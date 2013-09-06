@@ -1294,6 +1294,29 @@ void OpenMMFrEnergyST::initialise()  {
 
                         solute_bond_perturbation->addBond(idx0,idx1,solute_bond_perturbation_params);
 
+                        /*if(flag_constraint == NONE ){
+                            solute_bond_perturbation->addBond(idx0,idx1,solute_bond_perturbation_params);
+                        }
+
+                        else if ( flag_constraint == ALLBONDS || flag_constraint == HANGLES ){
+                            double pert_eq_distance = solute_bond_perturbation_params[1] * Alchemical_value + (1.0 - Alchemical_value) * solute_bond_perturbation_params[0];
+                            system_openmm->addConstraint(idx0,idx1, pert_eq_distance);
+                            if(Debug){
+                                qDebug() << "bond start distance = " << solute_bond_perturbation_params[0];
+                                qDebug() << "bond end distance = " << solute_bond_perturbation_params[1];
+                                qDebug() << "Perturbation bond equilibrium distance = " << pert_eq_distance;
+                            }
+                        }
+
+                        else if ( flag_constraint == HBONDS ){
+                            const SireMol::Atom atom0 = molecule.select(two.atom0());
+                            const SireBase::PropertyName ambertype_property = PropertyName("initial_ambertype");
+
+                            QString stringa = atom0.property<QString>("initial_ambertype");
+                            qDebug() << "NAME =" << stringa;
+
+                        }*/
+
                         bond_pert_list.append(BondID(two.atom0(),two.atom1()));
                         bond_pert_swap_list.append(BondID(two.atom1(),two.atom0()));
 
@@ -2025,6 +2048,9 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
             positions_openmm[system_index] = OpenMM::Vec3(c[j].x() * (OpenMM::NmPerAngstrom), c[j].y() * (OpenMM::NmPerAngstrom), c[j].z() * (OpenMM::NmPerAngstrom));
 
+            if(m[j] == 0.0)
+                qDebug() << "\nWARNING - THE MASS OF PARTICLE " << system_index << " is ZERO\n";
+
             if (m[j] > SireMaths::small){
                 velocities_openmm[system_index] = OpenMM::Vec3(p[j].x()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,p[j].y()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,p[j].z()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA);
             }
@@ -2033,7 +2059,8 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             }
             
             if(Debug){
-                qDebug() << "Particle num " << system_index;
+                qDebug() << "Particle num = " << system_index;
+                qDebug() << "Particle mass = " << m[j];
                 qDebug() << "X = " << positions_openmm[system_index][0] << " Y = " << positions_openmm[system_index][1] << " Z = " << positions_openmm[system_index][2];
                 qDebug() << "Vx = " << velocities_openmm[system_index][0] << " Vy = " << velocities_openmm[system_index][1] << " Vz = " << velocities_openmm[system_index][2] << "\n";
             }
@@ -2124,6 +2151,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     infoMask = OpenMM::State::Positions;
     infoMask = infoMask + OpenMM::State::Velocities; 
     infoMask = infoMask +  OpenMM::State::Energy;
+    //infoMask = infoMask + OpenMM::State::Parameters;
 
     OpenMM::State state_openmm;//OpenMM State
 
@@ -2136,14 +2164,15 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     int sample_count=1;
 
 
-    /*state_openmm=context_openmm.getState(infoMask);
+    state_openmm=context_openmm.getState(infoMask);
     //qDebug() << "TOTAL Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ + state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
     //qDebug() << "Potential Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
     //qDebug() << "Kinetic Energy = " <<  state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
     
     qDebug()  <<"*Lambda = " << Alchemical_value << " Potential energy lambda  = " << QString::number(state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ,'g',9) << " [A + A^2] kcal" << "\n";
-    return;*/
 
+
+    exit(-1);
 
     if(coord_freq > 0)
         qDebug() << "Saving atom coordinates every " << coord_freq << "\n";
@@ -2155,8 +2184,8 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             qDebug() << "Perturbed energy flag index" << i << " Value = " << perturbed_energies[i];
     }
 
-    vector<double> center(3);
-    /*center[0] = 23.7816;
+    /*vector<double> center(3);
+    center[0] = 23.7816;
     center[1] = 36.3938;
     center[2] = 31.8975; */
     
@@ -2174,6 +2203,9 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             qDebug() << "Max number of minimitazion iterations (0 = untill tollerance is reached) = " << minimize_iterations << "\n"; 
         }
         OpenMM::LocalEnergyMinimizer::minimize(context_openmm,minimize_tol,minimize_iterations);
+        //integrator_openmm->setStepSize(0.001);
+        //integrator_openmm->step(1000);
+        //integrator_openmm->setStepSize(0.002);
     }
 
 
@@ -2198,17 +2230,33 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     }
 
 
+
+
+
+    /*std::map<std::string,double> pippo;//EXTRACT GLOBAL PARAMETERS FROM THE CONTEXT
+
+    state_openmm=context_openmm.getState(infoMask);
+
+    pippo =  state_openmm.getParameters();
+    
+    
+    for( std::map<std::string,double>::iterator ii=pippo.begin(); ii!=pippo.end(); ++ii){
+        cout << (*ii).first << ": " << (*ii).second << endl;
+    }
+
+    exit();*/
+
+
+
     // Why is sample_count double precision?
-    while(sample_count<=n_samples){
+    while(sample_count <= n_samples){
+
 
         //*********************MD STEPS****************************
         integrator_openmm->step(energy_frequency);
 
-        context_openmm.setParameter("SSOnOff",1.0);//Solvent-Solvent OFF
-
-       /* qDebug() << "********************************************HERE*************************************";
-
-        return;*/
+        if(perturbed_energies[0])
+            context_openmm.setParameter("SSOnOff",1.0);//Solvent-Solvent OFF
 
         //dcd.write((int) sample_count);//Save a frame
 
@@ -2246,11 +2294,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
                 Vector dims = Vector( a[0] * OpenMM::AngstromsPerNm, b[1] * OpenMM::AngstromsPerNm, c[2] * OpenMM::AngstromsPerNm);
                 buffered_dimensions.append( dims );
             }
-        }
-
-        if(Debug){
-            qDebug() << "\nLambda = " << Alchemical_value;
-            printf("*Potential energy lambda = %f kcal/mol\n" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
         }
 
         if(potential_energy_lambda > 1000000.0){
@@ -2465,21 +2508,29 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             context_openmm.setParameter("lambda",Alchemical_value);//Torsions
 
 
-        /*state_openmm=context_openmm.getState(infoMask);
-        double dummy = state_openmm.getPotentialEnergy();
-        qDebug() << "\nDifference dummy = " << dummy - potential_energy_lambda<< "\n\n";*/
+        //state_openmm=context_openmm.getState(infoMask);
+        //double dummy = state_openmm.getPotentialEnergy();
+        //qDebug() << "\nDifference dummy = " << dummy - potential_energy_lambda<< "\n\n";
 
         sample_count= sample_count + 1.0;
 
         //show_status(sample_count, n_samples);
 
-        context_openmm.setParameter("SSOnOff",0.0);//Solvent-Solvent ON
+        if(perturbed_energies[0])
+            context_openmm.setParameter("SSOnOff",0.0);//Solvent-Solvent ON
+
+
+        if(true){
+            qDebug() << "\nLambda = " << Alchemical_value;
+            printf("*Potential energy lambda = %f kcal/mol\n" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
+        }
+
 
 
     }//end while
 
 
-    /**********************************************TO BE REMOVED*****************************************/
+    //**********************************************TO BE REMOVED*****************************************
     //dcd.close();
 
     //Disable Minimization because of multiple cycles
