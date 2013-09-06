@@ -69,6 +69,7 @@
 #include "SireMaths/vector.h"
 #include "SireMol/mgname.h"
 #include <iostream>
+#include <string>
 /* include <QElapsedTimer> */
 #include <QDebug>
 #include <QTime>
@@ -110,6 +111,8 @@ enum {
 
 static const RegisterMetaType<OpenMMAMDIntegrator> r_openmmint;
 
+OpenMM::Integrator* constructAMDIntegrator(double dt, int boostgroup, double alphagroup, double egroup);
+
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMAMDIntegrator &velver)
@@ -125,7 +128,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMAMDIntegrat
     	<< velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
     	<<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.buffer_frequency
 	<< velver.device_index
-	<< velver.boosted_torsions << velver.etorsion << velver.alphatorsion 
+	<< velver.boosted_torsions << velver.egroup1 << velver.alphagroup1 << velver.boostgroup1  
     	<< static_cast<const Integrator&>(velver);
     
     // Free OpenMM pointers??
@@ -149,7 +152,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMAMDIntegrator &ve
 	    >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature
 	    >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.buffer_frequency
 	    >> velver.device_index 
-	    >> velver.boosted_torsions >> velver.etorsion >> velver.alphatorsion
+	    >> velver.boosted_torsions >> velver.egroup1 >> velver.alphagroup1 << velver.boostgroup1
 	    >> static_cast<Integrator&>(velver);
 
 	// Maybe....need to reinitialise from molgroup because openmm system was not serialised...
@@ -177,7 +180,7 @@ OpenMMAMDIntegrator::OpenMMAMDIntegrator(bool frequent_save)
                  MCBarostat_frequency(25),ConstraintType("none"),
                  Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
 		 CMMremoval_frequency(0), buffer_frequency(0),device_index("0"),
-		 boosted_torsions(QList<DihedralID>()), etorsion( 0*kcal_per_mol ), alphatorsion(99999.0)
+		 boosted_torsions(QList<DihedralID>()), egroup1( 0*kcal_per_mol ), alphagroup1(99999.0), boostgroup1(0)
 	        
 {}
 /** Constructor using the passed molecule group */
@@ -192,7 +195,7 @@ OpenMMAMDIntegrator::OpenMMAMDIntegrator(const MoleculeGroup &molecule_group, bo
                  MCBarostat_frequency(25),ConstraintType("none"),
                  Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
 		 CMMremoval_frequency(0), buffer_frequency(0),device_index("0"),
-		 boosted_torsions(QList<DihedralID>()), etorsion( 0*kcal_per_mol ), alphatorsion(99999.0)
+		 boosted_torsions(QList<DihedralID>()), egroup1( 0*kcal_per_mol ), alphagroup1(99999.0), boostgroup1(0)
            
 {}
 
@@ -210,7 +213,8 @@ OpenMMAMDIntegrator::OpenMMAMDIntegrator(const OpenMMAMDIntegrator &other)
                  Pressure(other.Pressure), Temperature(other.Temperature),platform_type(other.platform_type),
                  Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency),
 		 buffer_frequency(other.buffer_frequency),device_index(other.device_index),
-		 boosted_torsions(other.boosted_torsions), etorsion(other.etorsion), alphatorsion(other.alphatorsion)
+		 boosted_torsions(other.boosted_torsions), egroup1(other.egroup1), alphagroup1(other.alphagroup1),
+		 boostgroup1(other.boostgroup1)
 
 {}
 
@@ -246,8 +250,9 @@ OpenMMAMDIntegrator& OpenMMAMDIntegrator::operator=(const OpenMMAMDIntegrator &o
     buffer_frequency = other.buffer_frequency;
     device_index = other.device_index;
     boosted_torsions = other.boosted_torsions;
-    etorsion = other.etorsion;
-    alphatorsion = other.alphatorsion;
+    egroup1 = other.egroup1;
+    alphagroup1 = other.alphagroup1;
+    boostgroup1 = other.boostgroup1;
 
     return *this;
 }
@@ -351,7 +356,10 @@ void OpenMMAMDIntegrator::initialise()  {
 
   nonbond_openmm->setUseDispersionCorrection(false);
 
-  system_openmm->addForce(nonbond_openmm);
+  int forceidx; 
+
+  forceidx = system_openmm->addForce(nonbond_openmm);
+  qDebug() << " The nonbonded group index is " << forceidx;
 
   if ( flag_cutoff == NOCUTOFF )
     {
@@ -385,17 +393,20 @@ void OpenMMAMDIntegrator::initialise()  {
      // Andersen thermostat. Complain if NOT using Verlet
     if (Andersen_flag == true)
       {
-	if (Integrator_type != "leapfrogverlet" or Integrator_type != "variableleapfrogverlet") 
+	if (Integrator_type != "leapfrogverlet" and 
+	    Integrator_type != "variableleapfrogverlet" and 
+	    Integrator_type != "custom") 
 	  {
 	    throw SireError::program_bug(QObject::tr(
-	       "The Andersen thermostat can only be used with the leapfrogverlet or variableleapfrogverlet integrators"), CODELOC);
+	       "The Andersen thermostat can only be used with the leapfrogverlet, variableleapfrogverlet or custom integrators"), CODELOC);
 	  }
 
 	const double converted_Temperature = convertTo(Temperature.value(), kelvin);
 	
 	OpenMM::AndersenThermostat * thermostat = new OpenMM::AndersenThermostat(converted_Temperature, Andersen_frequency);
 
-	system_openmm->addForce(thermostat);
+	int forceidx = system_openmm->addForce(thermostat);
+	qDebug() << " The thermostat group index is " << forceidx;
 		
 	if (Debug) 
 	  {
@@ -411,8 +422,9 @@ void OpenMMAMDIntegrator::initialise()  {
 	const double converted_Pressure = convertTo(Pressure.value(), bar);
 	
 	OpenMM::MonteCarloBarostat * barostat = new OpenMM::MonteCarloBarostat(converted_Pressure, converted_Temperature, MCBarostat_frequency);
-	system_openmm->addForce(barostat);
-		
+	int forceidx = system_openmm->addForce(barostat);
+	qDebug() << " The barostat group index is " << forceidx;		
+	
 	if (Debug) 
 	  {
 	    qDebug() << "\nMonte Carlo Barostat set\n";
@@ -430,12 +442,22 @@ void OpenMMAMDIntegrator::initialise()  {
     OpenMM::HarmonicAngleForce * bondBend_openmm = new OpenMM::HarmonicAngleForce();
 
     OpenMM::PeriodicTorsionForce * bondTorsion_openmm = new OpenMM::PeriodicTorsionForce();
+
+    OpenMM::PeriodicTorsionForce * BoostedbondTorsion_openmm = new OpenMM::PeriodicTorsionForce();
 	
-    system_openmm->addForce(bondStretch_openmm);
+    forceidx = system_openmm->addForce(bondStretch_openmm);
+    qDebug() << " The strechtorsion group index is " << forceidx;
 
-    system_openmm->addForce(bondBend_openmm);
+    forceidx = system_openmm->addForce(bondBend_openmm);
+    qDebug() << " The bendtorsion group index is " << forceidx;
 
-    system_openmm->addForce(bondTorsion_openmm);
+    forceidx = system_openmm->addForce(bondTorsion_openmm);
+    qDebug() << " The bondtorsion group index is " << forceidx;
+
+    forceidx = system_openmm->addForce(BoostedbondTorsion_openmm);
+    qDebug() << " The boosttorsionforceindex is " << forceidx;
+
+    boostgroup1 = forceidx;
 
     // Check whether positional restraints have been defined for a set of atoms in that molecule.
     // You can get the information out by getting the property and casting to VariantProperty
@@ -809,22 +831,27 @@ void OpenMMAMDIntegrator::initialise()  {
 		double v = dihedral_params[ k ];
 		int periodicity = dihedral_params[ k + 1 ];
 		double phase = dihedral_params[ k + 2 ];
-		
-		bondTorsion_openmm->addTorsion(idx0, idx1, idx2, idx3, periodicity, phase , v * OpenMM::KJPerKcal);
-		
+				
 		if (Debug)
 		  {
 		    qDebug() << "Dihedral between atom global index " << idx0 << " and " << idx1 << " and " << idx2 << " and " << idx3;
 		    qDebug() << "Amplitude_dih = " << v << " periodicity " << periodicity << " phase " << phase;
 		    qDebug() << "Dihedral local" << dihedral_ff.toString() << " v " << v << " periodicity " << periodicity << " phase " << phase;
 		  }
-	      }
-
-	    // Check whether this torsion is in the list of torsions to boost
-	    // E is etorsion (in kcal/mol) alpha is alphatorsion (unitless)
-	    if ( boosted_torsions.contains(dihedral_ff) )
-	      {
-		qDebug() << " Must add a boost potential to that torsion ";
+		
+		// Check whether this torsion is in the list of torsions to boost
+		// E is etorsion (in kcal/mol) alpha is alphatorsion (unitless)
+		if ( boosted_torsions.contains(dihedral_ff) )
+		  {
+		    qDebug() << " Torsion added to boosted group";
+		    BoostedbondTorsion_openmm->addTorsion(idx0, idx1, idx2, idx3, periodicity, phase , v * OpenMM::KJPerKcal);
+		  }
+		else
+		  {
+		    qDebug() << " Torsion added to regular group";
+		    bondTorsion_openmm->addTorsion(idx0, idx1, idx2, idx3, periodicity, phase , v * OpenMM::KJPerKcal);
+		  }
+	
 	      }
 
 
@@ -875,43 +902,6 @@ void OpenMMAMDIntegrator::initialise()  {
 	  qDebug() << "\n\nWill remove Center of Mass motion every " << CMMremoval_frequency << " steps\n\n";
       }
 
-    //OpenMM Integrator
-    //double dt = 2.0;
-    //OpenMM::VerletIntegrator* integrator_openmm = new OpenMM::VerletIntegrator(0.0);//dt in pico seconds
-    //OpenMM Context
-    //OpenMM::Platform& platform_openmm = OpenMM::Platform::getPlatformByName(platform_type.toStdString()); 
-    //OpenMM::Context * context_openmm = new OpenMM::Context( *system_openmm, *integrator_openmm, platform_openmm); 
-    
-    //if(flag_cutoff == CUTOFFPERIODIC)
-    //  {
-    //  //const System & ptr_sys = ws.system();
-    //  const PropertyName &space_property = PropertyName("space");
-    //	const PeriodicBox &space = system.property(space_property).asA<PeriodicBox>();
-    //	const double Box_x_Edge_Length = space.dimensions()[0] * OpenMM::NmPerAngstrom; //units in nm
-    //	const double Box_y_Edge_Length = space.dimensions()[1] * OpenMM::NmPerAngstrom; //units in nm
-    //	const double Box_z_Edge_Length = space.dimensions()[2] * OpenMM::NmPerAngstrom; //units in nm
-    //
-    //	if (Debug)
-    //	  qDebug() << "\nBOX SIZE [A] = (" << space.dimensions()[0] << " , " << space.dimensions()[1] << " ,  " << space.dimensions()[2] << ")\n\n";
-    //	
-    //	//Set Periodic Box Condition
-    //	context_openmm.setPeriodicBoxVectors(OpenMM::Vec3(Box_x_Edge_Length,0,0),
-    //					     OpenMM::Vec3(0,Box_y_Edge_Length,0),
-    //					     OpenMM::Vec3(0,0,Box_z_Edge_Length));
-    //}
-
-    //if (Debug)
-    //  qDebug() << "\n Now setting up coordinates and velocities "; 
-
-    //Add the coordinates  and velocities of the atoms to the OpenMM context
-    //context_openmm.setPositions(positions_openmm);  
-    //context_openmm.setVelocities(velocities_openmm);
-    
-    //this->context = &context_openmm;
-
-    //if (Debug)
-    //  cout << "\n\nREMARK  Using OpenMM platform = " <<context_openmm.getPlatform().getName().c_str()<<"\n";
-
     this->openmm_system = system_openmm;
 
     this->isInitialised = true;
@@ -956,29 +946,32 @@ void OpenMMAMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol
   // Currently not exposed to Sire API
   const double integration_tol = 0.001;
 
-  OpenMM::Integrator * integrator_openmm = NULL;
+  //OpenMM::Integrator * integrator_openmm = NULL;
+  //if (Integrator_type == "leapfrogverlet")
+  //  integrator_openmm = new OpenMM::VerletIntegrator(dt);//dt in picosecond
+  ////OpenMM::VerletIntegrator integrator_openmm(dt);
+  //else if (Integrator_type == "variableleapfrogverlet")
+  //  integrator_openmm = new OpenMM::VariableVerletIntegrator(integration_tol);//integration tolerance error unitless
+  ////OpenMM::VariableVerletIntegrator integrator_openmm(integration_tol);// integrator tolerance error unitless
+  //else if (Integrator_type == "langevin")
+  //  integrator_openmm = new OpenMM::LangevinIntegrator(converted_Temperature, converted_friction, dt);
+  ////OpenMM::LangevinIntegrator integrator_openmm(converted_Temperature, converted_friction, dt);
+  //else if (Integrator_type == "variablelangevin")
+  //  integrator_openmm = new OpenMM::VariableLangevinIntegrator(converted_Temperature, converted_friction, integration_tol);
+  //  //OpenMM::VariableLangevinIntegrator integrator_openmm(converted_Temperature, converted_friction, integration_tol);
+  //else if (Integrator_type == "brownian")
+  //  integrator_openmm = new OpenMM::BrownianIntegrator(converted_Temperature, converted_friction, dt);
+  ////OpenMM::BrownianIntegrator(converted_Temperature, converted_friction, dt);
+  //else 
+  //  throw SireError::program_bug(QObject::tr(
+  //    "The user defined Integrator type is not supported. Available types are leapfrogverlet, variableleapfrogverlet, langevin, variablelangevin, brownian"), CODELOC);
 
-  if (Integrator_type == "leapfrogverlet")
-    integrator_openmm = new OpenMM::VerletIntegrator(dt);//dt in picosecond
-  //OpenMM::VerletIntegrator integrator_openmm(dt);
-  else if (Integrator_type == "variableleapfrogverlet")
-    integrator_openmm = new OpenMM::VariableVerletIntegrator(integration_tol);//integration tolerance error unitless
-  //OpenMM::VariableVerletIntegrator integrator_openmm(integration_tol);// integrator tolerance error unitless
-  else if (Integrator_type == "langevin")
-    integrator_openmm = new OpenMM::LangevinIntegrator(converted_Temperature, converted_friction, dt);
-  //OpenMM::LangevinIntegrator integrator_openmm(converted_Temperature, converted_friction, dt);
-  else if (Integrator_type == "variablelangevin")
-    integrator_openmm = new OpenMM::VariableLangevinIntegrator(converted_Temperature, converted_friction, integration_tol);
-    //OpenMM::VariableLangevinIntegrator integrator_openmm(converted_Temperature, converted_friction, integration_tol);
-  else if (Integrator_type == "brownian")
-    integrator_openmm = new OpenMM::BrownianIntegrator(converted_Temperature, converted_friction, dt);
-  //OpenMM::BrownianIntegrator(converted_Temperature, converted_friction, dt);
-  else 
-    throw SireError::program_bug(QObject::tr(
-      "The user defined Integrator type is not supported. Available types are leapfrogverlet, variableleapfrogverlet, langevin, variablelangevin, brownian"), CODELOC);
+  //if (Debug)
+  //  qDebug() << "Using Integrator; " << Integrator_type;
 
-  if (Debug)
-    qDebug() << "Using Integrator; " << Integrator_type;
+  //Define custom integrator
+  //OpenMM::Integrator * integrator_openmm = NULL; 
+  OpenMM::Integrator * integrator_openmm = constructAMDIntegrator(dt, boostgroup1, alphagroup1, egroup1);
 
   OpenMM::Platform& platform_openmm = OpenMM::Platform::getPlatformByName(platform_type.toStdString()); 	
   
@@ -1086,6 +1079,7 @@ void OpenMMAMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol
   infoMask = OpenMM::State::Positions;
   infoMask = infoMask + OpenMM::State::Velocities; 
   infoMask = infoMask +  OpenMM::State::Energy;
+  infoMask = infoMask + OpenMM::State::Parameters;
 
   if (Debug)
     qDebug() << " Setup dynamics, time elapsed ms " << timer.elapsed() << " ms ";
@@ -1130,6 +1124,8 @@ void OpenMMAMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol
 
   OpenMM::Integrator& context_integrator = context_openmm.getIntegrator();
 
+  OpenMM::CustomIntegrator* p_custom_context_integrator = static_cast<OpenMM::CustomIntegrator*>(&context_integrator);
+
   if ( coord_freq > 0 )
     {/** Break nmoves in several steps to buffer coordinates*/
       for (int i=0; i < nmoves ; i = i + coord_freq)
@@ -1145,6 +1141,31 @@ void OpenMMAMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol
 	  state_openmm.getPeriodicBoxVectors(a,b,c);
 	  Vector dims = Vector( a[0] * OpenMM::AngstromsPerNm, b[1] * OpenMM::AngstromsPerNm, c[2] * OpenMM::AngstromsPerNm);
 	  buffered_dimensions.append( dims );
+	  
+	  /** Also get potential energy and boost */
+	  // 1) Get the energy of the boosted force group from the regular Hamiltonian 
+	  // How to get the energy of just a force group?
+	  //std::map<std::string,double> openmm_map = state_openmm.getParameters();
+	  //for (std::map<std::string,double>::iterator it=openmm_map.begin(); it!=openmm_map.end(); ++it)
+	  //  std::cout << it->first << " => " << it->second << '\n';
+	  int nintegrator_globalvariables = (*p_custom_context_integrator).getNumGlobalVariables();
+	  double groupnrg = -123; 
+	  for (int i=0; i< nintegrator_globalvariables; i++)
+	    {
+	      std::string var =  (*p_custom_context_integrator).getGlobalVariableName(i);
+	      //cout << global_vars;
+	      qDebug() << i << QString::fromStdString(var) <<  (*p_custom_context_integrator).getGlobalVariable(i);
+	      if (var == std::string("groupEnergy") )
+		groupnrg = (*p_custom_context_integrator).getGlobalVariable(i);
+	    }
+	  qDebug() << " The group energy is " << groupnrg;
+	      //qDebug() << i << "--> " <<;
+	  //(*p_custom_context_integrator).getGlobalVariableName(i);
+	  // 2) Call the getEffectiveEnergy internal function with arguments: alphaGroup, Egroup, Genergy
+	  //double effectiveEnergy = 
+	  // 3) --> Returns the actual energy at the simulation step
+	  // 4) --> Then save the energy difference * exp(-DU/kT) to get weight factor
+	  // 5) --> Buffer weight factor
 	}
     }
   else
@@ -1493,27 +1514,27 @@ QList<DihedralID> OpenMMAMDIntegrator::getBoostedTorsions(void)
 }
 
 /** Set the level of boosting (Energy)**/
-void OpenMMAMDIntegrator::setEtorsion( SireUnits::Dimension::MolarEnergy energy)
+void OpenMMAMDIntegrator::setEGroup1( SireUnits::Dimension::MolarEnergy energy)
 {
-  etorsion = energy;
+  egroup1 = energy;
 }
 
 /** Get the level of boosting (energy) **/
-SireUnits::Dimension::MolarEnergy OpenMMAMDIntegrator::getEtorsion(void)
+SireUnits::Dimension::MolarEnergy OpenMMAMDIntegrator::getEGroup1(void)
 {
-  return etorsion;
+  return egroup1;
 }
 
 /** Set the boost acceleration (alpha) **/
-void OpenMMAMDIntegrator::setAlphatorsion(double alpha)
+void OpenMMAMDIntegrator::setAlphaGroup1(double alpha)
 {
-  alphatorsion = alpha;
+  alphagroup1 = alpha;
 }
 
 /** Get the boost acceleration (alpha) **/
-double OpenMMAMDIntegrator::getAlphatorsion(void)
+double OpenMMAMDIntegrator::getAlphaGroup1(void)
 {
-  return alphatorsion;
+  return alphagroup1;
 }
 
 
@@ -1547,9 +1568,47 @@ const char* OpenMMAMDIntegrator::typeName()
 }
 
 
+OpenMM::Integrator* constructAMDIntegrator(double dt, int group, double alphab, double eb)
+{
+  // JM 09/13
+  // This is a port of the amd.py scripts from Peter Eastman and Steffen Lindert, downloaded from SimTk on 03/09/13
+  //
 
+  qDebug() << "Calling constructAMDIntegrator boost group " << group << " alphab " << alphab << " eb " << eb << " kcal/mol ";
 
+  qDebug() << "alphaGroup" << alphab * OpenMM::KJPerKcal << " EGroup " << eb * OpenMM::KJPerKcal;
 
+  OpenMM::CustomIntegrator * integrator = NULL;
+  integrator = new OpenMM::CustomIntegrator(dt);
+  integrator->addGlobalVariable("alphaGroup", alphab* OpenMM::KJPerKcal);
+  integrator->addGlobalVariable("EGroup", eb * OpenMM::KJPerKcal);
+  integrator->addGlobalVariable("groupEnergy", 1.5);
+  integrator->addPerDofVariable("oldx", 0);
+  integrator->addPerDofVariable("fg", 0);
+  integrator->addUpdateContextState();
+  //std::stringstream ss1;
+  //ss1 << "energy" << group;
+  //std::string groupenergystr = ss1.str();
+  std::string groupenergystr = "energy3";
+  qDebug() << " The group energy will come from " << QString::fromStdString(groupenergystr);
+  integrator->addComputeGlobal("groupEnergy", groupenergystr);
+  std::stringstream ss2;
+  ss2 << "f" << group;
+  std::string fgstr = ss2.str(); 
+  integrator->addComputePerDof("fg",fgstr);
+
+  std::string cmd = "v+dt*fprime/m; fprime=fother + fg*((1-modify) + modify*(alphaGroup/(alphaGroup+EGroup-groupEnergy))^2); fother=f-fg; modify=step(EGroup-groupEnergy)";
+
+  integrator->addComputePerDof("v", cmd);
+  integrator->addComputePerDof("oldx", "x");
+  integrator->addComputePerDof("x", "x+dt*v");
+  integrator->addConstrainPositions();
+  integrator->addComputePerDof("v", "(x-oldx)/dt");
+
+  return integrator;
+}
+
+//double getEffectiveEnergy()
 
 
 

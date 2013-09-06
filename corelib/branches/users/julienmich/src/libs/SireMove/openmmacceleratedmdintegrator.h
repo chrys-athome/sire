@@ -157,11 +157,11 @@ public:
     void setBoostedTorsions( QList<DihedralID> );
     QList<DihedralID> getBoostedTorsions(void);
 
-    void setEtorsion(SireUnits::Dimension::MolarEnergy );
-    SireUnits::Dimension::MolarEnergy getEtorsion(void);
+    void setEGroup1(SireUnits::Dimension::MolarEnergy );
+    SireUnits::Dimension::MolarEnergy getEGroup1(void);
 
-    void setAlphatorsion(double);
-    double getAlphatorsion(void);
+    void setAlphaGroup1(double);
+    double getAlphaGroup1(void);
 
 private:
     /** Whether or not to save the velocities after every step, or to save them at the end of all of the steps */
@@ -207,10 +207,12 @@ private:
 
     /** The list of torsions to boost **/
     QList<DihedralID> boosted_torsions;
-    /* The Etorsion parameter in kcal/mol */
-    SireUnits::Dimension::MolarEnergy etorsion;
-    /* The alpha parameter to control the boost of torsions*/
-    double alphatorsion;
+    /* The E parameter in kcal/mol to control the boost of group1 */
+    SireUnits::Dimension::MolarEnergy egroup1;
+    /* The alpha parameter to control the boost of group1*/
+    double alphagroup1;
+    /* The index of the boosted group 1  */
+    int boostgroup1;
 
 };
 
