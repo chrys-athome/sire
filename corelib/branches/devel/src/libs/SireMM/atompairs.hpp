@@ -43,6 +43,8 @@
 
 #include "SireError/errors.h"
 
+#include <QDebug>
+
 SIRE_BEGIN_HEADER
 
 namespace SireMM
@@ -771,19 +773,33 @@ SireBase::PropertyPtr
 AtomPairs<T>::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
                                       const AtomMatcher &atommatcher) const
 {
+    qDebug() << CODELOC;
+
     QHash<AtomIdx,AtomIdx> matched_atoms = atommatcher.match(this->info(), molinfo);
+
+    qDebug() << CODELOC;
     
     SireBase::PropertyPtr retptr( *(this->create()) );
+
+    qDebug() << CODELOC;
     
     AtomPairs<T> &ret = retptr.edit().asA< AtomPairs<T> >();
     ret.molinfo = molinfo;
 
+    qDebug() << CODELOC;
+
     ret.cgpairs = SireBase::SparseMatrix< CGAtomPairs<T> >(cgpairs.defaultValue());
 
+    qDebug() << CODELOC;
+
     int nats = this->nAtoms();
+    qDebug() << nats;
+
+    qDebug() << CODELOC;
     
     for (AtomIdx i(0); i<nats-1; ++i)
     {
+        qDebug() << i;
         AtomIdx new_i = matched_atoms.value(i, AtomIdx(-1));
     
         if (new_i == -1)
@@ -802,14 +818,22 @@ AtomPairs<T>::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
         }
     }
 
+    qDebug() << CODELOC;
+
     if (nats != 0)
     {
+        qDebug() << CODELOC;
+
         AtomIdx i(nats-1);
         AtomIdx new_i = matched_atoms.value(i, AtomIdx(-1));
         
         if (new_i != -1)
             ret.set(new_i, new_i, this->get(i,i));
+
+        qDebug() << CODELOC;
     }
+
+    qDebug() << CODELOC;
 
     return ret;
 }
