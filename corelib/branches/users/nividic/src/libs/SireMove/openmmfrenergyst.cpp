@@ -1268,18 +1268,19 @@ void OpenMMFrEnergyST::initialise()  {
             std::vector<double> solute_bond_perturbation_params(4);
             std::vector<double> solute_angle_perturbation_params(4);
             std::vector<double> solute_torsion_perturbation_params(1);
-
+            
+            QHash<BondID, double>  bond_pert_eq_list;
+            
             for (QList< PropPtr<Perturbation> >::const_iterator it = perturbation_list.constBegin();it != perturbation_list.constEnd();++it){
 
                 const Perturbation &pert = *it;
-
+           
                 if (pert.isA<InternalPerturbation>()){
 
                     QString str = pert.what();
-                    
+                   
                     if(str == "SireMM::TwoAtomPerturbation"){
                         const TwoAtomPerturbation &two = pert.asA<TwoAtomPerturbation>();
-
                         int idx0 = two.atom0().asA<AtomIdx>().value() + num_atoms_till_i;
                         int idx1 = two.atom1().asA<AtomIdx>().value() + num_atoms_till_i;
                         double rstart = two.initialForms()[Symbol("r0")].toString().toDouble();
@@ -1292,30 +1293,54 @@ void OpenMMFrEnergyST::initialise()  {
                         solute_bond_perturbation_params[2]=rstart * OpenMM::NmPerAngstrom;
                         solute_bond_perturbation_params[3]=rend * OpenMM::NmPerAngstrom;
 
-                        solute_bond_perturbation->addBond(idx0,idx1,solute_bond_perturbation_params);
+                        //solute_bond_perturbation->addBond(idx0,idx1,solute_bond_perturbation_params);
 
-                        /*if(flag_constraint == NONE ){
+                        if(flag_constraint == NONE ){
                             solute_bond_perturbation->addBond(idx0,idx1,solute_bond_perturbation_params);
                         }
 
                         else if ( flag_constraint == ALLBONDS || flag_constraint == HANGLES ){
-                            double pert_eq_distance = solute_bond_perturbation_params[1] * Alchemical_value + (1.0 - Alchemical_value) * solute_bond_perturbation_params[0];
+                            double pert_eq_distance = solute_bond_perturbation_params[3] * Alchemical_value + (1.0 - Alchemical_value) * solute_bond_perturbation_params[2];
                             system_openmm->addConstraint(idx0,idx1, pert_eq_distance);
+                            bond_pert_eq_list.insert(BondID(two.atom0(),two.atom1()),pert_eq_distance);
                             if(Debug){
-                                qDebug() << "bond start distance = " << solute_bond_perturbation_params[0];
-                                qDebug() << "bond end distance = " << solute_bond_perturbation_params[1];
+                                qDebug() << "bond start distance = " << solute_bond_perturbation_params[2];
+                                qDebug() << "bond end distance = " << solute_bond_perturbation_params[3];
                                 qDebug() << "Perturbation bond equilibrium distance = " << pert_eq_distance;
                             }
                         }
 
                         else if ( flag_constraint == HBONDS ){
                             const SireMol::Atom atom0 = molecule.select(two.atom0());
-                            const SireBase::PropertyName ambertype_property = PropertyName("initial_ambertype");
+                            QString initial_type_atom0 = atom0.property<QString>("initial_ambertype");
+                            QString final_type_atom0 = atom0.property<QString>("final_ambertype");
+                            
+                            const SireMol::Atom atom1 = molecule.select(two.atom1());
+                            QString initial_type_atom1 = atom1.property<QString>("initial_ambertype");
+                            QString final_type_atom1 = atom1.property<QString>("final_ambertype");
 
-                            QString stringa = atom0.property<QString>("initial_ambertype");
-                            qDebug() << "NAME =" << stringa;
+                            if(initial_type_atom0.startsWith("h", Qt::CaseInsensitive) || final_type_atom0.startsWith("h", Qt::CaseInsensitive) ||
+                               initial_type_atom1.startsWith("h", Qt::CaseInsensitive) || final_type_atom1.startsWith("h", Qt::CaseInsensitive)){
 
-                        }*/
+                               double pert_eq_distance = solute_bond_perturbation_params[1] * Alchemical_value + (1.0 - Alchemical_value) * solute_bond_perturbation_params[0];
+                               system_openmm->addConstraint(idx0,idx1, pert_eq_distance);
+                               
+                               if(Debug){
+                                    qDebug() << "Two/one bond atom(s) start(s) or end(s) with h/H" ;
+                                    qDebug() << "bond start distance = " << solute_bond_perturbation_params[0];
+                                    qDebug() << "bond end distance = " << solute_bond_perturbation_params[1];
+                                    qDebug() << "Perturbation bond equilibrium distance = " << pert_eq_distance;
+                               }
+                            }
+
+                            if(Debug){
+                                qDebug() << "Atom0 initil type = " <<  initial_type_atom0;
+                                qDebug() << "Atom0 final type = " <<  final_type_atom0;
+                                qDebug() << "Atom1 initil type = " <<  initial_type_atom1;
+                                qDebug() << "Atom1 final type = " <<  final_type_atom1;
+                            }
+
+                        }
 
                         bond_pert_list.append(BondID(two.atom0(),two.atom1()));
                         bond_pert_swap_list.append(BondID(two.atom1(),two.atom0()));
@@ -1334,7 +1359,6 @@ void OpenMMFrEnergyST::initialise()  {
                     }
                     if(str == "SireMM::ThreeAtomPerturbation"){
                         const ThreeAtomPerturbation &three = pert.asA<ThreeAtomPerturbation>();
-
                         int idx0 = three.atom0().asA<AtomIdx>().value() + num_atoms_till_i;
                         int idx1 = three.atom1().asA<AtomIdx>().value() + num_atoms_till_i;
                         int idx2 = three.atom2().asA<AtomIdx>().value() + num_atoms_till_i;
@@ -1348,12 +1372,136 @@ void OpenMMFrEnergyST::initialise()  {
                         solute_angle_perturbation_params[2] = thetastart;
                         solute_angle_perturbation_params[3] = thetaend;
                         
-                        solute_angle_perturbation->addAngle(idx0,idx1,idx2,solute_angle_perturbation_params);
-                        
+                        if(flag_constraint == HANGLES){
+                            const SireMol::Atom atom0 = molecule.select(three.atom0());
+                            QString initial_type_atom0 = atom0.property<QString>("initial_ambertype");
+                            QString final_type_atom0 = atom0.property<QString>("final_ambertype");
+                            
+                            const SireMol::Atom atom1 = molecule.select(three.atom1());
+                            QString initial_type_atom1 = atom1.property<QString>("initial_ambertype");
+                            QString final_type_atom1 = atom1.property<QString>("final_ambertype");
+                            
+                            const SireMol::Atom atom2 = molecule.select(three.atom2());
+                            QString initial_type_atom2 = atom2.property<QString>("initial_ambertype");
+                            QString final_type_atom2 = atom2.property<QString>("final_ambertype");
+                            
+                            bool H_X_H = (initial_type_atom0.startsWith("h", Qt::CaseInsensitive) || final_type_atom0.startsWith("h", Qt::CaseInsensitive)) &&
+                                         (initial_type_atom2.startsWith("h", Qt::CaseInsensitive) || final_type_atom2.startsWith("h", Qt::CaseInsensitive));
+                            
+                            bool H_O_X = (initial_type_atom0.startsWith("h", Qt::CaseInsensitive) || final_type_atom0.startsWith("h", Qt::CaseInsensitive)) && 
+                                         (initial_type_atom2.startsWith("o", Qt::CaseInsensitive) || final_type_atom2.startsWith("o", Qt::CaseInsensitive));
+                                         
+                            bool X_O_H = (initial_type_atom1.startsWith("o", Qt::CaseInsensitive) || final_type_atom1.startsWith("o", Qt::CaseInsensitive)) && 
+                                         (initial_type_atom2.startsWith("h", Qt::CaseInsensitive) || final_type_atom2.startsWith("h", Qt::CaseInsensitive));
+
+                            if(H_X_H || H_O_X || X_O_H){
+
+                                    const BondID * first_alchemical_bond;
+                                    const BondID * second_alchemical_bond;
+
+                                    if(bond_pert_eq_list.contains(BondID(three.atom0(),three.atom1()))){
+                                        first_alchemical_bond = &((bond_pert_eq_list.find(BondID(three.atom0(),three.atom1()))).key());
+                                        if(Debug)
+                                            qDebug() << "Atom0 - Atom1";
+                                    }
+                                    else if(bond_pert_eq_list.contains(BondID(three.atom1(),three.atom0()))){
+                                        first_alchemical_bond = &((bond_pert_eq_list.find(BondID(three.atom1(),three.atom0()))).key());
+                                        if(Debug)
+                                            qDebug() << "Atom1 - Atom0";
+                                    }
+                                    else
+                                        throw SireError::program_bug(QObject::tr("No Bond has been found in the perturbed bond equilibrium disance list"), CODELOC);
+
+
+                                    if(bond_pert_eq_list.contains(BondID(three.atom1(),three.atom2()))){
+                                        second_alchemical_bond = &((bond_pert_eq_list.find(BondID(three.atom1(),three.atom2()))).key());
+                                        if(Debug)
+                                            qDebug() << "Atom1 - Atom2";
+                                    }
+                                    else if(bond_pert_eq_list.contains(BondID(three.atom2(),three.atom1()))){
+                                        second_alchemical_bond = &((bond_pert_eq_list.find(BondID(three.atom2(),three.atom1()))).key());
+                                        if(Debug)
+                                            qDebug() << "Atom2 - Atom1";
+                                    }
+                                    else
+                                        throw SireError::program_bug(QObject::tr("No Bond has been found in the perturbed bond list"), CODELOC);
+
+                                    double first_alchemical_distance = bond_pert_eq_list.value(*first_alchemical_bond);
+                                    double second_alchemical_distance = bond_pert_eq_list.value(*second_alchemical_bond);
+
+                                    if(Debug)
+                                        qDebug() << "First Alchemical distance = " << first_alchemical_distance * OpenMM::AngstromsPerNm 
+                                                 << "Second Alchemical distance = " << second_alchemical_distance * OpenMM::AngstromsPerNm;
+
+                                    SireMaths::Vector bond1_vec;
+                                    SireMaths::Vector bond2_vec;
+
+                                    if(first_alchemical_bond->atom0() == second_alchemical_bond->atom0()){
+
+                                        SireMaths::Vector tmp1 = (molecule.atom(first_alchemical_bond->atom1())).property<SireMaths::Vector>("coordinates");
+                                        SireMaths::Vector tmp2 = (molecule.atom(second_alchemical_bond->atom1())).property<SireMaths::Vector>("coordinates");
+                                        SireMaths::Vector tmpc = (molecule.atom(first_alchemical_bond->atom0())).property<SireMaths::Vector>("coordinates");
+                                        bond1_vec = tmp1 - tmpc;
+                                        bond2_vec = tmp2 - tmpc;
+                                        if(Debug)
+                                            qDebug() << "Bond1 Atom0 = Bond2 Atom0";
+                                    }
+                                    else if(first_alchemical_bond->atom0() == second_alchemical_bond->atom1()){
+                                        SireMaths::Vector tmp1 = (molecule.atom(first_alchemical_bond->atom1())).property<SireMaths::Vector>("coordinates");
+                                        SireMaths::Vector tmp2 = (molecule.atom(second_alchemical_bond->atom0())).property<SireMaths::Vector>("coordinates");
+                                        SireMaths::Vector tmpc = (molecule.atom(first_alchemical_bond->atom0())).property<SireMaths::Vector>("coordinates");
+                                        bond1_vec = tmp1 - tmpc;
+                                        bond2_vec = tmp2 - tmpc;
+                                        if(Debug)
+                                            qDebug() << "Bond1 Atom0 = Bond2 Atom1";
+                                    }
+                                    else if(first_alchemical_bond->atom1() == second_alchemical_bond->atom0()){
+                                        SireMaths::Vector tmp1 = (molecule.atom(first_alchemical_bond->atom0())).property<SireMaths::Vector>("coordinates");
+                                        SireMaths::Vector tmp2 = (molecule.atom(second_alchemical_bond->atom1())).property<SireMaths::Vector>("coordinates");
+                                        SireMaths::Vector tmpc = (molecule.atom(first_alchemical_bond->atom1())).property<SireMaths::Vector>("coordinates");
+                                        bond1_vec = tmp1 - tmpc;
+                                        bond2_vec = tmp2 - tmpc;
+                                        if(Debug)
+                                            qDebug() << "Bond1 Atom1 = Bond2 Atom0";
+                                    }
+                                    else if(first_alchemical_bond->atom1() == second_alchemical_bond->atom1()){
+                                        SireMaths::Vector tmp1 = (molecule.atom(first_alchemical_bond->atom0())).property<SireMaths::Vector>("coordinates");
+                                        SireMaths::Vector tmp2 = (molecule.atom(second_alchemical_bond->atom0())).property<SireMaths::Vector>("coordinates");
+                                        SireMaths::Vector tmpc = (molecule.atom(first_alchemical_bond->atom1())).property<SireMaths::Vector>("coordinates");
+                                        bond1_vec = tmp1 - tmpc;
+                                        bond2_vec = tmp2 - tmpc;
+                                        if(Debug)
+                                            qDebug() << "Bond1 Atom1 = Bond2 Atom1";
+                                    }
+                                    else
+                                         throw SireError::program_bug(QObject::tr("No coorner bond"), CODELOC);
+                                         
+                                    if(Debug){
+                                        qDebug() << "First vector X = " << (bond1_vec.normalise() * first_alchemical_distance).x() * OpenMM::AngstromsPerNm ;
+                                        qDebug() << "First vector Y = " << (bond1_vec.normalise() * first_alchemical_distance).y() * OpenMM::AngstromsPerNm ;
+                                        qDebug() << "First vector Z = " << (bond1_vec.normalise() * first_alchemical_distance).z() * OpenMM::AngstromsPerNm ;
+
+                                        qDebug() << "Second vector X = " << (bond2_vec.normalise() * second_alchemical_distance).x() * OpenMM::AngstromsPerNm ;
+                                        qDebug() << "Second vector Y = " << (bond2_vec.normalise() * second_alchemical_distance).y() * OpenMM::AngstromsPerNm ;
+                                        qDebug() << "Second vector Z = " << (bond2_vec.normalise() * second_alchemical_distance).z() * OpenMM::AngstromsPerNm ;
+                                    }
+
+                                    double constraint_distance = (bond1_vec.normalise() * first_alchemical_distance - bond2_vec.normalise() * second_alchemical_distance).length();
+
+                                    system_openmm->addConstraint(idx0,idx2, constraint_distance);
+
+                                    if(Debug)
+                                        qDebug() << "CONSTRAINT DISTANCE = " << constraint_distance * OpenMM::AngstromsPerNm;
+                            }
+
+                        }//end if HANGLES
+                        else
+                            solute_angle_perturbation->addAngle(idx0,idx1,idx2,solute_angle_perturbation_params);
+
                         angle_pert_list.append(AngleID(three.atom0(),three.atom1(),three.atom2()));
                         angle_pert_swap_list.append(AngleID(three.atom2(),three.atom1(),three.atom0()));
 
-                        if(Debug){
+                        if(true){
                             qDebug() << "Atom0 = " << three.atom0().asA<AtomIdx>().value() << 
                                         "Atom1 = "<< three.atom1().asA<AtomIdx>().value() << 
                                         "Atom2 = "<< three.atom2().asA<AtomIdx>().value() ;
