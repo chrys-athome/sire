@@ -86,6 +86,9 @@ public:
     const T* data() const;
     const T* constData() const;
 
+    const T& read() const;
+    T& write();
+
     bool operator!() const;
 
     bool operator==(const SharedDataPointer<T> &other) const;
@@ -289,6 +292,23 @@ Q_INLINE_TEMPLATE
 const T& SharedDataPointer<T>::operator*() const 
 {
     return *d; 
+}
+
+/** Dereference this pointer for reading (const-access) */
+template<class T>
+Q_INLINE_TEMPLATE
+const T& SharedDataPointer<T>::read() const
+{
+    return *d;
+}
+
+/** Dereference this pointer for writing (non-const-access) */
+template<class T>
+Q_INLINE_TEMPLATE
+T& SharedDataPointer<T>::write()
+{
+    detach();
+    return *d;
 }
 
 /** Pointer dereference */

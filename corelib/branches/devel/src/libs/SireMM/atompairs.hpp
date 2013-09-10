@@ -647,7 +647,7 @@ template<class T>
 SIRE_INLINE_TEMPLATE
 void AtomPairs<T>::set(const AtomID &atm0, const T &value)
 {
-    this->set( molinfo->cgAtomIdx(atm0), value );
+    this->set( molinfo.read().cgAtomIdx(atm0), value );
 }
 
 /** Set the value for the atom-pair 'atm0'-'atm1' */
@@ -656,8 +656,8 @@ SIRE_INLINE_TEMPLATE
 void AtomPairs<T>::set(const AtomID &atm0, const AtomID &atm1,
                        const T &value)
 {
-    this->set( molinfo->cgAtomIdx(atm0), 
-               molinfo->cgAtomIdx(atm1), value );
+    this->set( molinfo.read().cgAtomIdx(atm0),
+               molinfo.read().cgAtomIdx(atm1), value );
 }
 
 /** Set every single atom pair in this molecule to have the value 'value' */
@@ -674,7 +674,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void AtomPairs<T>::setAll(CGIdx cgid0, const T &value)
 {
-    quint32 cg0 = cgid0.map(molinfo->nCutGroups());
+    quint32 cg0 = cgid0.map(molinfo.read().nCutGroups());
 
     cgpairs.set(cg0, cg0, CGAtomPairs<T>(value));
 }
@@ -685,8 +685,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void AtomPairs<T>::setAll(CGIdx cgid0, CGIdx cgid1, const T &value)
 {
-    quint32 cg0 = cgid0.map( molinfo->nCutGroups() );
-    quint32 cg1 = cgid1.map( molinfo->nCutGroups() );
+    quint32 cg0 = cgid0.map( molinfo.read().nCutGroups() );
+    quint32 cg1 = cgid1.map( molinfo.read().nCutGroups() );
 
     cgpairs.set(cg0, cg1, CGAtomPairs<T>(value));
 
@@ -700,7 +700,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void AtomPairs<T>::setAll(const CGID &cgid0, const T &value)
 {
-    this->setAll( molinfo->cgIdx(cgid0), value );
+    this->setAll( molinfo.read().cgIdx(cgid0), value );
 }
 
 /** Set every single atom pair between the CutGroups with IDs (cgid0,cgid1)
@@ -709,7 +709,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void AtomPairs<T>::setAll(const CGID &cgid0, const CGID &cgid1, const T &value)
 {
-    this->setAll( molinfo->cgIdx(cgid0), molinfo->cgIdx(cgid1), value );
+    this->setAll( molinfo.read().cgIdx(cgid0), molinfo.read().cgIdx(cgid1), value );
 }
 
 /** Return whether or not this is empty - all of the atom pairs have
@@ -736,7 +736,7 @@ template<class T>
 SIRE_INLINE_TEMPLATE
 int AtomPairs<T>::nAtoms() const
 {
-    return molinfo->nAtoms();
+    return molinfo.read().nAtoms();
 }
 
 /** Return the number of CutGroups in the molecule (hence the size
@@ -744,7 +744,7 @@ int AtomPairs<T>::nAtoms() const
 template<class T>
 int AtomPairs<T>::nGroups() const
 {
-    return molinfo->nCutGroups();
+    return molinfo.read().nCutGroups();
 }
 
 /** Return whether this object is compatible with a molecule with
@@ -770,32 +770,19 @@ bool AtomPairs<T>::isCompatibleWith(const MoleculeInfoData &info) const
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 SireBase::PropertyPtr 
-AtomPairs<T>::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
+AtomPairs<T>::_pvt_makeCompatibleWith(const MoleculeInfoData &other_info,
                                       const AtomMatcher &atommatcher) const
 {
-    qDebug() << CODELOC;
-
-    QHash<AtomIdx,AtomIdx> matched_atoms = atommatcher.match(this->info(), molinfo);
-
-    qDebug() << CODELOC;
+    QHash<AtomIdx,AtomIdx> matched_atoms = atommatcher.match(this->info(), other_info);
     
     SireBase::PropertyPtr retptr( *(this->create()) );
-
-    qDebug() << CODELOC;
     
     AtomPairs<T> &ret = retptr.edit().asA< AtomPairs<T> >();
-    ret.molinfo = molinfo;
-
-    qDebug() << CODELOC;
+    ret.molinfo = other_info;
 
     ret.cgpairs = SireBase::SparseMatrix< CGAtomPairs<T> >(cgpairs.defaultValue());
 
-    qDebug() << CODELOC;
-
     int nats = this->nAtoms();
-    qDebug() << nats;
-
-    qDebug() << CODELOC;
     
     for (AtomIdx i(0); i<nats-1; ++i)
     {
@@ -804,7 +791,7 @@ AtomPairs<T>::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
     
         if (new_i == -1)
             continue;
-    
+        
         ret.set(new_i, new_i, this->get(i,i));
     
         for (AtomIdx j(i+1); j<nats; ++j)
@@ -818,22 +805,14 @@ AtomPairs<T>::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
         }
     }
 
-    qDebug() << CODELOC;
-
     if (nats != 0)
     {
-        qDebug() << CODELOC;
-
         AtomIdx i(nats-1);
         AtomIdx new_i = matched_atoms.value(i, AtomIdx(-1));
         
         if (new_i != -1)
             ret.set(new_i, new_i, this->get(i,i));
-
-        qDebug() << CODELOC;
     }
-
-    qDebug() << CODELOC;
 
     return ret;
 }
