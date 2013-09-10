@@ -9,6 +9,7 @@ set( SIRE_TEST_DIR "${CMAKE_INSTALL_PREFIX}/test" )
 
 # List all of the directories containing unit tests
 set (TEST_DIRS "SireBase"
+               "SireMM"
                "io"
      )
 
