@@ -43,8 +43,6 @@
 
 #include "SireError/errors.h"
 
-#include <QDebug>
-
 SIRE_BEGIN_HEADER
 
 namespace SireMM
@@ -117,6 +115,9 @@ public:
 
     void set(quint32 i, const T &value);
     void set(quint32 i, quint32 j, const T &value);
+
+    void reserve(int dim_x, int dim_y);
+    void squeeze();
 
     bool isEmpty() const;
 
@@ -207,6 +208,9 @@ public:
 
     int nGroups() const;
     int nAtoms() const;
+
+    void reserve(int dim_x, int dim_y);
+    void squeeze();
 
     bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
 
@@ -353,6 +357,23 @@ const T& CGAtomPairs<T>::defaultValue() const
     return data.defaultValue();
 }
 
+/** Make sure that this container can hold dim_x by dim_y atom pairs */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void CGAtomPairs<T>::reserve(int dim_x, int dim_y)
+{
+    if (data.capacity() < dim_x*dim_y)
+        data.reserve(dim_x, dim_y);
+}
+
+/** Minimise the memory usage of these pairs */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void CGAtomPairs<T>::squeeze()
+{
+    data.commit();
+}
+
 //////////
 ////////// Implementation of AtomPairs<T>
 //////////
@@ -452,8 +473,8 @@ template<class T>
 SIRE_INLINE_TEMPLATE
 const CGAtomPairs<T>& AtomPairs<T>::operator()(CGIdx cgid0, CGIdx cgid1) const
 {
-    return cgpairs(cgid0.map(molinfo->nCutGroups()), 
-                   cgid1.map(molinfo->nCutGroups()));
+    return cgpairs(cgid0.map(molinfo.read().nCutGroups()),
+                   cgid1.map(molinfo.read().nCutGroups()));
 }
 
 /** Return the objects associated with all of the atom pairs within the
@@ -462,8 +483,8 @@ template<class T>
 SIRE_INLINE_TEMPLATE
 const CGAtomPairs<T>& AtomPairs<T>::operator()(CGIdx cgid0) const
 {
-    return cgpairs(cgid0.map(molinfo->nCutGroups()),
-                   cgid0.map(molinfo->nCutGroups()));
+    return cgpairs(cgid0.map(molinfo.read().nCutGroups()),
+                   cgid0.map(molinfo.read().nCutGroups()));
 }
 
 /** Return the objects associated with all of the atom pairs between
@@ -473,7 +494,7 @@ SIRE_INLINE_TEMPLATE
 const CGAtomPairs<T>& AtomPairs<T>::operator()(const CGID &cgid0, 
                                                const CGID &cgid1) const
 {
-    return cgpairs(molinfo->cgIdx(cgid0), molinfo->cgIdx(cgid1));
+    return cgpairs(molinfo.read().cgIdx(cgid0), molinfo.read().cgIdx(cgid1));
 }
 
 /** Return the objects associated with all of the atom pairs within the
@@ -482,7 +503,7 @@ template<class T>
 SIRE_INLINE_TEMPLATE
 const CGAtomPairs<T>& AtomPairs<T>::operator()(const CGID &cgid0) const
 {
-    quint32 idx = molinfo->cgIdx(cgid0);
+    quint32 idx = molinfo.read().cgIdx(cgid0);
 
     return cgpairs(idx,idx);
 }
@@ -529,11 +550,11 @@ template<class T>
 SIRE_INLINE_TEMPLATE
 const T& AtomPairs<T>::operator()(const CGAtomIdx &atm0, const CGAtomIdx &atm1) const
 {
-    const quint32 cg0 = atm0.cutGroup().map(molinfo->nCutGroups());
-    const quint32 cg1 = atm1.cutGroup().map(molinfo->nCutGroups());
+    const quint32 cg0 = atm0.cutGroup().map(molinfo.read().nCutGroups());
+    const quint32 cg1 = atm1.cutGroup().map(molinfo.read().nCutGroups());
     
-    const quint32 atom0 = atm0.atom().map(molinfo->nAtoms(atm0.cutGroup()));
-    const quint32 atom1 = atm1.atom().map(molinfo->nAtoms(atm1.cutGroup())); 
+    const quint32 atom0 = atm0.atom().map(molinfo.read().nAtoms(atm0.cutGroup()));
+    const quint32 atom1 = atm1.atom().map(molinfo.read().nAtoms(atm1.cutGroup()));
 
     return cgpairs(cg0, cg1)(atom0, atom1);
 }
@@ -544,8 +565,8 @@ template<class T>
 SIRE_INLINE_TEMPLATE
 const T& AtomPairs<T>::operator()(const CGAtomIdx &atm0) const
 {
-    const quint32 cg0 = atm0.cutGroup().map(molinfo->nCutGroups());
-    const quint32 atom0 = atm0.atom().map(molinfo->nAtoms(atm0.cutGroup()));
+    const quint32 cg0 = atm0.cutGroup().map(molinfo.read().nCutGroups());
+    const quint32 atom0 = atm0.atom().map(molinfo.read().nAtoms(atm0.cutGroup()));
 
     return cgpairs(cg0, cg0)(atom0, atom0);
 }
@@ -574,7 +595,7 @@ template<class T>
 SIRE_INLINE_TEMPLATE
 const T& AtomPairs<T>::operator()(const AtomID &atm0) const
 {
-    return this->operator()( molinfo->cgAtomIdx(atm0) );
+    return this->operator()( molinfo.read().cgAtomIdx(atm0) );
 }
 
 /** Return the object associated with the atom pair (atm0,atm1). This returns the
@@ -584,8 +605,33 @@ SIRE_INLINE_TEMPLATE
 const T& AtomPairs<T>::operator()(const AtomID &atm0,
                                   const AtomID &atm1) const
 {
-    return this->operator()( molinfo->cgAtomIdx(atm0),
-                             molinfo->cgAtomIdx(atm1) );
+    return this->operator()( molinfo.read().cgAtomIdx(atm0),
+                             molinfo.read().cgAtomIdx(atm1) );
+}
+
+/** Make sure that this container can hold dim_x by dim_y atom pairs */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomPairs<T>::reserve(int dim_x, int dim_y)
+{
+    if (cgpairs.capacity() < dim_x*dim_y)
+        cgpairs.reserve(dim_x, dim_y);
+}
+
+/** Minimise the memory usage of these pairs */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomPairs<T>::squeeze()
+{
+    for (int i=0; i<molinfo.read().nCutGroups(); ++i)
+    {
+        for (int j=0; j<molinfo.read().nCutGroups(); ++j)
+        {
+            cgpairs.edit(i,j).squeeze();
+        }
+    }
+
+    cgpairs.commit();
 }
 
 /** Return the object associated with the atom 'atm0'. This returns the
@@ -613,24 +659,37 @@ SIRE_OUTOFLINE_TEMPLATE
 void AtomPairs<T>::set(const CGAtomIdx &atm0, const CGAtomIdx &atm1,
                        const T &value)
 {
-    quint32 cg0 = atm0.cutGroup().map(molinfo->nCutGroups());
-    quint32 cg1 = atm1.cutGroup().map(molinfo->nCutGroups());
+    quint32 cg0 = atm0.cutGroup().map(molinfo.read().nCutGroups());
+    quint32 cg1 = atm1.cutGroup().map(molinfo.read().nCutGroups());
+
+    CGAtomPairs<T> cgpair = cgpairs.get(cg0, cg1);
     
-    quint32 atom0 = atm0.atom().map(molinfo->nAtoms(atm0.cutGroup()));
-    quint32 atom1 = atm1.atom().map(molinfo->nAtoms(atm1.cutGroup()));
+    int nats0 = molinfo.read().nAtoms(atm0.cutGroup());
+    int nats1 = molinfo.read().nAtoms(atm1.cutGroup());
+    
+    quint32 atom0 = atm0.atom().map(nats0);
+    quint32 atom1 = atm1.atom().map(nats1);
 
-    CGAtomPairs<T> &cgpair = cgpairs.edit(cg0,cg1);
-
-    cgpair.set(atom0, atom1, value);
-
-    if (cg0 == cg1)
+    if (cgpair.get(atom0,atom1) != value)
     {
-        cgpair.set(atom1, atom0, value);
-    }
-    else
-    {
-        CGAtomPairs<T> &mirror = cgpairs.edit(cg1,cg0);
-        mirror.set(atom1, atom0, value);
+        //we are changing the value
+        cgpair.reserve(nats0, nats1);
+        cgpair.set(atom0, atom1, value);
+        
+        if (cg0 == cg1)
+        {
+            cgpair.set(atom1, atom0, value);
+            cgpairs.set(cg0, cg0, cgpair);
+        }
+        else
+        {
+            cgpairs.set(cg0, cg1, cgpair);
+            
+            cgpair = cgpairs.get(cg1, cg0);
+            cgpair.reserve(nats1, nats0);
+            cgpair.set(atom1, atom0, value);
+            cgpairs.set(cg1, cg0, cgpair);
+        }
     }
 }
 
@@ -780,19 +839,24 @@ AtomPairs<T>::_pvt_makeCompatibleWith(const MoleculeInfoData &other_info,
     AtomPairs<T> &ret = retptr.edit().asA< AtomPairs<T> >();
     ret.molinfo = other_info;
 
+    T default_value = cgpairs.defaultValue().defaultValue();
+
     ret.cgpairs = SireBase::SparseMatrix< CGAtomPairs<T> >(cgpairs.defaultValue());
+    ret.cgpairs.reserve(other_info.nCutGroups(), other_info.nCutGroups());
 
     int nats = this->nAtoms();
     
     for (AtomIdx i(0); i<nats-1; ++i)
     {
-        qDebug() << i;
         AtomIdx new_i = matched_atoms.value(i, AtomIdx(-1));
     
         if (new_i == -1)
             continue;
         
-        ret.set(new_i, new_i, this->get(i,i));
+        T old_value = this->get(i,i);
+        
+        if (old_value != default_value)
+            ret.set(new_i, new_i, this->get(i,i));
     
         for (AtomIdx j(i+1); j<nats; ++j)
         {
@@ -800,8 +864,11 @@ AtomPairs<T>::_pvt_makeCompatibleWith(const MoleculeInfoData &other_info,
             
             if (new_j == -1)
                 continue;
-        
-            ret.set(new_i, new_j, this->get(i,j));
+            
+            old_value = this->get(i,j);
+            
+            if (old_value != default_value)
+                ret.set(new_i, new_j, this->get(i,j));
         }
     }
 
@@ -813,6 +880,8 @@ AtomPairs<T>::_pvt_makeCompatibleWith(const MoleculeInfoData &other_info,
         if (new_i != -1)
             ret.set(new_i, new_i, this->get(i,i));
     }
+
+    ret.cgpairs.commit();
 
     return ret;
 }

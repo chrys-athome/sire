@@ -3248,10 +3248,7 @@ const MoleculeInfoData& StructureEditor::commitInfo()
     all of the data in this editor */
 MoleculeData StructureEditor::commitChanges() const
 {
-    qDebug() << CODELOC;
     this->assertSane();
-
-    qDebug() << CODELOC;
     return MoleculeData(*this);
 }
 
@@ -4885,37 +4882,25 @@ Properties StructureEditor::properties() const
 {
     this->assertSane();
 
-    qDebug() << CODELOC;
-
     //make sure that the MoleculeInfo object is up to date
     if (this->needsInfoRebuild())
         const_cast<StructureEditor*>(this)->commitInfo();
-
-    qDebug() << CODELOC;
 
     //now get the mapping from the original AtomIdx indicies used when
     //the old properties were constructed to the new AtomIdx indicies of the
     //atoms in the edited molecule
     StructureEditorAtomMatcher mapping( d->getOldToNewAtomMapping() );
 
-    qDebug() << CODELOC;
-
     //go through each property in turn and extract it based
     //on its current type
     Properties updated_properties;
-
-    qDebug() << CODELOC;
     
     for (Properties::const_iterator it = d->properties.constBegin();
          it != d->properties.constEnd();
          ++it)
     {
-        qDebug() << "NEXT";
-    
         PropertyPtr updated_property = it.value();
         const QString &key = it.key();
-
-        qDebug() << key;
     
         if (updated_property->isA<AtomProp>())
         {
@@ -5045,16 +5030,10 @@ Properties StructureEditor::properties() const
             if (not updated_property.isNull())
                 updated_properties.setMetadata(key, metakey, updated_property);
         }
-        
-        qDebug() << "LOOP END";
     }
-
-    qDebug() << CODELOC;
     
     //the last step is converting all of the molecule metadata
     const Properties &metadata = d->properties.allMetadata();
-
-    qDebug() << CODELOC;
     
     for (Properties::const_iterator it = metadata.constBegin();
          it != metadata.constEnd();
@@ -5122,8 +5101,6 @@ Properties StructureEditor::properties() const
         if (not updated_property.isNull())
             updated_properties.setMetadata(metakey, updated_property);
     }
-
-    qDebug() << CODELOC;
     
     return updated_properties;
 }

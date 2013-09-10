@@ -297,11 +297,8 @@ PartialMolecule PartialMolecule::extract() const
     {
         PartialMolecule ret;
     
-        qDebug() << "HERE";
         ret.d = d->extract(selected_atoms);
-        qDebug() << "HERE2";
         ret.selected_atoms = AtomSelection( *(ret.d) );
-        qDebug() << "HERE3";
         
         return ret;
     }

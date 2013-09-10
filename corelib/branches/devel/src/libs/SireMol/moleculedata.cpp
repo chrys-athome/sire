@@ -279,21 +279,14 @@ void MoleculeData::renumber(MolNum newnum)
 MoleculeData::MoleculeData(const StructureEditor &editor)
              : QSharedData(), vrsn(0), molnum(0)
 {
-    qDebug() << CODELOC;
     //create the info object from this editor
     molinfo = SharedDataPointer<MoleculeInfoData>( new MoleculeInfoData(editor) );
-
-    qDebug() << CODELOC;
     
     //now copy across the properties...
     props = editor.properties();
-
-    qDebug() << CODELOC;
     
     //copy across the name
     molname = editor.molName();
-
-    qDebug() << CODELOC;
     
     //finally, sort out the molecule number - this also
     //sets up all of the version numbers and performs
@@ -302,8 +295,6 @@ MoleculeData::MoleculeData(const StructureEditor &editor)
         this->renumber();
     else
         this->renumber(editor.molNum());
-
-    qDebug() << CODELOC;
 }
 
 /** Copy constructor */

@@ -160,6 +160,9 @@ public:
 
     void commit();
 
+    void reserve(int dim_x, int dim_y);
+    int capacity() const;
+
     bool isEmpty() const;
     bool isSymmetric() const;
 
@@ -334,13 +337,29 @@ T& SparseMatrix<T>::edit(quint32 i, quint32 j)
     }
 }
 
+/** Reserve space to hold the matrix */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void SparseMatrix<T>::reserve(int dim_x, int dim_y)
+{
+    data.reserve( dim_x*dim_y );
+}
+
+/** Return the capacity of the sparsematrix */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+int SparseMatrix<T>::capacity() const
+{
+    return data.capacity();
+}
+
 /** Commit the sparse matrix. This will consolidate the memory
     usage of all entries that are equal to the default value */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void SparseMatrix<T>::commit()
 {
-    QMutableHashIterator<detail::Index,T> it(&data);
+    QMutableHashIterator<detail::Index,T> it(data);
     
     while (it.hasNext())
     {
@@ -349,6 +368,8 @@ void SparseMatrix<T>::commit()
         if (it.value() == def)
             it.remove();
     }
+    
+    data.squeeze();
 }
 
 /** Set the element at (i,j) to equal 'value' */
