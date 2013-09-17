@@ -103,6 +103,8 @@ namespace bp = boost::python;
 
 #include "SireSystem_properties.h"
 
+#include "SireSystem/freeenergymonitor.h"
+
 #include "SireMol/moleculegroup.h"
 
 BOOST_PYTHON_MODULE(_System){

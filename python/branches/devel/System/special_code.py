@@ -30,5 +30,6 @@ implicitly_convertible = [ ("SireMol::MoleculeGroup", "SireSystem::AssignerGroup
 
 
 def fixMB(mb):   
+    mb.add_declaration_code("#include \"SireSystem/freeenergymonitor.h\"")
     mb.add_declaration_code("#include \"SireMol/moleculegroup.h\"")
 
