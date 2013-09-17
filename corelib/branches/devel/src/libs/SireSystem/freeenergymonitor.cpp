@@ -596,17 +596,26 @@ inline pair<double,double> getSoftCLJEnergy(
     
     bool arithmetic_combining_rules = true;
 
-    const double alpha = 1 - lamval;
-    const double alpha_f = 1 - lamval + delta_lambda;
-    double one_minus_alfa_to_n = 1;
-    double one_minus_alfa_to_n_f = 1;
-    const double delta = shift_delta * alpha;
-    const double delta_f = shift_delta * alpha_f;
+    const double alpha_a = 1 - lamval;
+    const double alpha_a_f = 1 - lamval - delta_lambda;
+    double one_minus_alpha_a_to_n = 1;
+    double one_minus_alpha_a_to_n_f = 1;
+    const double delta_a = shift_delta * alpha_a;
+    const double delta_a_f = shift_delta * alpha_a_f;
+
+    const double alpha_b = lamval;
+    const double alpha_b_f = lamval + delta_lambda;
+    double one_minus_alpha_b_to_n = 1;
+    double one_minus_alpha_b_to_n_f = 1;
+    const double delta_b = shift_delta * alpha_b;
+    const double delta_b_f = shift_delta * alpha_b_f;
 
     if (coulomb_power != 0)
     {
-        one_minus_alfa_to_n = SireMaths::pow(1 - alpha, coulomb_power);
-        one_minus_alfa_to_n_f = SireMaths::pow(1 - alpha_f, coulomb_power);
+        one_minus_alpha_a_to_n = SireMaths::pow(1 - alpha_a, coulomb_power);
+        one_minus_alpha_a_to_n_f = SireMaths::pow(1 - alpha_a_f, coulomb_power);
+        one_minus_alpha_b_to_n = SireMaths::pow(1 - alpha_b, coulomb_power);
+        one_minus_alpha_b_to_n_f = SireMaths::pow(1 - alpha_b_f, coulomb_power);
     }
     
     // total_nrg(lam) = (1-lam) * group:group_A + lam * group:group_B
@@ -638,8 +647,8 @@ inline pair<double,double> getSoftCLJEnergy(
             
             double r2 = Vector::distance2(coord0, coord1);
 
-            const double shift = ljpair.sigma() * delta;
-            const double shift_f = ljpair.sigma() * delta_f;
+            const double shift = ljpair.sigma() * delta_a;
+            const double shift_f = ljpair.sigma() * delta_a_f;
             double lj_denom = r2 + shift;
             lj_denom = lj_denom * lj_denom * lj_denom;
 
@@ -656,14 +665,16 @@ inline pair<double,double> getSoftCLJEnergy(
             const double sig12_over_denom2_f = sig6_over_denom_f *
                                                sig6_over_denom_f;
             
-            iljnrg += ljpair.epsilon() * (sig12_over_denom2 - sig6_over_denom);
-            iljnrg_f += ljpair.epsilon() * (sig12_over_denom2_f - sig6_over_denom_f);
+            iljnrg += 4 * ljpair.epsilon() * (sig12_over_denom2 - sig6_over_denom);
+            iljnrg_f += 4 * ljpair.epsilon() * (sig12_over_denom2_f - sig6_over_denom_f);
             
-            icnrg += chg0.value() * chg1.value() * one_over_four_pi_eps0 /
-                           std::sqrt(alpha + r2);
+            icnrg += one_minus_alpha_a_to_n *
+                        chg0.value() * chg1.value() * one_over_four_pi_eps0 /
+                           std::sqrt(alpha_a + r2);
             
-            icnrg_f += chg0.value() * chg1.value() * one_over_four_pi_eps0 /
-                           std::sqrt(alpha_f + r2);
+            icnrg_f += one_minus_alpha_a_to_n_f *
+                        chg0.value() * chg1.value() * one_over_four_pi_eps0 /
+                           std::sqrt(alpha_a_f + r2);
         }
         
         cnrg += (1-lamval) * icnrg;
@@ -691,8 +702,8 @@ inline pair<double,double> getSoftCLJEnergy(
             
             double r2 = Vector::distance2(coord0, coord1);
 
-            const double shift = ljpair.sigma() * delta;
-            const double shift_f = ljpair.sigma() * delta_f;
+            const double shift = ljpair.sigma() * delta_b;
+            const double shift_f = ljpair.sigma() * delta_b_f;
             double lj_denom = r2 + shift;
             lj_denom = lj_denom * lj_denom * lj_denom;
 
@@ -709,14 +720,16 @@ inline pair<double,double> getSoftCLJEnergy(
             const double sig12_over_denom2_f = sig6_over_denom_f *
                                                sig6_over_denom_f;
             
-            iljnrg += ljpair.epsilon() * (sig12_over_denom2 - sig6_over_denom);
-            iljnrg_f += ljpair.epsilon() * (sig12_over_denom2_f - sig6_over_denom_f);
+            iljnrg += 4 * ljpair.epsilon() * (sig12_over_denom2 - sig6_over_denom);
+            iljnrg_f += 4 * ljpair.epsilon() * (sig12_over_denom2_f - sig6_over_denom_f);
             
-            icnrg += chg0.value() * chg1.value() * one_over_four_pi_eps0 /
-                           std::sqrt(alpha + r2);
+            icnrg += one_minus_alpha_b_to_n *
+                        chg0.value() * chg1.value() * one_over_four_pi_eps0 /
+                           std::sqrt(alpha_b + r2);
             
-            icnrg_f += chg0.value() * chg1.value() * one_over_four_pi_eps0 /
-                           std::sqrt(alpha_f + r2);
+            icnrg_f += one_minus_alpha_b_to_n_f * 
+                        chg0.value() * chg1.value() * one_over_four_pi_eps0 /
+                           std::sqrt(alpha_b_f + r2);
         }
 
         cnrg += (lamval) * icnrg;

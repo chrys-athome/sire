@@ -51,8 +51,8 @@ for i in range(1,len(sys.argv)):
         rundir = sys.argv[i+1]
 
     elif arg == "-b" or arg == "--branch":
-        print("\nUsing the %s branch of Sire" % args.branch)
-        branch = args.branch
+        print("\nUsing the %s branch of Sire" % sys.argv[i+1])
+        branch = sys.argv[i+1]
 
 if must_exit:
     sys.exit(0)
