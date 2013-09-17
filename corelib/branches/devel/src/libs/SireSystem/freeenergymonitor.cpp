@@ -437,6 +437,19 @@ SireUnits::Dimension::Temperature FreeEnergyMonitor::temperature() const
     return nrg_template.temperature();
 }
 
+/** Set the value of delta lambda to use to calculate the free energy gradients */
+void FreeEnergyMonitor::setDeltaLambda(double delta_lam)
+{
+    if (delta_lam > 0 and delta_lam < 1)
+        delta_lambda = delta_lam;
+}
+
+/** Return the value of delta lambda used to calculate the free energy gradients */
+double FreeEnergyMonitor::deltaLambda() const
+{
+    return delta_lambda;
+}
+
 /** Return the width of the histogram bins used to record the free energies */
 SireUnits::Dimension::MolarEnergy FreeEnergyMonitor::binWidth() const
 {
