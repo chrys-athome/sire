@@ -9,6 +9,8 @@
 
 #include "AngleComponent.pypp.hpp"
 
+#include "AssignerGroup.pypp.hpp"
+
 #include "ChargeConstraint.pypp.hpp"
 
 #include "CheckPoint.pypp.hpp"
@@ -133,6 +135,8 @@ BOOST_PYTHON_MODULE(_System){
     register_GeometryComponent_class();
 
     register_AngleComponent_class();
+
+    register_AssignerGroup_class();
 
     register_MoleculeConstraint_class();
 
