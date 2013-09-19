@@ -231,6 +231,37 @@ void AssignerGroup::update(const System &system)
     }
 }
 
+/** Return whether or not this group is compatible with 'other'.
+    Compatible means is the same type, refers to the same MoleculeGroup etc. */
+bool AssignerGroup::isCompatible(const AssignerGroup &other) const
+{
+    if (this == &other)
+        return true;
+    
+    if (assgnr.isNull())
+    {
+        if (not other.assgnr.isNull())
+            return false;
+        
+        if (molgroup.isNull())
+            return other.molgroup.isNull();
+
+        //check that the molecule group number is the same and the number
+        //of views is the same
+        return this->group().number() == other.group().number() and
+               this->group().nViews() == other.group().nViews();
+    }
+    else
+    {
+        if (other.assgnr.isNull())
+            return false;
+        
+        // we cannot do much of a comparison of assigners?
+        // Just check that the number of points is the same
+        return assigner().nPoints() == other.assigner().nPoints();
+    }
+}
+
 /////////
 ///////// Implementation of FreeEnergyMonitor
 /////////
@@ -240,7 +271,7 @@ static const RegisterMetaType<FreeEnergyMonitor> r_nrgmonitor;
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, 
                                           const FreeEnergyMonitor &nrgmonitor)
 {
-    writeHeader(ds, r_nrgmonitor, 3);
+    writeHeader(ds, r_nrgmonitor, 1);
     
     SharedDataStream sds(ds);
     
@@ -793,6 +824,115 @@ double FreeEnergyMonitor::shiftDelta() const
 int FreeEnergyMonitor::coulombPower() const
 {
     return coulomb_power;
+}
+
+/** Return whether this is empty (has no group data) */
+bool FreeEnergyMonitor::isEmpty() const
+{
+    return refgroup.isEmpty();
+}
+
+/** Return whether or not this monitor is compatible with 'other'
+    (have the same groups, soft-core parameters, delta lambda, temperature etc.) */
+bool FreeEnergyMonitor::isCompatible(const FreeEnergyMonitor &other) const
+{
+    return this->lambdaValue() == other.lambdaValue() and
+           this->lambdaComponent() == other.lambdaComponent() and
+           this->usesSoftCore() == other.usesSoftCore() and
+           this->shiftDelta() == other.shiftDelta() and
+           this->coulombPower() == other.coulombPower() and
+           this->temperature() == other.temperature() and
+           this->binWidth() == other.binWidth() and
+           refgroup.isCompatible(other.refgroup) and
+           group_a.isCompatible(other.group_a) and
+           group_b.isCompatible(other.group_b);
+}
+
+/** Self-addition operator - you can only add two monitors together if they 
+    have the same groups, soft-core parameters, delta lambda and temperature etc.
+    
+    \throw SireError::incompatible_error
+*/
+FreeEnergyMonitor& FreeEnergyMonitor::operator+=(const FreeEnergyMonitor &other)
+{
+    if (this == &other)
+    {
+        this->operator+=( FreeEnergyMonitor(other) );
+        return *this;
+    }
+    
+    if (not this->isCompatible(other))
+    {
+        throw SireError::incompatible_error( QObject::tr(
+                "Cannot add together two FreeEnergyMonitors as they are in some "
+                "way incompatible."), CODELOC );
+    }
+    
+    if (total_nrgs.isEmpty())
+    {
+        total_nrgs = other.total_nrgs;
+        coul_nrgs = other.coul_nrgs;
+        lj_nrgs = other.lj_nrgs;
+    }
+    else if (not other.total_nrgs.isEmpty())
+    {
+        if (total_nrgs.count() != other.total_nrgs.count())
+            throw SireError::program_bug( QObject::tr(
+                    "It should not be possible for two FreeEnergyMonitors to be compatible "
+                    "but have different numbers of free energies (%1 vs. %2)")
+                        .arg(total_nrgs.count())
+                        .arg(other.total_nrgs.count()), CODELOC );
+        
+        for (int i=0; i<total_nrgs.count(); ++i)
+        {
+            total_nrgs[i] += other.total_nrgs[i];
+        }
+        
+        for (int i=0; i<coul_nrgs.count(); ++i)
+        {
+            coul_nrgs[i] += other.coul_nrgs[i];
+        }
+        
+        for (int i=0; i<lj_nrgs.count(); ++i)
+        {
+            lj_nrgs[i] += other.lj_nrgs[i];
+        }
+    }
+    
+    return *this;
+}
+
+/** Addition operator - you can only add two monitors together if they
+    have the same groups, soft-core parameters, delta lambda, temperature etc.
+    
+    \throw SireError:incompatible_error
+*/
+FreeEnergyMonitor FreeEnergyMonitor::operator+(const FreeEnergyMonitor &other) const
+{
+    FreeEnergyMonitor ret(*this);
+    ret += other;
+    return ret;
+}
+
+/** Merge a whole set of free energy monitors together. Note that you can
+    only merge them if they have the same groups, soft-core parameters, delta lambda,
+    temperature etc.
+    
+    \throw SireError::incompatible_error
+*/
+FreeEnergyMonitor FreeEnergyMonitor::merge(const QList<FreeEnergyMonitor> &monitors)
+{
+    if (monitors.isEmpty())
+        return FreeEnergyMonitor();
+    
+    FreeEnergyMonitor ret = monitors.at(0);
+    
+    for (int i=1; i<monitors.count(); ++i)
+    {
+        ret += monitors.at(i);
+    }
+    
+    return ret;
 }
 
 /** Accumulate energies from the passed system */
