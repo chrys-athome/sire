@@ -144,6 +144,17 @@ void register_FreeEnergyMonitor_class(){
                 , ( bp::arg("other") ) );
         
         }
+        { //::SireSystem::FreeEnergyMonitor::isCompatibleExceptLambda
+        
+            typedef bool ( ::SireSystem::FreeEnergyMonitor::*isCompatibleExceptLambda_function_type )( ::SireSystem::FreeEnergyMonitor const & ) const;
+            isCompatibleExceptLambda_function_type isCompatibleExceptLambda_function_value( &::SireSystem::FreeEnergyMonitor::isCompatibleExceptLambda );
+            
+            FreeEnergyMonitor_exposer.def( 
+                "isCompatibleExceptLambda"
+                , isCompatibleExceptLambda_function_value
+                , ( bp::arg("other") ) );
+        
+        }
         { //::SireSystem::FreeEnergyMonitor::isEmpty
         
             typedef bool ( ::SireSystem::FreeEnergyMonitor::*isEmpty_function_type )(  ) const;
