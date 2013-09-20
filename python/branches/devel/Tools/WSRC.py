@@ -1596,7 +1596,26 @@ def loadWSRC():
     return (wsrc_system, wsrc_moves)
 
 
-def analyseWSRC(replicas, iteration):
+def printComponents(comps, FILE):
+    """This function prints out all of the free energy components in the passed object"""
+    print("RESIDUE    TOTAL    COULOMB    LJ", file=FILE)
+    for i in range(0, comps.nComponents()):
+        print("%s  %s  %s  %s" % (comps.viewAt(i).residue(), \
+                                  -comps.integrate(i).values()[-1].y(), \
+                                  -comps.integrateCoulomb(i).values()[-1].y(), \
+                                  -comps.integrateLJ(i).values()[-1].y()), file=FILE)
+
+
+def printFreeEnergy(total, bound, free, FILE):
+    """This function prints out the total, bound and free free energies"""
+    print("TOTAL   BOUND    FREE", file=FILE)
+    print("%s   %s   %s" % (-total.integrate().values()[-1].y(), \
+                            -bound.integrate().values()[-1].y(), \
+                            -free.integrate().values()[-1].y()), file=FILE)
+
+
+def analyseWSRC(replicas, iteration, bennetts_freenrgs, fep_freenrgs, ti_freenrgs, bound_freenrgs, free_freenrgs,
+                res_freenrgs, bound_water_freenrgs, free_water_freenrgs):
     """This function is used to perform all analysis of iteration 'it' of the passed WSRC system"""
 
     print("Analysing iteration %d..." % iteration)
@@ -1674,20 +1693,6 @@ def analyseWSRC(replicas, iteration):
         dg_boundwater[lamval] = monitors[MonitorName("boundwater_nrgmon")][-1]
         dg_freewater[lamval] = monitors[MonitorName("freewater_nrgmon")][-1]
 
-    t = QTime()
-    print("Analysing and saving free energies and their components...")
-    t.start()
-
-    # Save the free energies to a file
-    freenrgs_file = "%s/freenrgs.s3" % outdir.val
-
-    if not os.path.exists(freenrgs_file):
-        bennetts_freenrgs = Bennetts()
-        fep_freenrgs = FEP()
-        ti_freenrgs = TI()
-    else:
-        [bennetts_freenrgs, fep_freenrgs, ti_freenrgs] = Sire.Stream.load(freenrgs_file)
-
     windows = copy.deepcopy(lambda_values)
     windows.sort()
 
@@ -1701,72 +1706,46 @@ def analyseWSRC(replicas, iteration):
     fep_freenrgs.set( iteration, windows, dg_next, dg_prev )
     ti_freenrgs.set( iteration, dg_f, dg_b, delta_lambda )
 
-    # save the old file to a backup
-    try:
-        shutil.copy(freenrgs_file, "%s.bak" % freenrgs_file)
-    except:
-        pass
-
-    Sire.Stream.save( [bennetts_freenrgs, fep_freenrgs, ti_freenrgs], freenrgs_file )
-
-    ms1 = t.elapsed()
-
-    # Save the bound and free free energies to a file
-    freenrgs_file = "%s/freenrg_parts.s3" % outdir.val
-
-    if not os.path.exists(freenrgs_file):
-        bound_freenrgs = TI()
-        free_freenrgs = TI()
-    else:
-        [bound_freenrgs, free_freenrgs] = Sire.Stream.load(freenrgs_file)
-
     bound_freenrgs.set( iteration, dg_bound_f, dg_bound_b, delta_lambda )
     free_freenrgs.set( iteration, dg_free_f, dg_free_b, delta_lambda )
 
-    try:
-        shutil.copy(freenrgs_file, "%s.bak" % freenrgs_file)
-    except:
-        pass
-
-    Sire.Stream.save( [bound_freenrgs, free_freenrgs], freenrgs_file )
-
-    ms2 = t.elapsed()
-
-    # Now save all of the free energy components
-    freenrgs_file = "%s/freenrg_components.s3" % outdir.val
-
-    if not os.path.exists(freenrgs_file):
-        res_freenrgs = TIComponents()
-        bound_freenrgs = TIComponents()
-        free_freenrgs = TIComponents()
-    else:
-        [res_freenrgs, bound_freenrgs, free_freenrgs] = Sire.Stream.load(freenrgs_file)
+    print("\nTOTAL BINDING FREE ENERGY\n", file=FILE)
+    printFreeEnergy(ti_freenrgs[iteration], bound_freenrgs[iteration], free_freenrgs[iteration], FILE)
 
     res_freenrgs.set( iteration, dg_residue )
-    bound_freenrgs.set( iteration, dg_boundwater )
-    free_freenrgs.set( iteration, dg_freewater )
+    bound_water_freenrgs.set( iteration, dg_boundwater )
+    free_water_freenrgs.set( iteration, dg_freewater )
 
-    try:
-        shutil.copy(freenrgs_file, "%s.bak" % freenrgs_file)
-    except:
-        pass
+    print("\nRESIDUE FREE ENERGY COMPONENTS\n", file=FILE)
+    printComponents(res_freenrgs[iteration], FILE)
 
-    Sire.Stream.save( [res_freenrgs, bound_freenrgs, free_freenrgs], freenrgs_file )
+    print("\nPROTEIN BOX WATER FREE ENERGY COMPONENTS\n", file=FILE)
+    printComponents(bound_water_freenrgs[iteration], FILE)
 
-    ms3 = t.elapsed()
+    print("\nWATER BOX WATER FREE ENERGY COMPONENTS\n", file=FILE)
+    printComponents(free_water_freenrgs[iteration], FILE)
 
-    print("...complete. Took %d ms (%d, %d, %d)" % (ms3, ms1, ms2-ms1, ms3-ms2))
+    print("\n=============", file=FILE)
+    print("Binding free energy for iteration %d equals %s" % (i, -ti_freenrgs[iteration].integrate().values()[-1].y()), file=FILE)
+    print("==============", file=FILE)
 
 
 @resolveParameters
 def run():
     """This is a very high level function that does everything to run a WSRC simulation"""
 
+    t = QTime()
+    total_t = QTime()
+    total_t.start()
+
     if os.path.exists(restart_file.val):
+        t.start()
         (wsrc_system, wsrc_moves) = Sire.Stream.load(restart_file.val)
+        print("Loading the restart file took %d ms" % t.elapsed())
     else:
         # Load the WSRC protein and water boxes from the topology and coordinate
         # files and merge together into the WSRC system and moves object
+        t.start()
         if os.path.exists(sysmoves_file.val):
             (wsrc_system, wsrc_moves) = Sire.Stream.load(sysmoves_file.val)
         else:
@@ -1788,12 +1767,45 @@ def run():
 
         Sire.Stream.save( (wsrc_system, wsrc_moves), restart_file.val )
 
+        print("Initialising the simulation took %d ms" % t.elapsed())
+
     # see how many blocks of moves we still need to perform...
     nattempted = wsrc_moves.nMoves()
 
     print("Number of iterations to perform: %d. Number of iterations completed: %d." % (nmoves.val, nattempted))
 
+    # See if we have any existing free energy statistics files...
+    t.start()
+    freenrgs_file = "%s/freenrgs.s3" % outdir.val
+
+    if not os.path.exists(freenrgs_file):
+        bennetts_freenrgs = Bennetts()
+        fep_freenrgs = FEP()
+        ti_freenrgs = TI()
+    else:
+        [bennetts_freenrgs, fep_freenrgs, ti_freenrgs] = Sire.Stream.load(freenrgs_file)
+
+    freenrg_parts_file = "%s/freenrg_parts.s3" % outdir.val
+
+    if not os.path.exists(freenrg_parts_file):
+        bound_freenrgs = TI()
+        free_freenrgs = TI()
+    else:
+        [bound_freenrgs, free_freenrgs] = Sire.Stream.load(freenrg_parts_file)
+
+    freenrg_components_file = "%s/freenrg_components.s3" % outdir.val
+
+    if not os.path.exists(freenrg_components_file):
+        res_freenrgs = TIComponents()
+        bound_water_freenrgs = TIComponents()
+        free_water_freenrgs = TIComponents()
+    else:
+        [res_freenrgs, bound_water_freenrgs, free_water_freenrgs] = Sire.Stream.load(freenrg_components_file)
+
+    print("Initialising / loading the free energy files took %d ms" % t.elapsed())
+
     for i in range(nattempted+1, nmoves.val+1):
+        t.start()
         print("Performing iteration %d..." % i)
         sim = SupraSim.run( wsrc_system, wsrc_moves, 1, True )
         sim.wait()
@@ -1801,11 +1813,12 @@ def run():
         wsrc_system = sim.system()
         wsrc_moves = sim.moves()
 
-        print("...iteration complete")
+        print("...iteration complete (took %d ms)" % t.elapsed())
 
         # write a restart file every N moves in case of crash or run out of time
-        if True: #i % restart_frequency.val == 0 or i == nmoves.val:
-            print("Saving the restart file from iteration %d." % i)
+        if i % restart_frequency.val == 0 or i == nmoves.val:
+            t.start()
+            print("Saving the restart file from iteration %d..." % i)
             # save the old file to a backup
             try:
                 shutil.copy(restart_file.val, "%s.bak" % restart_file.val)
@@ -1813,10 +1826,37 @@ def run():
                 pass
 
             Sire.Stream.save( (wsrc_system, wsrc_moves), restart_file.val )
+            print("...save complete (took %d ms)" % t.elapsed())
 
+        t.start()
         print("Analysing iteration %d..." % i)
-        analyseWSRC(wsrc_system, i)
+        analyseWSRC(wsrc_system, i, bennetts_freenrgs, fep_freenrgs, ti_freenrgs, bound_freenrgs, free_freenrgs,
+                    res_freenrgs, bound_water_freenrgs, free_water_freenrgs)
         wsrc_system.clearAllStatistics()
-        print("...analysis complete")
+        print("...analysis complete (took %d ms)" % t.elapsed())
 
-    print("All iterations complete.")
+        if i % restart_frequency.val == 0 or i == nmoves.val:
+            t.start()
+            print("Saving the free energy analysis files from iteration %d..." % i)
+            # save the old file to a backup
+            try:
+                shutil.copy(freenrgs_file, "%s.bak" % freenrgs_file)
+            except:
+                pass
+
+            try:
+                shutil.copy(freenrg_components_file, "%s.bak" % freenrg_components_file)
+            except:
+                pass
+
+            try:
+                shutil.copy(freenrg_parts_file, "%s.bak" % freenrg_parts_file)
+            except:
+                pass
+
+            Sire.Stream.save( [bennetts_freenrgs, fep_freenrgs, ti_freenrgs], freenrgs_file )
+            Sire.Stream.save( [bound_freenrgs, free_freenrgs], freenrg_parts_file )
+            Sire.Stream.save( [res_freenrgs, bound_water_freenrgs, free_water_freenrgs], freenrg_components_file )
+            print("...save complete (took %d ms)" % t.elapsed())
+
+    print("All iterations complete. Total runtime was %d ms" % total_t.elapsed())

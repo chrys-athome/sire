@@ -67,6 +67,16 @@ void register_TIComponents_class(){
                 , ( bp::arg("i") ) );
         
         }
+        { //::SireAnalysis::TIComponents::clear
+        
+            typedef void ( ::SireAnalysis::TIComponents::*clear_function_type )(  ) ;
+            clear_function_type clear_function_value( &::SireAnalysis::TIComponents::clear );
+            
+            TIComponents_exposer.def( 
+                "clear"
+                , clear_function_value );
+        
+        }
         { //::SireAnalysis::TIComponents::count
         
             typedef int ( ::SireAnalysis::TIComponents::*count_function_type )(  ) const;
@@ -95,6 +105,28 @@ void register_TIComponents_class(){
             TIComponents_exposer.def( 
                 "lambdaValues"
                 , lambdaValues_function_value );
+        
+        }
+        { //::SireAnalysis::TIComponents::merge
+        
+            typedef ::SireAnalysis::ComponentGradients ( ::SireAnalysis::TIComponents::*merge_function_type )( int,int ) const;
+            merge_function_type merge_function_value( &::SireAnalysis::TIComponents::merge );
+            
+            TIComponents_exposer.def( 
+                "merge"
+                , merge_function_value
+                , ( bp::arg("start"), bp::arg("end") ) );
+        
+        }
+        { //::SireAnalysis::TIComponents::merge
+        
+            typedef ::SireAnalysis::ComponentGradients ( ::SireAnalysis::TIComponents::*merge_function_type )( ::QList< int > ) const;
+            merge_function_type merge_function_value( &::SireAnalysis::TIComponents::merge );
+            
+            TIComponents_exposer.def( 
+                "merge"
+                , merge_function_value
+                , ( bp::arg("indicies") ) );
         
         }
         { //::SireAnalysis::TIComponents::nComponents
@@ -160,6 +192,39 @@ void register_TIComponents_class(){
                 "__getitem__"
                 , __getitem___function_value
                 , ( bp::arg("i") ) );
+        
+        }
+        { //::SireAnalysis::TIComponents::removeAt
+        
+            typedef void ( ::SireAnalysis::TIComponents::*removeAt_function_type )( int ) ;
+            removeAt_function_type removeAt_function_value( &::SireAnalysis::TIComponents::removeAt );
+            
+            TIComponents_exposer.def( 
+                "removeAt"
+                , removeAt_function_value
+                , ( bp::arg("i") ) );
+        
+        }
+        { //::SireAnalysis::TIComponents::removeRange
+        
+            typedef void ( ::SireAnalysis::TIComponents::*removeRange_function_type )( int,int ) ;
+            removeRange_function_type removeRange_function_value( &::SireAnalysis::TIComponents::removeRange );
+            
+            TIComponents_exposer.def( 
+                "removeRange"
+                , removeRange_function_value
+                , ( bp::arg("start"), bp::arg("end") ) );
+        
+        }
+        { //::SireAnalysis::TIComponents::rollingAverage
+        
+            typedef ::QList< SireAnalysis::ComponentGradients > ( ::SireAnalysis::TIComponents::*rollingAverage_function_type )( int ) const;
+            rollingAverage_function_type rollingAverage_function_value( &::SireAnalysis::TIComponents::rollingAverage );
+            
+            TIComponents_exposer.def( 
+                "rollingAverage"
+                , rollingAverage_function_value
+                , ( bp::arg("niterations") ) );
         
         }
         { //::SireAnalysis::TIComponents::set
