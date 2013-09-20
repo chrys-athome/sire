@@ -145,20 +145,25 @@ const char* AssignerGroup::what() const
 /** Return whether or not this is empty */
 bool AssignerGroup::isEmpty() const
 {
-    if (molgroup.isNull() and assgnr.isNull())
+    if (molgroup.read().nViews() == 0 and assgnr.isNull())
         return true;
     
     else if (assgnr.isNull())
         return molgroup->isEmpty();
 
     else
+    {
         return assgnr->asA<IDAssigner>().nPoints() == 0;
+    }
 }
 
 /** Return whether or not this is a holding a MoleculeGroup */
 bool AssignerGroup::isMoleculeGroup() const
 {
-    return not molgroup.isNull();
+    if (not assgnr.isNull())
+        return false;
+    else
+        return molgroup.read().nViews() > 0;
 }
 
 /** Return whether or not this is holding an IDAssigner */
@@ -193,8 +198,9 @@ const IDAssigner& AssignerGroup::assigner() const
 QVector<PartialMolecule> AssignerGroup::views() const
 {
     if (this->isEmpty())
+    {
         return QVector<PartialMolecule>();
-    
+    }
     else if (this->isMoleculeGroup())
     {
         const MoleculeGroup &group = this->group();
@@ -966,9 +972,6 @@ FreeEnergyMonitor FreeEnergyMonitor::merge(const QList<FreeEnergyMonitor> &monit
 /** Accumulate energies from the passed system */
 void FreeEnergyMonitor::monitor(System &system)
 {
-    QTime t;
-    t.start();
-
     FreeEnergyMonitor old_state(*this);
 
     try
@@ -1160,8 +1163,4 @@ void FreeEnergyMonitor::monitor(System &system)
         FreeEnergyMonitor::operator=(old_state);
         throw;
     }
-    
-    int ms = t.elapsed();
-    
-    qDebug() << "Component free energies took" << ms << "ms";
 }

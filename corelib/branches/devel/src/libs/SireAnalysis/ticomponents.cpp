@@ -721,7 +721,15 @@ int TIComponents::nComponents() const
     if (grads.isEmpty())
         return 0;
     else
-        return grads.at(0).nComponents();
+    {
+        for (int i=0; i<grads.count(); ++i)
+        {
+            if (not grads.at(i).isEmpty())
+                return grads.at(i).nComponents();
+        }
+    
+        return 0;
+    }
 }
 
 /** Return the number of iterations */
@@ -796,4 +804,127 @@ ComponentGradients TIComponents::at(int i) const
 QList<ComponentGradients> TIComponents::gradients() const
 {
     return grads;
+}
+
+/** Remove the data for iteration 'i'. This sets the data equal to ComponentGradients() */
+void TIComponents::removeAt(int i)
+{
+    i = Index(i).map(grads.count());
+    grads[i] = ComponentGradients();
+}
+
+/** Remove every iteration from 'start' to 'end' (inclusively). This sets
+    the data equal to ComponentGradients() */
+void TIComponents::removeRange(int start, int end)
+{
+    start = Index(start).map(grads.count());
+    end = Index(end).map(grads.count());
+    
+    if (start > end)
+        qSwap(start, end);
+    
+    for (int i = start; i <= end; ++i)
+    {
+        grads[i] = ComponentGradients();
+    }
+}
+
+/** Remove all values from the histogram */
+void TIComponents::clear()
+{
+    this->operator=( TIComponents() );
+}
+
+/** Merge (average) together the gradients from iteration "start" to iteration
+    "end" inclusive */
+ComponentGradients TIComponents::merge(int start, int end) const
+{
+    start = Index(start).map(grads.count());
+    end = Index(end).map(grads.count());
+    
+    QList<ComponentGradients> set;
+    
+    for (int i=start; i<=end; ++i)
+    {
+        if (not grads.at(i).isEmpty())
+            set.append( grads.at(i) );
+    }
+    
+    return ComponentGradients::merge(set);
+}
+
+/** Merge together the gradients from the iterations with the passed indicies */
+ComponentGradients TIComponents::merge(QList<int> indicies) const
+{
+    QList<ComponentGradients> set;
+    
+    foreach (int idx, indicies)
+    {
+        int i = Index(idx).map(grads.count());
+        
+        if (not grads.at(i).isEmpty())
+            set.append( grads.at(i) );
+    }
+ 
+    return ComponentGradients::merge(set);
+}
+    
+/** Return a list of Gradients that represents the rolling average over 'niterations'
+    iterations over this TI data set. If this data set contains 100 iterations, and 
+    we calculate the rolling average over 50 iterations, then the returned Gradients
+    will be the average from 1-50, then 2-51, 3-52.....51-100 */
+QList<ComponentGradients> TIComponents::rollingAverage(int niterations) const
+{
+    if (grads.isEmpty())
+        return QList<ComponentGradients>();
+
+    QList<ComponentGradients> merged;
+
+    if (niterations >= grads.count())
+    {
+        ComponentGradients m = this->merge(0,-1);
+        
+        if (not m.isEmpty())
+            merged.append(m);
+    }
+    else if (niterations <= 1)
+    {
+        for (int i=0; i<grads.count(); ++i)
+        {
+            if (not grads.at(i).isEmpty())
+                merged.append(grads.at(i));
+        }
+    }
+    else
+    {
+        QList<ComponentGradients> set;
+        
+        int i = 0;
+        
+        for (i=0; i<grads.count(); ++i)
+        {
+            if (not grads.at(i).isEmpty())
+            {
+                set.append(grads.at(i));
+                
+                if (set.count() == niterations)
+                    break;
+            }
+        }
+
+        if (not set.isEmpty())
+            merged.append( ComponentGradients::merge(set) );
+        
+        for (i = i+1; i<grads.count(); ++i)
+        {
+            if (not grads.at(i).isEmpty())
+            {
+                set.removeFirst();
+                set.append(grads.at(i));
+                merged.append( ComponentGradients::merge(set) );
+            }
+        }
+    }
+    
+    return merged;
 }

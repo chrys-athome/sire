@@ -193,6 +193,16 @@ public:
     ComponentGradients at(int i) const;
     
     QList<ComponentGradients> gradients() const;
+    
+    ComponentGradients merge(int start, int end) const;
+    ComponentGradients merge(QList<int> indicies) const;
+    
+    QList<ComponentGradients> rollingAverage(int niterations) const;
+    
+    void removeAt(int i);
+    void removeRange(int start, int end);
+    
+    void clear();
 
 private:
     /** All of the free energy monitors from each iteration */
