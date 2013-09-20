@@ -152,6 +152,7 @@ public:
     
     bool isEmpty() const;
     bool isCompatible(const FreeEnergyMonitor &other) const;
+    bool isCompatibleExceptLambda(const FreeEnergyMonitor &other) const;
     
     void clearStatistics();
     

@@ -92,7 +92,7 @@ void ComponentGradients::checkSane() const
                     "Disagreement of lambda value: %1 vs. %2.")
                         .arg(it.key()).arg(it.value().lambdaValue()), CODELOC );
         
-        if (not first.isCompatible(it.value()))
+        if (not first.isCompatibleExceptLambda(it.value()))
             throw SireError::incompatible_error( QObject::tr(
                     "All of the FreeEnergyMonitors for each lambda value must be compatible. "
                     "The monitors at lambda=%1 and lambda=%2 are not!")

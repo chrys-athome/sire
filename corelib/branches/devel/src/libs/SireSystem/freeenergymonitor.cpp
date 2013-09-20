@@ -860,6 +860,22 @@ bool FreeEnergyMonitor::isCompatible(const FreeEnergyMonitor &other) const
            group_b.isCompatible(other.group_b);
 }
 
+/** Return whether or not this monitor is compatible with other, ignoring that
+    the monitors have different lambda values. This will let you know if it is sensible
+    to construct PMFs from a combination of these monitors */
+bool FreeEnergyMonitor::isCompatibleExceptLambda(const FreeEnergyMonitor &other) const
+{
+    return this->lambdaComponent() == other.lambdaComponent() and
+           this->usesSoftCore() == other.usesSoftCore() and
+           this->shiftDelta() == other.shiftDelta() and
+           this->coulombPower() == other.coulombPower() and
+           this->temperature() == other.temperature() and
+           this->binWidth() == other.binWidth() and
+           refgroup.isCompatible(other.refgroup) and
+           group_a.isCompatible(other.group_a) and
+           group_b.isCompatible(other.group_b);
+}
+
 /** Self-addition operator - you can only add two monitors together if they 
     have the same groups, soft-core parameters, delta lambda and temperature etc.
     
