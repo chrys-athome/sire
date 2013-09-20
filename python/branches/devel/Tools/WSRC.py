@@ -1674,6 +1674,11 @@ def analyseWSRC(replicas, iteration):
         dg_boundwater[lamval] = monitors[MonitorName("boundwater_nrgmon")][-1]
         dg_freewater[lamval] = monitors[MonitorName("freewater_nrgmon")][-1]
 
+    t = QTime()
+    print("Analysing and saving free energies and their components...")
+    t.start()
+
+    # Save the free energies to a file
     freenrgs_file = "%s/freenrgs.s3" % outdir.val
 
     if not os.path.exists(freenrgs_file):
@@ -1704,7 +1709,53 @@ def analyseWSRC(replicas, iteration):
 
     Sire.Stream.save( [bennetts_freenrgs, fep_freenrgs, ti_freenrgs], freenrgs_file )
 
-    pmf = ti_freenrgs.at(iteration).integrate()
+    ms1 = t.elapsed()
+
+    # Save the bound and free free energies to a file
+    freenrgs_file = "%s/freenrg_parts.s3" % outdir.val
+
+    if not os.path.exists(freenrgs_file):
+        bound_freenrgs = TI()
+        free_freenrgs = TI()
+    else:
+        [bound_freenrgs, free_freenrgs] = Sire.Stream.load(freenrgs_file)
+
+    bound_freenrgs.set( iteration, dg_bound_f, dg_bound_b, delta_lambda )
+    free_freenrgs.set( iteration, dg_free_f, dg_free_b, delta_lambda )
+
+    try:
+        shutil.copy(freenrgs_file, "%s.bak" % freenrgs_file)
+    except:
+        pass
+
+    Sire.Stream.save( [bound_freenrgs, free_freenrgs], freenrgs_file )
+
+    ms2 = t.elapsed()
+
+    # Now save all of the free energy components
+    freenrgs_file = "%s/freenrg_components.s3" % outdir.val
+
+    if not os.path.exists(freenrgs_file):
+        res_freenrgs = TIComponents()
+        bound_freenrgs = TIComponents()
+        free_freenrgs = TIComponents()
+    else:
+        [res_freenrgs, bound_freenrgs, free_freenrgs] = Sire.Stream.load(freenrgs_file)
+
+    res_freenrgs.set( iteration, dg_residue )
+    bound_freenrgs.set( iteration, dg_boundwater )
+    free_freenrgs.set( iteration, dg_freewater )
+
+    try:
+        shutil.copy(freenrgs_file, "%s.bak" % freenrgs_file)
+    except:
+        pass
+
+    Sire.Stream.save( [res_freenrgs, bound_freenrgs, free_freenrgs], freenrgs_file )
+
+    ms3 = t.elapsed()
+
+    print("...complete. Took %d ms (%d, %d, %d)" % (ms3, ms1, ms2-ms1, ms3-ms2))
 
 
 @resolveParameters

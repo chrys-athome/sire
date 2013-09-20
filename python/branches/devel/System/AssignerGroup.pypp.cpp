@@ -85,6 +85,17 @@ void register_AssignerGroup_class(){
                 , isAssigner_function_value );
         
         }
+        { //::SireSystem::AssignerGroup::isCompatible
+        
+            typedef bool ( ::SireSystem::AssignerGroup::*isCompatible_function_type )( ::SireSystem::AssignerGroup const & ) const;
+            isCompatible_function_type isCompatible_function_value( &::SireSystem::AssignerGroup::isCompatible );
+            
+            AssignerGroup_exposer.def( 
+                "isCompatible"
+                , isCompatible_function_value
+                , ( bp::arg("other") ) );
+        
+        }
         { //::SireSystem::AssignerGroup::isEmpty
         
             typedef bool ( ::SireSystem::AssignerGroup::*isEmpty_function_type )(  ) const;

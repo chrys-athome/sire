@@ -133,6 +133,47 @@ void register_FreeEnergyMonitor_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireSystem::FreeEnergyMonitor::isCompatible
+        
+            typedef bool ( ::SireSystem::FreeEnergyMonitor::*isCompatible_function_type )( ::SireSystem::FreeEnergyMonitor const & ) const;
+            isCompatible_function_type isCompatible_function_value( &::SireSystem::FreeEnergyMonitor::isCompatible );
+            
+            FreeEnergyMonitor_exposer.def( 
+                "isCompatible"
+                , isCompatible_function_value
+                , ( bp::arg("other") ) );
+        
+        }
+        { //::SireSystem::FreeEnergyMonitor::isEmpty
+        
+            typedef bool ( ::SireSystem::FreeEnergyMonitor::*isEmpty_function_type )(  ) const;
+            isEmpty_function_type isEmpty_function_value( &::SireSystem::FreeEnergyMonitor::isEmpty );
+            
+            FreeEnergyMonitor_exposer.def( 
+                "isEmpty"
+                , isEmpty_function_value );
+        
+        }
+        { //::SireSystem::FreeEnergyMonitor::lambdaComponent
+        
+            typedef ::SireCAS::Symbol ( ::SireSystem::FreeEnergyMonitor::*lambdaComponent_function_type )(  ) const;
+            lambdaComponent_function_type lambdaComponent_function_value( &::SireSystem::FreeEnergyMonitor::lambdaComponent );
+            
+            FreeEnergyMonitor_exposer.def( 
+                "lambdaComponent"
+                , lambdaComponent_function_value );
+        
+        }
+        { //::SireSystem::FreeEnergyMonitor::lambdaValue
+        
+            typedef double ( ::SireSystem::FreeEnergyMonitor::*lambdaValue_function_type )(  ) const;
+            lambdaValue_function_type lambdaValue_function_value( &::SireSystem::FreeEnergyMonitor::lambdaValue );
+            
+            FreeEnergyMonitor_exposer.def( 
+                "lambdaValue"
+                , lambdaValue_function_value );
+        
+        }
         { //::SireSystem::FreeEnergyMonitor::ljFreeEnergies
         
             typedef ::QVector< SireMaths::FreeEnergyAverage > ( ::SireSystem::FreeEnergyMonitor::*ljFreeEnergies_function_type )(  ) const;
@@ -141,6 +182,17 @@ void register_FreeEnergyMonitor_class(){
             FreeEnergyMonitor_exposer.def( 
                 "ljFreeEnergies"
                 , ljFreeEnergies_function_value );
+        
+        }
+        { //::SireSystem::FreeEnergyMonitor::merge
+        
+            typedef ::SireSystem::FreeEnergyMonitor ( *merge_function_type )( ::QList< SireSystem::FreeEnergyMonitor > const & );
+            merge_function_type merge_function_value( &::SireSystem::FreeEnergyMonitor::merge );
+            
+            FreeEnergyMonitor_exposer.def( 
+                "merge"
+                , merge_function_value
+                , ( bp::arg("monitors") ) );
         
         }
         { //::SireSystem::FreeEnergyMonitor::monitor
@@ -155,6 +207,7 @@ void register_FreeEnergyMonitor_class(){
         
         }
         FreeEnergyMonitor_exposer.def( bp::self != bp::self );
+        FreeEnergyMonitor_exposer.def( bp::self + bp::self );
         { //::SireSystem::FreeEnergyMonitor::operator=
         
             typedef ::SireSystem::FreeEnergyMonitor & ( ::SireSystem::FreeEnergyMonitor::*assign_function_type )( ::SireSystem::FreeEnergyMonitor const & ) ;
@@ -295,6 +348,7 @@ void register_FreeEnergyMonitor_class(){
                 , usesSoftCore_function_value );
         
         }
+        FreeEnergyMonitor_exposer.staticmethod( "merge" );
         FreeEnergyMonitor_exposer.staticmethod( "typeName" );
         FreeEnergyMonitor_exposer.def( "__copy__", &__copy__);
         FreeEnergyMonitor_exposer.def( "__deepcopy__", &__copy__);
