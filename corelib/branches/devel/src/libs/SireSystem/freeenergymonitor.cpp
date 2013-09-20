@@ -826,6 +826,18 @@ int FreeEnergyMonitor::coulombPower() const
     return coulomb_power;
 }
 
+/** Return the lambda value at which the free energy components were collected */
+double FreeEnergyMonitor::lambdaValue() const
+{
+    return lamval;
+}
+
+/** Return the symbol used to find the value of lambda from the system */
+Symbol FreeEnergyMonitor::lambdaComponent() const
+{
+    return lambda_symbol;
+}
+
 /** Return whether this is empty (has no group data) */
 bool FreeEnergyMonitor::isEmpty() const
 {

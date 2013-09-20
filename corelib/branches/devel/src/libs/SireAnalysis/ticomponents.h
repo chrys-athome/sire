@@ -67,6 +67,7 @@ friend QDataStream& ::operator>>(QDataStream&, ComponentGradients&);
 public:
     ComponentGradients();
     ComponentGradients(const QMap<double,FreeEnergyMonitor> &gradients);
+    ComponentGradients(const QList<FreeEnergyMonitor> &gradients);
     
     ComponentGradients(const ComponentGradients &other);
     
@@ -85,7 +86,7 @@ public:
 
     bool isEmpty() const;
     
-    bool isCompatible(const ComponenetGradients &other) const;
+    bool isCompatible(const ComponentGradients &other) const;
     
     ComponentGradients& operator+=(const ComponentGradients &other);
     ComponentGradients operator+(const ComponentGradients &other) const;
@@ -97,6 +98,7 @@ public:
     QList<double> lambdaValues() const;
 
     SireMol::PartialMolecule viewAt(int i) const;
+    SireMol::PartialMolecule viewAt(int i, double lamval) const;
 
     Gradients gradientsAt(int i) const;
     Gradients coulombGradientsAt(int i) const;
@@ -136,7 +138,7 @@ private:
     void checkSane() const;
 
     /** The set of free energy monitors for each lambda value */
-    QMap<double,FreeEnergyMonitor> mons;
+    QMap<double,FreeEnergyMonitor> grads;
 };
 
 /** This class is used to analyse the free energy components that are

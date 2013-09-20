@@ -42,6 +42,7 @@ set_target_properties (SireAnalysis PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (SireAnalysis
+                       SireSystem
                        SireCAS
                        SireMaths
                        SireBase
