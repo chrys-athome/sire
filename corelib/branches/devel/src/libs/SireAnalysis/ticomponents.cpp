@@ -104,8 +104,44 @@ void ComponentGradients::checkSane() const
 ComponentGradients::ComponentGradients() : ConcreteProperty<ComponentGradients,Property>()
 {}
 
+/** This function reduces the memory used by this object by ensuring that
+    the FreeEnergyMonitor at each lambda value uses the copy of the 
+    molecules used at the first lambda value */
+void ComponentGradients::conserveMemory()
+{
+    if (grads.count() <= 1)
+        return;
+    
+    FreeEnergyMonitor first_monitor = grads[ lambdaValues().at(0) ];
+    
+    for (QMap<double,FreeEnergyMonitor>::iterator it = grads.begin();
+         it != grads.end();
+         ++it)
+    {
+        it.value().conserveMemory(first_monitor);
+    }
+}
+
+/** This function conserves memory by copying in all of the shared molecule
+    data etc. from 'other' into this object */
+void ComponentGradients::conserveMemory(const ComponentGradients &other)
+{
+    if (grads.isEmpty() or other.grads.isEmpty())
+        return;
+    
+    FreeEnergyMonitor first_monitor = other.grads[ other.lambdaValues().at(0) ];
+    
+    for (QMap<double,FreeEnergyMonitor>::iterator it = grads.begin();
+         it != grads.end();
+         ++it)
+    {
+        it.value().conserveMemory(first_monitor);
+    }
+}
+
 /** Construct from the passed map of component monitors */
-ComponentGradients::ComponentGradients(const QMap<double,FreeEnergyMonitor> &gradients)
+ComponentGradients::ComponentGradients(const QMap<double,FreeEnergyMonitor> &gradients,
+                                       bool conserve_memory)
                    : ConcreteProperty<ComponentGradients,Property>()
 {
     //are any empty?
@@ -137,10 +173,14 @@ ComponentGradients::ComponentGradients(const QMap<double,FreeEnergyMonitor> &gra
     }
 
     checkSane();
+    
+    if (conserve_memory)
+        conserveMemory();
 }
 
 /** Construct from the passed list of component monitors */
-ComponentGradients::ComponentGradients(const QList<FreeEnergyMonitor> &gradients)
+ComponentGradients::ComponentGradients(const QList<FreeEnergyMonitor> &gradients,
+                                       bool conserve_memory)
                    : ConcreteProperty<ComponentGradients,Property>()
 {
     foreach (const FreeEnergyMonitor &gradient, gradients)
@@ -150,6 +190,9 @@ ComponentGradients::ComponentGradients(const QList<FreeEnergyMonitor> &gradients
     }
     
     checkSane();
+    
+    if (conserve_memory)
+        conserveMemory();
 }
 
 /** Copy constructor */
@@ -575,10 +618,10 @@ static const RegisterMetaType<TIComponents> r_ti;
 
 QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const TIComponents &ti)
 {
-    writeHeader(ds, r_ti, 1);
+    writeHeader(ds, r_ti, 2);
     
     SharedDataStream sds(ds);
-    sds << ti.grads;
+    sds << ti.grads << ti.should_conserve_memory;
     
     return ds;
 }
@@ -587,39 +630,58 @@ QDataStream SIREANALYSIS_EXPORT &operator>>(QDataStream &ds, TIComponents &ti)
 {
     VersionID v = readHeader(ds, r_ti);
     
-    if (v == 1)
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+        sds >> ti.grads >> ti.should_conserve_memory;
+    }
+    else if (v == 1)
     {
         SharedDataStream sds(ds);
         sds >> ti.grads;
+        ti.should_conserve_memory = false;
     }
     else
-        throw version_error(v, "1", r_ti, CODELOC);
+        throw version_error(v, "1,2", r_ti, CODELOC);
     
     return ds;
 }
 
 /** Constructor */
-TIComponents::TIComponents() : ConcreteProperty<TIComponents,Property>()
+TIComponents::TIComponents(bool conserve_memory)
+             : ConcreteProperty<TIComponents,Property>(),
+               should_conserve_memory(conserve_memory)
 {}
 
 /** Construct from a single iteration's worth of gradients */
-TIComponents::TIComponents(const QMap<double,FreeEnergyMonitor> &gradients)
-             : ConcreteProperty<TIComponents,Property>()
+TIComponents::TIComponents(const QMap<double,FreeEnergyMonitor> &gradients,
+                           bool conserve_memory)
+             : ConcreteProperty<TIComponents,Property>(),
+               should_conserve_memory(conserve_memory)
 {
-    grads.append( ComponentGradients(gradients) );
+    grads.append( ComponentGradients(gradients,conserve_memory) );
 }
 
 /** Construct from a single iteration's worth of gradients */
-TIComponents::TIComponents(const ComponentGradients &gradients)
-             : ConcreteProperty<TIComponents,Property>()
+TIComponents::TIComponents(const ComponentGradients &gradients,
+                           bool conserve_memory)
+             : ConcreteProperty<TIComponents,Property>(),
+               should_conserve_memory(conserve_memory)
 {
-    grads.append(gradients);
+    if (conserve_memory)
+    {
+        ComponentGradients small_grads(gradients);
+        small_grads.conserveMemory();
+        grads.append(small_grads);
+    }
+    else
+        grads.append(gradients);
 }
 
 /** Copy constructor */
 TIComponents::TIComponents(const TIComponents &other)
              : ConcreteProperty<TIComponents,Property>(other),
-               grads(other.grads)
+               grads(other.grads), should_conserve_memory(other.should_conserve_memory)
 {}
 
 /** Destructor */
@@ -630,13 +692,14 @@ TIComponents::~TIComponents()
 TIComponents& TIComponents::operator=(const TIComponents &other)
 {
     grads = other.grads;
+    should_conserve_memory = other.should_conserve_memory;
     return *this;
 }
 
 /** Comparison operator */
 bool TIComponents::operator==(const TIComponents &other) const
 {
-    return grads == other.grads;
+    return grads == other.grads and should_conserve_memory == other.should_conserve_memory;
 }
 
 /** Comparison operator */
@@ -689,6 +752,33 @@ void TIComponents::set(int i, const ComponentGradients &gradients)
     while (i >= grads.count())
     {
         grads.append( ComponentGradients() );
+    }
+    
+    if (should_conserve_memory)
+    {
+        ComponentGradients first;
+        
+        for (int j=0; j<grads.count(); ++j)
+        {
+            if (not grads.at(j).isEmpty())
+            {
+                first = grads.at(j);
+                break;
+            }
+        }
+        
+        ComponentGradients small_grads(gradients);
+        
+        if (first.isEmpty())
+        {
+            small_grads.conserveMemory();
+        }
+        else
+        {
+            small_grads.conserveMemory(first);
+        }
+        
+        grads[i] = small_grads;
     }
     
     grads[i] = gradients;
@@ -767,6 +857,12 @@ int TIComponents::count() const
 int TIComponents::size() const
 {
     return grads.count();
+}
+
+/** Whether or not this object conserves memory */
+bool TIComponents::conservesMemory() const
+{
+    return should_conserve_memory;
 }
 
 /** Return a list of all lambda values that contain data */

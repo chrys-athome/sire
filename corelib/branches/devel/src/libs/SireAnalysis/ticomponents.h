@@ -66,8 +66,10 @@ friend QDataStream& ::operator>>(QDataStream&, ComponentGradients&);
 
 public:
     ComponentGradients();
-    ComponentGradients(const QMap<double,FreeEnergyMonitor> &gradients);
-    ComponentGradients(const QList<FreeEnergyMonitor> &gradients);
+    ComponentGradients(const QMap<double,FreeEnergyMonitor> &gradients,
+                       bool conserve_memory=true);
+    ComponentGradients(const QList<FreeEnergyMonitor> &gradients,
+                       bool conserve_memory=true);
     
     ComponentGradients(const ComponentGradients &other);
     
@@ -134,6 +136,9 @@ public:
     TIPMF integrateLJ(int i, double range_min, double range_max) const;
     TIPMF integrateLJ(int i, double range_min, double range_max, int order) const;
 
+    void conserveMemory();
+    void conserveMemory(const ComponentGradients &other);
+
 private:
     void checkSane() const;
 
@@ -154,9 +159,11 @@ friend QDataStream& ::operator<<(QDataStream&, const TIComponents&);
 friend QDataStream& ::operator>>(QDataStream&, TIComponents&);
 
 public:
-    TIComponents();
-    TIComponents(const QMap<double,FreeEnergyMonitor> &gradients);
-    TIComponents(const ComponentGradients &gradients);
+    TIComponents(bool conserve_memory = true);
+    TIComponents(const QMap<double,FreeEnergyMonitor> &gradients,
+                 bool conserve_memory = true);
+    TIComponents(const ComponentGradients &gradients,
+                 bool conserve_memory = true);
     
     TIComponents(const TIComponents &other);
     
@@ -187,6 +194,8 @@ public:
     int count() const;
     int size() const;
     
+    bool conservesMemory() const;
+    
     QList<double> lambdaValues() const;
     
     ComponentGradients operator[](int i) const;
@@ -207,6 +216,9 @@ public:
 private:
     /** All of the free energy monitors from each iteration */
     QList<ComponentGradients> grads;
+    
+    /** Whether or not we should conserve memory */
+    bool should_conserve_memory;
 };
 
 }

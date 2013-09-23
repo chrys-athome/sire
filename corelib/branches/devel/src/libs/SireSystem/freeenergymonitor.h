@@ -191,6 +191,8 @@ public:
     QVector<SireMaths::FreeEnergyAverage> coulombFreeEnergies() const;
     QVector<SireMaths::FreeEnergyAverage> ljFreeEnergies() const;
 
+    void conserveMemory(const FreeEnergyMonitor &other);
+
 private:
     /** The reference group that contains the groups against which
         the free energy will be calculated */

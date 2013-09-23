@@ -857,6 +857,17 @@ bool FreeEnergyMonitor::isEmpty() const
     return refgroup.isEmpty();
 }
 
+/** Conserve memory by copying the molecule data etc. from 'other' into this monitor */
+void FreeEnergyMonitor::conserveMemory(const FreeEnergyMonitor &other)
+{
+    if (this->isCompatibleExceptLambda(other))
+    {
+        refgroup = other.refgroup;
+        group_a = other.group_a;
+        group_b = other.group_b;
+    }
+}
+
 /** Return whether or not this monitor is compatible with 'other'
     (have the same groups, soft-core parameters, delta lambda, temperature etc.) */
 bool FreeEnergyMonitor::isCompatible(const FreeEnergyMonitor &other) const
