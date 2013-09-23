@@ -71,6 +71,17 @@ void register_FreeEnergyMonitor_class(){
                 , clearStatistics_function_value );
         
         }
+        { //::SireSystem::FreeEnergyMonitor::conserveMemory
+        
+            typedef void ( ::SireSystem::FreeEnergyMonitor::*conserveMemory_function_type )( ::SireSystem::FreeEnergyMonitor const & ) ;
+            conserveMemory_function_type conserveMemory_function_value( &::SireSystem::FreeEnergyMonitor::conserveMemory );
+            
+            FreeEnergyMonitor_exposer.def( 
+                "conserveMemory"
+                , conserveMemory_function_value
+                , ( bp::arg("other") ) );
+        
+        }
         { //::SireSystem::FreeEnergyMonitor::coulombFreeEnergies
         
             typedef ::QVector< SireMaths::FreeEnergyAverage > ( ::SireSystem::FreeEnergyMonitor::*coulombFreeEnergies_function_type )(  ) const;

@@ -31,9 +31,30 @@ void register_ComponentGradients_class(){
         typedef bp::class_< SireAnalysis::ComponentGradients, bp::bases< SireBase::Property > > ComponentGradients_exposer_t;
         ComponentGradients_exposer_t ComponentGradients_exposer = ComponentGradients_exposer_t( "ComponentGradients", bp::init< >() );
         bp::scope ComponentGradients_scope( ComponentGradients_exposer );
-        ComponentGradients_exposer.def( bp::init< QMap< double, SireSystem::FreeEnergyMonitor > const & >(( bp::arg("gradients") )) );
-        ComponentGradients_exposer.def( bp::init< QList< SireSystem::FreeEnergyMonitor > const & >(( bp::arg("gradients") )) );
+        ComponentGradients_exposer.def( bp::init< QMap< double, SireSystem::FreeEnergyMonitor > const &, bp::optional< bool > >(( bp::arg("gradients"), bp::arg("conserve_memory")=(bool)(true) )) );
+        ComponentGradients_exposer.def( bp::init< QList< SireSystem::FreeEnergyMonitor > const &, bp::optional< bool > >(( bp::arg("gradients"), bp::arg("conserve_memory")=(bool)(true) )) );
         ComponentGradients_exposer.def( bp::init< SireAnalysis::ComponentGradients const & >(( bp::arg("other") )) );
+        { //::SireAnalysis::ComponentGradients::conserveMemory
+        
+            typedef void ( ::SireAnalysis::ComponentGradients::*conserveMemory_function_type )(  ) ;
+            conserveMemory_function_type conserveMemory_function_value( &::SireAnalysis::ComponentGradients::conserveMemory );
+            
+            ComponentGradients_exposer.def( 
+                "conserveMemory"
+                , conserveMemory_function_value );
+        
+        }
+        { //::SireAnalysis::ComponentGradients::conserveMemory
+        
+            typedef void ( ::SireAnalysis::ComponentGradients::*conserveMemory_function_type )( ::SireAnalysis::ComponentGradients const & ) ;
+            conserveMemory_function_type conserveMemory_function_value( &::SireAnalysis::ComponentGradients::conserveMemory );
+            
+            ComponentGradients_exposer.def( 
+                "conserveMemory"
+                , conserveMemory_function_value
+                , ( bp::arg("other") ) );
+        
+        }
         { //::SireAnalysis::ComponentGradients::coulombGradientsAt
         
             typedef ::SireAnalysis::Gradients ( ::SireAnalysis::ComponentGradients::*coulombGradientsAt_function_type )( int ) const;

@@ -29,10 +29,10 @@ void register_TIComponents_class(){
 
     { //::SireAnalysis::TIComponents
         typedef bp::class_< SireAnalysis::TIComponents, bp::bases< SireBase::Property > > TIComponents_exposer_t;
-        TIComponents_exposer_t TIComponents_exposer = TIComponents_exposer_t( "TIComponents", bp::init< >() );
+        TIComponents_exposer_t TIComponents_exposer = TIComponents_exposer_t( "TIComponents", bp::init< bp::optional< bool > >(( bp::arg("conserve_memory")=(bool)(true) )) );
         bp::scope TIComponents_scope( TIComponents_exposer );
-        TIComponents_exposer.def( bp::init< QMap< double, SireSystem::FreeEnergyMonitor > const & >(( bp::arg("gradients") )) );
-        TIComponents_exposer.def( bp::init< SireAnalysis::ComponentGradients const & >(( bp::arg("gradients") )) );
+        TIComponents_exposer.def( bp::init< QMap< double, SireSystem::FreeEnergyMonitor > const &, bp::optional< bool > >(( bp::arg("gradients"), bp::arg("conserve_memory")=(bool)(true) )) );
+        TIComponents_exposer.def( bp::init< SireAnalysis::ComponentGradients const &, bp::optional< bool > >(( bp::arg("gradients"), bp::arg("conserve_memory")=(bool)(true) )) );
         TIComponents_exposer.def( bp::init< SireAnalysis::TIComponents const & >(( bp::arg("other") )) );
         { //::SireAnalysis::TIComponents::add
         
@@ -75,6 +75,16 @@ void register_TIComponents_class(){
             TIComponents_exposer.def( 
                 "clear"
                 , clear_function_value );
+        
+        }
+        { //::SireAnalysis::TIComponents::conservesMemory
+        
+            typedef bool ( ::SireAnalysis::TIComponents::*conservesMemory_function_type )(  ) const;
+            conservesMemory_function_type conservesMemory_function_value( &::SireAnalysis::TIComponents::conservesMemory );
+            
+            TIComponents_exposer.def( 
+                "conservesMemory"
+                , conservesMemory_function_value );
         
         }
         { //::SireAnalysis::TIComponents::count
