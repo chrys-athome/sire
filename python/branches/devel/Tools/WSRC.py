@@ -1727,7 +1727,8 @@ def analyseWSRC(replicas, iteration, bennetts_freenrgs, fep_freenrgs, ti_freenrg
     printComponents(free_water_freenrgs[iteration], FILE)
 
     print("\n=============", file=FILE)
-    print("Binding free energy for iteration %d equals %s" % (i, -ti_freenrgs[iteration].integrate().values()[-1].y()), file=FILE)
+    print("Binding free energy for iteration %d equals %s" % (iteration, \
+                        -ti_freenrgs[iteration].integrate().values()[-1].y()), file=FILE)
     print("==============", file=FILE)
 
 
