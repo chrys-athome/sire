@@ -1479,6 +1479,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     for key in list(nrgmons.keys()):
         nrgmons[key].setCoulombPower(coulomb_power.val)
         nrgmons[key].setShiftDelta(shift_delta.val)
+        nrgmons[key].setTemperature(temperature.val)
 
         system.add(key, nrgmons[key], nrgmon_frequency.val)
 
