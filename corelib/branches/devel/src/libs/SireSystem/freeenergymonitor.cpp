@@ -323,20 +323,25 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
     return ds;
 }
 
-/** Null constructor */
+/** Null constructor. By default, we don't collect a histogram of each of
+    the components energies as this is too memory hungry */
 FreeEnergyMonitor::FreeEnergyMonitor()
                   : ConcreteProperty<FreeEnergyMonitor,SystemMonitor>(),
+                    nrg_template( FreeEnergyAverage(25*celsius, MolarEnergy(0)) ),
                     lambda_symbol("lambda"), shift_delta(0),
                     lamval(0), delta_lambda(0.001), coulomb_power(0)
 {}
 
 /** Construct to monitor the free energy difference of the reference group
-    interacting with group A as it is perturbed into group B */
+    interacting with group A as it is perturbed into group B. By default, 
+    we don't collect a histogram of each of the components energies as this 
+    is too memory hungry */
 FreeEnergyMonitor::FreeEnergyMonitor(const AssignerGroup &ref,
                                      const AssignerGroup &ga,
                                      const AssignerGroup &gb)
               : ConcreteProperty<FreeEnergyMonitor,SystemMonitor>(),
                 refgroup(ref), group_a(ga), group_b(gb),
+                nrg_template( FreeEnergyAverage(25*celsius, MolarEnergy(0)) ),
                 lambda_symbol("lambda"), shift_delta(0), lamval(0), delta_lambda(0.001),
                 coulomb_power(0)
 {}
@@ -462,7 +467,9 @@ void FreeEnergyMonitor::setTemperature(const SireUnits::Dimension::Temperature &
                                      MolarEnergy(nrg_template.histogram().binWidth()));
 }
 
-/** Set the bin width for the histogram of recorded free energies */
+/** Set the bin width for the histogram of recorded free energies. 
+    By default, we don't collect a histogram of each of the components energies 
+    as this is too memory hungry. */
 void FreeEnergyMonitor::setBinWidth(const SireUnits::Dimension::MolarEnergy &binwidth)
 {
     nrg_template = FreeEnergyAverage(nrg_template.temperature(), binwidth);
