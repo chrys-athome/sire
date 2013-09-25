@@ -85,9 +85,9 @@ except:
     pass
 
 try:
-    shutil.copyfile("%s/corelib/build/INSTALL" % srcdir, srcdir)
-    shutil.copyfile("%s/corelib/build/README" % srcdir, srcdir)
-    shutil.copyfile("%s/corelib/build/COPYING" % srcdir, srcdir)
+    shutil.copyfile("%s/corelib/build/INSTALL" % srcdir, "%s/INSTALL" % srcdir)
+    shutil.copyfile("%s/corelib/build/README" % srcdir, "%s/README" % srcdir)
+    shutil.copyfile("%s/corelib/build/COPYING" % srcdir, "%s/COPYING" % srcdir)
 except:
     pass
 
