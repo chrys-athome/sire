@@ -77,6 +77,16 @@ void register_TIComponents_class(){
                 , clear_function_value );
         
         }
+        { //::SireAnalysis::TIComponents::conserveMemory
+        
+            typedef void ( ::SireAnalysis::TIComponents::*conserveMemory_function_type )(  ) ;
+            conserveMemory_function_type conserveMemory_function_value( &::SireAnalysis::TIComponents::conserveMemory );
+            
+            TIComponents_exposer.def( 
+                "conserveMemory"
+                , conserveMemory_function_value );
+        
+        }
         { //::SireAnalysis::TIComponents::conservesMemory
         
             typedef bool ( ::SireAnalysis::TIComponents::*conservesMemory_function_type )(  ) const;
