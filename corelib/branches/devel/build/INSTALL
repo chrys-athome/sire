@@ -1,62 +1,111 @@
+
 A. INSTALL THE DEPENDENCIES
 
 First, make sure that you have downloaded and installed all
 of the dependencies of Sire. These are;
 
-(1) Functioning C++ and C compilers (recommend gcc >= 4.2)
+(1) Functioning C++ and C compilers (recommend gcc >= 4.2 or clang >= 4.2)
 (2) cmake >= 2.8.11.2
-(3) python (for running the compilation scripts)
 
-B. DOWNLOAD AND COMPILE THE SOURCE
+B. COMPILE THE CORELIB
 
-Downloading and compiling Sire is controlled using a python
-script called download_compile_sire.py. Simply download
-this script from the Sire website and run;
+Change into the build/corelib directory
 
-python download_compile_sire.py
+:-> cd build/corelib
 
-This will download all of the Sire source, compile it
-and install it all to the current directory.
+Next, run cmake on the corelib source directory. This will take a long
+time as it will compile all of the Sire dependencies and will install them
+into the Sire install directory (by default, $HOME/sire.app)
 
-If you want help running the script type
+:-> cmake ../../corelib
 
-python download_compile_sire.py --help
+Note that if you want to install Sire into another directory, use
 
-Once Sire has compiled, you will have a sire.app directory.
-This will contain all of the Sire executables and libraries,
-and can be freely copied to wherever you want to install
-Sire.
+:-> cmake ../../corelib -DSIRE_INSTALL_PREFIX=/path/to/sire.app
 
-To run a Sire executable, simply type;
+Once cmake has completed, you can compile using
 
-/path/to/sire.app/bin/sire_executable
+:-> make -j X
 
-e.g., to run the Sire waterswap executable, type
+where X is the number of cores in your computer, e.g. if you want to 
+run 4 compile jobs in parallel on a 4-core node, type
 
-/path/to/sire.app/bin/waterswap
+:-> make -j 4
 
-To get help on a particular Sire executable type
+Once make has completed (it will take a LONG time), install using
 
-/path/to/sire.app/bin/sire_executable --help
+:-> make -j X install/strip
 
-e.g.
+To test that the corelib has installed correctly, check that the sire 
+executable runs, e.g.
 
-/path/to/sire.app/bin/waterswap --help
+:-> ~/sire.app/bin/sire
 
-To run all of the Sire unit tests type
+(the application should run, print out some help, and then exit)
 
-/path/to/sire.app/bin/sire_test
+C. COMPILE THE PYTHON WRAPPERS
+
+Once the corelib has been compiled, you can then compile the
+python wrappers. Change into the python wrapper build directory, e.g.
+
+:-> cd ../python
+
+Next, run cmake pointing to the python wrapper source directory
+
+:-> cmake ../../python
+
+Note that cmake will look for sire.app in your home directory. If you
+installed sire.app somewhere different, you will need to use
+
+:-> cmake ../../python -DSIRE_APP=/path/to/sire.app
+
+Again, this cmake run will take a long time as it will compile and install
+all of the python wrapper dependencies (e.g. including python 3!)
+
+Once it has completed successfully, make the python wrappers using
+
+:-> make -j X
+
+where X has the same meaning as for the compilation of the corelib. Note
+that this compilation will take even longer than that for the corelib!
+
+Once it has finished, install using
+
+:-> make -j X install/strip
+
+To test that the Sire python wrappers have installed correctly, you can
+run the Sire python executable using
+
+:-> ~/sire.app/bin/python
+
+This should drop you into the python 3 prompt. Use "CTRL+D" to exit.
+
+D. RUNNING SIRE EXECUTABLES AND SCRIPTS
+
+To run a Sire script, e.g. script.py, simply using the Sire python 
+executable, e.g.
+
+:-> ~/sire.app/bin/python script.py
+
+Sire will automatically use all of the cores in a node to parallelise the job.
+
+Sire also comes with a set of installed scripts, that are linked to in the
+sire.app/bin directory. These include the "waterswap" script. To get help
+with these scripts, use "--help", e.g.
+
+:-> ~/sire.app/bin/waterswap --help
+
+E. DISTRIBUTING YOUR BINARY
 
 To package your installation of Sire up into a self-extracting
 executable, type
 
-/path/to/sire.app/bin/package_sire
+:-> ~/sire.app/bin/package_sire
 
-To update your build of Sire to the latest version, simply
-rerun the "download_compile_sire.py" script in the same
-directory as the source.
+This will build a "sire.run" package that can be used to install Sire
+on any machine that uses the same operating system, C and C++ library
+as that on which you compiled the binary.
 
 To get further help, please get in touch with the authors
 via the Sire mailing lists, or via the email links on the
 Sire website, http://siremol.org
-
