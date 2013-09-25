@@ -76,5 +76,20 @@ if os.system(cmd) != 0:
 else:
     print("\n...COMPLETE")
 
+print("\n...creating build directories and placing README, INSTALL and COPYING files...")
+try:
+    os.makedirs("%s/build" % srcdir)
+    os.makedirs("%s/build/corelib" % srcdir)
+    os.makedirs("%s/build/python" % srcdir)
+except:
+    pass
+
+try:
+    shutil.copyfile("%s/corelib/build/INSTALL" % srcdir, srcdir)
+    shutil.copyfile("%s/corelib/build/README" % srcdir, srcdir)
+    shutil.copyfile("%s/corelib/build/COPYING" % srcdir, srcdir)
+except:
+    pass
+
 print("\nFinished :-)")
 
