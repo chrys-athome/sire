@@ -1526,6 +1526,7 @@ def makeRETI(system, moves):
 
     # now create the replica exchange moves for the replicas
     replica_moves = RepExMove()
+    replica_moves.setDisableSwaps(True)
     replica_moves.setGenerator( RanGenerator(seed+7) )
 
     print("\nReturning the WSRC RETI replicas and moves...")
