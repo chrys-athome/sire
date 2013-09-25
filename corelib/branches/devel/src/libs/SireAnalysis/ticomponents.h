@@ -213,6 +213,8 @@ public:
     
     void clear();
 
+    void conserveMemory();
+
 private:
     /** All of the free energy monitors from each iteration */
     QList<ComponentGradients> grads;

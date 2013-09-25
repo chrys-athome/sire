@@ -728,6 +728,39 @@ QString TIComponents::toString() const
                 .arg(nLambdaValues());
 }
 
+/** Conserve memory by sharing as much data as possible between the different iterations */
+void TIComponents::conserveMemory()
+{
+    if (grads.isEmpty())
+        return;
+    
+    //find the first non-empty set of gradients
+    ComponentGradients first;
+    
+    for (int i=0; i<grads.count(); ++i)
+    {
+        if (not grads.at(i).isEmpty())
+        {
+            first = grads.at(i);
+            break;
+        }
+    }
+    
+    if (first.isEmpty())
+        return;
+    
+    //conserve memory in this first set
+    first.conserveMemory();
+    
+    for (int i=0; i<grads.count(); ++i)
+    {
+        if (not grads.at(i).isEmpty())
+            grads[i].conserveMemory(first);
+    }
+    
+    should_conserve_memory = true;
+}
+
 /** Set the gradients for the ith iteration. Note that these must be compatible
     with the gradients of the other iterations */
 void TIComponents::set(int i, const ComponentGradients &gradients)
@@ -780,8 +813,10 @@ void TIComponents::set(int i, const ComponentGradients &gradients)
         
         grads[i] = small_grads;
     }
-    
-    grads[i] = gradients;
+    else
+    {
+        grads[i] = gradients;
+    }
 }
 
 /** Set the gradients for the ith iteration. Note that these must be compatible

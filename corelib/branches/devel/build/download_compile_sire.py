@@ -107,8 +107,9 @@ if not os.path.exists("python"):
     if no_execute:
         print("svn co %s ./python" % python)
     elif os.system("svn co %s ./python" % python) != 0:
-        print("Failed to checkout the source for the python wrappers")
-        sys.exit(-1)
+        if os.system("svn co %s ./python" % python.replace("python","python2")) != 0:
+            print("Failed to checkout the source for the python wrappers")
+            sys.exit(-1)
 else:
     print("Updating the python wrappers...")
     
@@ -117,6 +118,10 @@ else:
     elif os.system("svn update ./python") != 0:
         print("Failed to update the source for the python wrappers")
         sys.exit(-1)
+
+if download_only:
+    print("Everything downloaded or updated...")
+    sys.exit(0)
 
 if rebuild:
     if os.path.exists("build"):
