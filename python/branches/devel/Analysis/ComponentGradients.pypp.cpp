@@ -79,13 +79,12 @@ void register_ComponentGradients_class(){
         }
         { //::SireAnalysis::ComponentGradients::data
         
-            typedef ::QMap< double, SireSystem::FreeEnergyMonitor > ( ::SireAnalysis::ComponentGradients::*data_function_type )( int ) const;
+            typedef ::QMap< double, SireSystem::FreeEnergyMonitor > ( ::SireAnalysis::ComponentGradients::*data_function_type )(  ) const;
             data_function_type data_function_value( &::SireAnalysis::ComponentGradients::data );
             
             ComponentGradients_exposer.def( 
                 "data"
-                , data_function_value
-                , ( bp::arg("i") ) );
+                , data_function_value );
         
         }
         { //::SireAnalysis::ComponentGradients::deltaLambda
