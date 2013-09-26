@@ -1055,100 +1055,100 @@ void OpenMMFrEnergyST::initialise()  {
                     }//end for
                 }
 
-            //if(!solutehard.isEmpty() && solutehard.moleculeAt(0).atoms().contains(atom))
-            if (ishard){//hard solute atom
+                //if(!solutehard.isEmpty() && solutehard.moleculeAt(0).atoms().contains(atom))
+                if (ishard){//hard solute atom
 
-                double charge_start = start_charges[j].value();
-                double charge_final = final_charges[j].value();
+                    double charge_start = start_charges[j].value();
+                    double charge_final = final_charges[j].value();
 
-                double epsilon_start = start_LJs[j].epsilon();
-                double epsilon_final = final_LJs[j].epsilon();
-                double sigma_start = start_LJs[j].sigma();
-                double sigma_final = final_LJs[j].sigma();
+                    double epsilon_start = start_LJs[j].epsilon();
+                    double epsilon_final = final_LJs[j].epsilon();
+                    double sigma_start = start_LJs[j].sigma();
+                    double sigma_final = final_LJs[j].sigma();
 
-                custom_non_bonded_params[0] = charge_start;
-                custom_non_bonded_params[1] = charge_final;
-                custom_non_bonded_params[2] = epsilon_start * OpenMM::KJPerKcal;
-                custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal; 
-                custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
-                custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
-                custom_non_bonded_params[6] = 1.0;//isHard
-                custom_non_bonded_params[7] = 0.0;//isTodummy
-                custom_non_bonded_params[8] = 0.0;//isFromdummy
-                custom_non_bonded_params[9] = 0.0;//isSolvent
+                    custom_non_bonded_params[0] = charge_start;
+                    custom_non_bonded_params[1] = charge_final;
+                    custom_non_bonded_params[2] = epsilon_start * OpenMM::KJPerKcal;
+                    custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal; 
+                    custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
+                    custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
+                    custom_non_bonded_params[6] = 1.0;//isHard
+                    custom_non_bonded_params[7] = 0.0;//isTodummy
+                    custom_non_bonded_params[8] = 0.0;//isFromdummy
+                    custom_non_bonded_params[9] = 0.0;//isSolvent
 
-                if(Debug)
-                  qDebug() << "hard solute = " << atom.index();
-            }
-            // JM July 13 THIS NEEDS FIXING TO DEAL WITH GROUPS THAT CONTAIN MORE THAN ONE MOLECULE
-            //else if(!solutetodummy.isEmpty() && solutetodummy.moleculeAt(0).atoms().contains(atom))
-            else if (istodummy){//to dummy solute atom
+                    if(Debug)
+                    qDebug() << "hard solute = " << atom.index();
+                }
+                // JM July 13 THIS NEEDS FIXING TO DEAL WITH GROUPS THAT CONTAIN MORE THAN ONE MOLECULE
+                //else if(!solutetodummy.isEmpty() && solutetodummy.moleculeAt(0).atoms().contains(atom))
+                else if (istodummy){//to dummy solute atom
 
-                double charge_start = start_charges[j].value();
-                double charge_final = final_charges[j].value();
-                double epsilon_start = start_LJs[j].epsilon();
-                double epsilon_final = final_LJs[j].epsilon();
-                double sigma_start = start_LJs[j].sigma();
-                double sigma_final = final_LJs[j].sigma();
+                    double charge_start = start_charges[j].value();
+                    double charge_final = final_charges[j].value();
+                    double epsilon_start = start_LJs[j].epsilon();
+                    double epsilon_final = final_LJs[j].epsilon();
+                    double sigma_start = start_LJs[j].sigma();
+                    double sigma_final = final_LJs[j].sigma();
 
-                custom_non_bonded_params[0] = charge_start;
-                custom_non_bonded_params[1] = charge_final;
-                custom_non_bonded_params[2] = epsilon_start * OpenMM::KJPerKcal;
-                custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal;
-                custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
-                custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
-                custom_non_bonded_params[6] = 0.0;//isHard
-                custom_non_bonded_params[7] = 1.0;//isTodummy
-                custom_non_bonded_params[8] = 0.0;//isFromdummy
-                custom_non_bonded_params[9] = 0.0;//isSolvent
+                    custom_non_bonded_params[0] = charge_start;
+                    custom_non_bonded_params[1] = charge_final;
+                    custom_non_bonded_params[2] = epsilon_start * OpenMM::KJPerKcal;
+                    custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal;
+                    custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
+                    custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
+                    custom_non_bonded_params[6] = 0.0;//isHard
+                    custom_non_bonded_params[7] = 1.0;//isTodummy
+                    custom_non_bonded_params[8] = 0.0;//isFromdummy
+                    custom_non_bonded_params[9] = 0.0;//isSolvent
 
-                if(Debug)
-                    qDebug() << "to dummy solute = " << atom.index();
-            }
-
-            //else if(!solutefromdummy.isEmpty() && solutefromdummy.moleculeAt(0).atoms().contains(atom))
-            else if (isfromdummy){//from dummy solute atom
-
-                double charge_start = start_charges[j].value();
-                double charge_final = final_charges[j].value();
-                double epsilon_start = start_LJs[j].epsilon();
-                double epsilon_final = final_LJs[j].epsilon();
-                double sigma_start = start_LJs[j].sigma();
-                double sigma_final = final_LJs[j].sigma();
-
-                custom_non_bonded_params[0] = charge_start;
-                custom_non_bonded_params[1] = charge_final;
-                custom_non_bonded_params[2] = epsilon_start * OpenMM::KJPerKcal;
-                custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal;
-                custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
-                custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
-                custom_non_bonded_params[6] = 0.0;//isHard
-                custom_non_bonded_params[7] = 0.0;//isTodummy
-                custom_non_bonded_params[8] = 1.0;//isFromdummy
-                custom_non_bonded_params[9] = 0.0;//isSolvent
-
-                if(Debug)
-                    qDebug() << "from dummy solute = " << atom.index();
+                    if(Debug)
+                        qDebug() << "to dummy solute = " << atom.index();
                 }
 
-            else{//What if some atoms were not perturbed at all in the pert file? Use default params
+                //else if(!solutefromdummy.isEmpty() && solutefromdummy.moleculeAt(0).atoms().contains(atom))
+                else if (isfromdummy){//from dummy solute atom
 
-                custom_non_bonded_params[0] = charge;
-                custom_non_bonded_params[1] = charge;
-                custom_non_bonded_params[2] = epsilon * OpenMM::KJPerKcal;
-                custom_non_bonded_params[3] = epsilon * OpenMM::KJPerKcal;
-                custom_non_bonded_params[4] = sigma * OpenMM::NmPerAngstrom;
-                custom_non_bonded_params[5] = sigma * OpenMM::NmPerAngstrom;
-                custom_non_bonded_params[6] = 1.0;//isHard
-                custom_non_bonded_params[7] = 0.0;//isTodummy
-                custom_non_bonded_params[8] = 0.0;//isFromdummy
-                custom_non_bonded_params[9] = 0.0;//isSolvent
+                    double charge_start = start_charges[j].value();
+                    double charge_final = final_charges[j].value();
+                    double epsilon_start = start_LJs[j].epsilon();
+                    double epsilon_final = final_LJs[j].epsilon();
+                    double sigma_start = start_LJs[j].sigma();
+                    double sigma_final = final_LJs[j].sigma();
 
-                if (Debug)
-                  qDebug() << " unperturbed solute atom " << atom.index();
-            }
-        }//end if perturbation section
-        else{//solvent atom like hard
+                    custom_non_bonded_params[0] = charge_start;
+                    custom_non_bonded_params[1] = charge_final;
+                    custom_non_bonded_params[2] = epsilon_start * OpenMM::KJPerKcal;
+                    custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal;
+                    custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
+                    custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
+                    custom_non_bonded_params[6] = 0.0;//isHard
+                    custom_non_bonded_params[7] = 0.0;//isTodummy
+                    custom_non_bonded_params[8] = 1.0;//isFromdummy
+                    custom_non_bonded_params[9] = 0.0;//isSolvent
+
+                    if(Debug)
+                        qDebug() << "from dummy solute = " << atom.index();
+                    }
+
+                else{//What if some atoms were not perturbed at all in the pert file? Use default params
+
+                    custom_non_bonded_params[0] = charge;
+                    custom_non_bonded_params[1] = charge;
+                    custom_non_bonded_params[2] = epsilon * OpenMM::KJPerKcal;
+                    custom_non_bonded_params[3] = epsilon * OpenMM::KJPerKcal;
+                    custom_non_bonded_params[4] = sigma * OpenMM::NmPerAngstrom;
+                    custom_non_bonded_params[5] = sigma * OpenMM::NmPerAngstrom;
+                    custom_non_bonded_params[6] = 1.0;//isHard
+                    custom_non_bonded_params[7] = 0.0;//isTodummy
+                    custom_non_bonded_params[8] = 0.0;//isFromdummy
+                    custom_non_bonded_params[9] = 0.0;//isSolvent
+
+                    if (Debug)
+                        qDebug() << " unperturbed solute atom " << atom.index();
+                }
+            }//end if perturbation section
+            else{//solvent atom like hard
 
                 custom_non_bonded_params[0] = charge;
                 custom_non_bonded_params[1] = charge;
@@ -1164,22 +1164,22 @@ void OpenMMFrEnergyST::initialise()  {
                 if(Debug)
                     qDebug() << "Solvent = " << atom.index();
 
-        }
+            }
 
-        if(Debug){
-            qDebug() << "Charge start = " << custom_non_bonded_params[0];
-            qDebug() << "Charge end = " << custom_non_bonded_params[1];
-            qDebug() << "Eps start = " << custom_non_bonded_params[2];
-            qDebug() << "Eps end = " << custom_non_bonded_params[3];
-            qDebug() << "Sig start = " << custom_non_bonded_params[4];
-            qDebug() << "Sig end = " << custom_non_bonded_params[5];
-            qDebug() << "is Hard = " << custom_non_bonded_params[6];
-            qDebug() << "is To dummy = " << custom_non_bonded_params[7];
-            qDebug() << "is From dummy = " << custom_non_bonded_params[8];
-            qDebug() << "is Solvent = " << custom_non_bonded_params[9] << "\n";
-        }
+            if(Debug){
+                qDebug() << "Charge start = " << custom_non_bonded_params[0];
+                qDebug() << "Charge end = " << custom_non_bonded_params[1];
+                qDebug() << "Eps start = " << custom_non_bonded_params[2];
+                qDebug() << "Eps end = " << custom_non_bonded_params[3];
+                qDebug() << "Sig start = " << custom_non_bonded_params[4];
+                qDebug() << "Sig end = " << custom_non_bonded_params[5];
+                qDebug() << "is Hard = " << custom_non_bonded_params[6];
+                qDebug() << "is To dummy = " << custom_non_bonded_params[7];
+                qDebug() << "is From dummy = " << custom_non_bonded_params[8];
+                qDebug() << "is Solvent = " << custom_non_bonded_params[9] << "\n";
+            }
 
-        custom_force_field->addParticle(custom_non_bonded_params);
+            custom_force_field->addParticle(custom_non_bonded_params);
 
         }
 
@@ -1314,7 +1314,7 @@ void OpenMMFrEnergyST::initialise()  {
                             const SireMol::Atom atom0 = molecule.select(two.atom0());
                             QString initial_type_atom0 = atom0.property<QString>("initial_ambertype");
                             QString final_type_atom0 = atom0.property<QString>("final_ambertype");
-                            
+
                             const SireMol::Atom atom1 = molecule.select(two.atom1());
                             QString initial_type_atom1 = atom1.property<QString>("initial_ambertype");
                             QString final_type_atom1 = atom1.property<QString>("final_ambertype");
@@ -1322,13 +1322,13 @@ void OpenMMFrEnergyST::initialise()  {
                             if(initial_type_atom0.startsWith("h", Qt::CaseInsensitive) || final_type_atom0.startsWith("h", Qt::CaseInsensitive) ||
                                initial_type_atom1.startsWith("h", Qt::CaseInsensitive) || final_type_atom1.startsWith("h", Qt::CaseInsensitive)){
 
-                               double pert_eq_distance = solute_bond_perturbation_params[1] * Alchemical_value + (1.0 - Alchemical_value) * solute_bond_perturbation_params[0];
+                               double pert_eq_distance = solute_bond_perturbation_params[3] * Alchemical_value + (1.0 - Alchemical_value) * solute_bond_perturbation_params[2];
                                system_openmm->addConstraint(idx0,idx1, pert_eq_distance);
                                
-                               if(Debug){
+                               if(true){
                                     qDebug() << "Two/one bond atom(s) start(s) or end(s) with h/H" ;
-                                    qDebug() << "bond start distance = " << solute_bond_perturbation_params[0];
-                                    qDebug() << "bond end distance = " << solute_bond_perturbation_params[1];
+                                    qDebug() << "bond start distance = " << solute_bond_perturbation_params[2];
+                                    qDebug() << "bond end distance = " << solute_bond_perturbation_params[3];
                                     qDebug() << "Perturbation bond equilibrium distance = " << pert_eq_distance;
                                }
                             }
@@ -1371,7 +1371,7 @@ void OpenMMFrEnergyST::initialise()  {
                         solute_angle_perturbation_params[1] = aend * OpenMM::KJPerKcal;
                         solute_angle_perturbation_params[2] = thetastart;
                         solute_angle_perturbation_params[3] = thetaend;
-                        
+
                         if(flag_constraint == HANGLES){
                             const SireMol::Atom atom0 = molecule.select(three.atom0());
                             QString initial_type_atom0 = atom0.property<QString>("initial_ambertype");
@@ -1396,8 +1396,8 @@ void OpenMMFrEnergyST::initialise()  {
 
                             if(H_X_H || H_O_X || X_O_H){
 
-                                    const BondID * first_alchemical_bond;
-                                    const BondID * second_alchemical_bond;
+                                    const BondID * first_alchemical_bond = NULL;
+                                    const BondID * second_alchemical_bond = NULL;
 
                                     if(bond_pert_eq_list.contains(BondID(three.atom0(),three.atom1()))){
                                         first_alchemical_bond = &((bond_pert_eq_list.find(BondID(three.atom0(),three.atom1()))).key());
@@ -1501,7 +1501,7 @@ void OpenMMFrEnergyST::initialise()  {
                         angle_pert_list.append(AngleID(three.atom0(),three.atom1(),three.atom2()));
                         angle_pert_swap_list.append(AngleID(three.atom2(),three.atom1(),three.atom0()));
 
-                        if(true){
+                        if(Debug){
                             qDebug() << "Atom0 = " << three.atom0().asA<AtomIdx>().value() << 
                                         "Atom1 = "<< three.atom1().asA<AtomIdx>().value() << 
                                         "Atom2 = "<< three.atom2().asA<AtomIdx>().value() ;
@@ -2312,15 +2312,13 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     int sample_count=1;
 
 
-    state_openmm=context_openmm.getState(infoMask);
+    //state_openmm=context_openmm.getState(infoMask);
     //qDebug() << "TOTAL Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ + state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
     //qDebug() << "Potential Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
     //qDebug() << "Kinetic Energy = " <<  state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
     
-    qDebug()  <<"*Lambda = " << Alchemical_value << " Potential energy lambda  = " << QString::number(state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ,'g',9) << " [A + A^2] kcal" << "\n";
-
-
-    exit(-1);
+    //qDebug()  <<"*Lambda = " << Alchemical_value << " Potential energy lambda  = " << QString::number(state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ,'g',9) << " [A + A^2] kcal" << "\n";
+    //exit(-1);
 
     if(coord_freq > 0)
         qDebug() << "Saving atom coordinates every " << coord_freq << "\n";
@@ -2444,6 +2442,15 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             }
         }
 
+
+        if(Debug){
+            qDebug() << "\nLambda = " << Alchemical_value;
+            state_openmm=context_openmm.getState(infoMask);
+            printf("*Potential energy lambda = %f kcal/mol\n" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
+            //exit(-1);
+        }
+
+
         if(potential_energy_lambda > 1000000.0){
             throw SireError::program_bug(QObject::tr("********************* Energy Too High. Error! *******************"), CODELOC);
             exit(-1);
@@ -2453,6 +2460,9 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             throw SireError::program_bug(QObject::tr("********************* NAN Error! *******************"), CODELOC);
             exit(-1);
         }
+
+
+
 
         if((Alchemical_value + delta_alchemical)>1.0){
 
@@ -2670,6 +2680,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
         if(true){
             qDebug() << "\nLambda = " << Alchemical_value;
+            state_openmm=context_openmm.getState(infoMask);
             printf("*Potential energy lambda = %f kcal/mol\n" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
         }
 
