@@ -520,7 +520,7 @@ QVector<DataPoint> ComponentGradients::ljValues(int i) const
 }
 
 /** Return the raw data for all of the free energy components */
-QMap<double,FreeEnergyMonitor> ComponentGradients::data(int i) const
+QMap<double,FreeEnergyMonitor> ComponentGradients::data() const
 {
     return grads;
 }

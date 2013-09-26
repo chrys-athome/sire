@@ -116,7 +116,7 @@ public:
     QVector<DataPoint> coulombValues(int i) const;
     QVector<DataPoint> ljValues(int i) const;
 
-    QMap<double,FreeEnergyMonitor> data(int i) const;
+    QMap<double,FreeEnergyMonitor> data() const;
 
     TIPMF integrate(int i) const;
     TIPMF integrate(int i, int order) const;
