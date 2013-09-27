@@ -1302,8 +1302,8 @@ void OpenMMFrEnergyST::initialise()  {
                         else if ( flag_constraint == ALLBONDS || flag_constraint == HANGLES ){
                             double pert_eq_distance = solute_bond_perturbation_params[3] * Alchemical_value + (1.0 - Alchemical_value) * solute_bond_perturbation_params[2];
                             system_openmm->addConstraint(idx0,idx1, pert_eq_distance);
-                            bond_pert_eq_list.insert(BondID(two.atom0(),two.atom1()),pert_eq_distance);
-                            if(Debug){
+                            bond_pert_eq_list.insert(BondID(two.atom0(),two.atom1()),pert_eq_distance * OpenMM::AngstromsPerNm);
+                            if(true){
                                 qDebug() << "bond start distance = " << solute_bond_perturbation_params[2];
                                 qDebug() << "bond end distance = " << solute_bond_perturbation_params[3];
                                 qDebug() << "Perturbation bond equilibrium distance = " << pert_eq_distance;
@@ -1325,7 +1325,7 @@ void OpenMMFrEnergyST::initialise()  {
                                double pert_eq_distance = solute_bond_perturbation_params[3] * Alchemical_value + (1.0 - Alchemical_value) * solute_bond_perturbation_params[2];
                                system_openmm->addConstraint(idx0,idx1, pert_eq_distance);
                                
-                               if(true){
+                               if(Debug){
                                     qDebug() << "Two/one bond atom(s) start(s) or end(s) with h/H" ;
                                     qDebug() << "bond start distance = " << solute_bond_perturbation_params[2];
                                     qDebug() << "bond end distance = " << solute_bond_perturbation_params[3];
@@ -1347,7 +1347,7 @@ void OpenMMFrEnergyST::initialise()  {
 
                         bondPairs.push_back(std::make_pair(idx0,idx1));
 
-                        if(Debug){
+                        if(true){
                             qDebug() << "Atom0 = " << two.atom0().asA<AtomIdx>().value() << 
                                         "Atom1 = "<< two.atom1().asA<AtomIdx>().value() ;
                             qDebug() << "IDX0 = " << idx0 <<  "IDX1 = " << idx1  << "\n";
@@ -1399,39 +1399,51 @@ void OpenMMFrEnergyST::initialise()  {
                                     const BondID * first_alchemical_bond = NULL;
                                     const BondID * second_alchemical_bond = NULL;
 
+                                    double first_alchemical_distance = -1.0;
+                                    double second_alchemical_distance = -1.0;
+
                                     if(bond_pert_eq_list.contains(BondID(three.atom0(),three.atom1()))){
                                         first_alchemical_bond = &((bond_pert_eq_list.find(BondID(three.atom0(),three.atom1()))).key());
+                                        first_alchemical_distance = bond_pert_eq_list.value(*first_alchemical_bond);
                                         if(Debug)
                                             qDebug() << "Atom0 - Atom1";
                                     }
                                     else if(bond_pert_eq_list.contains(BondID(three.atom1(),three.atom0()))){
                                         first_alchemical_bond = &((bond_pert_eq_list.find(BondID(three.atom1(),three.atom0()))).key());
+                                        first_alchemical_distance = bond_pert_eq_list.value(*first_alchemical_bond);
                                         if(Debug)
                                             qDebug() << "Atom1 - Atom0";
                                     }
-                                    else
-                                        throw SireError::program_bug(QObject::tr("No Bond has been found in the perturbed bond equilibrium disance list"), CODELOC);
+                                    else{
+                                        
+                                        if(true)
+                                            qDebug()<< "First perturbed bond was not foud in the perturned list";
+                                        first_alchemical_bond = new BondID(three.atom0(),three.atom1());
+                                    }
 
 
                                     if(bond_pert_eq_list.contains(BondID(three.atom1(),three.atom2()))){
                                         second_alchemical_bond = &((bond_pert_eq_list.find(BondID(three.atom1(),three.atom2()))).key());
+                                        second_alchemical_distance = bond_pert_eq_list.value(*second_alchemical_bond);
                                         if(Debug)
                                             qDebug() << "Atom1 - Atom2";
                                     }
                                     else if(bond_pert_eq_list.contains(BondID(three.atom2(),three.atom1()))){
                                         second_alchemical_bond = &((bond_pert_eq_list.find(BondID(three.atom2(),three.atom1()))).key());
+                                        second_alchemical_distance = bond_pert_eq_list.value(*second_alchemical_bond);
                                         if(Debug)
                                             qDebug() << "Atom2 - Atom1";
                                     }
-                                    else
-                                        throw SireError::program_bug(QObject::tr("No Bond has been found in the perturbed bond list"), CODELOC);
+                                    else{
+                                        if(true)
+                                            qDebug()<< "Second perturbed bond was not foud in the perturned list";
+                                        second_alchemical_bond = new BondID(three.atom2(),three.atom1());
+                                    }
 
-                                    double first_alchemical_distance = bond_pert_eq_list.value(*first_alchemical_bond);
-                                    double second_alchemical_distance = bond_pert_eq_list.value(*second_alchemical_bond);
 
-                                    if(Debug)
-                                        qDebug() << "First Alchemical distance = " << first_alchemical_distance * OpenMM::AngstromsPerNm 
-                                                 << "Second Alchemical distance = " << second_alchemical_distance * OpenMM::AngstromsPerNm;
+                                    if(true)
+                                        qDebug() << "First Alchemical distance = " << first_alchemical_distance
+                                                 << "Second Alchemical distance = " << second_alchemical_distance;
 
                                     SireMaths::Vector bond1_vec;
                                     SireMaths::Vector bond2_vec;
@@ -1475,33 +1487,66 @@ void OpenMMFrEnergyST::initialise()  {
                                     }
                                     else
                                          throw SireError::program_bug(QObject::tr("No coorner bond"), CODELOC);
-                                         
-                                    if(Debug){
-                                        qDebug() << "First vector X = " << (bond1_vec.normalise() * first_alchemical_distance).x() * OpenMM::AngstromsPerNm ;
-                                        qDebug() << "First vector Y = " << (bond1_vec.normalise() * first_alchemical_distance).y() * OpenMM::AngstromsPerNm ;
-                                        qDebug() << "First vector Z = " << (bond1_vec.normalise() * first_alchemical_distance).z() * OpenMM::AngstromsPerNm ;
 
-                                        qDebug() << "Second vector X = " << (bond2_vec.normalise() * second_alchemical_distance).x() * OpenMM::AngstromsPerNm ;
-                                        qDebug() << "Second vector Y = " << (bond2_vec.normalise() * second_alchemical_distance).y() * OpenMM::AngstromsPerNm ;
-                                        qDebug() << "Second vector Z = " << (bond2_vec.normalise() * second_alchemical_distance).z() * OpenMM::AngstromsPerNm ;
+                                    if(true){
+                                        if(first_alchemical_distance != -1.0){
+                                            qDebug() << "First vector X = " << (bond1_vec.normalise() * first_alchemical_distance).x();
+                                            qDebug() << "First vector Y = " << (bond1_vec.normalise() * first_alchemical_distance).y();
+                                            qDebug() << "First vector Z = " << (bond1_vec.normalise() * first_alchemical_distance).z();
+                                        }
+                                        else{
+                                            qDebug() << "First vector X = " << (bond1_vec).x();
+                                            qDebug() << "First vector Y = " << (bond1_vec).y();
+                                            qDebug() << "First vector Z = " << (bond1_vec).z();
+                                        }
+                                        
+                                        if(second_alchemical_distance !=-1.0){
+                                            qDebug() << "Second vector X = " << (bond2_vec.normalise() * second_alchemical_distance).x();
+                                            qDebug() << "Second vector Y = " << (bond2_vec.normalise() * second_alchemical_distance).y();
+                                            qDebug() << "Second vector Z = " << (bond2_vec.normalise() * second_alchemical_distance).z();
+                                        }
+                                        else{
+                                            qDebug() << "Second vector X = " << (bond2_vec).x();
+                                            qDebug() << "Second vector Y = " << (bond2_vec).y();
+                                            qDebug() << "Second vector Z = " << (bond2_vec).z();
+                                        }
                                     }
 
-                                    double constraint_distance = (bond1_vec.normalise() * first_alchemical_distance - bond2_vec.normalise() * second_alchemical_distance).length();
+                                    double constraint_distance;
 
-                                    system_openmm->addConstraint(idx0,idx2, constraint_distance);
+                                    if(first_alchemical_distance == -1.0 && second_alchemical_distance != -1.0)
+                                        constraint_distance = (bond1_vec - bond2_vec.normalise() * second_alchemical_distance).length();
 
-                                    if(Debug)
-                                        qDebug() << "CONSTRAINT DISTANCE = " << constraint_distance * OpenMM::AngstromsPerNm;
+                                    else if (first_alchemical_distance != -1.0 && second_alchemical_distance == -1.0)
+                                        constraint_distance = (bond1_vec.normalise() * first_alchemical_distance - bond2_vec).length();
+
+                                    else if (first_alchemical_distance != -1.0 && second_alchemical_distance != -1.0)
+                                        constraint_distance = (bond1_vec.normalise() * first_alchemical_distance - bond2_vec.normalise() * second_alchemical_distance).length();
+
+                                    else
+                                         throw SireError::program_bug(QObject::tr("The angle does not contain perturbed bond"), CODELOC);
+
+                                    system_openmm->addConstraint(idx0,idx2, constraint_distance *  OpenMM::NmPerAngstrom);
+
+                                    if(true)
+                                        qDebug() << "CONSTRAINT DISTANCE = " << constraint_distance ;
                             }
 
                         }//end if HANGLES
-                        else
+                        else{
                             solute_angle_perturbation->addAngle(idx0,idx1,idx2,solute_angle_perturbation_params);
+                            if(true)
+                                qDebug() << "Added perturbed angle";
+                        }
+
+
+                        //solute_angle_perturbation->addAngle(idx0,idx1,idx2,solute_angle_perturbation_params);
+
 
                         angle_pert_list.append(AngleID(three.atom0(),three.atom1(),three.atom2()));
                         angle_pert_swap_list.append(AngleID(three.atom2(),three.atom1(),three.atom0()));
 
-                        if(Debug){
+                        if(true){
                             qDebug() << "Atom0 = " << three.atom0().asA<AtomIdx>().value() << 
                                         "Atom1 = "<< three.atom1().asA<AtomIdx>().value() << 
                                         "Atom2 = "<< three.atom2().asA<AtomIdx>().value() ;
@@ -1529,7 +1574,7 @@ void OpenMMFrEnergyST::initialise()  {
                         
                         std::string openmm_str = tmp.toStdString();
 
-                        if(Debug){
+                        if(true){
                             qDebug() << "IDX0 = " << idx0 <<  "IDX1 = " << idx1 <<  "IDX2 = " << idx2 <<  "IDX3 = " << idx3;
                             qDebug() << "Dihedral String = " << openmm_str.c_str();
                             qDebug() << "Dihedral Normal String = " << four.perturbExpression().toString() << "\n";
@@ -1554,7 +1599,7 @@ void OpenMMFrEnergyST::initialise()  {
                         improper_pert_list.append(ImproperID(four.atom0(),four.atom1(),four.atom2(),four.atom3()));
                         improper_pert_swap_list.append(ImproperID(four.atom0(),four.atom1(),four.atom3(),four.atom2()));
 
-                        if(Debug){
+                        if(true){
                             qDebug() << "Atom0 = " << four.atom0().asA<AtomIdx>().value() << 
                                         "Atom1 = " << four.atom1().asA<AtomIdx>().value() << 
                                         "Atom2 = " << four.atom2().asA<AtomIdx>().value() << 
