@@ -688,14 +688,14 @@ void OpenMMFrEnergyST::initialise()  {
     OpenMM::CustomAngleForce* solute_angle_perturbation = NULL;
 
 
-    solute_bond_perturbation = new OpenMM::CustomBondForce("B*(r-req)^2;"
+    solute_bond_perturbation = new OpenMM::CustomBondForce("0.5*B*(r-req)^2;"
                                                             "B=bend*lambond+(1.0-lambond)*bstart;"
                                                             "req=rend*lambond+(1.0-lambond)*rstart");
 
 
     solute_bond_perturbation->addGlobalParameter("lambond",Alchemical_value);
 
-    solute_angle_perturbation = new OpenMM::CustomAngleForce("A*(theta-thetaeq)^2;"
+    solute_angle_perturbation = new OpenMM::CustomAngleForce("0.5*A*(theta-thetaeq)^2;"
                                                             "A=aend*lamangle+(1.0-lamangle)*astart;"
                                                             "thetaeq=thetaend*lamangle+(1.0-lamangle)*thetastart");
 
@@ -1288,8 +1288,8 @@ void OpenMMFrEnergyST::initialise()  {
                         double rend = two.finalForms()[Symbol("r0")].toString().toDouble();
                         double bend = two.finalForms()[Symbol("k")].toString().toDouble();
 
-                        solute_bond_perturbation_params[0]=bstart * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm;
-                        solute_bond_perturbation_params[1]=bend * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm;
+                        solute_bond_perturbation_params[0]=bstart * 2.0 * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm;
+                        solute_bond_perturbation_params[1]=bend * 2.0 * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm;
                         solute_bond_perturbation_params[2]=rstart * OpenMM::NmPerAngstrom;
                         solute_bond_perturbation_params[3]=rend * OpenMM::NmPerAngstrom;
 
@@ -1304,9 +1304,9 @@ void OpenMMFrEnergyST::initialise()  {
                             system_openmm->addConstraint(idx0,idx1, pert_eq_distance);
                             bond_pert_eq_list.insert(BondID(two.atom0(),two.atom1()),pert_eq_distance * OpenMM::AngstromsPerNm);
                             if(true){
-                                qDebug() << "bond start distance = " << solute_bond_perturbation_params[2];
-                                qDebug() << "bond end distance = " << solute_bond_perturbation_params[3];
-                                qDebug() << "Perturbation bond equilibrium distance = " << pert_eq_distance;
+                                qDebug() << "bond start distance = " << solute_bond_perturbation_params[2] << " Nm";
+                                qDebug() << "bond end distance = " << solute_bond_perturbation_params[3] << " Nm";
+                                qDebug() << "Perturbation bond equilibrium distance = " << pert_eq_distance << " Nm";
                             }
                         }
 
@@ -1327,9 +1327,9 @@ void OpenMMFrEnergyST::initialise()  {
                                
                                if(Debug){
                                     qDebug() << "Two/one bond atom(s) start(s) or end(s) with h/H" ;
-                                    qDebug() << "bond start distance = " << solute_bond_perturbation_params[2];
-                                    qDebug() << "bond end distance = " << solute_bond_perturbation_params[3];
-                                    qDebug() << "Perturbation bond equilibrium distance = " << pert_eq_distance;
+                                    qDebug() << "bond start distance = " << solute_bond_perturbation_params[2] << " Nm";
+                                    qDebug() << "bond end distance = " << solute_bond_perturbation_params[3] << " Nm";
+                                    qDebug() << "Perturbation bond equilibrium distance = " << pert_eq_distance << " Nm";
                                }
                             }
 
@@ -1351,10 +1351,10 @@ void OpenMMFrEnergyST::initialise()  {
                             qDebug() << "Atom0 = " << two.atom0().asA<AtomIdx>().value() << 
                                         "Atom1 = "<< two.atom1().asA<AtomIdx>().value() ;
                             qDebug() << "IDX0 = " << idx0 <<  "IDX1 = " << idx1  << "\n";
-                            qDebug() << "rstart = " << rstart <<
-                                        "rend = " << rend ;
-                            qDebug() << "bstart = " << bstart <<
-                                        "bend = " << bend << "\n";
+                            qDebug() << "rstart = " << rstart << " A" <<
+                                        "rend = " << rend << " A";
+                            qDebug() << "bstart = " << bstart << " kcal/A A" <<
+                                        "bend = " << bend << " kcal/A A" << "\n";
                         }
                     }
                     if(str == "SireMM::ThreeAtomPerturbation"){
@@ -1367,10 +1367,17 @@ void OpenMMFrEnergyST::initialise()  {
                         double aend = three.finalForms()[Symbol("k")].toString().toDouble();
                         double thetaend = three.finalForms()[Symbol("theta0")].toString().toDouble();
                         
-                        solute_angle_perturbation_params[0] = astart * OpenMM::KJPerKcal; 
-                        solute_angle_perturbation_params[1] = aend * OpenMM::KJPerKcal;
+                        solute_angle_perturbation_params[0] = astart * 2.0 * OpenMM::KJPerKcal; 
+                        solute_angle_perturbation_params[1] = aend * 2.0 * OpenMM::KJPerKcal;
                         solute_angle_perturbation_params[2] = thetastart;
                         solute_angle_perturbation_params[3] = thetaend;
+                        
+                        if(true){
+                            qDebug() << "astart = " << solute_angle_perturbation_params[0] << " kJ/rad rad" <<
+                                        " aend = " << solute_angle_perturbation_params[1] << " kJ/rad rad";
+                            qDebug() << "thetastart = " << solute_angle_perturbation_params[2] << " rad" <<
+                                        "thetaend = " << solute_angle_perturbation_params[3] << " rad";
+                        }
 
                         if(flag_constraint == HANGLES){
                             const SireMol::Atom atom0 = molecule.select(three.atom0());
@@ -1553,11 +1560,11 @@ void OpenMMFrEnergyST::initialise()  {
                             
                             qDebug() << "IDX0 = " << idx0 <<  "IDX1 = " << idx1 <<  "IDX2 = " << idx2 << "\n";
 
-                            qDebug() << "astart = " << astart <<
-                                        "aend = " << aend;
+                            qDebug() << "astart = " << astart << " kcal/rad rad" <<
+                                        "aend = " << " kcal/rad rad"<<aend;
 
-                            qDebug() << "thetastart = " << thetastart <<
-                                        "thetaend = " << thetaend << "\n";
+                            qDebug() << "thetastart = " << thetastart << " rad" <<
+                                        "thetaend = " << thetaend << " rad" << "\n";
                         }
                     }
                     if(str == "SireMM::FourAtomPerturbation"){
@@ -2365,6 +2372,8 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     //qDebug()  <<"*Lambda = " << Alchemical_value << " Potential energy lambda  = " << QString::number(state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ,'g',9) << " [A + A^2] kcal" << "\n";
     //exit(-1);
 
+    
+
     if(coord_freq > 0)
         qDebug() << "Saving atom coordinates every " << coord_freq << "\n";
 
@@ -2585,7 +2594,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
                 qDebug() << "Lambda + delta = " << Alchemical_value + delta_alchemical << " Potential energy plus  = " << potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
                 qDebug() << "Lambda - delta < 0.0\n";
             }
-      }
+        }
         else{
 
             //NON BONDED TERMS
@@ -2724,6 +2733,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 
         if(true){
+            state_openmm=context_openmm.getState(infoMask);
             qDebug() << "\nLambda = " << Alchemical_value;
             state_openmm=context_openmm.getState(infoMask);
             printf("*Potential energy lambda = %f kcal/mol\n" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
