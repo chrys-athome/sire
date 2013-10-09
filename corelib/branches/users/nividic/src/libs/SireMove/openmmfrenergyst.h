@@ -190,7 +190,7 @@ public:
 
     void setMinimizeIterations(int);
 
-
+    void setReinitializeContext(bool);
 
 private:
     /** Whether or not to save the velocities after every step, or to save them at the end of all of the steps */
@@ -209,8 +209,11 @@ private:
     /**Try instead to...keep a copy of OpenMM::System */
     OpenMM::System* openmm_system;
 
-    /** Whether the openmm system has been initialised*/
-    bool isInitialised;
+    OpenMM::Context* openmm_context;
+
+    /** Whether the openmm system and the context have been initialised*/
+    bool isSystemInitialised;
+    bool isContextInitialised;
 
     QString CutoffType;
     SireUnits::Dimension::Length cutoff_distance;
@@ -271,6 +274,8 @@ private:
     double minimize_tol;
 
     int minimize_iterations;
+
+    bool reinetialize_context;
 };
 
 

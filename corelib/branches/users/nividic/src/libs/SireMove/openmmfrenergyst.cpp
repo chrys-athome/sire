@@ -133,7 +133,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyST 
         <<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.buffer_frequency << velver.energy_frequency
         << velver.device_index <<velver.precision << velver.Alchemical_value << velver.coulomb_power << velver.shift_delta << velver.delta_alchemical << velver.buffer_coords
         << velver.gradients << velver.energies <<velver.perturbed_energies <<  velver.Integrator_type << velver.friction << velver.integration_tol << velver.timeskip 
-        << velver.minimize << velver.minimize_tol << velver.minimize_iterations
+        << velver.minimize << velver.minimize_tol << velver.minimize_iterations << velver.reinetialize_context
         << static_cast<const Integrator&>(velver);
 
     // Free OpenMM pointers??
@@ -156,11 +156,12 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyST &velve
         >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.buffer_frequency >> velver.energy_frequency
         >> velver.device_index >> velver.precision >> velver.Alchemical_value >> velver.coulomb_power >> velver.shift_delta >> velver.delta_alchemical >> velver.buffer_coords
         >> velver.gradients >> velver.energies >> velver.perturbed_energies >> velver.Integrator_type >> velver.friction >> velver.integration_tol >> velver.timeskip
-        >> velver.minimize >> velver.minimize_tol >> velver.minimize_iterations
+        >> velver.minimize >> velver.minimize_tol >> velver.minimize_iterations >> velver.reinetialize_context
         >> static_cast<Integrator&>(velver);
 
         // Maybe....need to reinitialise from molgroup because openmm system was not serialised...
-        velver.isInitialised = false;
+        velver.isSystemInitialised = false;
+        velver.isContextInitialised = false;
         
         qDebug() << " Re-initialisation of OpenMMFrEnergyST from datastream";
 
@@ -176,7 +177,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyST &velve
 OpenMMFrEnergyST::OpenMMFrEnergyST(bool frequent_save) 
                 : ConcreteProperty<OpenMMFrEnergyST,Integrator>(),
                 frequent_save_velocities(frequent_save), 
-                molgroup(MoleculeGroup()), solute(MoleculeGroup()) ,solutehard(MoleculeGroup()), solutetodummy(MoleculeGroup()), solutefromdummy(MoleculeGroup()), openmm_system(0), isInitialised(false), 
+                molgroup(MoleculeGroup()), solute(MoleculeGroup()) ,solutehard(MoleculeGroup()), solutetodummy(MoleculeGroup()), solutefromdummy(MoleculeGroup()),
+                openmm_system(0), openmm_context(0), isSystemInitialised(false),isContextInitialised(false), 
                 CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
                 Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                 MCBarostat_frequency(25),ConstraintType("none"),
@@ -184,14 +186,15 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(bool frequent_save)
                 CMMremoval_frequency(0), buffer_frequency(0),energy_frequency(100),device_index("0"), precision("single"), Alchemical_value(0.5),coulomb_power(0),
                 shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),energies(), perturbed_energies(),
                 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond),
-                minimize(false),minimize_tol(1.0),minimize_iterations(0)
+                minimize(false),minimize_tol(1.0),minimize_iterations(0),reinetialize_context(false)
 {}
 
 /** Constructor using the passed molecule groups */
 OpenMMFrEnergyST::OpenMMFrEnergyST(const MoleculeGroup &molecule_group, const MoleculeGroup &solute_group,const MoleculeGroup &solute_hard, const MoleculeGroup &solute_todummy, const MoleculeGroup &solute_fromdummy,bool frequent_save) 
                 : ConcreteProperty<OpenMMFrEnergyST,Integrator>(),
                 frequent_save_velocities(frequent_save), 
-                molgroup(molecule_group), solute(solute_group),solutehard(solute_hard), solutetodummy(solute_todummy),solutefromdummy(solute_fromdummy),openmm_system(0), isInitialised(false), 
+                molgroup(molecule_group), solute(solute_group),solutehard(solute_hard), solutetodummy(solute_todummy),solutefromdummy(solute_fromdummy),
+                openmm_system(0),openmm_context(0), isSystemInitialised(false), isContextInitialised(false), 
                 CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
                 Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                 MCBarostat_frequency(25),ConstraintType("none"),
@@ -199,7 +202,7 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const MoleculeGroup &molecule_group, const Mo
                 CMMremoval_frequency(0), buffer_frequency(0), energy_frequency(100),device_index("0"),precision("single"),Alchemical_value(0.5),coulomb_power(0),
                 shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),energies(), perturbed_energies(),
                 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond),
-                minimize(false),minimize_tol(1.0),minimize_iterations(0)
+                minimize(false),minimize_tol(1.0),minimize_iterations(0),reinetialize_context(false)
 {}
 
 /** Copy constructor */
@@ -208,7 +211,8 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const OpenMMFrEnergyST &other)
                 frequent_save_velocities(other.frequent_save_velocities),
                 molgroup(other.molgroup), solute(other.solute), solutehard(other.solutehard), 
                 solutetodummy(other.solutetodummy), solutefromdummy(other.solutefromdummy),
-                openmm_system(other.openmm_system), isInitialised(other.isInitialised), 
+                openmm_system(other.openmm_system), openmm_context(other.openmm_context), isSystemInitialised(other.isSystemInitialised), 
+                isContextInitialised(other.isContextInitialised),
                 CutoffType(other.CutoffType),cutoff_distance(other.cutoff_distance),
                 field_dielectric(other.field_dielectric), Andersen_flag(other.Andersen_flag),
                 Andersen_frequency(other.Andersen_frequency), MCBarostat_flag(other.MCBarostat_flag),
@@ -220,7 +224,7 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const OpenMMFrEnergyST &other)
                 delta_alchemical(other.delta_alchemical),buffer_coords(other.buffer_coords),gradients(other.gradients),energies(other.energies), 
                 perturbed_energies(other.perturbed_energies),
                 Integrator_type(other.Integrator_type),friction(other.friction),integration_tol(other.integration_tol),timeskip(other.timeskip),
-                minimize(other.minimize),minimize_tol(other.minimize_tol),minimize_iterations(other.minimize_iterations)
+                minimize(other.minimize),minimize_tol(other.minimize_tol),minimize_iterations(other.minimize_iterations),reinetialize_context(other.reinetialize_context)
 {}
 
 /** Destructor */
@@ -240,7 +244,9 @@ OpenMMFrEnergyST& OpenMMFrEnergyST::operator=(const OpenMMFrEnergyST &other)
     solutetodummy=other.solutetodummy;
     solutefromdummy=other.solutefromdummy;
     openmm_system = other.openmm_system;
-    isInitialised = other.isInitialised;
+    openmm_context = other.openmm_context;
+    isSystemInitialised = other.isSystemInitialised;
+    isContextInitialised = other.isContextInitialised;
     CutoffType = other.CutoffType;
     cutoff_distance = other.cutoff_distance;
     field_dielectric = other.field_dielectric;
@@ -273,7 +279,8 @@ OpenMMFrEnergyST& OpenMMFrEnergyST::operator=(const OpenMMFrEnergyST &other)
     minimize=other.minimize;
     minimize_tol=other.minimize_tol;
     minimize_iterations=other.minimize_iterations;
-
+    reinetialize_context=other.reinetialize_context;
+    
     return *this;
 }
 
@@ -1396,10 +1403,19 @@ void OpenMMFrEnergyST::initialise()  {
                                          (initial_type_atom2.startsWith("h", Qt::CaseInsensitive) || final_type_atom2.startsWith("h", Qt::CaseInsensitive));
                             
                             bool H_O_X = (initial_type_atom0.startsWith("h", Qt::CaseInsensitive) || final_type_atom0.startsWith("h", Qt::CaseInsensitive)) && 
-                                         (initial_type_atom2.startsWith("o", Qt::CaseInsensitive) || final_type_atom2.startsWith("o", Qt::CaseInsensitive));
+                                         (initial_type_atom1.startsWith("o", Qt::CaseInsensitive) || final_type_atom1.startsWith("o", Qt::CaseInsensitive));
                                          
                             bool X_O_H = (initial_type_atom1.startsWith("o", Qt::CaseInsensitive) || final_type_atom1.startsWith("o", Qt::CaseInsensitive)) && 
                                          (initial_type_atom2.startsWith("h", Qt::CaseInsensitive) || final_type_atom2.startsWith("h", Qt::CaseInsensitive));
+
+                            if(Debug){
+                                if(H_X_H)
+                                    qDebug() << "type =  H_X_H";
+                                if(H_O_X)
+                                    qDebug() << "type =  H_O_X";
+                                if(X_O_H)
+                                    qDebug() << "type =  X_O_H";
+                            }
 
                             if(H_X_H || H_O_X || X_O_H){
 
@@ -1423,7 +1439,7 @@ void OpenMMFrEnergyST::initialise()  {
                                     }
                                     else{
                                         
-                                        if(true)
+                                        if(Debug)
                                             qDebug()<< "First perturbed bond was not foud in the perturned list";
                                         first_alchemical_bond = new BondID(three.atom0(),three.atom1());
                                     }
@@ -1442,13 +1458,13 @@ void OpenMMFrEnergyST::initialise()  {
                                             qDebug() << "Atom2 - Atom1";
                                     }
                                     else{
-                                        if(true)
+                                        if(Debug)
                                             qDebug()<< "Second perturbed bond was not foud in the perturned list";
                                         second_alchemical_bond = new BondID(three.atom2(),three.atom1());
                                     }
 
 
-                                    if(true)
+                                    if(Debug)
                                         qDebug() << "First Alchemical distance = " << first_alchemical_distance
                                                  << "Second Alchemical distance = " << second_alchemical_distance;
 
@@ -1495,7 +1511,7 @@ void OpenMMFrEnergyST::initialise()  {
                                     else
                                          throw SireError::program_bug(QObject::tr("No coorner bond"), CODELOC);
 
-                                    if(true){
+                                    if(Debug){
                                         if(first_alchemical_distance != -1.0){
                                             qDebug() << "First vector X = " << (bond1_vec.normalise() * first_alchemical_distance).x();
                                             qDebug() << "First vector Y = " << (bond1_vec.normalise() * first_alchemical_distance).y();
@@ -1520,23 +1536,53 @@ void OpenMMFrEnergyST::initialise()  {
                                     }
 
                                     double constraint_distance;
+                                    
+                                    double eq_angle = solute_angle_perturbation_params[3] * Alchemical_value + (1.0 - Alchemical_value) * solute_angle_perturbation_params[2];
 
-                                    if(first_alchemical_distance == -1.0 && second_alchemical_distance != -1.0)
-                                        constraint_distance = (bond1_vec - bond2_vec.normalise() * second_alchemical_distance).length();
+                                    if(first_alchemical_distance == -1.0 && second_alchemical_distance != -1.0){
 
-                                    else if (first_alchemical_distance != -1.0 && second_alchemical_distance == -1.0)
-                                        constraint_distance = (bond1_vec.normalise() * first_alchemical_distance - bond2_vec).length();
+                                        //Carnot theorem a^2 = c^2 + b^2 - a*b*c*cos(bc)
+                                        double sq  = bond1_vec.length() * bond1_vec.length() + 
+                                                     (bond2_vec.normalise() * second_alchemical_distance).length() * (bond2_vec.normalise() * second_alchemical_distance).length();
 
-                                    else if (first_alchemical_distance != -1.0 && second_alchemical_distance != -1.0)
-                                        constraint_distance = (bond1_vec.normalise() * first_alchemical_distance - bond2_vec.normalise() * second_alchemical_distance).length();
+                                        double dp = 2.0 * bond1_vec.length() * (bond2_vec.normalise() * second_alchemical_distance).length() * cos(eq_angle) ;
 
+                                        constraint_distance = sqrt(sq - dp);
+
+                                        //constraint_distance = (bond1_vec - bond2_vec.normalise() * second_alchemical_distance).length();
+                                    }
+                                    else if (first_alchemical_distance != -1.0 && second_alchemical_distance == -1.0){
+
+                                        //Carnot theorem a^2 = c^2 + b^2 - a*b*c*cos(bc)
+                                        double sq  = bond2_vec.length() * bond2_vec.length() + 
+                                                    (bond1_vec.normalise() *  first_alchemical_distance).length() * (bond1_vec.normalise() *  first_alchemical_distance).length();
+
+                                        double dp = 2.0 * bond2_vec.length() * (bond2_vec.normalise() * first_alchemical_distance).length() * cos(eq_angle) ;
+
+                                        constraint_distance = sqrt(sq - dp);
+
+                                        //constraint_distance = (bond1_vec.normalise() * first_alchemical_distance - bond2_vec).length();
+                                    }
+                                    else if (first_alchemical_distance != -1.0 && second_alchemical_distance != -1.0){
+
+                                        //Carnot theorem a^2 = c^2 + b^2 - a*b*c*cos(bc)
+                                        double sq  = (bond1_vec.normalise() * first_alchemical_distance).length() * (bond1_vec.normalise() * first_alchemical_distance).length() +
+                                                     (bond2_vec.normalise() * second_alchemical_distance).length() * (bond2_vec.normalise() * second_alchemical_distance).length();
+
+                                        double dp = 2.0 * (bond1_vec.normalise() * first_alchemical_distance).length() * (bond2_vec.normalise() * second_alchemical_distance).length() * cos(eq_angle) ;
+
+                                        constraint_distance = sqrt(sq - dp);
+
+                                        //constraint_distance = (bond1_vec.normalise() * first_alchemical_distance - bond2_vec.normalise() * second_alchemical_distance).length();
+                                    }
                                     else
                                          throw SireError::program_bug(QObject::tr("The angle does not contain perturbed bond"), CODELOC);
+
 
                                     system_openmm->addConstraint(idx0,idx2, constraint_distance *  OpenMM::NmPerAngstrom);
 
                                     if(Debug)
-                                        qDebug() << "CONSTRAINT DISTANCE = " << constraint_distance ;
+                                        qDebug() << "CONSTRAINT DISTANCE = " << constraint_distance << " A" ;
                             }
 
                         }//end if HANGLES
@@ -2112,7 +2158,7 @@ void OpenMMFrEnergyST::initialise()  {
     //IMPORTANT: PERTURBED ENERGY TORSIONS ARE ADDED ABOVE
     
     this->openmm_system = system_openmm;
-    this->isInitialised = true;
+    this->isSystemInitialised = true;
 
 }
 
@@ -2129,7 +2175,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     // Check that the openmm system has been initialised
     // !! Should check that the workspace is compatible with molgroup
-    if ( not this->isInitialised){
+    if ( not this->isSystemInitialised){
 
     qDebug() << "Not initialised ! ";
     throw SireError::program_bug(QObject::tr(
@@ -2150,72 +2196,77 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     const double converted_Temperature = convertTo(Temperature.value(), kelvin);
     const double converted_friction = convertTo( friction.value(), picosecond);
 
+    if(!isContextInitialised || (isContextInitialised && reinetialize_context)){
+        OpenMM::Integrator * integrator_openmm = NULL;
 
-    OpenMM::Integrator * integrator_openmm = NULL;
+        if (Integrator_type == "leapfrogverlet")
+            integrator_openmm = new OpenMM::VerletIntegrator(dt);//dt in picosecond
+        else if (Integrator_type == "variableleapfrogverlet")
+            integrator_openmm = new OpenMM::VariableVerletIntegrator(integration_tol);//integration tolerance error unitless
+        else if (Integrator_type == "langevin")
+            integrator_openmm = new OpenMM::LangevinIntegrator(converted_Temperature, converted_friction, dt);
+        else if (Integrator_type == "variablelangevin")
+            integrator_openmm = new OpenMM::VariableLangevinIntegrator(converted_Temperature, converted_friction, integration_tol);
+        else if (Integrator_type == "brownian")
+            integrator_openmm = new OpenMM::BrownianIntegrator(converted_Temperature, converted_friction, dt);
+        else 
+            throw SireError::program_bug(QObject::tr("The user defined Integrator type is not supported. Available types are leapfrogverlet, variableleapfrogverlet, langevin, variablelangevin, brownian"), CODELOC);
 
-    if (Integrator_type == "leapfrogverlet")
-        integrator_openmm = new OpenMM::VerletIntegrator(dt);//dt in picosecond
-    else if (Integrator_type == "variableleapfrogverlet")
-        integrator_openmm = new OpenMM::VariableVerletIntegrator(integration_tol);//integration tolerance error unitless
-    else if (Integrator_type == "langevin")
-         integrator_openmm = new OpenMM::LangevinIntegrator(converted_Temperature, converted_friction, dt);
-    else if (Integrator_type == "variablelangevin")
-        integrator_openmm = new OpenMM::VariableLangevinIntegrator(converted_Temperature, converted_friction, integration_tol);
-    else if (Integrator_type == "brownian")
-        integrator_openmm = new OpenMM::BrownianIntegrator(converted_Temperature, converted_friction, dt);
-    else 
-        throw SireError::program_bug(QObject::tr("The user defined Integrator type is not supported. Available types are leapfrogverlet, variableleapfrogverlet, langevin, variablelangevin, brownian"), CODELOC);
+        if (true){
+            qDebug() << "Using Integrator: " << Integrator_type;
 
-    if (true){
-        qDebug() << "Using Integrator: " << Integrator_type;
+            qDebug() << "Integration step = " << dt <<" ps";
 
-        qDebug() << "Integration step = " << dt <<" ps";
-
-        if(Integrator_type == "variablelangevin" || Integrator_type == "variableleapfrogverlet"){
-            qDebug() << "Integration Tol = " << integration_tol;
+            if(Integrator_type == "variablelangevin" || Integrator_type == "variableleapfrogverlet"){
+                qDebug() << "Integration Tol = " << integration_tol;
+            }
+            if(Integrator_type == "langevin" || Integrator_type == "variablelangevin" || Integrator_type == "brownian"){
+                qDebug() << "Converted Friction = " << converted_friction << "1/ps";
+            }
         }
-        if(Integrator_type == "langevin" || Integrator_type == "variablelangevin" || Integrator_type == "brownian"){
-            qDebug() << "Converted Friction = " << converted_friction << "1/ps";
-        }
-     }
 
-    OpenMM::Platform& platform_openmm = OpenMM::Platform::getPlatformByName(platform_type.toStdString());
+        OpenMM::Platform& platform_openmm = OpenMM::Platform::getPlatformByName(platform_type.toStdString());
 
-    if (platform_type == "OpenCL"){
+        if (platform_type == "OpenCL"){
 
-        const std::string prop = std::string("OpenCLDeviceIndex");
-        const std::string prec = std::string("OpenCLPrecision");
+            const std::string prop = std::string("OpenCLDeviceIndex");
+            const std::string prec = std::string("OpenCLPrecision");
 
-        platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );
-        platform_openmm.setPropertyDefaultValue(prec, precision.toStdString() );
+            platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );
+            platform_openmm.setPropertyDefaultValue(prec, precision.toStdString() );
         
-        if (Debug){
-            qDebug() << "Setting up OpenCL default Index to " << device_index;
-            qDebug() << "Setting up OpenCL precision to" << precision;
+            if (Debug){
+                qDebug() << "Setting up OpenCL default Index to " << device_index;
+                qDebug() << "Setting up OpenCL precision to" << precision;
+            }
         }
-    }
-    else if (platform_type == "CUDA"){
-        const std::string prop = std::string("CudaDeviceIndex");
-        const std::string prec = std::string("CudaPrecision");
-        platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );
-        platform_openmm.setPropertyDefaultValue(prec, precision.toStdString() );
+        else if (platform_type == "CUDA"){
+            const std::string prop = std::string("CudaDeviceIndex");
+            const std::string prec = std::string("CudaPrecision");
+            platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );
+            platform_openmm.setPropertyDefaultValue(prec, precision.toStdString() );
 
-        if (Debug){
-            qDebug() << "Setting up CUDA default Index to " << device_index;
-            qDebug() << "Setting up CUDA precision to" << precision;
-        }
+            if (Debug){
+                qDebug() << "Setting up CUDA default Index to " << device_index;
+                qDebug() << "Setting up CUDA precision to" << precision;
+            }
         
-    }
-    // JM Dec 12. Do we need to set for Reference?
+        }
+        // JM Dec 12. Do we need to set for Reference?
 
-    // Creating a context is the bottleneck in the setup step 
-    // Another implementation could have the context created once during initialisation. 
-    // But then have to figure out how to properly allocate/free context on the heap and make it 
-    // compatible with sire objects
-    OpenMM::Context context_openmm( *system_openmm, *integrator_openmm, platform_openmm);  
+        // Creating a context is the bottleneck in the setup step 
+        // Another implementation could have the context created once during initialisation. 
+        // But then have to figure out how to properly allocate/free context on the heap and make it 
+        // compatible with sire objects
+
+        delete openmm_context;
+        openmm_context = new OpenMM::Context( *system_openmm, *integrator_openmm, platform_openmm);
+        this->isContextInitialised = true;
+
+    }
 
     if (Debug)
-        qDebug() << "\n Using OpenMM platform = " <<context_openmm.getPlatform().getName().c_str()<<"\n";
+        qDebug() << "\n Using OpenMM platform = " <<openmm_context->getPlatform().getName().c_str()<<"\n";
 
     // Now update coordinates / velocities / dimensions with sire data
 
@@ -2230,7 +2281,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     // Conversion factor because sire units of time are in AKMA, whereas OpenMM uses picoseconds
 
     double AKMAPerPs = 0.04888821;
-    double PsPerAKMA = 1 / AKMAPerPs;
+    double PsPerAKMA = 1.0 / AKMAPerPs;
 
     const int nmols = ws.nMolecules();
 
@@ -2274,8 +2325,8 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         throw SireError::program_bug(QObject::tr("The number of atoms in the openmm system does not match the number of atoms in the sire workspace"), CODELOC);
     }
 
-    context_openmm.setPositions(positions_openmm);  
-    context_openmm.setVelocities(velocities_openmm);
+    openmm_context->setPositions(positions_openmm);  
+    openmm_context->setVelocities(velocities_openmm);
 
     if ( CutoffType == "cutoffperiodic" ){
 
@@ -2292,7 +2343,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
         //Set Periodic Box Condition
 
-        context_openmm.setPeriodicBoxVectors( OpenMM::Vec3(Box_x_Edge_Length,0,0),OpenMM::Vec3(0,Box_y_Edge_Length,0),OpenMM::Vec3(0,0,Box_z_Edge_Length) );
+        openmm_context->setPeriodicBoxVectors( OpenMM::Vec3(Box_x_Edge_Length,0,0),OpenMM::Vec3(0,Box_y_Edge_Length,0),OpenMM::Vec3(0,0,Box_z_Edge_Length) );
     }
 
     if (Debug)
@@ -2364,7 +2415,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     int sample_count=1;
 
 
-    //state_openmm=context_openmm.getState(infoMask);
+    //state_openmm=openmm_context->getState(infoMask);
     //qDebug() << "TOTAL Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ + state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
     //qDebug() << "Potential Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
     //qDebug() << "Kinetic Energy = " <<  state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
@@ -2402,12 +2453,14 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             qDebug() << "Minimization tollerance = " << minimize_tol;
             qDebug() << "Max number of minimitazion iterations (0 = untill tollerance is reached) = " << minimize_iterations << "\n"; 
         }
-        OpenMM::LocalEnergyMinimizer::minimize(context_openmm,minimize_tol,minimize_iterations);
+        OpenMM::LocalEnergyMinimizer::minimize(*openmm_context,minimize_tol,minimize_iterations);
         //integrator_openmm->setStepSize(0.001);
         //integrator_openmm->step(1000);
         //integrator_openmm->setStepSize(0.002);
     }
 
+
+    
 
     //Time skipping
     const double time_skip = convertTo( timeskip.value(), picosecond);
@@ -2424,7 +2477,8 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             exit(-1);
         }
 
-        integrator_openmm->step(new_nmoves);
+        
+        (openmm_context->getIntegrator()).step(new_nmoves);
 
         n_samples = (nmoves - new_nmoves) / energy_frequency;
     }
@@ -2435,7 +2489,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     /*std::map<std::string,double> pippo;//EXTRACT GLOBAL PARAMETERS FROM THE CONTEXT
 
-    state_openmm=context_openmm.getState(infoMask);
+    state_openmm=openmm_context->getState(infoMask);
 
     pippo =  state_openmm.getParameters();
     
@@ -2453,14 +2507,14 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 
         //*********************MD STEPS****************************
-        integrator_openmm->step(energy_frequency);
+        (openmm_context->getIntegrator()).step(energy_frequency);
 
         if(perturbed_energies[0])
-            context_openmm.setParameter("SSOnOff",1.0);//Solvent-Solvent OFF
+            openmm_context->setParameter("SSOnOff",1.0);//Solvent-Solvent OFF
 
         //dcd.write((int) sample_count);//Save a frame
 
-        state_openmm=context_openmm.getState(infoMask);
+        state_openmm=openmm_context->getState(infoMask);
 
         if(Debug)
             qDebug()<< "Total Time = " << state_openmm.getTime() << " ps";
@@ -2500,7 +2554,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
         if(Debug){
             qDebug() << "\nLambda = " << Alchemical_value;
-            state_openmm=context_openmm.getState(infoMask);
+            state_openmm=openmm_context->getState(infoMask);
             printf("*Potential energy lambda = %f kcal/mol\n" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
             //exit(-1);
         }
@@ -2523,26 +2577,26 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
             //NON BONDED TERMS
             if(perturbed_energies[0])
-                context_openmm.setParameter("lam",Alchemical_value - delta_alchemical);//1-5 HD
+                openmm_context->setParameter("lam",Alchemical_value - delta_alchemical);//1-5 HD
             //1-4 Interactions
             if(perturbed_energies[1])
-                context_openmm.setParameter("lamhd",Alchemical_value - delta_alchemical);//1-4 HD
+                openmm_context->setParameter("lamhd",Alchemical_value - delta_alchemical);//1-4 HD
             if(perturbed_energies[2])
-                context_openmm.setParameter("lamtd",1.0 - (Alchemical_value - delta_alchemical));//1-4 To Dummy
+                openmm_context->setParameter("lamtd",1.0 - (Alchemical_value - delta_alchemical));//1-4 To Dummy
             if(perturbed_energies[3])
-                context_openmm.setParameter("lamfd",Alchemical_value - delta_alchemical);//1-4 From Dummy
+                openmm_context->setParameter("lamfd",Alchemical_value - delta_alchemical);//1-4 From Dummy
             if(perturbed_energies[4])
-                context_openmm.setParameter("lamftd",Alchemical_value - delta_alchemical);//1-4 From Dummy to Dummy
+                openmm_context->setParameter("lamftd",Alchemical_value - delta_alchemical);//1-4 From Dummy to Dummy
             
             //BONDED PERTURBED TERMS
             if(perturbed_energies[5])
-                context_openmm.setParameter("lambond",Alchemical_value - delta_alchemical);//Bonds
+                openmm_context->setParameter("lambond",Alchemical_value - delta_alchemical);//Bonds
             if(perturbed_energies[6])
-                context_openmm.setParameter("lamangle",Alchemical_value - delta_alchemical);//Angles
+                openmm_context->setParameter("lamangle",Alchemical_value - delta_alchemical);//Angles
             if(perturbed_energies[7])
-                context_openmm.setParameter("lambda",Alchemical_value - delta_alchemical);//Torsions
+                openmm_context->setParameter("lambda",Alchemical_value - delta_alchemical);//Torsions
 
-            state_openmm=context_openmm.getState(infoMask);
+            state_openmm=openmm_context->getState(infoMask);
 
             potential_energy_lambda_minus_delta = state_openmm.getPotentialEnergy();
 
@@ -2562,26 +2616,26 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
             //NON BONDED TERMS
             if(perturbed_energies[0])
-                context_openmm.setParameter("lam",Alchemical_value + delta_alchemical);//1-5 HD
+                openmm_context->setParameter("lam",Alchemical_value + delta_alchemical);//1-5 HD
             //1-4 Interactions
             if(perturbed_energies[1])
-                context_openmm.setParameter("lamhd",Alchemical_value + delta_alchemical);//1-4 HD
+                openmm_context->setParameter("lamhd",Alchemical_value + delta_alchemical);//1-4 HD
             if(perturbed_energies[2])
-                context_openmm.setParameter("lamtd",1.0 - (Alchemical_value + delta_alchemical));//1-4 To Dummy
+                openmm_context->setParameter("lamtd",1.0 - (Alchemical_value + delta_alchemical));//1-4 To Dummy
             if(perturbed_energies[3])
-                context_openmm.setParameter("lamfd",Alchemical_value + delta_alchemical);//1-4 From Dummy
+                openmm_context->setParameter("lamfd",Alchemical_value + delta_alchemical);//1-4 From Dummy
             if(perturbed_energies[4])
-                context_openmm.setParameter("lamftd",Alchemical_value + delta_alchemical);//1-4 From Dummy to Dummy
+                openmm_context->setParameter("lamftd",Alchemical_value + delta_alchemical);//1-4 From Dummy to Dummy
             
             //BONDED PERTURBED TERMS
             if(perturbed_energies[5])
-                context_openmm.setParameter("lambond",Alchemical_value + delta_alchemical);//Bonds
+                openmm_context->setParameter("lambond",Alchemical_value + delta_alchemical);//Bonds
             if(perturbed_energies[6])
-                context_openmm.setParameter("lamangle",Alchemical_value + delta_alchemical);//Angles
+                openmm_context->setParameter("lamangle",Alchemical_value + delta_alchemical);//Angles
             if(perturbed_energies[7])
-                context_openmm.setParameter("lambda",Alchemical_value + delta_alchemical);//Torsions
+                openmm_context->setParameter("lambda",Alchemical_value + delta_alchemical);//Torsions
             
-            state_openmm=context_openmm.getState(infoMask);
+            state_openmm=openmm_context->getState(infoMask);
 
             potential_energy_lambda_plus_delta = state_openmm.getPotentialEnergy();
 
@@ -2600,26 +2654,26 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
             //NON BONDED TERMS
             if(perturbed_energies[0])
-                context_openmm.setParameter("lam",Alchemical_value + delta_alchemical);//1-5 HD
+                openmm_context->setParameter("lam",Alchemical_value + delta_alchemical);//1-5 HD
             //1-4 Interactions
             if(perturbed_energies[1])
-                context_openmm.setParameter("lamhd",Alchemical_value + delta_alchemical);//1-4 HD
+                openmm_context->setParameter("lamhd",Alchemical_value + delta_alchemical);//1-4 HD
             if(perturbed_energies[2])
-                context_openmm.setParameter("lamtd",1.0 - (Alchemical_value + delta_alchemical));//1-4 To Dummy
+                openmm_context->setParameter("lamtd",1.0 - (Alchemical_value + delta_alchemical));//1-4 To Dummy
             if(perturbed_energies[3])
-                context_openmm.setParameter("lamfd",Alchemical_value + delta_alchemical);//1-4 From Dummy
+                openmm_context->setParameter("lamfd",Alchemical_value + delta_alchemical);//1-4 From Dummy
             if(perturbed_energies[4])
-                context_openmm.setParameter("lamftd",Alchemical_value + delta_alchemical);//1-4 From Dummy to Dummy
+                openmm_context->setParameter("lamftd",Alchemical_value + delta_alchemical);//1-4 From Dummy to Dummy
             
             //BONDED PERTURBED TERMS
             if(perturbed_energies[5])
-                context_openmm.setParameter("lambond",Alchemical_value + delta_alchemical);//Bonds
+                openmm_context->setParameter("lambond",Alchemical_value + delta_alchemical);//Bonds
             if(perturbed_energies[6])
-                context_openmm.setParameter("lamangle",Alchemical_value + delta_alchemical);//Angles
+                openmm_context->setParameter("lamangle",Alchemical_value + delta_alchemical);//Angles
             if(perturbed_energies[7])
-                context_openmm.setParameter("lambda",Alchemical_value + delta_alchemical);//Torsions
+                openmm_context->setParameter("lambda",Alchemical_value + delta_alchemical);//Torsions
 
-            state_openmm=context_openmm.getState(infoMask);
+            state_openmm=openmm_context->getState(infoMask);
 
             potential_energy_lambda_plus_delta = state_openmm.getPotentialEnergy();
 
@@ -2629,26 +2683,26 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
             //NON BONDED TERMS
             if(perturbed_energies[0])
-                context_openmm.setParameter("lam",Alchemical_value - delta_alchemical);//1-5 HD
+                openmm_context->setParameter("lam",Alchemical_value - delta_alchemical);//1-5 HD
             //1-4 Interactions
             if(perturbed_energies[1])
-                context_openmm.setParameter("lamhd",Alchemical_value - delta_alchemical);//1-4 HD
+                openmm_context->setParameter("lamhd",Alchemical_value - delta_alchemical);//1-4 HD
             if(perturbed_energies[2])
-                context_openmm.setParameter("lamtd",1.0 - (Alchemical_value - delta_alchemical));//1-4 To Dummy
+                openmm_context->setParameter("lamtd",1.0 - (Alchemical_value - delta_alchemical));//1-4 To Dummy
             if(perturbed_energies[3])
-                context_openmm.setParameter("lamfd",Alchemical_value - delta_alchemical);//1-4 From Dummy
+                openmm_context->setParameter("lamfd",Alchemical_value - delta_alchemical);//1-4 From Dummy
             if(perturbed_energies[4])
-                context_openmm.setParameter("lamftd",Alchemical_value - delta_alchemical);//1-4 From Dummy to Dummy
+                openmm_context->setParameter("lamftd",Alchemical_value - delta_alchemical);//1-4 From Dummy to Dummy
 
             //BONDED PERTURBED TERMS
             if(perturbed_energies[5])
-                context_openmm.setParameter("lambond",Alchemical_value - delta_alchemical);//Bonds
+                openmm_context->setParameter("lambond",Alchemical_value - delta_alchemical);//Bonds
             if(perturbed_energies[6])
-                context_openmm.setParameter("lamangle",Alchemical_value - delta_alchemical);//Angles
+                openmm_context->setParameter("lamangle",Alchemical_value - delta_alchemical);//Angles
             if(perturbed_energies[7])
-                context_openmm.setParameter("lambda",Alchemical_value - delta_alchemical);//Torsions
+                openmm_context->setParameter("lambda",Alchemical_value - delta_alchemical);//Torsions
 
-            state_openmm=context_openmm.getState(infoMask);
+            state_openmm=openmm_context->getState(infoMask);
 
             potential_energy_lambda_minus_delta = state_openmm.getPotentialEnergy();
 
@@ -2701,27 +2755,27 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
         //NON BONDED TERMS
         if(perturbed_energies[0])
-            context_openmm.setParameter("lam",Alchemical_value);//1-5 HD
+            openmm_context->setParameter("lam",Alchemical_value);//1-5 HD
         //1-4 Interactions
         if(perturbed_energies[1])
-            context_openmm.setParameter("lamhd",Alchemical_value);//1-4 HD
+            openmm_context->setParameter("lamhd",Alchemical_value);//1-4 HD
         if(perturbed_energies[2])
-            context_openmm.setParameter("lamtd",1.0 - Alchemical_value);//1-4 To Dummy
+            openmm_context->setParameter("lamtd",1.0 - Alchemical_value);//1-4 To Dummy
         if(perturbed_energies[3])
-            context_openmm.setParameter("lamfd",Alchemical_value);//1-4 From Dummy
+            openmm_context->setParameter("lamfd",Alchemical_value);//1-4 From Dummy
         if(perturbed_energies[4])
-            context_openmm.setParameter("lamftd",Alchemical_value);//1-4 From Dummy to Dummy
+            openmm_context->setParameter("lamftd",Alchemical_value);//1-4 From Dummy to Dummy
 
         //BONDED PERTURBED TERMS
         if(perturbed_energies[5])
-            context_openmm.setParameter("lambond",Alchemical_value);//Bonds
+            openmm_context->setParameter("lambond",Alchemical_value);//Bonds
         if(perturbed_energies[6])
-            context_openmm.setParameter("lamangle",Alchemical_value);//Angles
+            openmm_context->setParameter("lamangle",Alchemical_value);//Angles
         if(perturbed_energies[7])
-            context_openmm.setParameter("lambda",Alchemical_value);//Torsions
+            openmm_context->setParameter("lambda",Alchemical_value);//Torsions
 
 
-        //state_openmm=context_openmm.getState(infoMask);
+        //state_openmm=openmm_context->getState(infoMask);
         //double dummy = state_openmm.getPotentialEnergy();
         //qDebug() << "\nDifference dummy = " << dummy - potential_energy_lambda<< "\n\n";
 
@@ -2730,13 +2784,13 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         //show_status(sample_count, n_samples);
 
         if(perturbed_energies[0])
-            context_openmm.setParameter("SSOnOff",0.0);//Solvent-Solvent ON
+            openmm_context->setParameter("SSOnOff",0.0);//Solvent-Solvent ON
 
 
         if(Debug){
-            state_openmm=context_openmm.getState(infoMask);
+            state_openmm=openmm_context->getState(infoMask);
             qDebug() << "\nLambda = " << Alchemical_value;
-            state_openmm=context_openmm.getState(infoMask);
+            state_openmm=openmm_context->getState(infoMask);
             printf("*Potential energy lambda = %f kcal/mol\n" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
         }
 
@@ -2759,7 +2813,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     // Now update the sire coordinates/velocities and box dimensions 
     timer.restart();
 
-    state_openmm = context_openmm.getState(infoMask);
+    state_openmm = openmm_context->getState(infoMask);
     positions_openmm = state_openmm.getPositions();
     velocities_openmm = state_openmm.getVelocities();
 
@@ -3286,6 +3340,15 @@ void OpenMMFrEnergyST::setMinimizeIterations(int iterations){
     minimize_iterations = iterations;
 
 }
+
+/** Set the flag to reinitialize the context*/
+void OpenMMFrEnergyST::setReinitializeContext(bool reinitialize){
+
+    reinetialize_context = reinitialize;
+
+}
+
+
 
 
 /** Create an empty workspace */
