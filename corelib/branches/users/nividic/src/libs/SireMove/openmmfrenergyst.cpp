@@ -1893,7 +1893,7 @@ void OpenMMFrEnergyST::initialise()  {
             // Variable number of parameters
             for (int k=0 ; k < improper_params.length() ; k = k + 3 ){
                 double v = improper_params[ k ];
-                double periodicity = improper_params[ k + 1 ];
+                int periodicity = improper_params[ k + 1 ];
                 double phase = improper_params[ k + 2 ];
 
                 bondTorsion_openmm->addTorsion(idx0, idx1, idx2, idx3, periodicity, phase , v * OpenMM::KJPerKcal);
