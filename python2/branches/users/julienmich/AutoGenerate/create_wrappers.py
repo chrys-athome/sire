@@ -557,8 +557,9 @@ if __name__ == "__main__":
                             "%s/QtGui.framework/Headers" % qtdir, 
                             "%s/QtOpenGL.framework/Headers" % qtdir ]
     else:
-        qt_include_dirs = [ qtdir, "%s/QtCore" % qtdir, "%s/QtGui" % qtdir,
-                                   "%s/QtXml" % qtdir,  "%s/QtOpenGL" % qtdir ]
+        #qt_include_dirs = [ qtdir, "%s/QtCore" % qtdir, "%s/QtGui" % qtdir,
+        #                           "%s/QtXml" % qtdir,  "%s/QtOpenGL" % qtdir ]
+        qt_include_dirs = [ qtdir, "%s/QtCore" % qtdir, "%s/QtXml" % qtdir ]
 
 
     boost_include_dirs = [ boostdir ]

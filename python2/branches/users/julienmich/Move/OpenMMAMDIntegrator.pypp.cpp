@@ -69,6 +69,8 @@ namespace bp = boost::python;
 
 #include <iostream>
 
+#include <string>
+
 #include "openmmacceleratedmdintegrator.h"
 
 SireMove::OpenMMAMDIntegrator __copy__(const SireMove::OpenMMAMDIntegrator &other){ return SireMove::OpenMMAMDIntegrator(other); }
@@ -117,14 +119,14 @@ void register_OpenMMAMDIntegrator_class(){
                 , ensemble_function_value );
         
         }
-        { //::SireMove::OpenMMAMDIntegrator::getAlphatorsion
+        { //::SireMove::OpenMMAMDIntegrator::getAlphaGroup1
         
-            typedef double ( ::SireMove::OpenMMAMDIntegrator::*getAlphatorsion_function_type )(  ) ;
-            getAlphatorsion_function_type getAlphatorsion_function_value( &::SireMove::OpenMMAMDIntegrator::getAlphatorsion );
+            typedef double ( ::SireMove::OpenMMAMDIntegrator::*getAlphaGroup1_function_type )(  ) ;
+            getAlphaGroup1_function_type getAlphaGroup1_function_value( &::SireMove::OpenMMAMDIntegrator::getAlphaGroup1 );
             
             OpenMMAMDIntegrator_exposer.def( 
-                "getAlphatorsion"
-                , getAlphatorsion_function_value );
+                "getAlphaGroup1"
+                , getAlphaGroup1_function_value );
         
         }
         { //::SireMove::OpenMMAMDIntegrator::getAndersen
@@ -217,14 +219,14 @@ void register_OpenMMAMDIntegrator_class(){
                 , getDeviceIndex_function_value );
         
         }
-        { //::SireMove::OpenMMAMDIntegrator::getEtorsion
+        { //::SireMove::OpenMMAMDIntegrator::getEGroup1
         
-            typedef ::SireUnits::Dimension::MolarEnergy ( ::SireMove::OpenMMAMDIntegrator::*getEtorsion_function_type )(  ) ;
-            getEtorsion_function_type getEtorsion_function_value( &::SireMove::OpenMMAMDIntegrator::getEtorsion );
+            typedef ::SireUnits::Dimension::MolarEnergy ( ::SireMove::OpenMMAMDIntegrator::*getEGroup1_function_type )(  ) ;
+            getEGroup1_function_type getEGroup1_function_value( &::SireMove::OpenMMAMDIntegrator::getEGroup1 );
             
             OpenMMAMDIntegrator_exposer.def( 
-                "getEtorsion"
-                , getEtorsion_function_value );
+                "getEGroup1"
+                , getEGroup1_function_value );
         
         }
         { //::SireMove::OpenMMAMDIntegrator::getField_dielectric
@@ -362,14 +364,14 @@ void register_OpenMMAMDIntegrator_class(){
         
         }
         OpenMMAMDIntegrator_exposer.def( bp::self == bp::self );
-        { //::SireMove::OpenMMAMDIntegrator::setAlphatorsion
+        { //::SireMove::OpenMMAMDIntegrator::setAlphaGroup1
         
-            typedef void ( ::SireMove::OpenMMAMDIntegrator::*setAlphatorsion_function_type )( double ) ;
-            setAlphatorsion_function_type setAlphatorsion_function_value( &::SireMove::OpenMMAMDIntegrator::setAlphatorsion );
+            typedef void ( ::SireMove::OpenMMAMDIntegrator::*setAlphaGroup1_function_type )( double ) ;
+            setAlphaGroup1_function_type setAlphaGroup1_function_value( &::SireMove::OpenMMAMDIntegrator::setAlphaGroup1 );
             
             OpenMMAMDIntegrator_exposer.def( 
-                "setAlphatorsion"
-                , setAlphatorsion_function_value
+                "setAlphaGroup1"
+                , setAlphaGroup1_function_value
                 , ( bp::arg("arg0") ) );
         
         }
@@ -472,14 +474,14 @@ void register_OpenMMAMDIntegrator_class(){
                 , ( bp::arg("arg0") ) );
         
         }
-        { //::SireMove::OpenMMAMDIntegrator::setEtorsion
+        { //::SireMove::OpenMMAMDIntegrator::setEGroup1
         
-            typedef void ( ::SireMove::OpenMMAMDIntegrator::*setEtorsion_function_type )( ::SireUnits::Dimension::MolarEnergy ) ;
-            setEtorsion_function_type setEtorsion_function_value( &::SireMove::OpenMMAMDIntegrator::setEtorsion );
+            typedef void ( ::SireMove::OpenMMAMDIntegrator::*setEGroup1_function_type )( ::SireUnits::Dimension::MolarEnergy ) ;
+            setEGroup1_function_type setEGroup1_function_value( &::SireMove::OpenMMAMDIntegrator::setEGroup1 );
             
             OpenMMAMDIntegrator_exposer.def( 
-                "setEtorsion"
-                , setEtorsion_function_value
+                "setEGroup1"
+                , setEGroup1_function_value
                 , ( bp::arg("arg0") ) );
         
         }
