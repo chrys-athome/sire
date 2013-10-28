@@ -131,7 +131,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyST 
         << velver.Andersen_flag <<  velver.Andersen_frequency 
         << velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
         <<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.buffer_frequency << velver.energy_frequency
-        << velver.device_index <<velver.precision << velver.Alchemical_value << velver.coulomb_power << velver.shift_delta << velver.delta_alchemical << velver.buffer_coords
+        << velver.device_index <<velver.precision << velver.Alchemical_value << velver.coulomb_power << velver.shift_delta << velver.delta_alchemical 
         << velver.gradients << velver.energies <<velver.perturbed_energies <<  velver.Integrator_type << velver.friction << velver.integration_tol << velver.timeskip 
         << velver.minimize << velver.minimize_tol << velver.minimize_iterations << velver.reinetialize_context
         << static_cast<const Integrator&>(velver);
@@ -154,7 +154,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyST &velve
         >> velver.Andersen_flag >>  velver.Andersen_frequency 
         >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature 
         >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.buffer_frequency >> velver.energy_frequency
-        >> velver.device_index >> velver.precision >> velver.Alchemical_value >> velver.coulomb_power >> velver.shift_delta >> velver.delta_alchemical >> velver.buffer_coords
+        >> velver.device_index >> velver.precision >> velver.Alchemical_value >> velver.coulomb_power >> velver.shift_delta >> velver.delta_alchemical
         >> velver.gradients >> velver.energies >> velver.perturbed_energies >> velver.Integrator_type >> velver.friction >> velver.integration_tol >> velver.timeskip
         >> velver.minimize >> velver.minimize_tol >> velver.minimize_iterations >> velver.reinetialize_context
         >> static_cast<Integrator&>(velver);
@@ -184,7 +184,7 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(bool frequent_save)
                 MCBarostat_frequency(25),ConstraintType("none"),
                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
                 CMMremoval_frequency(0), buffer_frequency(0),energy_frequency(100),device_index("0"), precision("single"), Alchemical_value(0.5),coulomb_power(0),
-                shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),energies(), perturbed_energies(),
+                shift_delta(2.0),delta_alchemical(0.001),gradients(),energies(), perturbed_energies(),
                 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond),
                 minimize(false),minimize_tol(1.0),minimize_iterations(0),reinetialize_context(false)
 {}
@@ -200,7 +200,7 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const MoleculeGroup &molecule_group, const Mo
                 MCBarostat_frequency(25),ConstraintType("none"),
                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
                 CMMremoval_frequency(0), buffer_frequency(0), energy_frequency(100),device_index("0"),precision("single"),Alchemical_value(0.5),coulomb_power(0),
-                shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),energies(), perturbed_energies(),
+                shift_delta(2.0),delta_alchemical(0.001),gradients(),energies(), perturbed_energies(),
                 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond),
                 minimize(false),minimize_tol(1.0),minimize_iterations(0),reinetialize_context(false)
 {}
@@ -221,7 +221,7 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const OpenMMFrEnergyST &other)
                 Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency),
                 buffer_frequency(other.buffer_frequency), energy_frequency(other.energy_frequency),device_index(other.device_index),precision(other.precision),Alchemical_value(other.Alchemical_value),
                 coulomb_power(other.coulomb_power),shift_delta(other.shift_delta),
-                delta_alchemical(other.delta_alchemical),buffer_coords(other.buffer_coords),gradients(other.gradients),energies(other.energies), 
+                delta_alchemical(other.delta_alchemical), gradients(other.gradients),energies(other.energies), 
                 perturbed_energies(other.perturbed_energies),
                 Integrator_type(other.Integrator_type),friction(other.friction),integration_tol(other.integration_tol),timeskip(other.timeskip),
                 minimize(other.minimize),minimize_tol(other.minimize_tol),minimize_iterations(other.minimize_iterations),reinetialize_context(other.reinetialize_context)
@@ -268,7 +268,6 @@ OpenMMFrEnergyST& OpenMMFrEnergyST::operator=(const OpenMMFrEnergyST &other)
     coulomb_power = other.coulomb_power;
     shift_delta = other.shift_delta;
     delta_alchemical = other.delta_alchemical;
-    buffer_coords = other.buffer_coords;
     gradients = other.gradients;
     energies = other.energies;
     perturbed_energies = other.perturbed_energies;
@@ -2252,12 +2251,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             }
         
         }
-        // JM Dec 12. Do we need to set for Reference?
 
-        // Creating a context is the bottleneck in the setup step 
-        // Another implementation could have the context created once during initialisation. 
-        // But then have to figure out how to properly allocate/free context on the heap and make it 
-        // compatible with sire objects
 
         delete openmm_context;
         openmm_context = new OpenMM::Context( *system_openmm, *integrator_openmm, platform_openmm);
@@ -2460,7 +2454,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     }
 
 
-    
 
     //Time skipping
     const double time_skip = convertTo( timeskip.value(), picosecond);
@@ -2742,10 +2735,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             qDebug() << "*Istantaneus Energy Gradient = " << -1.0/(2.0*delta_alchemical*beta) * log(plus / minus) * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
         }
 
-
-        // JM why buffer_coords is used to store gradients?
-        if(buffer_coords && sample_count!=(n_samples)){
-            gradients.append(Energy_Gradient_lamda * OpenMM::KcalPerKJ);
+        if(sample_count!=(n_samples)){
             energies.append(avg_pot_energy_lambda * OpenMM::KcalPerKJ);
         }
         if(sample_count==(n_samples)){
@@ -3226,21 +3216,6 @@ void OpenMMFrEnergyST::setDeltatAlchemical(double deltaalchemical){
 
 }
 
-/** Get the flag to buffer coordinate during the free energy calculation*/
-bool OpenMMFrEnergyST::getBufferCoords(void){
-
-    return buffer_coords;
-
-
-}
-
-
-/** Set the flag to buffer coordinate during the free energy calculation*/
-void OpenMMFrEnergyST::setBufferCoords(bool buffer){
-
-     buffer_coords = buffer;
-
-}
 
 /** Calculated Gradient*/
 QVector<double> OpenMMFrEnergyST::getGradients(void){
@@ -3347,8 +3322,6 @@ void OpenMMFrEnergyST::setReinitializeContext(bool reinitialize){
     reinetialize_context = reinitialize;
 
 }
-
-
 
 
 /** Create an empty workspace */

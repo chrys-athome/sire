@@ -158,9 +158,6 @@ public:
     double getDeltaAlchemical(void);
     void setDeltatAlchemical(double);
 
-    bool getBufferCoords(void);
-    void setBufferCoords(bool);
-
     QVector<double> getGradients(void);
     QVector<double> getEnergies(void);
 
@@ -252,8 +249,6 @@ private:
     double shift_delta;
 
     double delta_alchemical;
-
-    bool buffer_coords;
 
     QVector<double> gradients;
 
