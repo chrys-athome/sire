@@ -1462,7 +1462,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
         monitor_prosol.add(mobile_solutes)
         system.add(monitor_prosol)
 
-    residue_nrgmon = FreeEnergyMonitor(monitor_prosol, ligand_group, swap_water_group)
+    residue_nrgmon = FreeEnergyMonitor(monitor_prosol, ligand_group, mobile_swap)
 
     nrgmons = {}
     nrgmons["residue_nrgmon"] = residue_nrgmon
@@ -1503,8 +1503,8 @@ def mergeSystems(protein_system, water_system, ligand_mol):
 
         freewater_assigner.update(system)
 
-        boundwater_nrgmon = FreeEnergyMonitor(boundwater_assigner, ligand_group, swap_water_group)
-        freewater_nrgmon = FreeEnergyMonitor(freewater_assigner, ligand_group, swap_water_group)
+        boundwater_nrgmon = FreeEnergyMonitor(boundwater_assigner, ligand_group, mobile_swap)
+        freewater_nrgmon = FreeEnergyMonitor(freewater_assigner, ligand_group, mobile_swap)
 
         nrgmons["boundwater_nrgmon"] = boundwater_nrgmon
         nrgmons["freewater_nrgmon"] = freewater_nrgmon
