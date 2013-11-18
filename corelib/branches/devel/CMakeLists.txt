@@ -34,6 +34,10 @@ endif()
 # name the project
 project (SIRE CXX C)
 
+# Whether or not to build the parts of Sire that depend on
+# a graphical environment (e.g. inquire)
+option ( SIRE_BUILD_GUI "Build graphical applications" ON )
+
 # Create a file in which we can save the values of all useful variables.
 # This will mean that projects using Sire won't have to set these variables
 set (SIRE_VARIABLES_FILE "${CMAKE_BINARY_DIR}/SireCompileVariables.cmake")
