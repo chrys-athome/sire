@@ -13,13 +13,6 @@ set ( NEED_BUILD_QT TRUE )
 if ( SIRE_BUILD_GUI )
   message( STATUS "Need also to build QtGui to create Sire GUIs" )
 
-  # Need to look for OpenGL first...
-  message(STATUS "CMAKE_OSX_SYSROOT=${CMAKE_OSX_SYSROOT}")
-  find_package(OpenGL)
-  if (OPENGL_FOUND)
-    message(STATUS "Using OpenGL from ${OPENGL_INCLUDE_DIR}, ${OPENGL_LIBRARIES}")
-  endif()
-
   set( Qt5Widgets_DIR "${BUNDLE_STAGEDIR}/lib/cmake/Qt5Widgets" )
   find_package( Qt5Widgets QUIET )
 
@@ -159,6 +152,24 @@ if ( NEED_BUILD_QT )
           execute_process( COMMAND ${CMAKE_INSTALL_NAME_TOOL} -id "@rpath/libQt5Widgets_debug.dylib" ${BUNDLE_STAGEDIR}/lib/libQt5Widgets_debug.dylib )
         endif()
       endif()
+
+      set( Qt5Gui_DIR "${BUNDLE_STAGEDIR}/lib/cmake/Qt5Gui" )
+      find_package( Qt5Gui )
+      if ( Qt5Gui_FOUND )
+        if (APPLE)
+          execute_process( COMMAND ${CMAKE_INSTALL_NAME_TOOL} -id "@rpath/libQt5Gui.dylib" ${BUNDLE_STAGEDIR}/lib/libQt5Gui.dylib )
+          execute_process( COMMAND ${CMAKE_INSTALL_NAME_TOOL} -id "@rpath/libQt5Gui_debug.dylib" ${BUNDLE_STAGEDIR}/lib/libQt5Gui_debug.dylib )
+        endif()
+      endif()
+
+      set( Qt5PrintSupport_DIR "${BUNDLE_STAGEDIR}/lib/cmake/Qt5PrintSupport" )
+      find_package( Qt5PrintSupport )
+      if ( Qt5PrintSupport_FOUND )
+        if (APPLE)
+          execute_process( COMMAND ${CMAKE_INSTALL_NAME_TOOL} -id "@rpath/libQt5PrintSupport.dylib" ${BUNDLE_STAGEDIR}/lib/libQt5PrintSupport.dylib )
+          execute_process( COMMAND ${CMAKE_INSTALL_NAME_TOOL} -id "@rpath/libQt5PrintSupport_debug.dylib" ${BUNDLE_STAGEDIR}/lib/libQt5PrintSupport_debug.dylib )
+        endif()
+      endif()
     endif()
   endif()
 endif()
@@ -170,6 +181,19 @@ if ( SIRE_BUILD_GUI )
     get_target_property(QtWidgets_location Qt5::Widgets LOCATION)
     message( STATUS "Library: ${QtCore_location}" )
     message( STATUS "Library: ${QtWidgets_location}" )
+
+    message( STATUS "Sire will also use QtGui and QtPrintSupport..." )
+
+    set( Qt5Gui_DIR "${BUNDLE_STAGEDIR}/lib/cmake/Qt5Gui" )
+    find_package( Qt5Gui )
+    set( Qt5PrintSupport_DIR "${BUNDLE_STAGEDIR}/lib/cmake/Qt5PrintSupport" )
+    find_package( Qt5PrintSupport )
+
+    get_target_property(QtGui_location Qt5::Gui LOCATION)
+    get_target_property(QtPrint_location Qt5::PrintSupport LOCATION)
+    message( STATUS "Library: ${QtGui_location}")
+    message( STATUS "Library: ${QtPrint_location}")
+
     set( SIRE_FOUND_QT TRUE )
   else()
     message( STATUS "Strange? Cannot find the file containing the cmake for Qt5.

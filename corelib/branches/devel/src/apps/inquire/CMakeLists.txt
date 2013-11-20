@@ -10,6 +10,8 @@ include_directories(${BOOST_INCLUDE_DIR})
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+set( CMAKE_AUTOMOC TRUE )
+
 set ( INQUIRE_HEADERS
 
       qcustomplot.h
@@ -31,6 +33,9 @@ add_executable ( inquire ${INQUIRE_SOURCES} )
 target_link_libraries (inquire
                        SireIO
                        SireStream
+                       Qt5::Gui
+                       Qt5::Widgets
+                       Qt5::PrintSupport
                       )
 
 # installation
@@ -43,6 +48,6 @@ install( TARGETS inquire
 if (APPLE)
   add_custom_command(TARGET inquire
       POST_BUILD
-      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../${SIRE_LIBS}" sire
-      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../${SIRE_BUNDLED_LIBS}" sire)
+      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../${SIRE_LIBS}" inquire
+      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../${SIRE_BUNDLED_LIBS}" inquire)
 endif()
