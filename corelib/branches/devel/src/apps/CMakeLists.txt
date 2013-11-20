@@ -9,4 +9,4 @@
 add_subdirectory (sire)
 add_subdirectory (testmulti)
 add_subdirectory (test_system)
-add_subdirectory (inquire)
+#add_subdirectory (inquire)

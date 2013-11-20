@@ -10,8 +10,8 @@
 ############ SETTING INITIAL SIRE VARIABLES
 ############
 
-# require cmake >= 2.8.11
-cmake_minimum_required(VERSION 2.8.11 FATAL_ERROR)
+# require cmake >= 2.8.12
+cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 cmake_policy(VERSION 2.8)
 
 # use loose loop syntax in CMakeLists files
@@ -545,7 +545,7 @@ if ( ${SIRE_ENABLE_BUNDLING} )
     endif()
 
     if ( ${SIRE_BUNDLE_QT} )
-      include( "src/bundled/install_qtbase.cmake" )
+      include( "src/bundled/install_qt5.cmake" )
     endif()
 
     if ( NOT ${BUNDLE_STAGEDIR} STREQUAL "${CMAKE_INSTALL_PREFIX}/${SIRE_BUNDLED_DIR}" )
