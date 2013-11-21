@@ -5,23 +5,24 @@
 #include <QMainWindow>
 
 #include "SireStream/streamdata.hpp"
+#include "SireStream/metatype.h"
+
+#include "SireBase/property.h"
+
+#include "SireAnalysis/ti.h"
 
 #include "SireError/errors.h"
 
 #include <QDebug>
 
+#include "tostring.h"
+
+using namespace SireAnalysis;
 using namespace SireStream;
+using namespace SireBase;
 
 int main(int argc, char **argv)
 {
-    // generate some data:
-    QVector<double> x(101), y(101); // initialize with entries 0..100
-    for (int i=0; i<101; ++i)
-    {
-      x[i] = i/50.0 - 1; // x goes from -1 to 1
-      y[i] = x[i]*x[i]; // let's plot a quadratic function
-    }
-
     QString file_to_load;
 
     if (argc > 0)
@@ -48,6 +49,8 @@ int main(int argc, char **argv)
         }
     }
 
+    QList<PropertyPtr> props;
+
     if (not file_to_load.isEmpty())
     {
         qDebug() << "Loading" << file_to_load;
@@ -73,33 +76,78 @@ int main(int argc, char **argv)
         
         for (int i=0; i<objects.count(); ++i)
         {
-            qDebug() << (i+1) << objects.at(i).get<1>();
+            QString type_name = objects.at(i).get<1>();
+            QString root_type = SireStream::registeredRoot(type_name);
             
-            int typ = QMetaType::type(objects.at(i).get<1>().toUtf8());
-            
-            qDebug() << QMetaType::typeName(typ) << QMetaType::isRegistered(typ);
-            
-            QMetaType meta(typ);
-            
-            qDebug() << meta.isValid() << meta.sizeOf(typ);
+            if (root_type == Property::typeName())
+            {
+                props.append( PropertyPtr(
+                    static_cast<const Property*>(objects.at(i).get<0>().get())->clone() ) );
+            }
         }
         
-        return 0;
+        objects.clear();
+        
+        foreach (PropertyPtr prop, props)
+        {
+            qDebug() << "Property" << prop.read().toString();
+        }
     }
     
     QApplication *a = new QApplication(argc, argv);
 
     QCustomPlot *customPlot = new QCustomPlot();
     
+    QVector<DataPoint> points;
+    
+    foreach (PropertyPtr prop, props)
+    {
+        if (prop.read().isA<TI>())
+        {
+            TI ti = prop.read().asA<TI>();
+            qDebug() << ti.toString();
+            qDebug() << ti[-1].toString();
+            qDebug() << ti[-1].integrate().toString();
+            points = ti.merge(ti.nIterations()/2, ti.nIterations()-1).integrate().values();
+            qDebug() << Sire::toString(points);
+            break;
+        }
+    }
+
     // create graph and assign data to it:
     customPlot->addGraph();
+    
+    QVector<double> x;
+    QVector<double> y;
+    
+    double ymin = 1000000;
+    double ymax = -1000000;
+    
+    foreach (DataPoint point, points)
+    {
+        x.append( point.x() );
+        y.append( point.y() );
+        
+        ymin = qMin(ymin, point.y());
+        ymax = qMax(ymax, point.y());
+        
+        qDebug() << point.x() << point.y();
+    }
+    
+    double delta = (ymax - ymin);
+    
+    ymin -= 0.1*delta;
+    ymax += 0.1*delta;
+    
+    qDebug() << ymin << ymax;
+    
     customPlot->graph(0)->setData(x, y);
     // give the axes some labels:
-    customPlot->xAxis->setLabel("x");
-    customPlot->yAxis->setLabel("y");
+    customPlot->xAxis->setLabel("lambda");
+    customPlot->yAxis->setLabel("delta G");
     // set axes ranges, so we see all data:
-    customPlot->xAxis->setRange(-1, 1);
-    customPlot->yAxis->setRange(0, 1);
+    customPlot->xAxis->setRange(0, 1);
+    customPlot->yAxis->setRange(ymin, ymax);
     customPlot->replot();
 
     customPlot->setWindowTitle("inquire");
