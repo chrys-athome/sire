@@ -50,7 +50,7 @@ using namespace SireBase;
 using namespace SireUnits;
 using namespace SireStream;
 
-static const RegisterMetaType<Vector> r_vector;
+static const RegisterMetaType<Vector> r_vector(NO_ROOT);
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const SireMaths::Vector &vec)

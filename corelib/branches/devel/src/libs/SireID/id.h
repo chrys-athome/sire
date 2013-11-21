@@ -40,6 +40,23 @@ SIRE_BEGIN_HEADER
 
 namespace SireID
 {
+class ID;
+}
+
+namespace Sire
+{
+
+template<>
+struct SIRE_EXPORT RegisterRootClass<SireID::ID>
+{
+    static void registerLeaf(const QString &type_name);
+    static void registerBranch(const QString &type_name);
+};
+
+}
+
+namespace SireID
+{
 
 /** This is the base class of all ID objects. An ID object
     is an object that is used to identify another object.
@@ -49,6 +66,8 @@ namespace SireID
 class SIREID_EXPORT ID
 {
 public:
+    typedef ID ROOT;
+
     ID();
     ID(const ID&);
     

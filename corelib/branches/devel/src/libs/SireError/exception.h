@@ -49,6 +49,18 @@ class QDataStream;
 QDataStream& operator<<(QDataStream&, const SireError::exception&);
 QDataStream& operator>>(QDataStream&, SireError::exception&);
 
+namespace Sire
+{
+
+template<>
+struct SIRE_EXPORT RegisterRootClass<SireError::exception>
+{
+    static void registerLeaf(const QString &type_name);
+    static void registerBranch(const QString &type_name);
+};
+
+}
+
 namespace SireError
 {
 
@@ -67,6 +79,8 @@ friend QDataStream& ::operator<<(QDataStream&, const exception&);
 friend QDataStream& ::operator>>(QDataStream&, exception&);
 
 public:
+    typedef SireError::exception ROOT;
+
     exception();
     exception(QString error, QString place = QString::null);
 

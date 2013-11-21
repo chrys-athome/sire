@@ -44,6 +44,21 @@ using namespace SireStream;
 Q_GLOBAL_STATIC( QThreadStorage<QString*>, pidStrings );
 Q_GLOBAL_STATIC( QString, processString );
 
+namespace Sire
+{
+
+void RegisterRootClass<SireError::exception>::registerLeaf(const QString &type_name)
+{
+    qDebug() << "Registering" << type_name << "as a leaf of SireError::exception";
+}
+
+void RegisterRootClass<SireError::exception>::registerBranch(const QString &type_name)
+{
+    qDebug() << "Registering" << type_name << "as a branch of SireError::exception";
+}
+
+}
+
 namespace SireError
 {
 

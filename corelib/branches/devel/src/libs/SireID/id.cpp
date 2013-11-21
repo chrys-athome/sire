@@ -30,7 +30,24 @@
 #include "name.h"
 #include "number.h"
 
+#include <QDebug>
+
 using namespace SireID;
+
+namespace Sire
+{
+
+void RegisterRootClass<SireID::ID>::registerLeaf(const QString &type_name)
+{
+    qDebug() << "Registering" << type_name << "as a leaf of SireID::ID";
+}
+
+void RegisterRootClass<SireID::ID>::registerBranch(const QString &type_name)
+{
+    qDebug() << "Registering" << type_name << "as a branch of SireID::ID";
+}
+
+}
 
 ///////////
 /////////// Implementation of ID

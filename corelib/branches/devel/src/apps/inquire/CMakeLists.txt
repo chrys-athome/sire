@@ -31,6 +31,10 @@ add_executable ( inquire ${INQUIRE_SOURCES} )
 
 # Link to other Sire libraries
 target_link_libraries (inquire
+                       SireAnalysis
+                       Squire
+                       SireMM
+                       SireSystem
                        SireIO
                        SireStream
                        Qt5::Gui
