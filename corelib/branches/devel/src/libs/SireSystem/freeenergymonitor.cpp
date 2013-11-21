@@ -60,7 +60,7 @@ using std::pair;
 ///////// Implementation of AssignerGroup
 /////////
 
-static const RegisterMetaType<AssignerGroup> r_assignergroup;
+static const RegisterMetaType<AssignerGroup> r_assignergroup(NO_ROOT);
 
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const AssignerGroup &group)
 {

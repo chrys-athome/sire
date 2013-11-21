@@ -43,18 +43,6 @@ namespace SireID
 class ID;
 }
 
-namespace Sire
-{
-
-template<>
-struct SIRE_EXPORT RegisterRootClass<SireID::ID>
-{
-    static void registerLeaf(const QString &type_name);
-    static void registerBranch(const QString &type_name);
-};
-
-}
-
 namespace SireID
 {
 

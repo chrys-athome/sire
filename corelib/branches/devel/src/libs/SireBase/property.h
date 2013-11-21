@@ -82,18 +82,6 @@ QDataStream& operator>>(QDataStream&, SireBase::GlobalPropPtr<T>&);
 
 class QMutex;
 
-namespace Sire
-{
-
-template<>
-struct SIRE_EXPORT RegisterRootClass<SireBase::Property>
-{
-    static void registerLeaf(const QString &type_name);
-    static void registerBranch(const QString &type_name);
-};
-
-}
-
 namespace SireBase
 {
 

@@ -46,18 +46,26 @@ Q_GLOBAL_STATIC( QString, processString );
 
 namespace Sire
 {
-
-void RegisterRootClass<SireError::exception>::registerLeaf(const QString &type_name)
+namespace detail
 {
-    qDebug() << "Registering" << type_name << "as a leaf of SireError::exception";
-}
 
-void RegisterRootClass<SireError::exception>::registerBranch(const QString &type_name)
-{
-    qDebug() << "Registering" << type_name << "as a branch of SireError::exception";
-}
+    void SIRE_EXPORT registerLeaf(const QString &type_name, const char *root)
+    {
+        qDebug() << "Registering class" << type_name << "as a leaf of" << root;
+    }
+    
+    void SIRE_EXPORT registerBranch(const QString &type_name, const char *root)
+    {
+        qDebug() << "Registering class" << type_name << "as a branch of" << root;
+    }
+    
+    void SIRE_EXPORT registerRootless(const QString &type_name)
+    {
+        qDebug() << "Registering class" << type_name << "as rootless";
+    }
 
-}
+} // end of namespace detail
+} // end of namespace Sire
 
 namespace SireError
 {

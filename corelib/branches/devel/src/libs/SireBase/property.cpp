@@ -55,22 +55,6 @@ QMutex SIREBASE_EXPORT *globalLock()
 
 } // end of namespace SireBase
 
-namespace Sire
-{
-
-void RegisterRootClass<SireBase::Property>::registerLeaf(const QString &type_name)
-{
-    qDebug() << "Registering" << type_name << "as a leaf with root SireBase::Property";
-}
-
-void RegisterRootClass<SireBase::Property>::registerBranch(const QString &type_name)
-{
-    qDebug() << "Registering" << type_name << "as a branch with root SireBase::Property";
-}
-
-} // end of namespace Sire
-
-
 ///////////////
 /////////////// Implementation of Property
 ///////////////
