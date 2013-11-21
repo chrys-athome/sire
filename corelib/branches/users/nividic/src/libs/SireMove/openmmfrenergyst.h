@@ -189,6 +189,8 @@ public:
 
     void setReinitializeContext(bool);
 
+    double getGradient(void);
+
 private:
     /** Whether or not to save the velocities after every step, or to save them at the end of all of the steps */
     bool frequent_save_velocities;
@@ -271,6 +273,13 @@ private:
     int minimize_iterations;
 
     bool reinetialize_context;
+
+    double GF_acc;
+
+    double GB_acc;
+
+    double gradient;
+
 };
 
 

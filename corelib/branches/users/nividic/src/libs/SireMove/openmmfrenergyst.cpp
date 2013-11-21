@@ -130,10 +130,11 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyST 
         << velver.CutoffType << velver.cutoff_distance << velver.field_dielectric
         << velver.Andersen_flag <<  velver.Andersen_frequency 
         << velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
-        <<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.buffer_frequency << velver.energy_frequency
+        << velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.buffer_frequency << velver.energy_frequency
         << velver.device_index <<velver.precision << velver.Alchemical_value << velver.coulomb_power << velver.shift_delta << velver.delta_alchemical 
         << velver.gradients << velver.energies <<velver.perturbed_energies <<  velver.Integrator_type << velver.friction << velver.integration_tol << velver.timeskip 
-        << velver.minimize << velver.minimize_tol << velver.minimize_iterations << velver.reinetialize_context
+        << velver.minimize << velver.minimize_tol << velver.minimize_iterations << velver.reinetialize_context 
+	<< velver.GF_acc << velver.GB_acc << velver.gradient
         << static_cast<const Integrator&>(velver);
 
     // Free OpenMM pointers??
@@ -157,6 +158,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyST &velve
         >> velver.device_index >> velver.precision >> velver.Alchemical_value >> velver.coulomb_power >> velver.shift_delta >> velver.delta_alchemical
         >> velver.gradients >> velver.energies >> velver.perturbed_energies >> velver.Integrator_type >> velver.friction >> velver.integration_tol >> velver.timeskip
         >> velver.minimize >> velver.minimize_tol >> velver.minimize_iterations >> velver.reinetialize_context
+	>> velver.GF_acc >> velver.GB_acc >> velver.gradient 
         >> static_cast<Integrator&>(velver);
 
         // Maybe....need to reinitialise from molgroup because openmm system was not serialised...
@@ -186,7 +188,8 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(bool frequent_save)
                 CMMremoval_frequency(0), buffer_frequency(0),energy_frequency(100),device_index("0"), precision("single"), Alchemical_value(0.5),coulomb_power(0),
                 shift_delta(2.0),delta_alchemical(0.001),gradients(),energies(), perturbed_energies(),
                 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond),
-                minimize(false),minimize_tol(1.0),minimize_iterations(0),reinetialize_context(false)
+		minimize(false),minimize_tol(1.0),minimize_iterations(0),reinetialize_context(false),
+		GF_acc(0.0),GB_acc(0.0),gradient(0.0)
 {}
 
 /** Constructor using the passed molecule groups */
@@ -202,7 +205,8 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const MoleculeGroup &molecule_group, const Mo
                 CMMremoval_frequency(0), buffer_frequency(0), energy_frequency(100),device_index("0"),precision("single"),Alchemical_value(0.5),coulomb_power(0),
                 shift_delta(2.0),delta_alchemical(0.001),gradients(),energies(), perturbed_energies(),
                 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond),
-                minimize(false),minimize_tol(1.0),minimize_iterations(0),reinetialize_context(false)
+		minimize(false),minimize_tol(1.0),minimize_iterations(0),reinetialize_context(false),
+		GF_acc(0.0),GB_acc(0.0),gradient(0.0)  
 {}
 
 /** Copy constructor */
@@ -224,7 +228,8 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const OpenMMFrEnergyST &other)
                 delta_alchemical(other.delta_alchemical), gradients(other.gradients),energies(other.energies), 
                 perturbed_energies(other.perturbed_energies),
                 Integrator_type(other.Integrator_type),friction(other.friction),integration_tol(other.integration_tol),timeskip(other.timeskip),
-                minimize(other.minimize),minimize_tol(other.minimize_tol),minimize_iterations(other.minimize_iterations),reinetialize_context(other.reinetialize_context)
+		minimize(other.minimize),minimize_tol(other.minimize_tol),minimize_iterations(other.minimize_iterations),
+		  reinetialize_context(other.reinetialize_context),GF_acc(other.GF_acc),GB_acc(other.GB_acc),gradient(other.gradient)
 {}
 
 /** Destructor */
@@ -279,7 +284,9 @@ OpenMMFrEnergyST& OpenMMFrEnergyST::operator=(const OpenMMFrEnergyST &other)
     minimize_tol=other.minimize_tol;
     minimize_iterations=other.minimize_iterations;
     reinetialize_context=other.reinetialize_context;
-    
+    GF_acc=other.GF_acc;
+    GB_acc=other.GB_acc;
+    gradient=other.gradient;
     return *this;
 }
 
@@ -2165,10 +2172,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     bool Debug = false; 
 
-    QTime timer;
-
-    timer.start();
-    
     if (Debug)
         qDebug() << "In OpenMMFrEnergyST::integrate()\n\n" ;
 
@@ -2340,11 +2343,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         openmm_context->setPeriodicBoxVectors( OpenMM::Vec3(Box_x_Edge_Length,0,0),OpenMM::Vec3(0,Box_y_Edge_Length,0),OpenMM::Vec3(0,0,Box_z_Edge_Length) );
     }
 
-    if (Debug)
-        qDebug() << " Setup dynamics, time elapsed ms " << timer.elapsed() << " ms ";
-
-    /** Now perform some steps of dynamics */
-        timer.restart();
 
     if (Debug)
         qDebug() << " Doing " << nmoves << " steps of dynamics ";
@@ -2400,14 +2398,13 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     OpenMM::State state_openmm;//OpenMM State
 
-    double GF_acc = 0.0;
-
-    double GB_acc = 0.0;
-
     double pot_energy_acc = 0.0;
 
     int sample_count=1;
 
+    double GF_local = 0.0;
+
+    double GB_local = 0.0;
 
     //state_openmm=openmm_context->getState(infoMask);
     //qDebug() << "TOTAL Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ + state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
@@ -2443,16 +2440,21 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     if(minimize){
         if(true){
-            qDebug() << "\nStarting minimization";
+            qDebug() << "\nStarting minimization and Equilibration";
             qDebug() << "Minimization tollerance = " << minimize_tol;
             qDebug() << "Max number of minimitazion iterations (0 = untill tollerance is reached) = " << minimize_iterations << "\n"; 
         }
+        double dtm = 0.0005; //new time step for minimization and equilibartion in ps
+        int moves_eq = 10000;
         OpenMM::LocalEnergyMinimizer::minimize(*openmm_context,minimize_tol,minimize_iterations);
-        //integrator_openmm->setStepSize(0.001);
-        //integrator_openmm->step(1000);
-        //integrator_openmm->setStepSize(0.002);
+        qDebug() << "Starting equilibration for " << dtm * moves_eq << " ps"; 
+        (openmm_context->getIntegrator()).setStepSize(dtm);
+        (openmm_context->getIntegrator()).step(moves_eq);
+        (openmm_context->getIntegrator()).setStepSize(dt);
+        openmm_context->setTime(0.0);
+        qDebug() << "End Equilibration";
+        qDebug() << "\nStarting Production run";
     }
-
 
 
     //Time skipping
@@ -2475,7 +2477,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
         n_samples = (nmoves - new_nmoves) / energy_frequency;
     }
-
 
 
 
@@ -2715,22 +2716,28 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
         GF_acc = GF_acc + plus;
         GB_acc = GB_acc + minus;
+
+        GF_local = GF_local +  plus;
+        GB_local = GB_local +  minus;
+
         pot_energy_acc = pot_energy_acc + potential_energy_lambda;
 
-        double avg_GF = GF_acc /(sample_count);
+        //double avg_GF = GF_acc /(sample_count);
 
-        double avg_GB = GB_acc /(sample_count);
+        //double avg_GB = GB_acc /(sample_count);
 
         double avg_pot_energy_lambda = pot_energy_acc / (sample_count);
 
-        double Energy_GF = -(1.0/beta)*log(avg_GF);
+        //double Energy_GF = -(1.0/beta)*log(avg_GF);
 
-        double Energy_GB = -(1.0/beta)*log(avg_GB);
+        //double Energy_GB = -(1.0/beta)*log(avg_GB);
 
-        double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2.0 * delta_alchemical);
+        //double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2.0 * delta_alchemical);
 
+        double Energy_Gradient_lamda = -1.0/(2.0*delta_alchemical*beta) * log(GF_local / GB_local);
 
         if(Debug){
+            qDebug()<< "Total Time = " << state_openmm.getTime() << " ps";
             qDebug() << "\n\n*Cumulative Energy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" ;
             qDebug() << "*Istantaneus Energy Gradient = " << -1.0/(2.0*delta_alchemical*beta) * log(plus / minus) * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
         }
@@ -2795,13 +2802,12 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     //Disable Minimization because of multiple cycles
     if(minimize)
         minimize=false;
+    //Disable Time to Skip because of multiple cycles
+    if(time_skip!=0){
+        //timeskip = 0.0;
+    }
+    gradient = (-1.0/(2.0*delta_alchemical*beta) * log(GF_acc / GB_acc)) * OpenMM::KcalPerKJ;
 
-
-    if (Debug)
-        qDebug() << "Done dynamics, time elapsed " << timer.elapsed() << " ms\n";
-
-    // Now update the sire coordinates/velocities and box dimensions 
-    timer.restart();
 
     state_openmm = openmm_context->getState(infoMask);
     positions_openmm = state_openmm.getPositions();
@@ -2890,9 +2896,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     buffered_workspace.clear();
     buffered_dimensions.clear();
-
-    if (Debug)
-        qDebug() << "Updating system coordinates, time elapsed " << timer.elapsed() << " ms\n";
 
     return;
 
@@ -3217,12 +3220,20 @@ void OpenMMFrEnergyST::setDeltatAlchemical(double deltaalchemical){
 }
 
 
-/** Calculated Gradient*/
+/** Calculated Gradients*/
 QVector<double> OpenMMFrEnergyST::getGradients(void){
 
     return gradients;
 
 }
+
+/** Calculated Gradient*/
+double OpenMMFrEnergyST::getGradient(void){
+
+    return gradient;
+}
+
+
 /** Average energies*/
 QVector<double> OpenMMFrEnergyST::getEnergies(void){
 
