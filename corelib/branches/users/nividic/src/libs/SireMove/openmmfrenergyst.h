@@ -162,7 +162,6 @@ public:
     QVector<double> getEnergies(void);
 
     QString getIntegrator(void);
-
     void setIntegrator(QString);
 
     SireUnits::Dimension::Time getFriction(void);
@@ -170,7 +169,6 @@ public:
     void setFriction(SireUnits::Dimension::Time);
 
     double getIntegration_tollerance(void);
-
     void setIntegration_tollerance(double tollerance);
 
     SireUnits::Dimension::Time getTimetoSkip(void);
@@ -180,12 +178,16 @@ public:
     void setMinimization(bool);
 
     double getMinimizeTol(void);
-
     void setMinimizeTol(double);
 
     int getMinimizeIterations(void);
-
     void setMinimizeIterations(int);
+
+    int getEquilib_iterations(void);
+    void setEquilib_iterations(int);
+
+    SireUnits::Dimension::Time getEquilib_time_step(void);
+    void setEquilib_time_step(SireUnits::Dimension::Time);
 
     void setReinitializeContext(bool);
 
@@ -269,13 +271,15 @@ private:
     bool minimize;
 
     double minimize_tol;
-
     int minimize_iterations;
+
+
+    int equilib_iterations;
+    SireUnits::Dimension::Time equilib_time_step;
 
     bool reinetialize_context;
 
     double GF_acc;
-
     double GB_acc;
 
     double gradient;

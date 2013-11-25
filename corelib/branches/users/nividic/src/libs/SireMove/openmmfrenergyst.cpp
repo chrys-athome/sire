@@ -132,9 +132,9 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyST 
         << velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
         << velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.buffer_frequency << velver.energy_frequency
         << velver.device_index <<velver.precision << velver.Alchemical_value << velver.coulomb_power << velver.shift_delta << velver.delta_alchemical 
-        << velver.gradients << velver.energies <<velver.perturbed_energies <<  velver.Integrator_type << velver.friction << velver.integration_tol << velver.timeskip 
-        << velver.minimize << velver.minimize_tol << velver.minimize_iterations << velver.reinetialize_context 
-	<< velver.GF_acc << velver.GB_acc << velver.gradient
+        << velver.gradients << velver.energies <<velver.perturbed_energies <<  velver.Integrator_type << velver.friction << velver.integration_tol 
+        << velver.timeskip << velver.minimize << velver.minimize_tol << velver.minimize_iterations << velver.equilib_iterations << velver.equilib_time_step
+        << velver.reinetialize_context << velver.GF_acc << velver.GB_acc << velver.gradient
         << static_cast<const Integrator&>(velver);
 
     // Free OpenMM pointers??
@@ -156,9 +156,9 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyST &velve
         >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature 
         >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.buffer_frequency >> velver.energy_frequency
         >> velver.device_index >> velver.precision >> velver.Alchemical_value >> velver.coulomb_power >> velver.shift_delta >> velver.delta_alchemical
-        >> velver.gradients >> velver.energies >> velver.perturbed_energies >> velver.Integrator_type >> velver.friction >> velver.integration_tol >> velver.timeskip
-        >> velver.minimize >> velver.minimize_tol >> velver.minimize_iterations >> velver.reinetialize_context
-	>> velver.GF_acc >> velver.GB_acc >> velver.gradient 
+        >> velver.gradients >> velver.energies >> velver.perturbed_energies >> velver.Integrator_type >> velver.friction 
+        >> velver.integration_tol >> velver.timeskip >> velver.minimize >> velver.minimize_tol >> velver.equilib_iterations >> velver.equilib_time_step
+        >> velver.minimize_iterations >> velver.reinetialize_context >> velver.GF_acc >> velver.GB_acc >> velver.gradient 
         >> static_cast<Integrator&>(velver);
 
         // Maybe....need to reinitialise from molgroup because openmm system was not serialised...
@@ -188,8 +188,8 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(bool frequent_save)
                 CMMremoval_frequency(0), buffer_frequency(0),energy_frequency(100),device_index("0"), precision("single"), Alchemical_value(0.5),coulomb_power(0),
                 shift_delta(2.0),delta_alchemical(0.001),gradients(),energies(), perturbed_energies(),
                 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond),
-		minimize(false),minimize_tol(1.0),minimize_iterations(0),reinetialize_context(false),
-		GF_acc(0.0),GB_acc(0.0),gradient(0.0)
+                minimize(false),minimize_tol(1.0),minimize_iterations(0),equilib_iterations(5000),equilib_time_step(0.0005 * picosecond),
+                reinetialize_context(false),GF_acc(0.0),GB_acc(0.0),gradient(0.0)
 {}
 
 /** Constructor using the passed molecule groups */
@@ -205,8 +205,8 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const MoleculeGroup &molecule_group, const Mo
                 CMMremoval_frequency(0), buffer_frequency(0), energy_frequency(100),device_index("0"),precision("single"),Alchemical_value(0.5),coulomb_power(0),
                 shift_delta(2.0),delta_alchemical(0.001),gradients(),energies(), perturbed_energies(),
                 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond),
-		minimize(false),minimize_tol(1.0),minimize_iterations(0),reinetialize_context(false),
-		GF_acc(0.0),GB_acc(0.0),gradient(0.0)  
+                minimize(false),minimize_tol(1.0),minimize_iterations(0),equilib_iterations(5000),equilib_time_step(0.0005 * picosecond),
+                reinetialize_context(false),GF_acc(0.0),GB_acc(0.0),gradient(0.0)
 {}
 
 /** Copy constructor */
@@ -223,13 +223,15 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const OpenMMFrEnergyST &other)
                 MCBarostat_frequency(other.MCBarostat_frequency),ConstraintType(other.ConstraintType), 
                 Pressure(other.Pressure), Temperature(other.Temperature),platform_type(other.platform_type),
                 Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency),
-                buffer_frequency(other.buffer_frequency), energy_frequency(other.energy_frequency),device_index(other.device_index),precision(other.precision),Alchemical_value(other.Alchemical_value),
+                buffer_frequency(other.buffer_frequency), energy_frequency(other.energy_frequency),device_index(other.device_index),
+                precision(other.precision),Alchemical_value(other.Alchemical_value),
                 coulomb_power(other.coulomb_power),shift_delta(other.shift_delta),
                 delta_alchemical(other.delta_alchemical), gradients(other.gradients),energies(other.energies), 
                 perturbed_energies(other.perturbed_energies),
                 Integrator_type(other.Integrator_type),friction(other.friction),integration_tol(other.integration_tol),timeskip(other.timeskip),
-		minimize(other.minimize),minimize_tol(other.minimize_tol),minimize_iterations(other.minimize_iterations),
-		  reinetialize_context(other.reinetialize_context),GF_acc(other.GF_acc),GB_acc(other.GB_acc),gradient(other.gradient)
+                minimize(other.minimize),minimize_tol(other.minimize_tol),minimize_iterations(other.minimize_iterations),
+                equilib_iterations(other.equilib_iterations),equilib_time_step(other.equilib_time_step),
+                reinetialize_context(other.reinetialize_context),GF_acc(other.GF_acc),GB_acc(other.GB_acc),gradient(other.gradient)
 {}
 
 /** Destructor */
@@ -283,6 +285,8 @@ OpenMMFrEnergyST& OpenMMFrEnergyST::operator=(const OpenMMFrEnergyST &other)
     minimize=other.minimize;
     minimize_tol=other.minimize_tol;
     minimize_iterations=other.minimize_iterations;
+    equilib_iterations=other.equilib_iterations;
+    equilib_time_step=other.equilib_time_step;
     reinetialize_context=other.reinetialize_context;
     GF_acc=other.GF_acc;
     GB_acc=other.GB_acc;
@@ -2439,21 +2443,69 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 
     if(minimize){
+
+        //New time step for minimization and equilibartion in ps
+        double dtm = convertTo( equilib_time_step.value(), picosecond);
+
         if(true){
-            qDebug() << "\nStarting minimization and Equilibration";
+            qDebug() << "\nStarting Minimization and Equilibration";
             qDebug() << "Minimization tollerance = " << minimize_tol;
-            qDebug() << "Max number of minimitazion iterations (0 = untill tollerance is reached) = " << minimize_iterations << "\n"; 
+            qDebug() << "Max number of minimization iterations (0 = untill tollerance is reached) = " << minimize_iterations;
+            qDebug() << "Max number of equilibration iterations = " << equilib_iterations;
+            qDebug() << "Equilibration time step = " << dtm << " ps"; 
+            qDebug() << "Total equilibration Time per Lambda = " << dtm * equilib_iterations << " ps \n";
         }
-        double dtm = 0.0005; //new time step for minimization and equilibartion in ps
-        int moves_eq = 10000;
-        OpenMM::LocalEnergyMinimizer::minimize(*openmm_context,minimize_tol,minimize_iterations);
-        qDebug() << "Starting equilibration for " << dtm * moves_eq << " ps"; 
+
         (openmm_context->getIntegrator()).setStepSize(dtm);
-        (openmm_context->getIntegrator()).step(moves_eq);
+        OpenMM::LocalEnergyMinimizer::minimize(*openmm_context,minimize_tol,minimize_iterations);
+
+        int max = ceil(Alchemical_value/0.1);
+
+        double lam=0.0;
+
+        for(int i=0;i<max+1;i++){
+
+            if(true)
+                qDebug() << "Lambda = " << lam;
+
+            //NON BONDED TERMS
+            if(perturbed_energies[0])
+                openmm_context->setParameter("lam",lam);//1-5 HD
+            //1-4 Interactions
+            if(perturbed_energies[1])
+                openmm_context->setParameter("lamhd",lam);//1-4 HD
+            if(perturbed_energies[2])
+                openmm_context->setParameter("lamtd",1.0 - lam);//1-4 To Dummy
+            if(perturbed_energies[3])
+                openmm_context->setParameter("lamfd",lam);//1-4 From Dummy
+            if(perturbed_energies[4])
+                openmm_context->setParameter("lamftd",lam);//1-4 From Dummy to Dummy
+
+            //BONDED PERTURBED TERMS
+            if(perturbed_energies[5])
+                openmm_context->setParameter("lambond",lam);//Bonds
+            if(perturbed_energies[6])
+                openmm_context->setParameter("lamangle",lam);//Angles
+            if(perturbed_energies[7])
+                openmm_context->setParameter("lambda",lam);//Torsions
+
+            (openmm_context->getIntegrator()).step(equilib_iterations);
+
+            if(i == max-1)
+                lam = Alchemical_value;
+            else
+                lam = lam + 0.1;
+
+
+        }
+
         (openmm_context->getIntegrator()).setStepSize(dt);
         openmm_context->setTime(0.0);
-        qDebug() << "End Equilibration";
-        qDebug() << "\nStarting Production run";
+
+        if(true){
+            qDebug() << "End Equilibration";
+            qDebug() << "\nStarting Production run";
+        }
     }
 
 
@@ -3326,6 +3378,39 @@ void OpenMMFrEnergyST::setMinimizeIterations(int iterations){
     minimize_iterations = iterations;
 
 }
+
+
+/** Get the total number of iterations used to perform the equilibration stage*/
+int OpenMMFrEnergyST::getEquilib_iterations(void){
+
+    return equilib_iterations;
+
+}
+
+
+/** Set the total number of iterations used to perform the equilibration stage*/
+void OpenMMFrEnergyST::setEquilib_iterations(int iterations){
+
+    equilib_iterations = iterations;
+
+}
+
+
+/** Get the time step used to perform the equilibration stage*/
+SireUnits::Dimension::Time OpenMMFrEnergyST::getEquilib_time_step(void){
+
+    return equilib_time_step;
+
+}
+
+
+/** Set the time step used to perform the equilibration stage*/
+void OpenMMFrEnergyST::setEquilib_time_step(SireUnits::Dimension::Time timestep){
+
+    equilib_time_step = timestep;
+
+}
+
 
 /** Set the flag to reinitialize the context*/
 void OpenMMFrEnergyST::setReinitializeContext(bool reinitialize){
