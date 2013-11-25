@@ -1415,7 +1415,6 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
     PropertyName chainmangler_property = map[PDB::parameters().chainNameMangler()];
     PropertyName segmangler_property = map[PDB::parameters().segmentNameMangler()];
     
-    PropertyName connectivity_property = map["connectivity"];
     
     if (atommangler_property.hasValue())
         atommangler = atommangler_property.value().asA<StringMangler>();
@@ -1433,8 +1432,6 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
     
     Molecule mol(molview);
     
-    //map of AtomIdx to PDB atomnum
-    QHash<AtomIdx,int> atomidx_to_pdbnum;
     
     const AtomCoords &coords = mol.property(map[PDB::parameters().coordinates()])
                                   .asA<AtomCoords>();
@@ -1517,8 +1514,6 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
         ++atomnum;
         
         pdbatom.serial = atomnum;
-        
-        atomidx_to_pdbnum.insert(atom.index(), atomnum);
         
         if (pdbatomname.isEmpty() or pdbatomname[ atom.cgAtomIdx() ].isEmpty())
         {
@@ -1646,32 +1641,6 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
         }
     }
     
-    if (mol.hasProperty(connectivity_property))
-    {
-        const Connectivity &connectivity = mol.property(connectivity_property)
-                                              .asA<Connectivity>();
-                                              
-        for (AtomIdx i(0); i<mol.nAtoms(); ++i)
-        {
-            QSet<AtomIdx> bonded_atoms = connectivity.connectionsTo(i);
-            
-            if (not bonded_atoms.isEmpty())
-            {
-                ts << "CONECT";
-                ts.setFieldWidth(5);
-                
-                ts << atomidx_to_pdbnum.value(i);
-                
-                foreach (AtomIdx bonded_atom, bonded_atoms)
-                {
-                    ts << atomidx_to_pdbnum.value(bonded_atom);
-                }
-                
-                ts << "\n";
-            }
-        }
-    } 
-    
     return atomnum;
 }
 
@@ -1683,6 +1652,8 @@ QByteArray PDB::writeMols(const MoleculeGroup &molgroup,
                           const PropertyMap &map) const
 {
     QByteArray data;
+    PropertyName connectivity_property = map["connectivity"];
+    QHash<AtomIdx,int> atomidx_to_pdbnum;
     data.reserve(RESERVE_SIZE);
     
     if (data.capacity() != RESERVE_SIZE)
@@ -1705,6 +1676,48 @@ QByteArray PDB::writeMols(const MoleculeGroup &molgroup,
             ts << "TER\n";
     }
 
+    atomid = 0;
+
+    for (MolIdx i(0); i<nmols; ++i) {
+      Molecule mol(molgroup[i]);
+      AtomSelection selected_atoms = mol.selection();
+
+      for (AtomIdx i(0); i< mol.nAtoms(); ++i)
+      {
+	  if (not selected_atoms.selected(i))
+            continue;
+
+	  ++atomid;
+	  atomidx_to_pdbnum.insert(mol.atom(i).index(), atomid);
+      }
+
+      if (mol.hasProperty(connectivity_property))
+	{
+	  const Connectivity &connectivity = mol.property(connectivity_property)
+                                              .asA<Connectivity>();
+                                              
+	  for (AtomIdx i(0); i<mol.nAtoms(); ++i)
+	    {
+	      QSet<AtomIdx> bonded_atoms = connectivity.connectionsTo(i);
+            
+	      if (not bonded_atoms.isEmpty())
+		{
+		  ts << "CONECT";
+		  ts.setFieldWidth(5);
+                
+		  ts << atomidx_to_pdbnum.value(i);
+                
+		  foreach (AtomIdx bonded_atom, bonded_atoms)
+		    {
+		      ts << atomidx_to_pdbnum.value(bonded_atom);
+		    }
+                
+		  ts << "\n";
+		}
+	    }
+	} 
+    }
+
     return data;
 }
 
@@ -1713,6 +1726,8 @@ QByteArray PDB::writeMols(const Molecules &molecules,
                           const PropertyMap &map) const
 {
     QByteArray data;
+    PropertyName connectivity_property = map["connectivity"];
+    QHash<AtomIdx,int> atomidx_to_pdbnum;
     data.reserve(RESERVE_SIZE);
     
     if (data.capacity() != RESERVE_SIZE)
@@ -1737,6 +1752,53 @@ QByteArray PDB::writeMols(const Molecules &molecules,
         if ( it2 != molecules.constEnd())
             ts << "TER\n";
     }
+
+    atomid = 0;
+
+    for (Molecules::const_iterator it = molecules.constBegin();
+         it != molecules.constEnd();
+         ++it)
+    {
+      Molecule mol(*it);
+      AtomSelection selected_atoms = mol.selection();
+
+      for (AtomIdx i(0); i< mol.nAtoms(); ++i)
+      {
+	  if (not selected_atoms.selected(i))
+            continue;
+
+	  ++atomid;
+	  atomidx_to_pdbnum.insert(mol.atom(i).index(), atomid);
+      }
+
+      if (mol.hasProperty(connectivity_property))
+	{
+	  const Connectivity &connectivity = mol.property(connectivity_property)
+                                              .asA<Connectivity>();
+
+	  for (AtomIdx i(0); i<mol.nAtoms(); ++i)
+	    {
+	      QSet<AtomIdx> bonded_atoms = connectivity.connectionsTo(i);
+
+	      if (not bonded_atoms.isEmpty())
+		{
+		  ts << "CONECT";
+		  ts.setFieldWidth(5);
+
+		  ts << atomidx_to_pdbnum.value(i);
+
+		  foreach (AtomIdx bonded_atom, bonded_atoms)
+		    {
+		      ts << atomidx_to_pdbnum.value(bonded_atom);
+		    }
+
+		  ts << "\n";
+		}
+	    }
+	} 
+    }
+
+    ts << "END\n";
 
     return data;
 }
