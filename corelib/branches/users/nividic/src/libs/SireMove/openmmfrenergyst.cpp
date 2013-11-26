@@ -2495,8 +2495,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
                 lam = Alchemical_value;
             else
                 lam = lam + 0.1;
-
-
         }
 
         (openmm_context->getIntegrator()).setStepSize(dt);
