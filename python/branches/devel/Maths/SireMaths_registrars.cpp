@@ -9,13 +9,13 @@
 #include "histogram.h"
 #include "n4matrix.h"
 #include "nvector.h"
+#include "sphere.h"
 #include "accumulator.h"
 #include "nmatrix.h"
 #include "vector.h"
 #include "matrix.h"
 #include "distvector.h"
 #include "triangle.h"
-#include "sphere.h"
 #include "rangenerator.h"
 #include "trigmatrix.h"
 #include "torsion.h"
@@ -37,6 +37,7 @@ void register_SireMaths_objects()
     ObjectRegistry::registerConverterFor< SireMaths::Histogram >();
     ObjectRegistry::registerConverterFor< SireMaths::N4Matrix >();
     ObjectRegistry::registerConverterFor< SireMaths::NVector >();
+    ObjectRegistry::registerConverterFor< SireMaths::Sphere >();
     ObjectRegistry::registerConverterFor< SireMaths::NullAccumulator >();
     ObjectRegistry::registerConverterFor< SireMaths::Average >();
     ObjectRegistry::registerConverterFor< SireMaths::AverageAndStddev >();
@@ -48,7 +49,6 @@ void register_SireMaths_objects()
     ObjectRegistry::registerConverterFor< SireMaths::Matrix >();
     ObjectRegistry::registerConverterFor< SireMaths::DistVector >();
     ObjectRegistry::registerConverterFor< SireMaths::Triangle >();
-    ObjectRegistry::registerConverterFor< SireMaths::Sphere >();
     ObjectRegistry::registerConverterFor< SireMaths::RanGenerator >();
     ObjectRegistry::registerConverterFor< SireMaths::TrigMatrix >();
     ObjectRegistry::registerConverterFor< SireMaths::Torsion >();

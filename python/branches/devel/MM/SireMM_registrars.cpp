@@ -4,9 +4,9 @@
 #include "SireMM_registrars.h"
 
 #include "dihedralrestraint.h"
+#include "gridff2.h"
 #include "ljparameter.h"
 #include "softcljcomponent.h"
-#include "intersoftcljff.h"
 #include "ljpair.h"
 #include "restraintcomponent.h"
 #include "gridff.h"
@@ -22,8 +22,8 @@
 #include "distancerestraint.h"
 #include "fouratomfunctions.h"
 #include "intracljff.h"
-#include "internalcomponent.h"
 #include "internalparameters.h"
+#include "internalcomponent.h"
 #include "restraintff.h"
 #include "intraljff.h"
 #include "intercoulombff.h"
@@ -35,7 +35,7 @@
 #include "internalff.h"
 #include "cljparam.h"
 #include "restraint.h"
-#include "gridff2.h"
+#include "intersoftcljff.h"
 
 #include "Helpers/objectregistry.hpp"
 
@@ -43,12 +43,9 @@ void register_SireMM_objects()
 {
 
     ObjectRegistry::registerConverterFor< SireMM::DihedralRestraint >();
+    ObjectRegistry::registerConverterFor< SireMM::GridFF2 >();
     ObjectRegistry::registerConverterFor< SireMM::LJParameter >();
     ObjectRegistry::registerConverterFor< SireMM::SoftCLJComponent >();
-    ObjectRegistry::registerConverterFor< SireMM::InterSoftCLJFFBase >();
-    ObjectRegistry::registerConverterFor< SireMM::InterSoftCLJFF >();
-    ObjectRegistry::registerConverterFor< SireMM::InterGroupSoftCLJFFBase >();
-    ObjectRegistry::registerConverterFor< SireMM::InterGroupSoftCLJFF >();
     ObjectRegistry::registerConverterFor< SireMM::LJPair >();
     ObjectRegistry::registerConverterFor< SireMM::RestraintComponent >();
     ObjectRegistry::registerConverterFor< SireMM::GridFF >();
@@ -87,6 +84,8 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::IntraCLJFF >();
     ObjectRegistry::registerConverterFor< SireMM::IntraGroupCLJFFBase >();
     ObjectRegistry::registerConverterFor< SireMM::IntraGroupCLJFF >();
+    ObjectRegistry::registerConverterFor< SireMM::InternalParameters >();
+    ObjectRegistry::registerConverterFor< SireMM::InternalParameters3D >();
     ObjectRegistry::registerConverterFor< SireMM::BondComponent >();
     ObjectRegistry::registerConverterFor< SireMM::AngleComponent >();
     ObjectRegistry::registerConverterFor< SireMM::DihedralComponent >();
@@ -97,8 +96,6 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::BendBendComponent >();
     ObjectRegistry::registerConverterFor< SireMM::StretchBendTorsionComponent >();
     ObjectRegistry::registerConverterFor< SireMM::InternalComponent >();
-    ObjectRegistry::registerConverterFor< SireMM::InternalParameters >();
-    ObjectRegistry::registerConverterFor< SireMM::InternalParameters3D >();
     ObjectRegistry::registerConverterFor< SireMM::RestraintFF >();
     ObjectRegistry::registerConverterFor< SireMM::IntraLJFFBase >();
     ObjectRegistry::registerConverterFor< SireMM::IntraLJFF >();
@@ -125,7 +122,10 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::CLJParams >();
     ObjectRegistry::registerConverterFor< SireMM::CLJParamsArray >();
     ObjectRegistry::registerConverterFor< SireMM::NullRestraint >();
-    ObjectRegistry::registerConverterFor< SireMM::GridFF2 >();
+    ObjectRegistry::registerConverterFor< SireMM::InterSoftCLJFFBase >();
+    ObjectRegistry::registerConverterFor< SireMM::InterSoftCLJFF >();
+    ObjectRegistry::registerConverterFor< SireMM::InterGroupSoftCLJFFBase >();
+    ObjectRegistry::registerConverterFor< SireMM::InterGroupSoftCLJFF >();
 
 }
 

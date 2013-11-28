@@ -214,18 +214,7 @@ void register_MoleculeGroups_class(){
         MoleculeGroups_exposer.def( bp::self == bp::self );
         { //::SireMol::MoleculeGroups::remove
         
-            typedef void ( ::SireMol::MoleculeGroups::*remove_function_type )( ::SireMol::MGNum ) ;
-            remove_function_type remove_function_value( &::SireMol::MoleculeGroups::remove );
-            
-            MoleculeGroups_exposer.def( 
-                "remove"
-                , remove_function_value
-                , ( bp::arg("mgnum") ) );
-        
-        }
-        { //::SireMol::MoleculeGroups::remove
-        
-            typedef void ( ::SireMol::MoleculeGroups::*remove_function_type )( ::SireMol::MGID const & ) ;
+            typedef bool ( ::SireMol::MoleculeGroups::*remove_function_type )( ::SireMol::MGID const & ) ;
             remove_function_type remove_function_value( &::SireMol::MoleculeGroups::remove );
             
             MoleculeGroups_exposer.def( 

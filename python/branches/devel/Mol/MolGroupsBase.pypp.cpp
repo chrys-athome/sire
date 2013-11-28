@@ -1206,6 +1206,28 @@ void register_MolGroupsBase_class(){
         }
         { //::SireMol::MolGroupsBase::remove
         
+            typedef bool ( ::SireMol::MolGroupsBase::*remove_function_type )( ::SireMol::MolID const & ) ;
+            remove_function_type remove_function_value( &::SireMol::MolGroupsBase::remove );
+            
+            MolGroupsBase_exposer.def( 
+                "remove"
+                , remove_function_value
+                , ( bp::arg("molid") ) );
+        
+        }
+        { //::SireMol::MolGroupsBase::remove
+        
+            typedef bool ( ::SireMol::MolGroupsBase::*remove_function_type )( ::SireMol::MGID const & ) ;
+            remove_function_type remove_function_value( &::SireMol::MolGroupsBase::remove );
+            
+            MolGroupsBase_exposer.def( 
+                "remove"
+                , remove_function_value
+                , ( bp::arg("mgid") ) );
+        
+        }
+        { //::SireMol::MolGroupsBase::remove
+        
             typedef bool ( ::SireMol::MolGroupsBase::*remove_function_type )( ::SireMol::MoleculeView const &,::SireMol::MGID const & ) ;
             remove_function_type remove_function_value( &::SireMol::MolGroupsBase::remove );
             

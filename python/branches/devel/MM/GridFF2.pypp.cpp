@@ -9,6 +9,10 @@ namespace bp = boost::python;
 
 #include "SireMaths/constants.h"
 
+#include "SireMaths/multidouble.h"
+
+#include "SireMaths/multifloat.h"
+
 #include "SireMol/atomcharges.h"
 
 #include "SireMol/atomcoords.h"

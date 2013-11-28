@@ -1335,7 +1335,7 @@ void register_System_class(){
         }
         { //::SireSystem::System::remove
         
-            typedef void ( ::SireSystem::System::*remove_function_type )( ::SireMol::MGID const & ) ;
+            typedef bool ( ::SireSystem::System::*remove_function_type )( ::SireMol::MGID const & ) ;
             remove_function_type remove_function_value( &::SireSystem::System::remove );
             
             System_exposer.def( 

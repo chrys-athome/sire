@@ -5,7 +5,6 @@ dirs = [ "Analysis", \
          "Base", \
          "CAS", \
          "Cluster", \
-         "DB", \
          "FF", \
          "ID", \
          "IO", \

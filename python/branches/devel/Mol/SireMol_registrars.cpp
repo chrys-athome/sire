@@ -7,7 +7,7 @@
 #include "beadeditor.h"
 #include "beadproperty.hpp"
 #include "improperid.h"
-#include "atomelements.h"
+#include "molidentifier.h"
 #include "chain.h"
 #include "residx.h"
 #include "atomcharges.h"
@@ -16,6 +16,7 @@
 #include "atomselection.h"
 #include "segidentifier.h"
 #include "moleditor.h"
+#include "segeditor.h"
 #include "evaluator.h"
 #include "chainresid.h"
 #include "geometryperturbation.h"
@@ -32,7 +33,7 @@
 #include "cgeditor.h"
 #include "atomeditor.h"
 #include "chainname.h"
-#include "chargeperturbation.h"
+#include "withres.h"
 #include "partialmolecule.h"
 #include "atompolarisabilities.h"
 #include "mgidx.h"
@@ -47,7 +48,7 @@
 #include "moleculegroup.h"
 #include "groupatomids.h"
 #include "atomvelocities.h"
-#include "molidentifier.h"
+#include "atomelements.h"
 #include "segidx.h"
 #include "chaineditor.h"
 #include "atomproperty.hpp"
@@ -64,7 +65,6 @@
 #include "atommasses.h"
 #include "segment.h"
 #include "angleid.h"
-#include "segeditor.h"
 #include "molnum.h"
 #include "atomforces.h"
 #include "beadnum.h"
@@ -96,7 +96,7 @@
 #include "residue.h"
 #include "atommatcher.h"
 #include "atomname.h"
-#include "withres.h"
+#include "chargeperturbation.h"
 
 #include "Helpers/objectregistry.hpp"
 
@@ -110,7 +110,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::BeadFloatProperty >();
     ObjectRegistry::registerConverterFor< SireMol::BeadVariantProperty >();
     ObjectRegistry::registerConverterFor< SireMol::ImproperID >();
-    ObjectRegistry::registerConverterFor< SireMol::AtomElements >();
+    ObjectRegistry::registerConverterFor< SireMol::MolIdentifier >();
     ObjectRegistry::registerConverterFor< SireMol::Chain >();
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::Chain> >();
     ObjectRegistry::registerConverterFor< SireMol::Selector<SireMol::Chain> >();
@@ -130,6 +130,8 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::SegIdentifier >();
     ObjectRegistry::registerConverterFor< SireMol::MolEditor >();
     ObjectRegistry::registerConverterFor< SireMol::MolStructureEditor >();
+    ObjectRegistry::registerConverterFor< SireMol::SegEditor >();
+    ObjectRegistry::registerConverterFor< SireMol::SegStructureEditor >();
     ObjectRegistry::registerConverterFor< SireMol::Evaluator >();
     ObjectRegistry::registerConverterFor< SireMol::ChainResID >();
     ObjectRegistry::registerConverterFor< SireMol::NullGeometryPerturbation >();
@@ -160,7 +162,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::AtomEditor >();
     ObjectRegistry::registerConverterFor< SireMol::AtomStructureEditor >();
     ObjectRegistry::registerConverterFor< SireMol::ChainName >();
-    ObjectRegistry::registerConverterFor< SireMol::ChargePerturbation >();
+    ObjectRegistry::registerConverterFor< SireMol::ChainsWithRes >();
     ObjectRegistry::registerConverterFor< SireMol::PartialMolecule >();
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::PartialMolecule> >();
     ObjectRegistry::registerConverterFor< SireMol::AtomPolarisabilities >();
@@ -193,7 +195,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::CGAtomID >();
     ObjectRegistry::registerConverterFor< SireMol::AtomVelocities >();
     ObjectRegistry::registerConverterFor< SireMol::Velocity3D >();
-    ObjectRegistry::registerConverterFor< SireMol::MolIdentifier >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomElements >();
     ObjectRegistry::registerConverterFor< SireMol::SegIdx >();
     ObjectRegistry::registerConverterFor< SireMol::ChainEditor >();
     ObjectRegistry::registerConverterFor< SireMol::ChainStructureEditor >();
@@ -224,8 +226,6 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::Selector<SireMol::Segment> >();
     ObjectRegistry::registerConverterFor< SireMol::Mover< SireMol::Selector<SireMol::Segment> > >();
     ObjectRegistry::registerConverterFor< SireMol::AngleID >();
-    ObjectRegistry::registerConverterFor< SireMol::SegEditor >();
-    ObjectRegistry::registerConverterFor< SireMol::SegStructureEditor >();
     ObjectRegistry::registerConverterFor< SireMol::MolNum >();
     ObjectRegistry::registerConverterFor< SireMol::AtomForces >();
     ObjectRegistry::registerConverterFor< SireMol::Force3D >();
@@ -295,7 +295,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::AtomIdxMatcher >();
     ObjectRegistry::registerConverterFor< SireMol::AtomNameMatcher >();
     ObjectRegistry::registerConverterFor< SireMol::AtomName >();
-    ObjectRegistry::registerConverterFor< SireMol::ChainsWithRes >();
+    ObjectRegistry::registerConverterFor< SireMol::ChargePerturbation >();
 
 }
 
