@@ -1349,6 +1349,9 @@ void OpenMMFrEnergyST::initialise()  {
                                     qDebug() << "Perturbation bond equilibrium distance = " << pert_eq_distance << " Nm";
                                }
                             }
+                            else{
+                                solute_bond_perturbation->addBond(idx0,idx1,solute_bond_perturbation_params);
+                            }
 
                             if(Debug){
                                 qDebug() << "Atom0 initil type = " <<  initial_type_atom0;
@@ -2410,15 +2413,16 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     double GB_local = 0.0;
 
+
     //state_openmm=openmm_context->getState(infoMask);
     //qDebug() << "TOTAL Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ + state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
     //qDebug() << "Potential Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
     //qDebug() << "Kinetic Energy = " <<  state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
-    
-    //qDebug()  <<"*Lambda = " << Alchemical_value << " Potential energy lambda  = " << QString::number(state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ,'g',9) << " [A + A^2] kcal" << "\n";
-    //exit(-1);
 
-    
+    /*qDebug()  <<"*Lambda = " << Alchemical_value << " Potential energy lambda  = " 
+    << QString::number(state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ,'g',9) << " [A + A^2] kcal" << "\n";
+    exit(-1);*/
+
 
     if(coord_freq > 0)
         qDebug() << "Saving atom coordinates every " << coord_freq << "\n";
