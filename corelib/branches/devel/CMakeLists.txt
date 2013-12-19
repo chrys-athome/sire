@@ -17,6 +17,15 @@ cmake_policy(VERSION 2.8)
 # use loose loop syntax in CMakeLists files
 set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 
+# get the number of cores on this machine - useful for
+# compiling dependencies
+include(ProcessorCount)
+ProcessorCount(NCORES)
+if (NCORES EQUAL 0)
+    set( NCORES 1 )
+endif()
+message(STATUS "Configuring on a machine with number of cores = ${NCORES}")
+
 # Option to set the install directory of Sire
 set( SIRE_INSTALL_PREFIX "$ENV{HOME}/sire.app" CACHE PATH
         "Install directory for Sire. This directory can be moved after compilation" )
