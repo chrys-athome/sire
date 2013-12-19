@@ -23,6 +23,15 @@ if ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
   message( FATAL_ERROR "You must run CMake in a different directory to the source!" ) 
 endif ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
 
+# get the number of cores on this machine - useful for
+# compiling dependencies
+include(ProcessorCount)
+ProcessorCount(NCORES)
+if (NCORES EQUAL 0)
+    set( NCORES 1 )
+endif()
+message(STATUS "Configuring on a machine with number of cores = ${NCORES}")
+
 # Option to set the install directory of Sire
 set( SIRE_APP "$ENV{HOME}/sire.app" CACHE PATH
         "The full path to the sire.app installed Sire application." )
