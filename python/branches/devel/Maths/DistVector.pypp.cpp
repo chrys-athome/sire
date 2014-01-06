@@ -514,6 +514,7 @@ void register_DistVector_class(){
         DistVector_exposer.def( "__str__", &__str__< ::SireMaths::DistVector > );
         DistVector_exposer.def( "__repr__", &__str__< ::SireMaths::DistVector > );
         DistVector_exposer.def( "__len__", &__len_count< ::SireMaths::DistVector > );
+        DistVector_exposer.def( "__getitem__", &::SireMaths::DistVector::getitem );
     }
 
 }

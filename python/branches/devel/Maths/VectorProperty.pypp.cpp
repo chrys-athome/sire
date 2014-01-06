@@ -100,6 +100,7 @@ void register_VectorProperty_class(){
         VectorProperty_exposer.def( "__str__", &__str__< ::SireMaths::VectorProperty > );
         VectorProperty_exposer.def( "__repr__", &__str__< ::SireMaths::VectorProperty > );
         VectorProperty_exposer.def( "__len__", &__len_count< ::SireMaths::VectorProperty > );
+        VectorProperty_exposer.def( "__getitem__", &::SireMaths::VectorProperty::getitem );
     }
 
 }
