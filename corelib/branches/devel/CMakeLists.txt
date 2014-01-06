@@ -647,6 +647,20 @@ endif()
 ########### PRINTING OUT SETTINGS AND FINALISING COMPILE FLAGS
 ###########
 
+set( SIRE_DISABLE_WARNINGS ON )
+
+if (SIRE_DISABLE_WARNINGS)
+  # Disable some of the unnecessary compiler warnings...
+  CHECK_CXX_COMPILER_FLAG( "-Wno-attributes" SIRE_HAS_WNO_ATTRIBUTES )
+
+  if (SIRE_HAS_WNO_ATTRIBUTES)
+    list( APPEND SIRE_DISABLE_WARNING_FLAGS "-Wno-attributes" )
+  endif()
+
+  set( SIRE_WARNALL_FLAGS "${SIRE_WARNALL_FLAGS} ${SIRE_DISABLE_WARNING_FLAGS}" )
+
+endif()
+
 message( STATUS  "CMAKE_SYSTEM_NAME      == ${CMAKE_SYSTEM_NAME}" )
 message( STATUS  "CMAKE_C_COMPILER       == ${CMAKE_C_COMPILER}" )
 message( STATUS  "CMAKE_CXX_COMPILER     == ${CMAKE_CXX_COMPILER}" )
