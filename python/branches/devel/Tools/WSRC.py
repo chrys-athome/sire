@@ -50,7 +50,7 @@ grid_buffer = Parameter("grid buffer", 2*angstrom,
 disable_grid = Parameter("disable grid", False, """Whether or not to disable use of the grid""")
 
 coul_power = Parameter("coulomb power", 0, """Soft-core coulomb power parameter""") 
-shift_delta = Parameter("shift delta", 0.25, """Soft-core LJ shift delta parameter""")
+shift_delta = Parameter("shift delta", 1.2, """Soft-core LJ shift delta parameter""")
 
 temperature = Parameter("temperature", 25*celsius, """Simulation temperature""")
 random_seed = Parameter("random seed", None, """Random number seed. Set this if you
@@ -74,7 +74,7 @@ water_monitor_distance = Parameter("water monitor distance", 5.0*angstrom,
                                    """The distance up to which the free energy of water molecules
                                       interacting with the ligand should be recorded.""")
 
-waterbox_only = Parameter("waterbox only", True,
+waterbox_only = Parameter("waterbox only", False,
                           """Whether or not to select water molecules only from the water box.""")
 
 nrgmon_frequency = Parameter("energy monitor frequency", 1000, 
@@ -129,7 +129,7 @@ sysmoves_file = Parameter("sysmoves file", "wsrc_sysmoves.s3",
 nequilmoves = Parameter("nequilmoves", 50000,
                         """Number of equilibration moves to perform before setting up the free energy simulation.""")
 
-nmoves = Parameter("nmoves", 600, """Number of RETI moves to perform during the simulation.""")
+nmoves = Parameter("nmoves", 1000, """Number of RETI moves to perform during the simulation.""")
 
 coulomb_power = Parameter("coulomb power", 0,
                           """The soft-core coulomb power parameter""")
