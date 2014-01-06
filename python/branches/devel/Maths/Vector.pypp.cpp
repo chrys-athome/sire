@@ -39,6 +39,8 @@ SireMaths::Vector __copy__(const SireMaths::Vector &other){ return SireMaths::Ve
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_Vector_class(){
 
     { //::SireMaths::Vector
@@ -615,6 +617,7 @@ void register_Vector_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         Vector_exposer.def( "__str__", &__str__< ::SireMaths::Vector > );
         Vector_exposer.def( "__repr__", &__str__< ::SireMaths::Vector > );
+        Vector_exposer.def( "__len__", &__len_count< ::SireMaths::Vector > );
     }
 
 }

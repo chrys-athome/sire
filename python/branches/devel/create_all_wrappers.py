@@ -26,6 +26,6 @@ def create_wrappers(dir):
 for dir in dirs:
     create_wrappers(dir)
 
-os.chdir("Qt")
-os.system("python create_qt_wrappers.py")
-os.chdir("..")
+#os.chdir("Qt")
+#os.system("python create_qt_wrappers.py")
+#os.chdir("..")

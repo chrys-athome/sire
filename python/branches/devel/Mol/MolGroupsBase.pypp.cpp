@@ -76,6 +76,8 @@ namespace bp = boost::python;
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_MolGroupsBase_class(){
 
     { //::SireMol::MolGroupsBase
@@ -1793,6 +1795,7 @@ void register_MolGroupsBase_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         MolGroupsBase_exposer.def( "__str__", &__str__< ::SireMol::MolGroupsBase > );
         MolGroupsBase_exposer.def( "__repr__", &__str__< ::SireMol::MolGroupsBase > );
+        MolGroupsBase_exposer.def( "__len__", &__len_count< ::SireMol::MolGroupsBase > );
     }
 
 }

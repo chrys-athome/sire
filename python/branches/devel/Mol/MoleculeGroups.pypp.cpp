@@ -78,6 +78,8 @@ SireMol::MoleculeGroups __copy__(const SireMol::MoleculeGroups &other){ return S
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_MoleculeGroups_class(){
 
     { //::SireMol::MoleculeGroups
@@ -463,6 +465,7 @@ void register_MoleculeGroups_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         MoleculeGroups_exposer.def( "__str__", &__str__< ::SireMol::MoleculeGroups > );
         MoleculeGroups_exposer.def( "__repr__", &__str__< ::SireMol::MoleculeGroups > );
+        MoleculeGroups_exposer.def( "__len__", &__len_count< ::SireMol::MoleculeGroups > );
     }
 
 }

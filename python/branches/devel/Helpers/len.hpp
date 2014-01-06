@@ -37,15 +37,27 @@
 SIRE_BEGIN_HEADER
 
 /** This function returns the size of the object using the "count" function */
-template<class T>
+/*template<class T>
 size_t __len_count(const T &obj)
+{
+    return obj.count();
+}*/
+
+template<class T>
+size_t __len_count(T &obj)
 {
     return obj.count();
 }
 
 /** This function returns the size of the object using the "size" function */
-template<class T>
+/*template<class T>
 size_t __len_size(const T &obj)
+{
+    return obj.size();
+}*/
+
+template<class T>
+size_t __len_size(T &obj)
 {
     return obj.size();
 }
