@@ -1015,6 +1015,21 @@ Vector Cartesian::getMinimumImage(const Vector &point, const Vector&) const
     return point;
 }
 
+/** Return all periodic images of 'point' with respect to 'center' within
+    'dist' distance of 'center' */
+QVector<Vector> Cartesian::getImagesWithin(const Vector &point, const Vector &center,
+                                           double dist) const
+{
+    QVector<Vector> points;
+
+    if ( Vector::distance(point,center) < dist )
+    {
+        points.append(point);
+    }
+    
+    return points;
+}
+
 /** Return a list of copies of CoordGroup 'group' that are within
     'distance' of the CoordGroup 'center', translating 'group' so that
     it has the right coordinates to be around 'center'. As this is not

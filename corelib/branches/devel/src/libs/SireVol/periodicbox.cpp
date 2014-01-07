@@ -1143,6 +1143,57 @@ Vector PeriodicBox::getMinimumImage(const Vector &point, const Vector &center) c
     return point + wrapDelta(point, center);
 }
 
+/** Return all periodic images of 'point' with respect to 'center' within
+    'dist' distance of 'center' */
+QVector<Vector> PeriodicBox::getImagesWithin(const Vector &point, const Vector &center,
+                                             double dist) const
+{
+    QVector<Vector> points;
+
+    //first, get the minimum image...
+    Vector p = getMinimumImage(point, center);
+
+    if ( Vector::distance(p,center) < dist )
+    {
+        //the minimum image is within the distance, so lets now look at all periodic replicas...
+
+        //We only need to look at periodic boxes that are within 'dist'...
+        // This rounds to the nearest number of box lengths, e.g.
+        // if dist is >= halflength.x() and < 1.5 length.x()
+        // then there is only the need to go out to the first layer in the
+        // x-dimension.
+        int nlayers_x = int( (dist*invlength.x()) + 0.5 );
+        int nlayers_y = int( (dist*invlength.y()) + 0.5 );
+        int nlayers_z = int( (dist*invlength.z()) + 0.5 );
+
+        //loop over all peridic boxes in range
+        for (int i = -nlayers_x; i <= nlayers_x; ++i)
+        {
+            for (int j = -nlayers_y; j <= nlayers_y; ++j)
+            {
+                for (int k = -nlayers_z; k <= nlayers_z; ++k)
+                {
+                    //get the delta value needed to translate the minimum
+                    //image into the i,j,k box
+                    Vector delta( i * boxlength.x(),
+                                  j * boxlength.y(),
+                                  k * boxlength.z() );
+
+                    //translate just the center of the minimum image...
+                    Vector p_image = p + delta;
+
+                    if ( Vector::distance(center, p_image) < dist )
+                    {
+                        points.append(p_image);
+                    }
+                }
+            }
+        }
+    }
+    
+    return points;
+}
+
 /** Return a list of copies of CoordGroup 'group' that are within
     'distance' of the CoordGroup 'center', translating 'group' so that
     it has the right coordinates to be around 'center'. Note that multiple

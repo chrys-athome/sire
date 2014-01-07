@@ -331,6 +331,11 @@ public:
         box that has its center at 'center' */
     virtual Vector getMinimumImage(const Vector &point, const Vector &center) const=0;
 
+    /** Return all periodic images of 'point' with respect to 'center' within
+        'dist' distance of 'center' */
+    virtual QVector<Vector> getImagesWithin(const Vector &point, const Vector &center,
+                                            double dist) const=0;
+
     /** Return a list of copies of CoordGroup 'group' that are within
         'distance' of the CoordGroup 'center', translating 'group' so that
         it has the right coordinates to be around 'center'. Note that multiple

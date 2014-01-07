@@ -592,8 +592,8 @@ static int gridIndexToArrayIndex(int ix, int iy, int iz, int dimx, int dimy, int
     return ix*(dimy*dimz) + iy*dimz + iz;
 }
 
-void getGridPoint(int ipt, const Vector &min, int dimx, int dimy, int dimz,
-                  double grid_spacing, MultiDouble &x, MultiDouble &y, MultiDouble &z)
+static void getGridPoint(int ipt, const Vector &min, int dimx, int dimy, int dimz,
+                         double grid_spacing, MultiDouble &x, MultiDouble &y, MultiDouble &z)
 {
     int ix, iy, iz;
     arrayIndexToGridIndex(ipt, dimx, dimy, dimz, ix, iy, iz);
@@ -603,8 +603,8 @@ void getGridPoint(int ipt, const Vector &min, int dimx, int dimy, int dimz,
     z = MultiDouble( min.z() + iz*grid_spacing );
 }
 
-void getGridPoint(int ipt, const Vector &min, int dimx, int dimy, int dimz,
-                  double grid_spacing, MultiFloat &x, MultiFloat &y, MultiFloat &z)
+static void getGridPoint(int ipt, const Vector &min, int dimx, int dimy, int dimz,
+                         double grid_spacing, MultiFloat &x, MultiFloat &y, MultiFloat &z)
 {
     int ix, iy, iz;
     arrayIndexToGridIndex(ipt, dimx, dimy, dimz, ix, iy, iz);
@@ -620,6 +620,9 @@ void GridFF2::addToGrid(const QVector<float> &vx,
                         const QVector<float> &vz,
                         const QVector<float> &vq)
 {
+    QTime t;
+    t.start();
+
     const QVector<MultiFloat> mx = MultiFloat::fromArray(vx);
     const QVector<MultiFloat> my = MultiFloat::fromArray(vy);
     const QVector<MultiFloat> mz = MultiFloat::fromArray(vz);
@@ -635,9 +638,6 @@ void GridFF2::addToGrid(const QVector<float> &vx,
     const MultiFloat *ay = my.constData();
     const MultiFloat *az = mz.constData();
     const MultiFloat *aq = mq.constData();
-    
-    QTime t;
-    t.start();
     
     const MultiFloat Rc( coul_cutoff );
     MultiFloat r, tmp;
@@ -872,6 +872,15 @@ void GridFF2::rebuildGrid()
     if (mols[0].moleculesByIndex().isEmpty())
         return;
 
+    if (lj_cutoff > coul_cutoff)
+    {
+        //there is something very wrong here!
+        throw SireError::invalid_state( QObject::tr(
+                "You cannot have a grid forcefield with a longer LJ cutoff (%1 A) "
+                "than a coulomb cutoff (%2 A).")
+                    .arg(lj_cutoff).arg(coul_cutoff), CODELOC );
+    }
+
     qDebug() << "REBUILDING THE GRID FOR FORCEFIELD" << this->name().value()
              << "USING A LJ_CUTOFF OF" << lj_cutoff << "A, A COULOMB CUTOFF OF"
              << coul_cutoff << "A AND A GRID SPACING OF" << grid_spacing << "A...";
@@ -957,12 +966,13 @@ void GridFF2::rebuildGrid()
 
     closemols_coords.clear();
     closemols_params.clear();
+
+    //temporary space to store the coordinates and parameters of
+    //all group 2 and fixed atoms that are within the LJ cutoff of
+    //the edge of the grid. All other atoms are added to 'far_mols_?'
+    QVector<float> cmols_x, cmols_y, cmols_z, cmols_q, cmols_sig, cmols_eps;
     
-    //now build the grid - we take atoms that are within the LJ cutoff
-    //and calculate those manually (saving them in the closemols list), and
-    //only add coulomb potentials of CoordGroups that are beyond the LJ cutoff
     const ChunkedVector<CLJMolecule> &cljmols = mols[1].moleculesByIndex();
-    
     const Space &spce = this->space();
     qDebug() << "Grid space equals:" << spce.toString();
     
@@ -979,8 +989,10 @@ void GridFF2::rebuildGrid()
     int atomcount = 0;
     int gridcount = 0;
     
-    closemols_coords.reserve(cljmols.count() + (fixedatoms_coords.count() / 2));
-    closemols_params.reserve(cljmols.count() + (fixedatoms_coords.count() / 2));
+    //an atom will only be evaluated if it is within the coulomb cutoff distance
+    //of the corner of the grid (this means it is within the grid size distance + coul_cutoff
+    //of the center of the grid)
+    double grid_plus_coul_dist = coul_cutoff + gridbox.halfExtents().length();
     
     if (fixedatoms_coords.count() > 0)
     {
@@ -988,48 +1000,58 @@ void GridFF2::rebuildGrid()
 
         for (int i=0; i<fixedatoms_coords.count(); ++i)
         {
-            Vector coords = fixedatoms_coords.constData()[i];
-            
-            if (spce.isPeriodic())
-            {
-                coords = spce.getMinimumImage(coords, grid_center);
-            }
-            
             const SireMM::detail::CLJParameter &params = fixedatoms_params.constData()[i];
 
             if (params.reduced_charge == 0 and params.ljid == 0)
                 continue;
+
+            QVector<Vector> coords( 1, fixedatoms_coords.constData()[i] );
             
-            //calculate the closest distance between this point and the grid
-            double dist = ::minimumDistanceToGrid(coords, gridbox);
-            
-            //only explicitly evaluate points within the LJ cutoff of the grid
-            if (dist < lj_cutoff)
+            if (spce.isPeriodic())
             {
-                atomcount += 1;
-                closemols_coords.append(coords);
-                closemols_params.append(params);
+                coords = spce.getImagesWithin(coords.at(0), grid_center, grid_plus_coul_dist);
             }
-            //all other points are evaluated using the grid
-            else
+            
+            for (int j=0; j<coords.count(); ++j)
             {
-                if (params.reduced_charge != 0)
+                const Vector &c = coords.at(j);
+            
+                //calculate the closest distance between this point and the grid
+                double dist = Vector::distance(c, grid_center);
+            
+                //only explicitly evaluate points within the LJ cutoff of the grid
+                if (dist < lj_cutoff)
                 {
-                    far_mols_x.append(coords.x());
-                    far_mols_y.append(coords.y());
-                    far_mols_z.append(coords.z());
-                    far_mols_q.append(params.reduced_charge);
-                
-                    if (far_mols_x.count() > 1023)
+                    atomcount += 1;
+                    cmols_x.append(c.x());
+                    cmols_y.append(c.y());
+                    cmols_z.append(c.z());
+                    cmols_q.append(params.reduced_charge);
+                    
+                    LJParameter lj = LJParameterDB::getLJParameter(params.ljid);
+                    cmols_sig.append(lj.sigma());
+                    cmols_eps.append(lj.epsilon());
+                }
+                else if (dist < grid_plus_coul_dist)
+                {
+                    if (params.reduced_charge != 0)
                     {
-                        addToGrid(far_mols_x, far_mols_y, far_mols_z, far_mols_q);
-                        gridcount += far_mols_x.count();
-                        far_mols_x.clear();
-                        far_mols_y.clear();
-                        far_mols_z.clear();
-                        far_mols_q.clear();
-                        //qDebug() << "Added" << i+1 << "of" << fixedatoms_coords.count()
-                        //         << "fixed atoms to the grid...";
+                        far_mols_x.append(c.x());
+                        far_mols_y.append(c.y());
+                        far_mols_z.append(c.z());
+                        far_mols_q.append(params.reduced_charge);
+                    
+                        if (far_mols_x.count() > 1023)
+                        {
+                            addToGrid(far_mols_x, far_mols_y, far_mols_z, far_mols_q);
+                            gridcount += far_mols_x.count();
+                            far_mols_x.clear();
+                            far_mols_y.clear();
+                            far_mols_z.clear();
+                            far_mols_q.clear();
+                            //qDebug() << "Added" << i+1 << "of" << fixedatoms_coords.count()
+                            //         << "fixed atoms to the grid...";
+                        }
                     }
                 }
             }
@@ -1076,48 +1098,59 @@ void GridFF2::rebuildGrid()
 
                 for (int i=0; i<coordgroup.count(); ++i)
                 {
-                    Vector coords = coordgroup.constData()[i];
-            
-                    if (spce.isPeriodic())
-                    {
-                        coords = spce.getMinimumImage(coords, grid_center);
-                    }
-            
                     const SireMM::detail::CLJParameter &params = paramsgroup.constData()[i];
             
                     if (params.reduced_charge == 0 and params.ljid == 0)
                         continue;
+
+                    QVector<Vector> coords( 1, coordgroup.constData()[i] );
             
-                    //calculate the closest distance between this point and the grid
-                    double dist = ::minimumDistanceToGrid(coords, gridbox);
-            
-                    //only explicitly evaluate points within the LJ cutoff of the grid
-                    if (dist < lj_cutoff)
+                    if (spce.isPeriodic())
                     {
-                        atomcount += 1;
-                        closemols_coords.append(coords);
-                        closemols_params.append(params);
+                        coords = spce.getImagesWithin(coords.at(0), grid_center,
+                                                      grid_plus_coul_dist);
                     }
-                    //all other points are evaluated using the grid
-                    else
+            
+                    for (int j=0; j<coords.count(); ++j)
                     {
-                        if (params.reduced_charge != 0)
+                        const Vector &c = coords.at(j);
+            
+                        //calculate the closest distance between this point and the grid
+                        double dist = Vector::distance(grid_center, c);
+            
+                        //only explicitly evaluate points within the LJ cutoff of the grid
+                        if (dist < lj_cutoff)
                         {
-                            far_mols_x.append(coords.x());
-                            far_mols_y.append(coords.y());
-                            far_mols_z.append(coords.z());
-                            far_mols_q.append(params.reduced_charge);
-                
-                            if (far_mols_x.count() > 1023)
+                            atomcount += 1;
+                            cmols_x.append(c.x());
+                            cmols_y.append(c.y());
+                            cmols_z.append(c.z());
+                            cmols_q.append(params.reduced_charge);
+                            
+                            LJParameter lj = LJParameterDB::getLJParameter(params.ljid);
+                            cmols_sig.append(lj.sigma());
+                            cmols_eps.append(lj.epsilon());
+                        }
+                        else if (dist < grid_plus_coul_dist)
+                        {
+                            if (params.reduced_charge != 0)
                             {
-                                addToGrid(far_mols_x, far_mols_y, far_mols_z, far_mols_q);
-                                gridcount += far_mols_x.count();
-                                far_mols_x.clear();
-                                far_mols_y.clear();
-                                far_mols_z.clear();
-                                far_mols_q.clear();
-                                qDebug() << "Added" << nmols << "of" << cljmols.count()
-                                         << "molecules to the grid...";
+                                far_mols_x.append(c.x());
+                                far_mols_y.append(c.y());
+                                far_mols_z.append(c.z());
+                                far_mols_q.append(params.reduced_charge);
+                    
+                                if (far_mols_x.count() > 1023)
+                                {
+                                    addToGrid(far_mols_x, far_mols_y, far_mols_z, far_mols_q);
+                                    gridcount += far_mols_x.count();
+                                    far_mols_x.clear();
+                                    far_mols_y.clear();
+                                    far_mols_z.clear();
+                                    far_mols_q.clear();
+                                    qDebug() << "Added" << nmols << "of" << cljmols.count()
+                                             << "molecules to the grid...";
+                                }
                             }
                         }
                     }
@@ -1136,6 +1169,14 @@ void GridFF2::rebuildGrid()
         qDebug() << "The number of grid evaluated atoms is now" << gridcount;
     }
  
+    // convert the QVector<float> arrays into QVector<MultiFloat>
+    close_mols_x = MultiFloat::fromArray(cmols_x);
+    close_mols_y = MultiFloat::fromArray(cmols_y);
+    close_mols_z = MultiFloat::fromArray(cmols_z);
+    close_mols_q = MultiFloat::fromArray(cmols_q);
+    close_mols_sig = MultiFloat::fromArray(cmols_sig);
+    close_mols_eps = MultiFloat::fromArray(cmols_eps);
+ 
     {
         double grid_sum = 0;
         
@@ -1146,9 +1187,6 @@ void GridFF2::rebuildGrid()
         
         qDebug() << "Sum of grid potentials is" << grid_sum;
     }
-
-    closemols_coords.squeeze();
-    closemols_params.squeeze();
 }
 
 void GridFF2::calculateEnergy(const CoordGroup &coords0, 

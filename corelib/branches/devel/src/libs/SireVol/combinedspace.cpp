@@ -578,6 +578,13 @@ Vector CombinedSpace::getMinimumImage(const Vector &point, const Vector &center)
     return spces.at(0).read().getMinimumImage(point, center);
 }
 
+QVector<Vector> CombinedSpace::getImagesWithin(const Vector &point, const Vector &center,
+                                               double dist) const
+{
+    this->assertSameSpace("Cannot get minimum images", CODELOC);
+    return spces.at(0).read().getImagesWithin(point, center, dist);
+}
+
 /** Return a random point within the spaces used in this combined space */
 Vector CombinedSpace::getRandomPoint(const Vector &center,
                                      const RanGenerator &generator) const

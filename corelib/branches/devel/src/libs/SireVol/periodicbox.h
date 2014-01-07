@@ -155,6 +155,8 @@ public:
     
     Vector getMinimumImage(const Vector &point, const Vector &center) const;
 
+    QVector<Vector> getImagesWithin(const Vector &point, const Vector &center, double dist) const;
+
     QList< boost::tuple<double,CoordGroup> >
                getCopiesWithin(const CoordGroup &group,
                                const CoordGroup &center, double dist) const;

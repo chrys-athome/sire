@@ -30,7 +30,9 @@
 #define SIREMM_GRIDFF2_H
 
 #include "intercljff.h"
+
 #include "SireMaths/histogram.h"
+#include "SireMaths/multifloat.h"
 
 SIRE_BEGIN_HEADER
 
@@ -205,6 +207,16 @@ private:
         molecules that are within the LJ cutoff of the center of the grid */
     QVector<SireMaths::Vector> closemols_coords;
     QVector<detail::CLJParameter> closemols_params;
+    
+    /** The set of coordinates and parameters (charge, LJ sig and eps)
+        of atoms of group 2 and
+        fixed atoms that are within the LJ cutoff of the edge of the grid */
+    QVector<SireMaths::MultiFloat> close_mols_x;
+    QVector<SireMaths::MultiFloat> close_mols_y;
+    QVector<SireMaths::MultiFloat> close_mols_z;
+    QVector<SireMaths::MultiFloat> close_mols_q;
+    QVector<SireMaths::MultiFloat> close_mols_sig;
+    QVector<SireMaths::MultiFloat> close_mols_eps;
     
     /** The old energy of each molecule */
     QHash<SireMol::MolNum,CLJEnergy> oldnrgs;
