@@ -2402,7 +2402,7 @@ void GridFF::calculateEnergy(const CoordGroup &coords0,
             gridnrg += phi * p0.reduced_charge;
         }
     }
-    
+
     cnrg = icnrg + gridnrg;
     ljnrg = 4.0*iljnrg;  // 4 epsilon (....)
 }

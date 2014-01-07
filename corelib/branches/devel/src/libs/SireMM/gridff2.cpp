@@ -672,7 +672,7 @@ void GridFF2::addToGrid(const QVector<float> &vx,
                 tmp = r - Rc;
                 tmp *= one_over_Rc2;
                 tmp -= one_over_Rc;
-                tmp += r.reciprocal();
+                tmp += MULTIFLOAT_ONE / r;
                 tmp *= aq[ivec];
                 
                 //apply the cutoff - compare r against Rc. This will
@@ -717,7 +717,7 @@ void GridFF2::addToGrid(const QVector<float> &vx,
                 r = r.sqrt();
                 tmp *= k_rf;
                 tmp -= c_rf;
-                tmp += r.reciprocal();
+                tmp += MULTIFLOAT_ONE / r;
                 tmp *= aq[ivec];
                 
                 //apply the cutoff - compare r against Rc. This will
@@ -1215,7 +1215,7 @@ void GridFF2::calculateEnergy(const CoordGroup &coords0,
             const MultiFloat one_over_Rc( 1.0 / coul_cutoff );
             const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
 
-            MultiFloat tmp, r, sig2_over_r2, sig6_over_r6, eps;
+            MultiFloat tmp, r, q2, sig2_over_r2, sig6_over_r6, eps;
             MultiDouble icnrg(0), iljnrg(0);
 
             for (int i=0; i<nats0; ++i)
@@ -1223,7 +1223,7 @@ void GridFF2::calculateEnergy(const CoordGroup &coords0,
                 const float x0 = coords0_array[i].x();
                 const float y0 = coords0_array[i].y();
                 const float z0 = coords0_array[i].z();
-                const float q0 = params0_array[i].reduced_charge;
+                const MultiFloat q0(params0_array[i].reduced_charge);
                 const LJParameter lj = LJParameterDB::getLJParameter(params0_array[i].ljid);
                 const MultiFloat sig0(lj.sigma());
                 const MultiFloat eps0(lj.epsilon());
@@ -1245,9 +1245,8 @@ void GridFF2::calculateEnergy(const CoordGroup &coords0,
                     tmp = r - Rc;
                     tmp *= one_over_Rc2;
                     tmp -= one_over_Rc;
-                    tmp += r.reciprocal();
-                    tmp *= q0;
-                    tmp *= q1[j];
+                    tmp += MULTIFLOAT_ONE / r;
+                    tmp *= q0 * q1[j];
                     
                     //apply the cutoff - compare r against Rc. This will
                     //return 1 if r is less than Rc, or 0 otherwise. Logical

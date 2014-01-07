@@ -48,8 +48,8 @@
 #endif
 #endif
 
-//#undef SIRE_USE_AVX
-//#define SIRE_USE_SSE 1
+#undef SIRE_USE_AVX
+#define SIRE_USE_SSE 1
 //#undef SIRE_USE_SSE
 
 #define MULTIFLOAT_CHECK_ALIGNMENT 1
@@ -200,9 +200,16 @@ public:
     MultiFloat min(const MultiFloat &other) const;
     
     MultiFloat reciprocal() const;
+    MultiFloat reciprocal_approx() const;
+    MultiFloat reciprocal_approx_nr() const;
     
     MultiFloat sqrt() const;
+    MultiFloat sqrt_approx() const;
+    MultiFloat sqrt_approx_nr() const;
+    
     MultiFloat rsqrt() const;
+    MultiFloat rsqrt_approx() const;
+    MultiFloat rsqrt_approx_nr() const;
     
     MultiFloat rotate() const;
     
@@ -1027,15 +1034,33 @@ MultiFloat MultiFloat::min(const MultiFloat &other) const
 inline
 MultiFloat MultiFloat::reciprocal() const
 {
+    return MULTIFLOAT_ONE.operator/(*this);
+}
+
+/** Return a poor approximation of the reciprocal of the vector (about 12 bits of precision) */
+inline
+MultiFloat MultiFloat::reciprocal_approx() const
+{
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
         return MultiFloat( _mm256_rcp_ps(v.x) );
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiFloat( _mm_rcp_ps(v.x) );
     #else
-        return MULTIFLOAT_ONE.operator/(*this);
+        return this->reciprocal();
     #endif
     #endif
+}
+
+/** Return a good approximation of the reciprocal of the vector (the poor approximation
+    refined using one step of Newton Raphson) */
+inline
+MultiFloat MultiFloat::reciprocal_approx_nr() const
+{
+    //One step of NR
+    // 1/x = a[ 2 - a x ] where a is the approximation
+
+    return this->reciprocal();
 }
 
 /** Return the square root of this vector */
@@ -1058,9 +1083,75 @@ MultiFloat MultiFloat::sqrt() const
     #endif
 }
 
+/** Return the approximate square root, highly approximated but very fast.
+    Has about 12 bits of precision in the mantissa (is x * rsqrt(x)) */
+inline
+MultiFloat MultiFloat::sqrt_approx() const
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        __m256 r_sqrt = _mm256_rsqrt_ps(v.x);
+        return MultiFloat( _mm256_mul_ps( v.x, r_sqrt ) );
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        __m128 r_sqrt = _mm_rsqrt_ps(v.x);
+        return MultiFloat( _mm_mul_ps( v.x, r_sqrt ) );
+    #else
+        return this->sqrt();
+    #endif
+    #endif
+}
+
+/** Return a good approximation of the square root (this is the poor approximation
+    refined using a single step of Newton Raphson) */
+inline
+MultiFloat MultiFloat::sqrt_approx_nr() const
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        //calculate sqrt(x) as x * 1 / sqrt(x)
+        __m256 a = _mm256_rsqrt_ps(v.x);
+        a = _mm256_mul_ps(v.x, a);
+
+        //now use one step of NR to refine the result
+        // sqrt(x) = a - [ (a^2 - x) / 2a ] where a is the approximation
+        __m256 tmp = _mm256_mul_ps(a, a);
+        tmp = _mm256_sub_ps(tmp, v.x);
+        __m256 two_a = _mm256_add_ps(a, a);
+        tmp = _mm256_div_ps(tmp, two_a);
+        a = _mm256_sub_ps(a, tmp);
+    
+        return MultiFloat(a);
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        //calculate sqrt(x) as x * 1 / sqrt(x)
+        __m128 a = _mm_rsqrt_ps(v.x);
+        a = _mm_mul_ps(v.x, a);
+
+        //now use one step of NR to refine the result
+        // sqrt(x) = a - [ (a^2 - x) / 2a ] where a is the approximation
+        __m128 tmp = _mm_mul_ps(a, a);
+        tmp = _mm_sub_ps(tmp, v.x);
+        __m128 two_a = _mm_add_ps(a, a);
+        tmp = _mm_div_ps(tmp, two_a);
+        a = _mm_sub_ps(a, tmp);
+    
+        return MultiFloat(a);
+    #else
+        return this->sqrt();
+    #endif
+    #endif
+}
+
 /** Return the recipical square root of this vector */
 inline
 MultiFloat MultiFloat::rsqrt() const
+{
+    return MULTIFLOAT_ONE.operator/(this->sqrt());
+}
+
+/** Return an approximation of the reciprical square root of this vector (only good
+    for about 12 bit of the mantissa) */
+inline
+MultiFloat MultiFloat::rsqrt_approx() const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
         return MultiFloat( _mm256_rsqrt_ps(v.x) );
@@ -1071,6 +1162,14 @@ MultiFloat MultiFloat::rsqrt() const
         return MULTIFLOAT_ONE.operator/(this->sqrt());
     #endif
     #endif
+}
+
+/** Return a good approximation of the reciprical square root (this poor approximation
+    refined using a single Newton Raphson step) */
+inline
+MultiFloat MultiFloat::rsqrt_approx_nr() const
+{
+    return this->rsqrt();
 }
 
 /** Rotate this vector. This moves each element one space to the left, moving the
