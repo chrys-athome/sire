@@ -2523,8 +2523,15 @@ void GridFF::recalculateEnergy()
     
     if (must_recalculate)
     {
+        QTime t;
+        t.start();
+    
         this->mustNowRecalculateFromScratch();
         this->rebuildGrid();
+
+        int ms = t.elapsed();
+        qDebug() << "REBUILD GRID TOOK" << ms << "ms";
+        t.restart();
 
         double total_cnrg(0);
         double total_ljnrg(0);
@@ -2582,6 +2589,9 @@ void GridFF::recalculateEnergy()
             total_cnrg += cnrg;
             total_ljnrg += ljnrg;
         }
+
+        ms = t.elapsed();
+        qDebug() << "CALCULATING ENERGY TOOK" << ms << "ms";
 
         this->components().setEnergy(*this, CLJEnergy(total_cnrg,total_ljnrg));
     }

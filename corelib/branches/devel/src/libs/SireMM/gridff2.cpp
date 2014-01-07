@@ -827,6 +827,7 @@ static double minimumDistanceToGrid(const Vector &coords, const AABox &gridbox)
     if (ix == 0 and iy == 0 and iz == 0)
         //the box contains the point
         return 0;
+    
     else if (ix == 0 and iy == 0)
     {
         //the point is above or below the xy face
@@ -988,11 +989,8 @@ void GridFF2::rebuildGrid()
 
     int atomcount = 0;
     int gridcount = 0;
-    
-    //an atom will only be evaluated if it is within the coulomb cutoff distance
-    //of the corner of the grid (this means it is within the grid size distance + coul_cutoff
-    //of the center of the grid)
-    double grid_plus_coul_dist = coul_cutoff + gridbox.halfExtents().length();
+
+    const double image_cutoff = coul_cutoff + gridbox.halfExtents().length();
     
     if (fixedatoms_coords.count() > 0)
     {
@@ -1005,19 +1003,15 @@ void GridFF2::rebuildGrid()
             if (params.reduced_charge == 0 and params.ljid == 0)
                 continue;
 
-            QVector<Vector> coords( 1, fixedatoms_coords.constData()[i] );
-            
-            if (spce.isPeriodic())
-            {
-                coords = spce.getImagesWithin(coords.at(0), grid_center, grid_plus_coul_dist);
-            }
+            QVector<Vector> coords = spce.getImagesWithin(fixedatoms_coords.constData()[i],
+                                                          grid_center, image_cutoff);
             
             for (int j=0; j<coords.count(); ++j)
             {
                 const Vector &c = coords.at(j);
             
                 //calculate the closest distance between this point and the grid
-                double dist = Vector::distance(c, grid_center);
+                double dist = ::minimumDistanceToGrid(c, gridbox);
             
                 //only explicitly evaluate points within the LJ cutoff of the grid
                 if (dist < lj_cutoff)
@@ -1032,7 +1026,7 @@ void GridFF2::rebuildGrid()
                     cmols_sig.append(lj.sigma());
                     cmols_eps.append(lj.epsilon());
                 }
-                else if (dist < grid_plus_coul_dist)
+                else if (dist < coul_cutoff)
                 {
                     if (params.reduced_charge != 0)
                     {
@@ -1103,20 +1097,15 @@ void GridFF2::rebuildGrid()
                     if (params.reduced_charge == 0 and params.ljid == 0)
                         continue;
 
-                    QVector<Vector> coords( 1, coordgroup.constData()[i] );
-            
-                    if (spce.isPeriodic())
-                    {
-                        coords = spce.getImagesWithin(coords.at(0), grid_center,
-                                                      grid_plus_coul_dist);
-                    }
+                    QVector<Vector> coords = spce.getImagesWithin(fixedatoms_coords.constData()[i],
+                                                                  grid_center, image_cutoff);
             
                     for (int j=0; j<coords.count(); ++j)
                     {
                         const Vector &c = coords.at(j);
             
                         //calculate the closest distance between this point and the grid
-                        double dist = Vector::distance(grid_center, c);
+                        double dist = ::minimumDistanceToGrid(c, gridbox);
             
                         //only explicitly evaluate points within the LJ cutoff of the grid
                         if (dist < lj_cutoff)
@@ -1131,7 +1120,7 @@ void GridFF2::rebuildGrid()
                             cmols_sig.append(lj.sigma());
                             cmols_eps.append(lj.epsilon());
                         }
-                        else if (dist < grid_plus_coul_dist)
+                        else if (dist < coul_cutoff)
                         {
                             if (params.reduced_charge != 0)
                             {
@@ -1190,701 +1179,198 @@ void GridFF2::rebuildGrid()
 }
 
 void GridFF2::calculateEnergy(const CoordGroup &coords0, 
-                             const GridFF2::CLJParameters::Array &params0,
-                             double &cnrg, double &ljnrg)
+                              const GridFF2::CLJParameters::Array &params0,
+                              double &return_cnrg, double &return_ljnrg)
 {
-    double icnrg = 0;
-    double iljnrg = 0;
+    if (coords0.isEmpty())
+        return;
+
+    double cnrg = 0;
+    double ljnrg = 0;
+    double gridnrg = 0;
 
     const int nats0 = coords0.count();
     
     const Vector *coords0_array = coords0.constData();
     const detail::CLJParameter *params0_array = params0.constData();
 
-    const Vector *coords1_array = closemols_coords.constData();
-    const detail::CLJParameter *params1_array = closemols_params.constData();
-
-    const int nats1 = closemols_coords.count();
-        
     BOOST_ASSERT( closemols_coords.count() == closemols_params.count() );
 
-    if (nats1 > 0)
+    //calculate the energy with fixed explicit atoms
+    if (not close_mols_x.isEmpty())
     {
+        const MultiFloat *x1 = close_mols_x.constData();
+        const MultiFloat *y1 = close_mols_y.constData();
+        const MultiFloat *z1 = close_mols_z.constData();
+        const MultiFloat *q1 = close_mols_q.constData();
+        const MultiFloat *sig1 = close_mols_sig.constData();
+        const MultiFloat *eps1 = close_mols_eps.constData();
+    
+        const bool is_arithmetic = (this->combiningRules() == "arithmetic");
+    
         if (shiftElectrostatics())
         {
-            //use the force-shifted cutoff with an alpha value of 0
-            const double Rc = coul_cutoff;
-            const double Rlj = lj_cutoff;
+            const MultiFloat Rc(coul_cutoff);
+            const MultiFloat Rlj(lj_cutoff);
+            const MultiFloat one_over_Rc( 1.0 / coul_cutoff );
+            const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
+
+            MultiFloat tmp, r, sig2_over_r2, sig6_over_r6, eps;
+            MultiDouble icnrg(0), iljnrg(0);
+
+            for (int i=0; i<nats0; ++i)
+            {
+                const float x0 = coords0_array[i].x();
+                const float y0 = coords0_array[i].y();
+                const float z0 = coords0_array[i].z();
+                const float q0 = params0_array[i].reduced_charge;
+                const LJParameter lj = LJParameterDB::getLJParameter(params0_array[i].ljid);
+                const MultiFloat sig0(lj.sigma());
+                const MultiFloat eps0(lj.epsilon());
+                const MultiFloat half(0.5);
             
-            const double one_over_Rc = double(1) / Rc;
-            const double one_over_Rc2 = double(1) / (Rc*Rc);
-        
-            #ifdef SIRE_USE_SSE
-            {
-                const int remainder = nats1 % 2;
-                
-                __m128d sse_cnrg = { 0, 0 };
-                __m128d sse_ljnrg = { 0, 0 };
-
-                const __m128d sse_one = { 1.0, 1.0 };
-                
-                const __m128d sse_Rc = { Rc, Rc };
-                const __m128d sse_Rlj = { Rlj, Rlj };
-                
-                const __m128d sse_one_over_Rc = { one_over_Rc, one_over_Rc };
-                const __m128d sse_one_over_Rc2 = { one_over_Rc2, one_over_Rc2 };
-                
-                for (int j=0; j<nats1-1; j += 2)
+                for (int j=0; j<close_mols_x.count(); ++j)
                 {
-                    const Parameter &param10 = params1_array[j];
-                    const Parameter &param11 = params1_array[j+1];
+                    //calculate the distance between the fixed and mobile atoms
+                    tmp = x1[j] - x0;
+                    r = tmp * tmp;
+                    tmp = y1[j] - y0;
+                    r.multiplyAdd(tmp, tmp);
+                    tmp = z1[j] - z0;
+                    r.multiplyAdd(tmp, tmp);
+                    r = r.sqrt();
 
-                    const Vector &c10 = coords1_array[j];
-                    const Vector &c11 = coords1_array[j+1];
+                    //calculate the coulomb energy using shift-electrostatics
+                    // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
+                    tmp = r - Rc;
+                    tmp *= one_over_Rc2;
+                    tmp -= one_over_Rc;
+                    tmp += r.reciprocal();
+                    tmp *= q0;
+                    tmp *= q1[j];
                     
-                    for (int i=0; i<nats0; ++i)
+                    //apply the cutoff - compare r against Rc. This will
+                    //return 1 if r is less than Rc, or 0 otherwise. Logical
+                    //and will then remove all energies where r >= Rc
+                    icnrg += tmp.logicalAnd( r.compareLess(Rc) );
+                    
+                    //now calculate the LJ energy - first combine LJ parameters
+                    if (is_arithmetic)
                     {
-                        const Parameter &param0 = params0_array[i];
-                    
-                        __m128d sse_chg0 = _mm_set_pd( param0.reduced_charge,
-                                                       param0.reduced_charge );
-                    
-                        const Vector &c0 = coords0_array[i];
-
-                        __m128d sse_r;
-                        {
-                            __m128d dx = _mm_set_pd( c0.x() - c10.x(), c0.x() - c11.x() );
-                            __m128d dy = _mm_set_pd( c0.y() - c10.y(), c0.y() - c11.y() );
-                            __m128d dz = _mm_set_pd( c0.z() - c10.z(), c0.z() - c11.z() );
-                        
-                            __m128d dx2 = _mm_mul_pd(dx, dx);
-                            __m128d dy2 = _mm_mul_pd(dy, dy);
-                            __m128d dz2 = _mm_mul_pd(dz, dz);
-                        
-                            __m128d sse_r2 = _mm_add_pd(dx2,dy2);
-                            sse_r2 = _mm_add_pd(sse_r2, dz2);
-                        
-                            sse_r = _mm_sqrt_pd(sse_r2);
-                        }
-                        
-                        const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
-
-                        //calculate the coulomb energy
-                        {
-                            const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
-                            __m128d nrg = _mm_sub_pd(sse_r, sse_Rc);
-                            nrg = _mm_mul_pd(nrg, sse_one_over_Rc2);
-                            nrg = _mm_add_pd(nrg, sse_one_over_r);
-                            nrg = _mm_sub_pd(nrg, sse_one_over_Rc);
-
-                            __m128d sse_chg = _mm_set_pd( param10.reduced_charge,
-                                                          param11.reduced_charge );
-                        
-                            sse_chg = _mm_mul_pd(sse_chg, sse_chg0);
-                        
-                            nrg = _mm_mul_pd(sse_chg, nrg);
-
-                            nrg = _mm_and_pd(nrg, sse_in_cutoff);
-                            
-                            sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
-                        }
-                        
-                        //calculate the LJ energy
-                        {
-                            const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rlj);
-                            const LJPair &ljpair0 = ljpairs.constData()[
-                                                        ljpairs.map(param0.ljid,
-                                                                    param10.ljid)];
-                    
-                            const LJPair &ljpair1 = ljpairs.constData()[
-                                                        ljpairs.map(param0.ljid,
-                                                                    param11.ljid)];
-
-                            const __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
-                            const __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(),
-                                                                ljpair1.epsilon() );
-                        
-                            //calculate (sigma/r)^6 and (sigma/r)^12
-                            __m128d sse_sig_over_r2 = _mm_mul_pd(sse_sig, sse_one_over_r);
-                            sse_sig_over_r2 = _mm_mul_pd( sse_sig_over_r2,
-                                                          sse_sig_over_r2 );
-                                                     
-                            __m128d sse_sig_over_r6 = _mm_mul_pd(sse_sig_over_r2,
-                                                                 sse_sig_over_r2);
-                                                        
-                            sse_sig_over_r6 = _mm_mul_pd(sse_sig_over_r6,
-                                                         sse_sig_over_r2);
-                                                     
-                            __m128d sse_sig_over_r12 = _mm_mul_pd(sse_sig_over_r6,
-                                                                  sse_sig_over_r6);
-                                              
-                            //calculate LJ energy (the factor of 4 is added later)
-                            __m128d tmp = _mm_sub_pd(sse_sig_over_r12,
-                                                     sse_sig_over_r6);
-                                                 
-                            tmp = _mm_mul_pd(tmp, sse_eps);
-                            tmp = _mm_and_pd(tmp, sse_in_cutoff);
-                            sse_ljnrg = _mm_add_pd(sse_ljnrg, tmp);
-                        }
+                        //arithmetic combining rules
+                        tmp = sig0 + sig1[j];
+                        tmp *= half;
                     }
-                }
-                
-                if (remainder == 1)
-                {
-                    const Vector &c1 = coords1_array[nats1-1];
-                    const Parameter &param1 = params1_array[nats1-1];
-
-                    for (int i=0; i<nats0; ++i)
+                    else
                     {
-                        const Vector &c0 = coords0_array[i];
-                        const Parameter &param0 = params0_array[i];
-
-                        const double r = Vector::distance(c0,c1);
-                        const double one_over_r = double(1) / r;
-                        
-                        if (r < Rc)
-                        {
-                            icnrg += param0.reduced_charge * param1.reduced_charge
-                                        * (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
-                        }
-
-                        if (r < Rlj)
-                        {
-                            const LJPair &ljpair = ljpairs.constData()[
-                                                    ljpairs.map(param0.ljid,
-                                                                param1.ljid)];
-                        
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
-
-                            iljnrg += ljpair.epsilon() * (sig_over_dist12 -
-                                                          sig_over_dist6);
-                        }
+                        //geometric combining rules
+                        tmp = sig0 * sig1[j];
+                        tmp = tmp.sqrt();
                     }
-                }
-                
-                icnrg += *((const double*)&sse_cnrg) +
-                         *( ((const double*)&sse_cnrg) + 1 );
-                         
-                iljnrg += *((const double*)&sse_ljnrg) +
-                          *( ((const double*)&sse_ljnrg) + 1 );
-            }
-            #else
-            {
-                //we use the force-shifted cutoff potential described in equation 18
-                //in Fennell and Gezelter, J. Chem. Phys., 124, 234104, 2006
-                //We use alpha=0, as I have seen that a 25 A cutoff gives stable results
-                //with alpha=0, and this way we avoid changing the hamiltonian significantly
-                //by having an erfc function
-                for (int j=0; j<nats1; ++j)
-                {
-                    const Parameter &param1 = params1_array[j];
-                    const Vector &c1 = coords1_array[j];
                     
-                    for (int i=0; i<nats0; ++i)
-                    {
-                        const Parameter &param0 = params0_array[i];
-                        const Vector &c0 = coords0_array[i];
+                    sig2_over_r2 = tmp / r;
+                    sig2_over_r2 = sig2_over_r2*sig2_over_r2;
+                    sig6_over_r6 = sig2_over_r2*sig2_over_r2;
+                    sig6_over_r6 = sig6_over_r6*sig2_over_r2;
 
-                        const double r = Vector::distance(c0,c1);
-                        const double one_over_r = double(1) / r;
-                        
-                        if (r < Rc)
-                        {
-                            icnrg += (param0.reduced_charge * param1.reduced_charge) *
-                                        (one_over_r - one_over_Rc + one_over_Rc2 * (r-Rc));
-                        }
-                        
-                        if (r < Rlj)
-                        {
-                            const LJPair &ljpair = ljpairs.constData()[
-                                                    ljpairs.map(param0.ljid,
-                                                                param1.ljid)];
+                    eps = eps0 * eps1[j];
+                    eps = eps.sqrt();
 
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
-
-                            iljnrg += ljpair.epsilon() * (sig_over_dist12 -
-                                                          sig_over_dist6);
-                        }
-                    }
+                    tmp = sig6_over_r6 * sig6_over_r6;
+                    tmp -= sig6_over_r6;
+                    tmp *= eps;
+                    
+                    //apply the cutoff - compare r against Rc. This will
+                    //return 1 if r is less than Rc, or 0 otherwise. Logical
+                    //and will then remove all energies where r >= Rc
+                    iljnrg += tmp.logicalAnd( r.compareLess(Rlj) );
                 }
             }
-            #endif
-        }
-        else if (useReactionField())
-        {
-            //use the reaction field potential
-            const double Rc = coul_cutoff;
-            const double Rlj = lj_cutoff;
             
-            const double rf_dielectric = reactionFieldDielectric();
-            const double k_rf = (1.0 / pow_3(Rc)) * ( (rf_dielectric-1) /
-                                                      (2*rf_dielectric + 1) );
-            const double c_rf = (1.0 / Rc) * ( (3*rf_dielectric) /
-                                               (2*rf_dielectric + 1) );            
-        
-            #ifdef SIRE_USE_SSE
-            {
-                const int remainder = nats1 % 2;
-                
-                __m128d sse_cnrg = { 0, 0 };
-                __m128d sse_ljnrg = { 0, 0 };
-
-                const __m128d sse_one = { 1.0, 1.0 };
-                
-                const __m128d sse_Rc = { Rc, Rc };
-                const __m128d sse_Rlj = { Rlj, Rlj };
-                
-                const __m128d sse_k_rf = { k_rf, k_rf };
-                const __m128d sse_c_rf = { c_rf, c_rf };
-                
-                for (int j=0; j<nats1-1; j += 2)
-                {
-                    const Parameter &param10 = params1_array[j];
-                    const Parameter &param11 = params1_array[j+1];
-
-                    const Vector &c10 = coords1_array[j];
-                    const Vector &c11 = coords1_array[j+1];
-
-                    for (int i=0; i<nats0; ++i)
-                    {
-                        const Parameter &param0 = params0_array[i];
-                    
-                        __m128d sse_chg0 = _mm_set_pd( param0.reduced_charge,
-                                                       param0.reduced_charge );
-                    
-                        const Vector &c0 = coords0_array[i];
-
-                        __m128d sse_r;
-                        {
-                            __m128d dx = _mm_set_pd( c0.x() - c10.x(), c0.x() - c11.x() );
-                            __m128d dy = _mm_set_pd( c0.y() - c10.y(), c0.y() - c11.y() );
-                            __m128d dz = _mm_set_pd( c0.z() - c10.z(), c0.z() - c11.z() );
-                        
-                            __m128d dx2 = _mm_mul_pd(dx, dx);
-                            __m128d dy2 = _mm_mul_pd(dy, dy);
-                            __m128d dz2 = _mm_mul_pd(dz, dz);
-                        
-                            __m128d sse_r2 = _mm_add_pd(dx2,dy2);
-                            sse_r2 = _mm_add_pd(sse_r2, dz2);
-                        
-                            sse_r = _mm_sqrt_pd(sse_r2);
-                        }
-                        
-                        const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
-                        
-                        //calculate the coulomb energy
-                        {
-                            const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
-
-                            __m128d nrg = _mm_mul_pd(sse_r, sse_r);
-                            nrg = _mm_mul_pd(nrg, sse_k_rf);
-                            nrg = _mm_sub_pd(nrg, sse_c_rf);
-                            nrg = _mm_add_pd(nrg, sse_one_over_r);
-
-                            __m128d sse_chg = _mm_set_pd( param10.reduced_charge,
-                                                          param11.reduced_charge );
-                    
-                            sse_chg = _mm_mul_pd(sse_chg, sse_chg0);
-                    
-                            nrg = _mm_mul_pd(sse_chg, nrg);
-
-                            nrg = _mm_and_pd(nrg, sse_in_cutoff);
-                            
-                            sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
-                        }
-                        
-                        //calculate the LJ energy
-                        {
-                            const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rlj);
-                            const LJPair &ljpair0 = ljpairs.constData()[
-                                                ljpairs.map(param0.ljid,
-                                                            param10.ljid)];
-                    
-                            const LJPair &ljpair1 = ljpairs.constData()[
-                                                        ljpairs.map(param0.ljid,
-                                                                    param11.ljid)];
-
-                            const __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
-                            const __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(),
-                                                                ljpair1.epsilon() );
-                        
-                            //calculate (sigma/r)^6 and (sigma/r)^12
-                            __m128d sse_sig_over_r2 = _mm_mul_pd(sse_sig, sse_one_over_r);
-                            sse_sig_over_r2 = _mm_mul_pd( sse_sig_over_r2,
-                                                          sse_sig_over_r2 );
-                                                     
-                            __m128d sse_sig_over_r6 = _mm_mul_pd(sse_sig_over_r2,
-                                                                 sse_sig_over_r2);
-                                                        
-                            sse_sig_over_r6 = _mm_mul_pd(sse_sig_over_r6,
-                                                         sse_sig_over_r2);
-                                                     
-                            __m128d sse_sig_over_r12 = _mm_mul_pd(sse_sig_over_r6,
-                                                                  sse_sig_over_r6);
-                                              
-                            //calculate LJ energy (the factor of 4 is added later)
-                            __m128d tmp = _mm_sub_pd(sse_sig_over_r12,
-                                                     sse_sig_over_r6);
-                                                 
-                            tmp = _mm_mul_pd(tmp, sse_eps);
-                            tmp = _mm_and_pd(tmp, sse_in_cutoff);
-                            sse_ljnrg = _mm_add_pd(sse_ljnrg, tmp);
-                        }
-                    }
-                }
-                
-                if (remainder == 1)
-                {
-                    const Vector &c1 = coords1_array[nats1-1];
-                    const Parameter &param1 = params1_array[nats1-1];
-
-                    for (int i=0; i<nats0; ++i)
-                    {
-                        const Vector &c0 = coords0_array[i];
-                        const Parameter &param0 = params0_array[i];
-
-                        const double r = Vector::distance(c0,c1);
-                        const double one_over_r = double(1) / r;
-                        
-                        if (r < Rc)
-                        {
-                            icnrg += param0.reduced_charge * param1.reduced_charge
-                                        * (one_over_r + k_rf*r*r - c_rf);
-                        }
-                        
-                        if (r < Rlj)
-                        {
-                            const LJPair &ljpair = ljpairs.constData()[
-                                                    ljpairs.map(param0.ljid,
-                                                                param1.ljid)];
-                        
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
-
-                            iljnrg += ljpair.epsilon() * (sig_over_dist12 -
-                                                          sig_over_dist6);
-                        }
-                    }
-                }
-                
-                icnrg += *((const double*)&sse_cnrg) +
-                         *( ((const double*)&sse_cnrg) + 1 );
-                         
-                iljnrg += *((const double*)&sse_ljnrg) +
-                          *( ((const double*)&sse_ljnrg) + 1 );
-            }
-            #else
-            {
-                //we use the force-shifted cutoff potential described in equation 18
-                //in Fennell and Gezelter, J. Chem. Phys., 124, 234104, 2006
-                //We use alpha=0, as I have seen that a 25 A cutoff gives stable results
-                //with alpha=0, and this way we avoid changing the hamiltonian significantly
-                //by having an erfc function
-                for (int j=0; j<nats1; ++j)
-                {
-                    const Parameter &param1 = params1_array[j];
-                    const Vector &c1 = coords1_array[j];
-                    
-                    for (int i=0; i<nats0; ++i)
-                    {
-                        const Parameter &param0 = params0_array[i];
-                        const Vector &c0 = coords0_array[i];
-
-                        const double r = Vector::distance(c0,c1);
-                        const double one_over_r = double(1) / r;
-                        
-                        if (r < Rc)
-                        {
-                            icnrg += (param0.reduced_charge * param1.reduced_charge) *
-                                     (one_over_r + k_rf*r*r - c_rf);
-                        }
-                        
-                        if (r < Rlj)
-                        {
-                            const LJPair &ljpair = ljpairs.constData()[
-                                                    ljpairs.map(param0.ljid,
-                                                                param1.ljid)];
-
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
-
-                            iljnrg += ljpair.epsilon() * (sig_over_dist12 -
-                                                          sig_over_dist6);
-                        }
-                    }
-                }
-            }
-            #endif
-        }
-        else
-        {
-            //use a simple atom-based cutoff
-            const double Rc = coul_cutoff;
-            const double Rlj = lj_cutoff;
-        
-            #ifdef SIRE_USE_SSE
-            {
-                const int remainder = nats1 % 2;
-                
-                __m128d sse_cnrg = { 0, 0 };
-                __m128d sse_ljnrg = { 0, 0 };
-
-                const __m128d sse_one = { 1.0, 1.0 };
-                const __m128d sse_Rc = { Rc, Rc };
-                const __m128d sse_Rlj = { Rlj, Rlj };
-                
-                for (int j=0; j<nats1-1; j += 2)
-                {
-                    const Parameter &param10 = params1_array[j];
-                    const Parameter &param11 = params1_array[j+1];
-
-                    const Vector &c10 = coords1_array[j];
-                    const Vector &c11 = coords1_array[j+1];
-
-                    for (int i=0; i<nats0; ++i)
-                    {
-                        const Parameter &param0 = params0_array[i];
-                    
-                        __m128d sse_chg0 = _mm_set_pd( param0.reduced_charge,
-                                                       param0.reduced_charge );
-                    
-                        const Vector &c0 = coords0_array[i];
-                    
-                        __m128d sse_r;
-                        {
-                            __m128d dx = _mm_set_pd( c0.x() - c10.x(), c0.x() - c11.x() );
-                            __m128d dy = _mm_set_pd( c0.y() - c10.y(), c0.y() - c11.y() );
-                            __m128d dz = _mm_set_pd( c0.z() - c10.z(), c0.z() - c11.z() );
-                        
-                            __m128d dx2 = _mm_mul_pd(dx, dx);
-                            __m128d dy2 = _mm_mul_pd(dy, dy);
-                            __m128d dz2 = _mm_mul_pd(dz, dz);
-                        
-                            __m128d sse_r2 = _mm_add_pd(dx2,dy2);
-                            sse_r2 = _mm_add_pd(sse_r2, dz2);
-                        
-                            sse_r = _mm_sqrt_pd(sse_r2);
-                        }
-                        
-                        const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
-                        
-                        //calculate the coulomb energy
-                        {
-                            const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
-
-                            __m128d sse_chg = _mm_set_pd( param10.reduced_charge,
-                                                          param11.reduced_charge );
-                        
-                            sse_chg = _mm_mul_pd(sse_chg, sse_chg0);
-                        
-                            __m128d nrg = _mm_mul_pd(sse_chg, sse_one_over_r);
-
-                            nrg = _mm_and_pd(nrg, sse_in_cutoff);
-                            
-                            sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
-                        }
-                        
-                        //calculate the LJ energy
-                        {
-                            const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rlj);
-                        
-                            const LJPair &ljpair0 = ljpairs.constData()[
-                                                        ljpairs.map(param0.ljid,
-                                                                    param10.ljid)];
-                    
-                            const LJPair &ljpair1 = ljpairs.constData()[
-                                                        ljpairs.map(param0.ljid,
-                                                                    param11.ljid)];
-
-                            const __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
-                            const __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(),
-                                                                ljpair1.epsilon() );
-                        
-                            //calculate (sigma/r)^6 and (sigma/r)^12
-                            __m128d sse_sig_over_r2 = _mm_mul_pd(sse_sig, sse_one_over_r);
-                            sse_sig_over_r2 = _mm_mul_pd( sse_sig_over_r2,
-                                                          sse_sig_over_r2 );
-                                                     
-                            __m128d sse_sig_over_r6 = _mm_mul_pd(sse_sig_over_r2,
-                                                                 sse_sig_over_r2);
-                                                        
-                            sse_sig_over_r6 = _mm_mul_pd(sse_sig_over_r6,
-                                                         sse_sig_over_r2);
-                                                     
-                            __m128d sse_sig_over_r12 = _mm_mul_pd(sse_sig_over_r6,
-                                                                  sse_sig_over_r6);
-                                              
-                            //calculate LJ energy (the factor of 4 is added later)
-                            __m128d tmp = _mm_sub_pd(sse_sig_over_r12,
-                                                     sse_sig_over_r6);
-                                                 
-                            tmp = _mm_mul_pd(tmp, sse_eps);
-                            tmp = _mm_and_pd(tmp, sse_in_cutoff);
-                            sse_ljnrg = _mm_add_pd(sse_ljnrg, tmp);
-                        }
-                    }
-                }
-                          
-                if (remainder == 1)
-                {
-                    const Vector &c1 = coords1_array[nats1-1];
-                    const Parameter &param1 = params1_array[nats1-1];
-
-                    for (int i=0; i<nats0; ++i)
-                    {
-                        const Vector &c0 = coords0_array[i];
-                        const Parameter &param0 = params0_array[i];
-
-                        const double r = Vector::distance(c0,c1);
-                        const double one_over_r = double(1) / r;
-                        
-                        if (r < Rc)
-                        {
-                            icnrg += param0.reduced_charge * param1.reduced_charge
-                                                * one_over_r;
-                        }
-
-                        if (r < Rlj)
-                        {
-                            const LJPair &ljpair = ljpairs.constData()[
-                                                    ljpairs.map(param0.ljid,
-                                                                param1.ljid)];
-                        
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
-
-                            iljnrg += ljpair.epsilon() * (sig_over_dist12 -
-                                                          sig_over_dist6);
-                        }
-                    }
-                }
-                
-                icnrg += *((const double*)&sse_cnrg) +
-                         *( ((const double*)&sse_cnrg) + 1 );
-                         
-                iljnrg += *((const double*)&sse_ljnrg) +
-                          *( ((const double*)&sse_ljnrg) + 1 );
-            }
-            #else
-            {
-                // use an atomistic cutoff
-                for (int j=0; j<nats1; ++j)
-                {
-                    const Parameter &param1 = params1_array[j];
-                    const Vector &c1 = coords1_array[j];
-                    
-                    for (int i=0; i<nats0; ++i)
-                    {
-                        const Parameter &param0 = params0_array[i];
-                        const Vector &c0 = coords0_array[i];
-
-                        const double r = Vector::distance(c0,c1);
-                        const double one_over_r = double(1) / r;
-                        
-                        if (r < Rc)
-                        {
-                            icnrg += (param0.reduced_charge * param1.reduced_charge) *
-                                        one_over_r;
-                        }
-                        
-                        if (r < Rlj)
-                        {
-                            const LJPair &ljpair = ljpairs.constData()[
-                                                    ljpairs.map(param0.ljid,
-                                                                param1.ljid)];
-
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
-
-                            iljnrg += ljpair.epsilon() * (sig_over_dist12 -
-                                                          sig_over_dist6);
-                        }
-                    }
-                }
-            }
-            #endif
+            cnrg += icnrg.sum();
+            ljnrg += iljnrg.sum();
         }
     }
 
-    double gridnrg = 0;
-    const double *gridpot_array = gridpot.constData();
-
     //now calculate the energy in the grid
-    for (int i0=0; i0<nats0; ++i0)
+    if (not gridpot.isEmpty())
     {
-        const Vector &c0 = coords0[i0];
-        const detail::CLJParameter &p0 = params0[i0];
-        
-        Vector grid_coords = c0 - gridbox.minCoords();
-        
-        int i_0 = int(grid_coords.x() / grid_spacing);
-        int j_0 = int(grid_coords.y() / grid_spacing);
-        int k_0 = int(grid_coords.z() / grid_spacing);
-        
-        if (i_0 < 0 or i_0 >= int(dimx-1) or
-            j_0 < 0 or j_0 >= int(dimy-1) or
-            k_0 < 0 or k_0 >= int(dimz-1))
-        {
-            qDebug() << "POINT" << c0.toString() << "LIES OUTSIDE OF "
-                     << "THE GRID?" << gridbox.toString();
-        }
-        else
-        {
-            //use tri-linear interpolation to get the potential at the atom
-            //
-            // This is described in 
-            //
-            // Davis, Madura and McCammon, Comp. Phys. Comm., 62, 187-197, 1991
-            //
-            // phi(x,y,z) = phi(i  ,j  ,k  )*(1-R)(1-S)(1-T) +
-            //              phi(i+1,j  ,k  )*(  R)(1-S)(1-T) +
-            //              phi(i  ,j+1,k  )*(1-R)(  S)(1-T) +
-            //              phi(i  ,j  ,k+1)*(1-R)(1-S)(  T) +
-            //              phi(i+1,j+1,k  )*(  R)(  S)(1-T) +
-            //              phi(i+1,j  ,k+1)*(  R)(1-S)(  T) +
-            //              phi(i  ,j+1,k+1)*(1-R)(  S)(  T) +
-            //              phi(i+1,j+1,k+1)*(  R)(  S)(  T) +
-            //
-            // where R, S and T are the coordinates of the atom in 
-            // fractional grid coordinates from the point (i,j,k), e.g.
-            // (0,0,0) is (i,j,k) and (1,1,1) is (i+1,j+1,k+1)
-            //
-            const Vector c000 = gridbox.minCoords() + 
-                                    Vector( i_0 * grid_spacing,
-                                            j_0 * grid_spacing,
-                                            k_0 * grid_spacing );
+        const double *gridpot_array = gridpot.constData();
 
-            const Vector RST = (c0 - c000) / grid_spacing;
-            const double R = RST.x();
-            const double S = RST.y();
-            const double T = RST.z();
+        for (int i0=0; i0<nats0; ++i0)
+        {
+            const Vector &c0 = coords0_array[i0];
+            const detail::CLJParameter &p0 = params0_array[i0];
             
-            int i000 = gridIndexToArrayIndex(i_0  , j_0  , k_0  , dimx, dimy, dimz);
-            int i001 = gridIndexToArrayIndex(i_0  , j_0  , k_0+1, dimx, dimy, dimz);
-            int i010 = gridIndexToArrayIndex(i_0  , j_0+1, k_0  , dimx, dimy, dimz);
-            int i100 = gridIndexToArrayIndex(i_0+1, j_0  , k_0  , dimx, dimy, dimz);
-            int i011 = gridIndexToArrayIndex(i_0  , j_0+1, k_0+1, dimx, dimy, dimz);
-            int i101 = gridIndexToArrayIndex(i_0+1, j_0  , k_0+1, dimx, dimy, dimz);
-            int i110 = gridIndexToArrayIndex(i_0+1, j_0+1, k_0  , dimx, dimy, dimz);
-            int i111 = gridIndexToArrayIndex(i_0+1, j_0+1, k_0+1, dimx, dimy, dimz);
+            Vector grid_coords = c0 - gridbox.minCoords();
             
-            double phi = (gridpot_array[i000] * (1-R)*(1-S)*(1-T)) + 
-                         (gridpot_array[i001] * (1-R)*(1-S)*(  T)) +
-                         (gridpot_array[i010] * (1-R)*(  S)*(1-T)) +
-                         (gridpot_array[i100] * (  R)*(1-S)*(1-T)) +
-                         (gridpot_array[i011] * (1-R)*(  S)*(  T)) +
-                         (gridpot_array[i101] * (  R)*(1-S)*(  T)) +
-                         (gridpot_array[i110] * (  R)*(  S)*(1-T)) +
-                         (gridpot_array[i111] * (  R)*(  S)*(  T));                         
-                              
-            gridnrg += phi * p0.reduced_charge;
+            int i_0 = int(grid_coords.x() / grid_spacing);
+            int j_0 = int(grid_coords.y() / grid_spacing);
+            int k_0 = int(grid_coords.z() / grid_spacing);
+            
+            if (i_0 < 0 or i_0 >= int(dimx-1) or
+                j_0 < 0 or j_0 >= int(dimy-1) or
+                k_0 < 0 or k_0 >= int(dimz-1))
+            {
+                qDebug() << "POINT" << c0.toString() << "LIES OUTSIDE OF "
+                         << "THE GRID?" << gridbox.toString();
+            }
+            else
+            {
+                //use tri-linear interpolation to get the potential at the atom
+                //
+                // This is described in 
+                //
+                // Davis, Madura and McCammon, Comp. Phys. Comm., 62, 187-197, 1991
+                //
+                // phi(x,y,z) = phi(i  ,j  ,k  )*(1-R)(1-S)(1-T) +
+                //              phi(i+1,j  ,k  )*(  R)(1-S)(1-T) +
+                //              phi(i  ,j+1,k  )*(1-R)(  S)(1-T) +
+                //              phi(i  ,j  ,k+1)*(1-R)(1-S)(  T) +
+                //              phi(i+1,j+1,k  )*(  R)(  S)(1-T) +
+                //              phi(i+1,j  ,k+1)*(  R)(1-S)(  T) +
+                //              phi(i  ,j+1,k+1)*(1-R)(  S)(  T) +
+                //              phi(i+1,j+1,k+1)*(  R)(  S)(  T) +
+                //
+                // where R, S and T are the coordinates of the atom in 
+                // fractional grid coordinates from the point (i,j,k), e.g.
+                // (0,0,0) is (i,j,k) and (1,1,1) is (i+1,j+1,k+1)
+                //
+                const Vector c000 = gridbox.minCoords() + 
+                                        Vector( i_0 * grid_spacing,
+                                                j_0 * grid_spacing,
+                                                k_0 * grid_spacing );
+
+                const Vector RST = (c0 - c000) / grid_spacing;
+                const double R = RST.x();
+                const double S = RST.y();
+                const double T = RST.z();
+                
+                int i000 = gridIndexToArrayIndex(i_0  , j_0  , k_0  , dimx, dimy, dimz);
+                int i001 = gridIndexToArrayIndex(i_0  , j_0  , k_0+1, dimx, dimy, dimz);
+                int i010 = gridIndexToArrayIndex(i_0  , j_0+1, k_0  , dimx, dimy, dimz);
+                int i100 = gridIndexToArrayIndex(i_0+1, j_0  , k_0  , dimx, dimy, dimz);
+                int i011 = gridIndexToArrayIndex(i_0  , j_0+1, k_0+1, dimx, dimy, dimz);
+                int i101 = gridIndexToArrayIndex(i_0+1, j_0  , k_0+1, dimx, dimy, dimz);
+                int i110 = gridIndexToArrayIndex(i_0+1, j_0+1, k_0  , dimx, dimy, dimz);
+                int i111 = gridIndexToArrayIndex(i_0+1, j_0+1, k_0+1, dimx, dimy, dimz);
+                
+                double phi = (gridpot_array[i000] * (1-R)*(1-S)*(1-T)) + 
+                             (gridpot_array[i001] * (1-R)*(1-S)*(  T)) +
+                             (gridpot_array[i010] * (1-R)*(  S)*(1-T)) +
+                             (gridpot_array[i100] * (  R)*(1-S)*(1-T)) +
+                             (gridpot_array[i011] * (1-R)*(  S)*(  T)) +
+                             (gridpot_array[i101] * (  R)*(1-S)*(  T)) +
+                             (gridpot_array[i110] * (  R)*(  S)*(1-T)) +
+                             (gridpot_array[i111] * (  R)*(  S)*(  T));                         
+                                  
+                gridnrg += phi * p0.reduced_charge;
+            }
         }
     }
     
-    cnrg = icnrg + gridnrg;
-    ljnrg = 4.0*iljnrg;  // 4 epsilon (....)
+    return_cnrg = cnrg + gridnrg;
+    return_ljnrg = 4.0 * ljnrg;  // 4 epsilon (....)
 }
 
 /** Ensure that the next energy evaluation is from scratch */
@@ -2003,8 +1489,15 @@ void GridFF2::recalculateEnergy()
     
     if (must_recalculate)
     {
+        QTime t;
+        t.start();
+    
         this->mustNowRecalculateFromScratch();
         this->rebuildGrid();
+
+        int ms = t.elapsed();
+        qDebug() << "REBUILD GRID TOOK" << ms << "ms";
+        t.restart();
 
         double total_cnrg(0);
         double total_ljnrg(0);
@@ -2062,6 +1555,9 @@ void GridFF2::recalculateEnergy()
             total_cnrg += cnrg;
             total_ljnrg += ljnrg;
         }
+
+        ms = t.elapsed();
+        qDebug() << "CALCULATING ENERGY TOOK" << ms << "ms";
 
         this->components().setEnergy(*this, CLJEnergy(total_cnrg,total_ljnrg));
     }
