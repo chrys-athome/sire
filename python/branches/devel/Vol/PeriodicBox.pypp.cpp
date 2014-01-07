@@ -253,6 +253,17 @@ void register_PeriodicBox_class(){
                 , ( bp::arg("group"), bp::arg("center"), bp::arg("dist") ) );
         
         }
+        { //::SireVol::PeriodicBox::getImagesWithin
+        
+            typedef ::QVector< SireMaths::Vector > ( ::SireVol::PeriodicBox::*getImagesWithin_function_type )( ::SireMaths::Vector const &,::SireMaths::Vector const &,double ) const;
+            getImagesWithin_function_type getImagesWithin_function_value( &::SireVol::PeriodicBox::getImagesWithin );
+            
+            PeriodicBox_exposer.def( 
+                "getImagesWithin"
+                , getImagesWithin_function_value
+                , ( bp::arg("point"), bp::arg("center"), bp::arg("dist") ) );
+        
+        }
         { //::SireVol::PeriodicBox::getMinimumImage
         
             typedef ::SireVol::CoordGroup ( ::SireVol::PeriodicBox::*getMinimumImage_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const & ) const;

@@ -295,6 +295,17 @@ void register_Cartesian_class(){
                 , ( bp::arg("group"), bp::arg("center"), bp::arg("dist") ) );
         
         }
+        { //::SireVol::Cartesian::getImagesWithin
+        
+            typedef ::QVector< SireMaths::Vector > ( ::SireVol::Cartesian::*getImagesWithin_function_type )( ::SireMaths::Vector const &,::SireMaths::Vector const &,double ) const;
+            getImagesWithin_function_type getImagesWithin_function_value( &::SireVol::Cartesian::getImagesWithin );
+            
+            Cartesian_exposer.def( 
+                "getImagesWithin"
+                , getImagesWithin_function_value
+                , ( bp::arg("point"), bp::arg("center"), bp::arg("dist") ) );
+        
+        }
         { //::SireVol::Cartesian::getMinimumImage
         
             typedef ::SireVol::CoordGroup ( ::SireVol::Cartesian::*getMinimumImage_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const & ) const;

@@ -297,6 +297,17 @@ void register_Space_class(){
                 , ( bp::arg("group"), bp::arg("center"), bp::arg("dist") ) );
         
         }
+        { //::SireVol::Space::getImagesWithin
+        
+            typedef ::QVector< SireMaths::Vector > ( ::SireVol::Space::*getImagesWithin_function_type )( ::SireMaths::Vector const &,::SireMaths::Vector const &,double ) const;
+            getImagesWithin_function_type getImagesWithin_function_value( &::SireVol::Space::getImagesWithin );
+            
+            Space_exposer.def( 
+                "getImagesWithin"
+                , getImagesWithin_function_value
+                , ( bp::arg("point"), bp::arg("center"), bp::arg("dist") ) );
+        
+        }
         { //::SireVol::Space::getMinimumImage
         
             typedef ::SireVol::CoordGroup ( ::SireVol::Space::*getMinimumImage_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const & ) const;
