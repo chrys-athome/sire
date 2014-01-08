@@ -1057,10 +1057,35 @@ MultiFloat MultiFloat::reciprocal_approx() const
 inline
 MultiFloat MultiFloat::reciprocal_approx_nr() const
 {
-    //One step of NR
-    // 1/x = a[ 2 - a x ] where a is the approximation
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        //get the approximation
+        __m256 a = _mm256_rcp_ps(v.x);
 
-    return this->reciprocal();
+        //now use one step of NR to refine the result
+        // 1/x = a[ 2 - a x ] where a is the approximation
+        __m256 tmp = _mm256_mul_ps(a, v.x);
+        __m256 two = _mm256_set1_ps(2.0);
+        tmp = _mm256_sub_ps(two, tmp);
+        a = _mm256_mul_ps(a, tmp);
+    
+        return MultiFloat(a);
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        //get the approximation
+        __m128 a = _mm_rcp_ps(v.x);
+
+        //now use one step of NR to refine the result
+        // 1/x = a[ 2 - a x ] where a is the approximation
+        __m128 tmp = _mm_mul_ps(a, v.x);
+        __m128 two = _mm_set1_ps(2.0);
+        tmp = _mm_sub_ps(two, tmp);
+        a = _mm_mul_ps(a, tmp);
+    
+        return MultiFloat(a);
+    #else
+        return this->reciprocal();
+    #endif
+    #endif
 }
 
 /** Return the square root of this vector */
@@ -1169,7 +1194,41 @@ MultiFloat MultiFloat::rsqrt_approx() const
 inline
 MultiFloat MultiFloat::rsqrt_approx_nr() const
 {
-    return this->rsqrt();
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        //get the approximation
+        __m256 a = _mm256_rsqrt_ps(v.x);
+
+        //now use one step of NR to refine the result
+        // 1/x = 0.5 a[ 3 - x a^2 ] where a is the approximation
+        __m256 tmp = _mm256_mul_ps(a, v.x);
+        tmp = _mm256_mul_ps(a, tmp);
+        __m256 three = _mm256_set1_ps(3.0);
+        tmp = _mm256_sub_ps(three, tmp);
+        a = _mm256_mul_ps(a, tmp);
+        __m256 half = _mm256_set1_ps(0.5);
+        a = _mm256_mul_ps(a, half);
+    
+        return MultiFloat(a);
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        //get the approximation
+        __m128 a = _mm_rsqrt_ps(v.x);
+
+        //now use one step of NR to refine the result
+        // 1/x = 0.5 a[ 3 - x a^2 ] where a is the approximation
+        __m128 tmp = _mm_mul_ps(a, v.x);
+        tmp = _mm_mul_ps(a, tmp);
+        __m128 three = _mm_set1_ps(3.0);
+        tmp = _mm_sub_ps(three, tmp);
+        a = _mm_mul_ps(a, tmp);
+        __m128 half = _mm_set1_ps(0.5);
+        a = _mm_mul_ps(a, half);
+    
+        return MultiFloat(a);
+    #else
+        return this->rsqrt();
+    #endif
+    #endif
 }
 
 /** Rotate this vector. This moves each element one space to the left, moving the
