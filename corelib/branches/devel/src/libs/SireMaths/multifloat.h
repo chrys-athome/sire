@@ -213,6 +213,14 @@ public:
     
     MultiFloat rotate() const;
     
+    bool isBinaryZero() const;
+    bool isNotBinaryZero() const;
+    bool hasBinaryZero() const;
+    
+    bool isBinaryOne() const;
+    bool isNotBinaryOne() const;
+    bool hasBinaryOne() const;
+    
     float sum() const;
     double doubleSum() const;
 

@@ -1214,8 +1214,9 @@ void GridFF2::calculateEnergy(const CoordGroup &coords0,
             const MultiFloat Rlj(lj_cutoff);
             const MultiFloat one_over_Rc( 1.0 / coul_cutoff );
             const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
+            const MultiFloat zero(0);
 
-            MultiFloat tmp, r, q2, sig2_over_r2, sig6_over_r6, eps;
+            MultiFloat tmp, r, one_over_r, q2, sig2_over_r2, sig6_over_r6, eps, in_cutoff;
             MultiDouble icnrg(0), iljnrg(0);
 
             for (int i=0; i<nats0; ++i)
@@ -1238,51 +1239,60 @@ void GridFF2::calculateEnergy(const CoordGroup &coords0,
                     r.multiplyAdd(tmp, tmp);
                     tmp = z1[j] - z0;
                     r.multiplyAdd(tmp, tmp);
-                    r = r.sqrt();
+                    one_over_r = r.rsqrt_approx_nr();
+                    r = r * one_over_r;
 
-                    //calculate the coulomb energy using shift-electrostatics
-                    // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                    tmp = r - Rc;
-                    tmp *= one_over_Rc2;
-                    tmp -= one_over_Rc;
-                    tmp += MULTIFLOAT_ONE / r;
-                    tmp *= q0 * q1[j];
-                    
-                    //apply the cutoff - compare r against Rc. This will
-                    //return 1 if r is less than Rc, or 0 otherwise. Logical
-                    //and will then remove all energies where r >= Rc
-                    icnrg += tmp.logicalAnd( r.compareLess(Rc) );
-                    
-                    //now calculate the LJ energy - first combine LJ parameters
-                    if (is_arithmetic)
+                    in_cutoff = r.compareLess(Rc);
+                    if (in_cutoff.hasBinaryOne())
                     {
-                        //arithmetic combining rules
-                        tmp = sig0 + sig1[j];
-                        tmp *= half;
-                    }
-                    else
-                    {
-                        //geometric combining rules
-                        tmp = sig0 * sig1[j];
-                        tmp = tmp.sqrt();
-                    }
+                        //calculate the coulomb energy using shift-electrostatics
+                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
+                        tmp = r - Rc;
+                        tmp *= one_over_Rc2;
+                        tmp -= one_over_Rc;
+                        tmp += one_over_r;
+                        tmp *= q0 * q1[j];
+                        
+                        //apply the cutoff - compare r against Rc. This will
+                        //return 1 if r is less than Rc, or 0 otherwise. Logical
+                        //and will then remove all energies where r >= Rc
+                        icnrg += tmp.logicalAnd(in_cutoff);
                     
-                    sig2_over_r2 = tmp / r;
-                    sig2_over_r2 = sig2_over_r2*sig2_over_r2;
-                    sig6_over_r6 = sig2_over_r2*sig2_over_r2;
-                    sig6_over_r6 = sig6_over_r6*sig2_over_r2;
+                        in_cutoff = r.compareLess(Rlj);
+                        if (in_cutoff.hasBinaryOne())
+                        {
+                            //now calculate the LJ energy - first combine LJ parameters
+                            if (is_arithmetic)
+                            {
+                                //arithmetic combining rules
+                                tmp = sig0 + sig1[j];
+                                tmp *= half;
+                            }
+                            else
+                            {
+                                //geometric combining rules
+                                tmp = sig0 * sig1[j];
+                                tmp = tmp.sqrt();
+                            }
+                            
+                            sig2_over_r2 = tmp * one_over_r;
+                            sig2_over_r2 = sig2_over_r2*sig2_over_r2;
+                            sig6_over_r6 = sig2_over_r2*sig2_over_r2;
+                            sig6_over_r6 = sig6_over_r6*sig2_over_r2;
 
-                    eps = eps0 * eps1[j];
-                    eps = eps.sqrt();
+                            eps = eps0 * eps1[j];
+                            eps = eps.sqrt();
 
-                    tmp = sig6_over_r6 * sig6_over_r6;
-                    tmp -= sig6_over_r6;
-                    tmp *= eps;
-                    
-                    //apply the cutoff - compare r against Rc. This will
-                    //return 1 if r is less than Rc, or 0 otherwise. Logical
-                    //and will then remove all energies where r >= Rc
-                    iljnrg += tmp.logicalAnd( r.compareLess(Rlj) );
+                            tmp = sig6_over_r6 * sig6_over_r6;
+                            tmp -= sig6_over_r6;
+                            tmp *= eps;
+                            
+                            //apply the cutoff - compare r against Rc. This will
+                            //return 1 if r is less than Rc, or 0 otherwise. Logical
+                            //and will then remove all energies where r >= Rc
+                            iljnrg += tmp.logicalAnd(in_cutoff);
+                        }
+                    }
                 }
             }
             

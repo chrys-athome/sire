@@ -447,6 +447,80 @@ bool MultiFloat::operator!=(const MultiFloat &other) const
     return true;
 }
 
+/** Return whether all of the elements of this MultiFloat are 
+    equal to 0x00000000 (e.g. every bit in the entire vector is 0) */
+bool MultiFloat::isBinaryZero() const
+{
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        static const quint32 bin_zero = 0x00000000;
+    
+        if (*(reinterpret_cast<const quint32*>(&(v.a[i]))) != bin_zero)
+            return false;
+    }
+    
+    return true;
+}
+
+/** Return whether all of the elements of this MultiFloat are
+    not equal to 0x00000000 (e.g. at least one bit in the entire vector is 1) */
+bool MultiFloat::isNotBinaryZero() const
+{
+    return not isBinaryZero();
+}
+
+/** Return whether or not at least one of the elements of this vector
+    is binary zero (the float is equal to 0x00000000) */
+bool MultiFloat::hasBinaryZero() const
+{
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        static const quint32 bin_zero = 0x00000000;
+    
+        if (*(reinterpret_cast<const quint32*>(&(v.a[i]))) == bin_zero)
+            return true;
+    }
+    
+    return false;
+}
+
+/** Return whether all of the elements of this MultiFloat are 
+    equal to 0xFFFFFFFF (e.g. every bit in the entire vector is 1) */
+bool MultiFloat::isBinaryOne() const
+{
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        static const quint32 bin_one = 0xFFFFFFFF;
+    
+        if (*(reinterpret_cast<const quint32*>(&(v.a[i]))) != bin_one)
+            return false;
+    }
+    
+    return true;
+}
+
+/** Return whether all of the elements of this MultiFloat are
+    not equal to 0xFFFFFFFF (e.g. at least one bit in the entire vector is 0) */
+bool MultiFloat::isNotBinaryOne() const
+{
+    return not isBinaryOne();
+}
+
+/** Return whether or not at least one of the elements of this vector
+    is binary one (the float is equal to 0xFFFFFFFF) */
+bool MultiFloat::hasBinaryOne() const
+{
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        static const quint32 bin_one = 0xFFFFFFFF;
+    
+        if (*(reinterpret_cast<const quint32*>(&(v.a[i]))) == bin_one)
+            return true;
+    }
+    
+    return false;
+}
+
 /** Comparison operator - only returns true if all elements are less */
 bool MultiFloat::operator<(const MultiFloat &other) const
 {
