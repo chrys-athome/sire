@@ -8,7 +8,8 @@
 
 #include <QDebug>
 
-static const qint64 NTEST = 25000000;
+static const int NTEST = 1024;
+static const int NLOOPS = 2000000;
 
 using namespace SireMaths;
 
@@ -77,27 +78,66 @@ int main(int argc, const char **argv)
 
     qDebug() << "Calculating exact answers...";
     t.start();
-    for (int i=0; i<xf.count(); ++i)
     {
-        exact[i] = xf[i].sqrt();
+        MultiFloat sum(0);
+
+        for (int j=0; j<NLOOPS; ++j)
+        {
+            for (int i=0; i<xf.count(); ++i)
+            {
+                exact[i] = xf[i].sqrt();
+            }
+
+            sum += exact[0];
+        }
+
+        qDebug() << "Sum" << sum.sum();
+        int ms = t.elapsed();
+        qDebug() << "Took" << ms << "ms";
+        qDebug() << "Nanoseconds per operation:" << ((1000000.0 * ms) / (NLOOPS*NTEST));
     }
-    qDebug() << "Took" << t.elapsed() << "ms";
 
     qDebug() << "Calculating approx answers...";
     t.start();
-    for (int i=0; i<xf.count(); ++i)
     {
-        approx[i] = xf[i].sqrt_approx();
+        MultiFloat sum(0);
+
+        for (int j=0; j<NLOOPS; ++j)
+        {
+            for (int i=0; i<xf.count(); ++i)
+            {
+                approx[i] = xf[i].sqrt_approx();
+            }
+
+            sum += approx[0];
+        }
+
+        qDebug() << "Sum" << sum.sum();
+        int ms = t.elapsed();
+        qDebug() << "Took" << ms << "ms";
+        qDebug() << "Nanoseconds per operation:" << ((1000000.0 * ms) / (NLOOPS*NTEST));
     }
-    qDebug() << "Took" << t.elapsed() << "ms";
 
     qDebug() << "Calculating approx_nr answers...";
     t.start();
-    for (int i=0; i<xf.count(); ++i)
     {
-        approx_nr[i] = xf[i].sqrt_approx_nr();
+        MultiFloat sum(0);
+
+        for (int j=0; j<NLOOPS; ++j)
+        {
+            for (int i=0; i<xf.count(); ++i)
+            {
+                approx_nr[i] = xf[i].sqrt_approx_nr();
+            }
+
+            sum += approx_nr[0];
+        }
+
+        qDebug() << "Sum" << sum.sum();
+        int ms = t.elapsed();
+        qDebug() << "Took" << ms << "ms";
+        qDebug() << "Nanoseconds per operation:" << ((1000000.0 * ms) / (NLOOPS*NTEST));
     }
-    qDebug() << "Took" << t.elapsed() << "ms";
 
     qDebug() << xf[0].toString();
     qDebug() << xf[0].sqrt().toString();
