@@ -44,6 +44,7 @@
 
 #include <QDebug>
 #include <QTime>
+#include <QElapsedTimer>
 
 #ifdef SIRE_USE_SSE
     #ifdef __SSE__
@@ -620,7 +621,7 @@ void GridFF2::addToGrid(const QVector<float> &vx,
                         const QVector<float> &vz,
                         const QVector<float> &vq)
 {
-    QTime t;
+    QElapsedTimer t;
     t.start();
 
     const QVector<MultiFloat> mx = MultiFloat::fromArray(vx);
@@ -672,9 +673,9 @@ void GridFF2::addToGrid(const QVector<float> &vx,
                 tmp = r - Rc;
                 tmp *= one_over_Rc2;
                 tmp -= one_over_Rc;
-                tmp += MULTIFLOAT_ONE / r;
+                tmp += r.reciprocal();
                 tmp *= aq[ivec];
-                
+            
                 //apply the cutoff - compare r against Rc. This will
                 //return 1 if r is less than Rc, or 0 otherwise. Logical
                 //and will then remove all energies where r >= Rc
@@ -765,10 +766,10 @@ void GridFF2::addToGrid(const QVector<float> &vx,
         }
     }
     
-    int ms = t.elapsed();
+    qint64 ns = t.nsecsElapsed();
     
     qDebug() << "Added" << vx.count() << "more atoms to" << npts << "grid points in"
-             << ms << "ms";
+             << (0.000001 * ns) << "ms";
 }
 
 inline double getDist(double p, double minp, double maxp)
@@ -1166,6 +1167,14 @@ void GridFF2::rebuildGrid()
     close_mols_sig = MultiFloat::fromArray(cmols_sig);
     close_mols_eps = MultiFloat::fromArray(cmols_eps);
  
+    // take the square root of the sigma and epsilon parameters now to avoid
+    // having to do it during the nonbonded energy evaluation
+    for (int i=0; i<close_mols_sig.count(); ++i)
+    {
+        close_mols_sig[i] = close_mols_sig[i].sqrt();
+        close_mols_eps[i] = close_mols_eps[i].sqrt();
+    }
+ 
     {
         double grid_sum = 0;
         
@@ -1176,6 +1185,255 @@ void GridFF2::rebuildGrid()
         
         qDebug() << "Sum of grid potentials is" << grid_sum;
     }
+}
+
+GridFF2::CLJAtoms::CLJAtoms()
+{}
+
+GridFF2::CLJAtoms::CLJAtoms(const CoordGroup &coords,
+                            const GridFF2::CLJParameters::Array &params)
+{
+    const int nats = coords.count();
+
+    if (nats == 0)
+        return;
+    
+    QVector<float> xf(nats);
+    QVector<float> yf(nats);
+    QVector<float> zf(nats);
+    QVector<float> qf(nats);
+    QVector<float> sigf(nats);
+    QVector<float> epsf(nats);
+    
+    LJParameterDB::lock();
+    for (int i=0; i<nats; ++i)
+    {
+        xf[i] = coords.constData()[i].x();
+        yf[i] = coords.constData()[i].y();
+        zf[i] = coords.constData()[i].z();
+        qf[i] = params.constData()[i].reduced_charge;
+        const LJParameter lj = LJParameterDB::_locked_getLJParameter(params.constData()[i].ljid);
+        sigf[i] = lj.sigma();
+        epsf[i] = lj.epsilon();
+    }
+    LJParameterDB::unlock();
+
+    x = MultiFloat::fromArray(xf);
+    y = MultiFloat::fromArray(yf);
+    z = MultiFloat::fromArray(zf);
+    q = MultiFloat::fromArray(qf);
+    sig = MultiFloat::fromArray(sigf);
+    eps = MultiFloat::fromArray(epsf);
+    
+    for (int i=0; i<sig.count(); ++i)
+    {
+        sig[i] = sig[i].sqrt();
+        eps[i] = eps[i].sqrt();
+    }
+}
+
+GridFF2::CLJAtoms::CLJAtoms(const GridFF2::CLJAtoms &other)
+        : x(other.x), y(other.y), z(other.z), q(other.q), sig(other.sig), eps(other.eps)
+{}
+
+GridFF2::CLJAtoms::~CLJAtoms()
+{}
+
+GridFF2::CLJAtoms& GridFF2::CLJAtoms::operator=(const GridFF2::CLJAtoms &other)
+{
+    x = other.x;
+    y = other.y;
+    z = other.z;
+    q = other.q;
+    sig = other.sig;
+    eps = other.eps;
+    return *this;
+}
+
+int GridFF2::CLJAtoms::count() const
+{
+    return x.count() * MultiFloat::size();
+}
+
+/** Calculate the coulomb and LJ energy between the two passed groups of atoms,
+    returning the results in the passed arguments 'return_cnrg' and 'return_ljnrg' */
+void GridFF2::calculateEnergy(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                              double &return_cnrg, double &return_ljnrg)
+{
+    if (atoms0.count() > atoms1.count())
+    {
+        calculateEnergy(atoms1, atoms0, return_cnrg, return_ljnrg);
+    }
+    else if (atoms0.count() == 0)
+    {
+        return_cnrg = 0;
+        return_ljnrg = 0;
+    }
+    
+    const MultiFloat *x0 = atoms0.x.constData();
+    const MultiFloat *y0 = atoms0.y.constData();
+    const MultiFloat *z0 = atoms0.z.constData();
+    const MultiFloat *q0 = atoms0.q.constData();
+    const MultiFloat *sig0 = atoms0.sig.constData();
+    const MultiFloat *eps0 = atoms0.eps.constData();
+
+    const MultiFloat *x1 = atoms1.x.constData();
+    const MultiFloat *y1 = atoms1.y.constData();
+    const MultiFloat *z1 = atoms1.z.constData();
+    const MultiFloat *q1 = atoms1.q.constData();
+    const MultiFloat *sig1 = atoms1.sig.constData();
+    const MultiFloat *eps1 = atoms1.eps.constData();
+    
+    const MultiFloat Rc(coul_cutoff);
+    const MultiFloat Rlj(lj_cutoff);
+    const MultiFloat one_over_Rc( 1.0 / coul_cutoff );
+    const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
+    const MultiFloat zero(0);
+    const MultiFloat half(0.5);
+
+    MultiFloat tmp, r, one_over_r, sig2_over_r2, sig6_over_r6;
+    MultiDouble icnrg(0), iljnrg(0);
+
+    for (int i=0; i<atoms0.x.count(); ++i)
+    {
+        for (int ii=0; ii<MultiFloat::count(); ++ii)
+        {
+            if (q0[i][ii] != 0)
+            {
+                const MultiFloat x(x0[i][ii]);
+                const MultiFloat y(y0[i][ii]);
+                const MultiFloat z(z0[i][ii]);
+                const MultiFloat q(q0[i][ii]);
+            
+                if (eps0[i][ii] == 0)
+                {
+                    //coulomb energy only
+                    for (int j=0; j<atoms1.x.count(); ++j)
+                    {
+                        //calculate the distance between the fixed and mobile atoms
+                        tmp = x1[j] - x;
+                        r = tmp * tmp;
+                        tmp = y1[j] - y;
+                        r.multiplyAdd(tmp, tmp);
+                        tmp = z1[j] - z;
+                        r.multiplyAdd(tmp, tmp);
+                        r = r.sqrt();
+
+                        one_over_r = r.reciprocal();
+                
+                        //calculate the coulomb energy using shift-electrostatics
+                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
+                        tmp = r - Rc;
+                        tmp *= one_over_Rc2;
+                        tmp -= one_over_Rc;
+                        tmp += one_over_r;
+                        tmp *= q * q1[j];
+                    
+                        //apply the cutoff - compare r against Rc. This will
+                        //return 1 if r is less than Rc, or 0 otherwise. Logical
+                        //and will then remove all energies where r >= Rc
+                        icnrg += tmp.logicalAnd( r.compareLess(Rc) );
+                    }
+                }
+                else
+                {
+                    const MultiFloat sig(sig0[i][ii] * sig0[i][ii]);
+                    const MultiFloat eps(eps0[i][ii]);
+
+                    for (int j=0; j<atoms1.x.count(); ++j)
+                    {
+                        //calculate the distance between the fixed and mobile atoms
+                        tmp = x1[j] - x;
+                        r = tmp * tmp;
+                        tmp = y1[j] - y;
+                        r.multiplyAdd(tmp, tmp);
+                        tmp = z1[j] - z;
+                        r.multiplyAdd(tmp, tmp);
+                        r = r.sqrt();
+
+                        one_over_r = r.reciprocal();
+                
+                        //calculate the coulomb energy using shift-electrostatics
+                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
+                        tmp = r - Rc;
+                        tmp *= one_over_Rc2;
+                        tmp -= one_over_Rc;
+                        tmp += one_over_r;
+                        tmp *= q * q1[j];
+                    
+                        //apply the cutoff - compare r against Rc. This will
+                        //return 1 if r is less than Rc, or 0 otherwise. Logical
+                        //and will then remove all energies where r >= Rc
+                        icnrg += tmp.logicalAnd( r.compareLess(Rc) );
+                
+                        //arithmetic combining rules
+                        tmp = sig + (sig1[j]*sig1[j]);
+                        tmp *= half;
+                    
+                        sig2_over_r2 = tmp * one_over_r;
+                        sig2_over_r2 = sig2_over_r2*sig2_over_r2;
+                        sig6_over_r6 = sig2_over_r2*sig2_over_r2;
+                        sig6_over_r6 = sig6_over_r6*sig2_over_r2;
+
+                        tmp = sig6_over_r6 * sig6_over_r6;
+                        tmp -= sig6_over_r6;
+                        tmp *= eps;
+                        tmp *= eps1[j];
+                    
+                        //apply the cutoff - compare r against Rlj. This will
+                        //return 1 if r is less than Rlj, or 0 otherwise. Logical
+                        //and will then remove all energies where r >= Rlj
+                        iljnrg += tmp.logicalAnd( r.compareLess(Rlj) );
+                    }
+                }
+            }
+            else if (eps0[i][ii] != 0)
+            {
+                //LJ energy only
+                const MultiFloat x(x0[i][ii]);
+                const MultiFloat y(y0[i][ii]);
+                const MultiFloat z(z0[i][ii]);
+                const MultiFloat sig(sig0[i][ii] * sig0[i][ii]);
+                const MultiFloat eps(eps0[i][ii]);
+
+                for (int j=0; j<atoms1.x.count(); ++j)
+                {
+                    //calculate the distance between the fixed and mobile atoms
+                    tmp = x1[j] - x;
+                    r = tmp * tmp;
+                    tmp = y1[j] - y;
+                    r.multiplyAdd(tmp, tmp);
+                    tmp = z1[j] - z;
+                    r.multiplyAdd(tmp, tmp);
+                    r = r.sqrt();
+
+                    one_over_r = r.reciprocal();
+            
+                    //arithmetic combining rules
+                    tmp = sig + (sig1[j]*sig1[j]);
+                    tmp *= half;
+                
+                    sig2_over_r2 = tmp * one_over_r;
+                    sig2_over_r2 = sig2_over_r2*sig2_over_r2;
+                    sig6_over_r6 = sig2_over_r2*sig2_over_r2;
+                    sig6_over_r6 = sig6_over_r6*sig2_over_r2;
+
+                    tmp = sig6_over_r6 * sig6_over_r6;
+                    tmp -= sig6_over_r6;
+                    tmp *= eps;
+                    tmp *= eps1[j];
+                
+                    //apply the cutoff - compare r against Rlj. This will
+                    //return 1 if r is less than Rlj, or 0 otherwise. Logical
+                    //and will then remove all energies where r >= Rlj
+                    iljnrg += tmp.logicalAnd( r.compareLess(Rlj) );
+                }
+            }
+        }
+    }
+    
+    return_cnrg = icnrg.sum();
+    return_ljnrg = 4.0 * iljnrg.sum();  // SHOULD PUT FACTOR OF FOUR INTO EPSILON PARAMETERS
 }
 
 void GridFF2::calculateEnergy(const CoordGroup &coords0, 
@@ -1190,116 +1448,33 @@ void GridFF2::calculateEnergy(const CoordGroup &coords0,
     double gridnrg = 0;
 
     const int nats0 = coords0.count();
+
+    QElapsedTimer t;
+    t.start();
     
     const Vector *coords0_array = coords0.constData();
     const detail::CLJParameter *params0_array = params0.constData();
 
     BOOST_ASSERT( closemols_coords.count() == closemols_params.count() );
 
-    //calculate the energy with fixed explicit atoms
-    if (not close_mols_x.isEmpty())
-    {
-        const MultiFloat *x1 = close_mols_x.constData();
-        const MultiFloat *y1 = close_mols_y.constData();
-        const MultiFloat *z1 = close_mols_z.constData();
-        const MultiFloat *q1 = close_mols_q.constData();
-        const MultiFloat *sig1 = close_mols_sig.constData();
-        const MultiFloat *eps1 = close_mols_eps.constData();
-    
-        const bool is_arithmetic = (this->combiningRules() == "arithmetic");
-    
-        if (shiftElectrostatics())
-        {
-            const MultiFloat Rc(coul_cutoff);
-            const MultiFloat Rlj(lj_cutoff);
-            const MultiFloat one_over_Rc( 1.0 / coul_cutoff );
-            const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
-            const MultiFloat zero(0);
+    CLJAtoms atoms0(coords0, params0);
+    CLJAtoms atoms1;
+    atoms1.x = close_mols_x;
+    atoms1.y = close_mols_y;
+    atoms1.z = close_mols_z;
+    atoms1.q = close_mols_q;
+    atoms1.sig = close_mols_sig;
+    atoms1.eps = close_mols_eps;
 
-            MultiFloat tmp, r, one_over_r, q2, sig2_over_r2, sig6_over_r6, eps, in_cutoff;
-            MultiDouble icnrg(0), iljnrg(0);
+    qint64 ns = t.nsecsElapsed();
+    qDebug() << "Setup took" << (0.000001*ns) << "ms";
+    t.restart();
 
-            for (int i=0; i<nats0; ++i)
-            {
-                const float x0 = coords0_array[i].x();
-                const float y0 = coords0_array[i].y();
-                const float z0 = coords0_array[i].z();
-                const MultiFloat q0(params0_array[i].reduced_charge);
-                const LJParameter lj = LJParameterDB::getLJParameter(params0_array[i].ljid);
-                const MultiFloat sig0(lj.sigma());
-                const MultiFloat eps0(lj.epsilon());
-                const MultiFloat half(0.5);
-            
-                for (int j=0; j<close_mols_x.count(); ++j)
-                {
-                    //calculate the distance between the fixed and mobile atoms
-                    tmp = x1[j] - x0;
-                    r = tmp * tmp;
-                    tmp = y1[j] - y0;
-                    r.multiplyAdd(tmp, tmp);
-                    tmp = z1[j] - z0;
-                    r.multiplyAdd(tmp, tmp);
-                    one_over_r = r.rsqrt_approx_nr();
-                    r = r * one_over_r;
+    calculateEnergy(atoms0, atoms1, cnrg, ljnrg);
 
-                    in_cutoff = r.compareLess(Rc);
-                    if (in_cutoff.hasBinaryOne())
-                    {
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = r - Rc;
-                        tmp *= one_over_Rc2;
-                        tmp -= one_over_Rc;
-                        tmp += one_over_r;
-                        tmp *= q0 * q1[j];
-                        
-                        //apply the cutoff - compare r against Rc. This will
-                        //return 1 if r is less than Rc, or 0 otherwise. Logical
-                        //and will then remove all energies where r >= Rc
-                        icnrg += tmp.logicalAnd(in_cutoff);
-                    
-                        in_cutoff = r.compareLess(Rlj);
-                        if (in_cutoff.hasBinaryOne())
-                        {
-                            //now calculate the LJ energy - first combine LJ parameters
-                            if (is_arithmetic)
-                            {
-                                //arithmetic combining rules
-                                tmp = sig0 + sig1[j];
-                                tmp *= half;
-                            }
-                            else
-                            {
-                                //geometric combining rules
-                                tmp = sig0 * sig1[j];
-                                tmp = tmp.sqrt();
-                            }
-                            
-                            sig2_over_r2 = tmp * one_over_r;
-                            sig2_over_r2 = sig2_over_r2*sig2_over_r2;
-                            sig6_over_r6 = sig2_over_r2*sig2_over_r2;
-                            sig6_over_r6 = sig6_over_r6*sig2_over_r2;
-
-                            eps = eps0 * eps1[j];
-                            eps = eps.sqrt();
-
-                            tmp = sig6_over_r6 * sig6_over_r6;
-                            tmp -= sig6_over_r6;
-                            tmp *= eps;
-                            
-                            //apply the cutoff - compare r against Rc. This will
-                            //return 1 if r is less than Rc, or 0 otherwise. Logical
-                            //and will then remove all energies where r >= Rc
-                            iljnrg += tmp.logicalAnd(in_cutoff);
-                        }
-                    }
-                }
-            }
-            
-            cnrg += icnrg.sum();
-            ljnrg += iljnrg.sum();
-        }
-    }
+    ns = t.nsecsElapsed();
+    qDebug() << "CLJ calculation took" << (0.000001*ns) << "ms";
+    t.restart();
 
     //now calculate the energy in the grid
     if (not gridpot.isEmpty())
@@ -1377,9 +1552,12 @@ void GridFF2::calculateEnergy(const CoordGroup &coords0,
             }
         }
     }
-    
+
+    ns = t.nsecsElapsed();
+    qDebug() << "Grid calculation took" << (0.000001*ns) << "ms";
+
     return_cnrg = cnrg + gridnrg;
-    return_ljnrg = 4.0 * ljnrg;  // 4 epsilon (....)
+    return_ljnrg = ljnrg;
 }
 
 /** Ensure that the next energy evaluation is from scratch */
@@ -1498,14 +1676,14 @@ void GridFF2::recalculateEnergy()
     
     if (must_recalculate)
     {
-        QTime t;
+        QElapsedTimer t;
         t.start();
     
         this->mustNowRecalculateFromScratch();
         this->rebuildGrid();
 
-        int ms = t.elapsed();
-        qDebug() << "REBUILD GRID TOOK" << ms << "ms";
+        qint64 ns = t.nsecsElapsed();
+        qDebug() << "REBUILD GRID TOOK" << (0.000001*ns) << "ms";
         t.restart();
 
         double total_cnrg(0);
@@ -1565,8 +1743,8 @@ void GridFF2::recalculateEnergy()
             total_ljnrg += ljnrg;
         }
 
-        ms = t.elapsed();
-        qDebug() << "CALCULATING ENERGY TOOK" << ms << "ms";
+        ns = t.nsecsElapsed();
+        qDebug() << "CALCULATING ENERGY TOOK" << (0.000001*ns) << "ms";
 
         this->components().setEnergy(*this, CLJEnergy(total_cnrg,total_ljnrg));
     }

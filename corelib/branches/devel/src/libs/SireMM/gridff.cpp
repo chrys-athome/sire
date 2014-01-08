@@ -42,6 +42,7 @@
 
 #include <QDebug>
 #include <QTime>
+#include <QElapsedTimer>
 
 #ifdef SIRE_USE_SSE
     #ifdef __SSE__
@@ -681,7 +682,7 @@ void GridFF::addToGrid(const QVector<GridFF::Vector4> &coords_and_charges)
 
     const double Rc = coul_cutoff;
     
-    QTime t;
+    QElapsedTimer t;
     t.start();
     
     if (shiftElectrostatics())
@@ -1349,10 +1350,10 @@ void GridFF::addToGrid(const QVector<GridFF::Vector4> &coords_and_charges)
         #endif
     }
     
-    int ms = t.elapsed();
+    qint64 ns = t.nsecsElapsed();
     
     qDebug() << "Added" << nats << "more atoms to" << npts << "grid points in"
-             << ms << "ms";
+             << (0.000001*ns) << "ms";
 }
 
 inline double getDist(double p, double minp, double maxp)
@@ -1727,6 +1728,9 @@ void GridFF::calculateEnergy(const CoordGroup &coords0,
     const int nats1 = closemols_coords.count();
         
     BOOST_ASSERT( closemols_coords.count() == closemols_params.count() );
+
+    QElapsedTimer t;
+    t.start();
 
     if (nats1 > 0)
     {
@@ -2328,6 +2332,10 @@ void GridFF::calculateEnergy(const CoordGroup &coords0,
         }
     }
 
+    qint64 ns = t.nsecsElapsed();
+    qDebug() << "CLJ calculation took" << (0.000001*ns) << "ms";
+    t.restart();
+
     double gridnrg = 0;
     const double *gridpot_array = gridpot.constData();
 
@@ -2402,6 +2410,9 @@ void GridFF::calculateEnergy(const CoordGroup &coords0,
             gridnrg += phi * p0.reduced_charge;
         }
     }
+
+    ns = t.nsecsElapsed();
+    qDebug() << "Grid calculation took" << (0.000001*ns) << "ms";
 
     cnrg = icnrg + gridnrg;
     ljnrg = 4.0*iljnrg;  // 4 epsilon (....)
@@ -2523,14 +2534,14 @@ void GridFF::recalculateEnergy()
     
     if (must_recalculate)
     {
-        QTime t;
+        QElapsedTimer t;
         t.start();
     
         this->mustNowRecalculateFromScratch();
         this->rebuildGrid();
 
-        int ms = t.elapsed();
-        qDebug() << "REBUILD GRID TOOK" << ms << "ms";
+        qint64 ns = t.nsecsElapsed();
+        qDebug() << "REBUILD GRID TOOK" << (0.000001*ns) << "ms";
         t.restart();
 
         double total_cnrg(0);
@@ -2590,8 +2601,8 @@ void GridFF::recalculateEnergy()
             total_ljnrg += ljnrg;
         }
 
-        ms = t.elapsed();
-        qDebug() << "CALCULATING ENERGY TOOK" << ms << "ms";
+        ns = t.nsecsElapsed();
+        qDebug() << "CALCULATING ENERGY TOOK" << (0.000001*ns) << "ms";
 
         this->components().setEnergy(*this, CLJEnergy(total_cnrg,total_ljnrg));
     }

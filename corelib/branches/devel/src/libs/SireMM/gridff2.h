@@ -129,9 +129,35 @@ private:
     typedef InterGroupCLJFF::Molecule CLJMolecule;
     typedef InterGroupCLJFF::Molecules CLJMolecules;
 
-    void calculateEnergy(const SireVol::CoordGroup &coords,
-                         const CLJParameters::Array &params,
-                         double &cnrg, double &ljnrg);
+    /** This class holds a set of coordinates, partial charges and Lennard Jones
+        parameters of a set of atoms. This is held in an optimised format to speed
+        up non-bonded calculations */
+    class CLJAtoms
+    {
+    public:
+        CLJAtoms();
+        CLJAtoms(const CoordGroup &coords, const CLJParameters::Array &params0);
+        CLJAtoms(const CLJAtoms &other);
+        ~CLJAtoms();
+        
+        CLJAtoms& operator=(const CLJAtoms &other);
+        
+        int count() const;
+        
+        /** x coordinates */
+        QVector<SireMaths::MultiFloat> x;
+        /** y coordinates */
+        QVector<SireMaths::MultiFloat> y;
+        /** z coordinates */
+        QVector<SireMaths::MultiFloat> z;
+        /** reduced partial charge (square root of charge divided by 4 pi eps 0) */
+        QVector<SireMaths::MultiFloat> q;
+        /** square root of sigma */
+        QVector<SireMaths::MultiFloat> sig;
+        /** square root of epsilon */
+        QVector<SireMaths::MultiFloat> eps;
+        
+    };
 
     class Vector4
     {
@@ -170,6 +196,13 @@ private:
                          
     void addToGrid(const QVector<float> &vx, const QVector<float> &vy,
                    const QVector<float> &vz, const QVector<float> &vq);
+
+    void calculateEnergy(const SireVol::CoordGroup &coords,
+                         const CLJParameters::Array &params,
+                         double &cnrg, double &ljnrg);
+
+    void calculateEnergy(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                         double &cnrg, double &ljnrg);
 
     /** The AABox that describes the grid */
     SireVol::AABox gridbox;
