@@ -178,6 +178,26 @@ void register_MultiFloat_class(){
                 , ( bp::arg("i") ) );
         
         }
+        { //::SireMaths::MultiFloat::hasBinaryOne
+        
+            typedef bool ( ::SireMaths::MultiFloat::*hasBinaryOne_function_type )(  ) const;
+            hasBinaryOne_function_type hasBinaryOne_function_value( &::SireMaths::MultiFloat::hasBinaryOne );
+            
+            MultiFloat_exposer.def( 
+                "hasBinaryOne"
+                , hasBinaryOne_function_value );
+        
+        }
+        { //::SireMaths::MultiFloat::hasBinaryZero
+        
+            typedef bool ( ::SireMaths::MultiFloat::*hasBinaryZero_function_type )(  ) const;
+            hasBinaryZero_function_type hasBinaryZero_function_value( &::SireMaths::MultiFloat::hasBinaryZero );
+            
+            MultiFloat_exposer.def( 
+                "hasBinaryZero"
+                , hasBinaryZero_function_value );
+        
+        }
         { //::SireMaths::MultiFloat::isAligned
         
             typedef bool ( ::SireMaths::MultiFloat::*isAligned_function_type )(  ) const;
@@ -186,6 +206,46 @@ void register_MultiFloat_class(){
             MultiFloat_exposer.def( 
                 "isAligned"
                 , isAligned_function_value );
+        
+        }
+        { //::SireMaths::MultiFloat::isBinaryOne
+        
+            typedef bool ( ::SireMaths::MultiFloat::*isBinaryOne_function_type )(  ) const;
+            isBinaryOne_function_type isBinaryOne_function_value( &::SireMaths::MultiFloat::isBinaryOne );
+            
+            MultiFloat_exposer.def( 
+                "isBinaryOne"
+                , isBinaryOne_function_value );
+        
+        }
+        { //::SireMaths::MultiFloat::isBinaryZero
+        
+            typedef bool ( ::SireMaths::MultiFloat::*isBinaryZero_function_type )(  ) const;
+            isBinaryZero_function_type isBinaryZero_function_value( &::SireMaths::MultiFloat::isBinaryZero );
+            
+            MultiFloat_exposer.def( 
+                "isBinaryZero"
+                , isBinaryZero_function_value );
+        
+        }
+        { //::SireMaths::MultiFloat::isNotBinaryOne
+        
+            typedef bool ( ::SireMaths::MultiFloat::*isNotBinaryOne_function_type )(  ) const;
+            isNotBinaryOne_function_type isNotBinaryOne_function_value( &::SireMaths::MultiFloat::isNotBinaryOne );
+            
+            MultiFloat_exposer.def( 
+                "isNotBinaryOne"
+                , isNotBinaryOne_function_value );
+        
+        }
+        { //::SireMaths::MultiFloat::isNotBinaryZero
+        
+            typedef bool ( ::SireMaths::MultiFloat::*isNotBinaryZero_function_type )(  ) const;
+            isNotBinaryZero_function_type isNotBinaryZero_function_value( &::SireMaths::MultiFloat::isNotBinaryZero );
+            
+            MultiFloat_exposer.def( 
+                "isNotBinaryZero"
+                , isNotBinaryZero_function_value );
         
         }
         { //::SireMaths::MultiFloat::logicalAnd
@@ -348,6 +408,26 @@ void register_MultiFloat_class(){
                 , reciprocal_function_value );
         
         }
+        { //::SireMaths::MultiFloat::reciprocal_approx
+        
+            typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*reciprocal_approx_function_type )(  ) const;
+            reciprocal_approx_function_type reciprocal_approx_function_value( &::SireMaths::MultiFloat::reciprocal_approx );
+            
+            MultiFloat_exposer.def( 
+                "reciprocal_approx"
+                , reciprocal_approx_function_value );
+        
+        }
+        { //::SireMaths::MultiFloat::reciprocal_approx_nr
+        
+            typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*reciprocal_approx_nr_function_type )(  ) const;
+            reciprocal_approx_nr_function_type reciprocal_approx_nr_function_value( &::SireMaths::MultiFloat::reciprocal_approx_nr );
+            
+            MultiFloat_exposer.def( 
+                "reciprocal_approx_nr"
+                , reciprocal_approx_nr_function_value );
+        
+        }
         { //::SireMaths::MultiFloat::rotate
         
             typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*rotate_function_type )(  ) const;
@@ -366,6 +446,26 @@ void register_MultiFloat_class(){
             MultiFloat_exposer.def( 
                 "rsqrt"
                 , rsqrt_function_value );
+        
+        }
+        { //::SireMaths::MultiFloat::rsqrt_approx
+        
+            typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*rsqrt_approx_function_type )(  ) const;
+            rsqrt_approx_function_type rsqrt_approx_function_value( &::SireMaths::MultiFloat::rsqrt_approx );
+            
+            MultiFloat_exposer.def( 
+                "rsqrt_approx"
+                , rsqrt_approx_function_value );
+        
+        }
+        { //::SireMaths::MultiFloat::rsqrt_approx_nr
+        
+            typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*rsqrt_approx_nr_function_type )(  ) const;
+            rsqrt_approx_nr_function_type rsqrt_approx_nr_function_value( &::SireMaths::MultiFloat::rsqrt_approx_nr );
+            
+            MultiFloat_exposer.def( 
+                "rsqrt_approx_nr"
+                , rsqrt_approx_nr_function_value );
         
         }
         { //::SireMaths::MultiFloat::set
@@ -397,6 +497,26 @@ void register_MultiFloat_class(){
             MultiFloat_exposer.def( 
                 "sqrt"
                 , sqrt_function_value );
+        
+        }
+        { //::SireMaths::MultiFloat::sqrt_approx
+        
+            typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*sqrt_approx_function_type )(  ) const;
+            sqrt_approx_function_type sqrt_approx_function_value( &::SireMaths::MultiFloat::sqrt_approx );
+            
+            MultiFloat_exposer.def( 
+                "sqrt_approx"
+                , sqrt_approx_function_value );
+        
+        }
+        { //::SireMaths::MultiFloat::sqrt_approx_nr
+        
+            typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*sqrt_approx_nr_function_type )(  ) const;
+            sqrt_approx_nr_function_type sqrt_approx_nr_function_value( &::SireMaths::MultiFloat::sqrt_approx_nr );
+            
+            MultiFloat_exposer.def( 
+                "sqrt_approx_nr"
+                , sqrt_approx_nr_function_value );
         
         }
         { //::SireMaths::MultiFloat::sum
