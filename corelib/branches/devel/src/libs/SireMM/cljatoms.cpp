@@ -854,3 +854,28 @@ QVector<LJParameter> CLJAtoms::ljParameters() const
     
     return ljs;
 }
+
+/** Return the IDs of all of the atoms */
+QVector<quint32> CLJAtoms::IDs() const
+{
+    if (this->isEmpty())
+        return QVector<quint32>();
+
+    QVector<quint32> ids( _id.count() * MultiUInt::count() );
+    quint32 *idval = ids.data();
+
+    int idx = 0;
+
+    for (int i=0; i<_id.count(); ++i)
+    {
+        const MultiUInt &idf = _id[i];
+
+        for (int j=0; j<MultiUInt::count(); ++j)
+        {
+            idval[idx] = idf[j];
+            ++idx;
+        }
+    }
+
+    return ids;
+}

@@ -30,6 +30,9 @@
 
 #include "SireUnits/units.h"
 
+#include <QDebug>
+#include <QElapsedTimer>
+
 using namespace SireMM;
 using namespace SireMol;
 using namespace SireMaths;
@@ -65,7 +68,14 @@ void TestFF::addFixedAtoms(const Molecules &molecules)
 
 void TestFF::calculateEnergy()
 {
+    QElapsedTimer t;
+    t.start();
+
     double cnrg;
     double ljnrg;
     (*cljfunc)(atoms0, atoms1, cnrg, ljnrg);
+
+    quint64 ns = t.nsecsElapsed();
+
+    qDebug() << "TestFF" << cnrg << ljnrg << "took" << (0.000001*ns) << "ms";
 }

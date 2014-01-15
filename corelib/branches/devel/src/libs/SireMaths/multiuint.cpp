@@ -43,20 +43,22 @@ static inline bool isAligned32(const void *pointer)
 
 static void assertAligned32(const void *pointer, QString place)
 {
-    if (not isAligned32(pointer))
+/*    if (not isAligned32(pointer))
         throw SireError::program_bug( QObject::tr(
                 "An unaligned MultiFloat has been created! %1")
                     .arg((quintptr)pointer % size_t(32)), place );
+*/
 }
 
 void MultiUInt::assertAligned(const void *ptr, size_t size)
 {
-    if ( (quintptr)ptr % size != 0 )
+/*    if ( (quintptr)ptr % size != 0 )
         throw SireError::program_bug( QObject::tr(
                 "An unaligned MultiFloat has been created! %1, %2, %3")
                     .arg((quintptr)ptr)
                     .arg((quintptr)ptr % size)
                     .arg(size), CODELOC );
+*/
 }
 
 /** Construct from the passed array. If size is greater than MultiUInt::size()

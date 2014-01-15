@@ -32,6 +32,8 @@
 #include "cljfunction.h"
 #include "cljatoms.h"
 
+#include "SireMol/molecules.h"
+
 #include <boost/shared_ptr.hpp>
 
 SIRE_BEGIN_HEADER

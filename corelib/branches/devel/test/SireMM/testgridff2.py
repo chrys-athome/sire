@@ -75,6 +75,10 @@ gridff2.add( swapwaters, MGIdx(0) )
 gridff2.addFixedAtoms(waters.molecules())
 gridff2.setSpace( Cartesian() )
 
+testff = TestFF()
+testff.add( swapwaters.molecules() )
+testff.addFixedAtoms(waters.molecules())
+
 cljff = InterGroupCLJFF("cljff")
 cljff.setSwitchingFunction( HarmonicSwitchingFunction(30*angstrom,30*angstrom,7.5*angstrom,7.5*angstrom) )
 cljff.add(swapwaters, MGIdx(0))
@@ -91,3 +95,6 @@ print("\nEnergies")
 print(gridff.energies())
 print(gridff2.energies())
 print(cljff.energies())
+
+testff.calculateEnergy()
+
