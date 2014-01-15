@@ -1,0 +1,291 @@
+/********************************************\
+  *
+  *  Sire - Molecular Simulation Framework
+  *
+  *  Copyright (C) 2014  Christopher Woods
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation; either version 2 of the License, or
+  *  (at your option) any later version.
+  *
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
+  *
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  *
+  *  For full details of the license please see the COPYING file
+  *  that should have come with this distribution.
+  *
+  *  You can contact the authors via the developer's mailing list
+  *  at http://siremol.org
+  *
+\*********************************************/
+
+#ifndef SIREMM_CLJATOMS_H
+#define SIREMM_CLJATOMS_H
+
+#include <QVector>
+
+#include "ljparameter.h"
+
+#include "SireUnits/dimensions.h"
+
+#include "SireBase/propertymap.h"
+
+#include "SireMaths/vector.h"
+#include "SireMaths/multifloat.h"
+#include "SireMaths/multiuint.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMM
+{
+class CLJAtom;
+class CLJAtoms;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMM::CLJAtom&);
+QDataStream& operator>>(QDataStream&, SireMM::CLJAtom&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::CLJAtoms&);
+QDataStream& operator>>(QDataStream&, SireMM::CLJAtoms&);
+
+namespace SireMol
+{
+class Molecules;
+}
+
+namespace SireMM
+{
+
+using SireBase::PropertyMap;
+
+using SireUnits::Dimension::Charge;
+
+using SireMaths::Vector;
+using SireMaths::MultiFloat;
+using SireMaths::MultiUInt;
+
+using SireMol::Molecules;
+
+/** This class holds everything about a single CLJAtom */
+class SIREMM_EXPORT CLJAtom
+{
+
+friend class CLJAtoms;
+
+friend QDataStream& ::operator<<(QDataStream&, const CLJAtom&);
+friend QDataStream& ::operator>>(QDataStream&, CLJAtom&);
+
+public:
+    CLJAtom();
+    CLJAtom(Vector coords, Charge charge, LJParameter ljparam, quint32 idnum=1);
+    
+    CLJAtom(const CLJAtom &other);
+    
+    ~CLJAtom();
+    
+    CLJAtom& operator=(const CLJAtom &other);
+    
+    bool operator==(const CLJAtom &other) const;
+    bool operator!=(const CLJAtom &other) const;
+
+    static const char* typeName();
+    
+    const char* what() const;
+    
+    Vector coordinates() const;
+    Charge charge() const;
+    LJParameter ljParameter() const;
+    quint32 ID() const;
+    
+private:
+    /** The coordinates of the atom */
+    float x;
+    float y;
+    float z;
+    
+    /** The reduced charge of the atom */
+    float chg;
+    
+    /** The reduced sigma parameter for the atom */
+    float sig;
+    
+    /** The reduced epsilon parameter for the atom */
+    float eps;
+    
+    /** The ID number for the atom - atoms with ID 0 are dummies,
+        while atoms with the same ID are in the same molecule */
+    quint32 idnum;
+};
+
+/** This class holds vectorised arrays of the coordinates,
+    reduced charges and reduced Lennard Jones parameters of 
+    a set of atoms. This class is intended only to be used
+    in the fast functions used to calculated coulomb and LJ
+    energies, and is not intended for general use.
+    
+    @author Christopher Woods
+*/
+class SIREMM_EXPORT CLJAtoms
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const CLJAtoms&);
+friend QDataStream& ::operator>>(QDataStream&, CLJAtoms&);
+
+public:
+    CLJAtoms();
+    CLJAtoms(const QVector<CLJAtom> &atoms);
+    
+    CLJAtoms(const QVector<Vector> &coordinates,
+             const QVector<Charge> &charges,
+             const QVector<LJParameter> &ljparams,
+             quint32 atomid=1);
+
+    CLJAtoms(const QVector<Vector> &coordinates,
+             const QVector<Charge> &charges,
+             const QVector<LJParameter> &ljparams,
+             const QVector<quint32> &ids);
+
+    CLJAtoms(const Molecules &molecules,
+             const PropertyMap &map = PropertyMap());
+
+    CLJAtoms(const CLJAtoms &other);
+
+    ~CLJAtoms();
+    
+    CLJAtoms& operator=(const CLJAtoms &other);
+    
+    bool operator==(const CLJAtoms &other) const;
+    bool operator!=(const CLJAtoms &other) const;
+    
+    static const char* typeName();
+    const char* what() const;
+    
+    int count() const;
+    int size() const;
+    
+    bool isEmpty() const;
+    
+    CLJAtom operator[](int i) const;
+    
+    CLJAtom at(int i) const;
+    CLJAtom getitem(int i) const;
+    
+    void set(int i, const CLJAtom &atom);
+    
+    void setCoordinates(int i, Vector coords);
+    void setCharge(int i, Charge charge);
+    void setLJParameter(int i, LJParameter ljparam);
+    void setID(int i, quint32 idnum);
+
+    void makeDummy(int i);
+    bool isDummy(int i);
+    
+    QVector<CLJAtom> atoms() const;
+    
+    QVector<Vector> coordinates() const;
+    QVector<Charge> charges() const;
+    QVector<LJParameter> ljParameters() const;
+    QVector<quint32> IDs() const;
+    
+    const QVector<MultiFloat>& x() const;
+    const QVector<MultiFloat>& y() const;
+    const QVector<MultiFloat>& z() const;
+    
+    const QVector<MultiFloat>& q() const;
+    const QVector<MultiFloat>& sigma() const;
+    const QVector<MultiFloat>& epsilon() const;
+    
+    const QVector<MultiUInt>& ID() const;
+    
+private:
+    /** Vector of the x-coordinates of the atoms */
+    QVector<MultiFloat> _x;
+    
+    /** Vector of the y-coordinates of the atoms */
+    QVector<MultiFloat> _y;
+    
+    /** Vector of the z-coordinates of the atoms */
+    QVector<MultiFloat> _z;
+    
+    /** Vector of the reduced partial charges of the 
+        atoms (square root of the charge divided by
+        4 pi epsilon0) */
+    QVector<MultiFloat> _q;
+    
+    /** Vector of the square root of the sigma LJ parameters */
+    QVector<MultiFloat> _sig;
+    
+    /** Vector of the square root of the epsilon LJ parameters */
+    QVector<MultiFloat> _eps;
+
+    /** The molecule number for each atom - atoms with the same
+        number are part of the same molecule. Also, if this number is
+        zero, then this is a dummy atom */
+    QVector<MultiUInt> _id;
+};
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+/** Return the vector of the vectorised x coordinates */
+inline const QVector<MultiFloat>& CLJAtoms::x() const
+{
+    return _x;
+}
+
+/** Return the vector of the vectorised y coordinates */
+inline const QVector<MultiFloat>& CLJAtoms::y() const
+{
+    return _y;
+}
+
+/** Return the vector of the vectorised z coordinates */
+inline const QVector<MultiFloat>& CLJAtoms::z() const
+{
+    return _z;
+}
+
+/** Return the vector of the vectorised reduced charges
+    (square root of charge divided by 4 pi epsilon 0) */
+inline const QVector<MultiFloat>& CLJAtoms::q() const
+{
+    return _q;
+}
+
+/** Return the vector of the vectorised reduced (square root) sigma parameters */
+inline const QVector<MultiFloat>& CLJAtoms::sigma() const
+{
+    return _sig;
+}
+
+/** Return the vector of the vectorised reduced (square root) epsilon parameters */
+inline const QVector<MultiFloat>& CLJAtoms::epsilon() const
+{
+    return _eps;
+}
+
+/** Return the vector of vectorised atom IDs */
+inline const QVector<MultiUInt>& CLJAtoms::ID() const
+{
+    return _id;
+}
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
+
+}
+
+Q_DECLARE_METATYPE(SireMM::CLJAtom);
+Q_DECLARE_METATYPE(SireMM::CLJAtoms);
+
+SIRE_EXPOSE_CLASS( SireMM::CLJAtoms )
+
+SIRE_END_HEADER
+
+#endif
+

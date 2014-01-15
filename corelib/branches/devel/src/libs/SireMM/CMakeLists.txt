@@ -16,7 +16,9 @@ set ( SIREMM_HEADERS
       atomfunctions.h
       atomljs.h
       atompairs.hpp
+      cljatoms.h
       cljcomponent.h
+      cljfunction.h
       cljparam.h
       cljpotential.h
       cljprobe.h
@@ -52,6 +54,7 @@ set ( SIREMM_HEADERS
       softcljcomponent.h
       softcljpotential.h
       switchingfunction.h
+      testff.h
       threeatomfunctions.h
       twoatomfunctions.h
     )
@@ -68,7 +71,9 @@ set ( SIREMM_SOURCES
       anglerestraint.cpp
       atomfunctions.cpp
       atomljs.cpp
+      cljatoms.cpp
       cljcomponent.cpp
+      cljfunction.cpp
       cljparam.cpp
       cljpotential.cpp
       cljprobe.cpp
@@ -103,6 +108,7 @@ set ( SIREMM_SOURCES
       softcljcomponent.cpp
       softcljpotential.cpp
       switchingfunction.cpp
+      testff.cpp
       threeatomfunctions.cpp
       twoatomfunctions.cpp    
 
