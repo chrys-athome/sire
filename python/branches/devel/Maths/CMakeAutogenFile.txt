@@ -37,6 +37,7 @@ set ( PYPP_SOURCES
        BennettsFreeEnergyAverage.pypp.cpp
        Line.pypp.cpp
        Triangle.pypp.cpp
+       MultiUInt.pypp.cpp
        Vector.pypp.cpp
        Average.pypp.cpp
        NMatrix.pypp.cpp

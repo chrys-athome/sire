@@ -5,6 +5,7 @@ set ( PYPP_SOURCES
        NoCutoff.pypp.cpp
        TwoAtomFunctions.pypp.cpp
        InterLJFFBase.pypp.cpp
+       CLJAtoms.pypp.cpp
        IntraCoulombFFBase.pypp.cpp
        StretchStretchComponent.pypp.cpp
        AtomLJs.pypp.cpp
@@ -105,6 +106,7 @@ set ( PYPP_SOURCES
        AtomFunctions.pypp.cpp
        ScaledLJParameterNames3D.pypp.cpp
        CLJPotentialInterface_InterSoftCLJPotential_.pypp.cpp
+       CLJVacShiftAriFunction.pypp.cpp
        StretchBendParameterName.pypp.cpp
        CLJPotentialInterface_InterCLJPotential_.pypp.cpp
        IntraSoftCLJFFBase.pypp.cpp
@@ -116,6 +118,7 @@ set ( PYPP_SOURCES
        BondSymbols.pypp.cpp
        LJComponent.pypp.cpp
        IntraGroupCLJFF.pypp.cpp
+       TestFF.pypp.cpp
        InterGroupCoulombFFBase.pypp.cpp
        BondParameterName.pypp.cpp
        CoulombPotentialInterface_IntraCoulombPotential_.pypp.cpp
@@ -123,6 +126,7 @@ set ( PYPP_SOURCES
        ImproperSymbols.pypp.cpp
        HarmonicSwitchingFunction.pypp.cpp
        FourAtomFunctions.pypp.cpp
+       CLJFunction.pypp.cpp
        InterCLJFFBase.pypp.cpp
        StretchBendTorsionSymbols.pypp.cpp
        CLJScaleFactor.pypp.cpp

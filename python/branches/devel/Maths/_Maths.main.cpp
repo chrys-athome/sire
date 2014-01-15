@@ -51,6 +51,8 @@
 
 #include "MultiFloat.pypp.hpp"
 
+#include "MultiUInt.pypp.hpp"
+
 #include "N4Matrix.pypp.hpp"
 
 #include "NMatrix.pypp.hpp"
@@ -151,6 +153,8 @@ BOOST_PYTHON_MODULE(_Maths){
     register_MultiFixed_class();
 
     register_MultiFloat_class();
+
+    register_MultiUInt_class();
 
     register_N4Matrix_class();
 

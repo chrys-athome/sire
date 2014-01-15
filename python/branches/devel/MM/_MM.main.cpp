@@ -41,7 +41,11 @@
 
 #include "CHARMMSwitchingFunction.pypp.hpp"
 
+#include "CLJAtoms.pypp.hpp"
+
 #include "CLJComponent.pypp.hpp"
+
+#include "CLJFunction.pypp.hpp"
 
 #include "CLJNBPairs.pypp.hpp"
 
@@ -60,6 +64,8 @@
 #include "CLJProbe.pypp.hpp"
 
 #include "CLJScaleFactor.pypp.hpp"
+
+#include "CLJVacShiftAriFunction.pypp.hpp"
 
 #include "ChargeParameterName.pypp.hpp"
 
@@ -255,6 +261,8 @@
 
 #include "SwitchingFunction.pypp.hpp"
 
+#include "TestFF.pypp.hpp"
+
 #include "ThreeAtomFunction.pypp.hpp"
 
 #include "ThreeAtomFunctions.pypp.hpp"
@@ -416,7 +424,11 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_CHARMMSwitchingFunction_class();
 
+    register_CLJAtoms_class();
+
     register_CLJComponent_class();
+
+    register_CLJFunction_class();
 
     register_CLJNBPairs_class();
 
@@ -429,6 +441,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_CLJParameterNames3D_class();
 
     register_CLJProbe_class();
+
+    register_CLJVacShiftAriFunction_class();
 
     register_ChargeParameterName3D_class();
 
@@ -533,6 +547,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_StretchStretchComponent_class();
 
     register_StretchStretchSymbols_class();
+
+    register_TestFF_class();
 
     register_ThreeAtomFunction_class();
 

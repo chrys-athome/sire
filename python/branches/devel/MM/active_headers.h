@@ -6,7 +6,9 @@
 #include "anglerestraint.h"
 #include "atomfunctions.h"
 #include "atomljs.h"
+#include "cljatoms.h"
 #include "cljcomponent.h"
+#include "cljfunction.h"
 #include "cljnbpairs.h"
 #include "cljparam.h"
 #include "cljpotential.h"
@@ -38,6 +40,7 @@
 #include "restraintff.h"
 #include "softcljcomponent.h"
 #include "switchingfunction.h"
+#include "testff.h"
 #include "threeatomfunctions.h"
 #include "twoatomfunctions.h"
 

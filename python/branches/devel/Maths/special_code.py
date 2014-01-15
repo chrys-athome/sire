@@ -54,7 +54,8 @@ def fix_Multi(c):
 special_code = { "SireBase::Array2D<SireBase::PropPtr<SireMaths::Accumulator> >" : fix_Array2D,
                  "SireMaths::MultiFloat" : fix_Multi,
                  "SireMaths::MultiFixed" : fix_Multi,
-                 "SireMaths::MultiDouble" : fix_Multi }
+                 "SireMaths::MultiDouble" : fix_Multi,
+                 "SireMaths::MultiUInt" : fix_Multi }
 
 def fixMB(mb):
    mb.add_declaration_code("#include \"_Maths_global_variables.pyman.hpp\"")
