@@ -54,6 +54,7 @@ void register_CLJAtoms_class(){
         CLJAtoms_exposer.def( bp::init< QVector< SireMM::CLJAtom > const & >(( bp::arg("atoms") )) );
         CLJAtoms_exposer.def( bp::init< QVector< SireMaths::Vector > const &, QVector< SireUnits::Dimension::PhysUnit< 0, 0, 0, 1, 0, 0, 0 > > const &, QVector< SireMM::LJParameter > const &, bp::optional< quint32 > >(( bp::arg("coordinates"), bp::arg("charges"), bp::arg("ljparams"), bp::arg("atomid")=(unsigned int)(1) )) );
         CLJAtoms_exposer.def( bp::init< QVector< SireMaths::Vector > const &, QVector< SireUnits::Dimension::PhysUnit< 0, 0, 0, 1, 0, 0, 0 > > const &, QVector< SireMM::LJParameter > const &, QVector< unsigned int > const & >(( bp::arg("coordinates"), bp::arg("charges"), bp::arg("ljparams"), bp::arg("ids") )) );
+        CLJAtoms_exposer.def( bp::init< SireMol::MoleculeView const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecule"), bp::arg("map")=SireBase::PropertyMap() )) );
         CLJAtoms_exposer.def( bp::init< SireMol::Molecules const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecules"), bp::arg("map")=SireBase::PropertyMap() )) );
         CLJAtoms_exposer.def( bp::init< SireMM::CLJAtoms const & >(( bp::arg("other") )) );
         { //::SireMM::CLJAtoms::ID

@@ -9,9 +9,11 @@ namespace bp = boost::python;
 
 #include "SireUnits/units.h"
 
-#include "SireMol/molecules.h"
-
 #include "testff.h"
+
+#include <QDebug>
+
+#include <QElapsedTimer>
 
 #include "testff.h"
 
