@@ -47,6 +47,7 @@
 #include "SireMaths/multifloat.h"
 #include "SireMaths/multifixed.h"
 #include "SireMaths/multidouble.h"
+#include "SireMaths/multiuint.h"
 #include "SireMaths/histogram.h"
 #include "SireMaths/freeenergyaverage.h"
 
@@ -62,6 +63,7 @@ void register_SireMaths_containers()
     register_list< QVector<MultiFloat> >();
     register_list< QVector<MultiFixed> >();
     register_list< QVector<MultiDouble> >();
+    register_list< QVector<MultiUInt> >();
 
     register_list< QVector<FreeEnergyAverage> >();
 
