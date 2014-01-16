@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QElapsedTimer>
+
 #include "cljatoms.h"
 
 #include "atomljs.h"
@@ -442,6 +444,9 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
 {
     if (molecules.isEmpty())
         return;
+   
+    QElapsedTimer t;
+    t.start();
     
     //extract all of the data from the passed molecules
     {
@@ -544,6 +549,11 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
         s[i] = s[i].sqrt();
         e[i] = (e[i] * four).sqrt();
     }
+    
+    quint64 ns = t.nsecsElapsed();
+    
+    qDebug() << "Converting" << (_q.count() * MultiFloat::count()) << "atoms took"
+             << (0.000001*ns) << "ms";
 }
 
 /** Construct from the parameters in the passed molecule view */
