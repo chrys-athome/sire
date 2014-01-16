@@ -238,45 +238,103 @@ void CLJVacShiftAriFunction::operator()(const CLJAtoms &atoms0, const CLJAtoms &
     {
         for (int ii=0; ii<MultiFloat::count(); ++ii)
         {
-            if (q0[i][ii] != 0)
+            //if (id0[i][ii] != 0)
             {
-                const MultiFloat x(x0[i][ii]);
-                const MultiFloat y(y0[i][ii]);
-                const MultiFloat z(z0[i][ii]);
-                const MultiFloat q(q0[i][ii]);
-            
-                if (eps0[i][ii] == 0)
+                if (q0[i][ii] != 0)
                 {
-                    //coulomb energy only
-                    for (int j=0; j<atoms1.x().count(); ++j)
-                    {
-                        //calculate the distance between the fixed and mobile atoms
-                        tmp = x1[j] - x;
-                        r = tmp * tmp;
-                        tmp = y1[j] - y;
-                        r.multiplyAdd(tmp, tmp);
-                        tmp = z1[j] - z;
-                        r.multiplyAdd(tmp, tmp);
-                        r = r.sqrt();
-
-                        one_over_r = r.reciprocal();
+                    const MultiFloat x(x0[i][ii]);
+                    const MultiFloat y(y0[i][ii]);
+                    const MultiFloat z(z0[i][ii]);
+                    const MultiFloat q(q0[i][ii]);
                 
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = r - Rc;
-                        tmp *= one_over_Rc2;
-                        tmp -= one_over_Rc;
-                        tmp += one_over_r;
-                        tmp *= q * q1[j];
+                    if (eps0[i][ii] == 0)
+                    {
+                        //coulomb energy only
+                        for (int j=0; j<atoms1.x().count(); ++j)
+                        {
+                            //calculate the distance between the fixed and mobile atoms
+                            tmp = x1[j] - x;
+                            r = tmp * tmp;
+                            tmp = y1[j] - y;
+                            r.multiplyAdd(tmp, tmp);
+                            tmp = z1[j] - z;
+                            r.multiplyAdd(tmp, tmp);
+                            r = r.sqrt();
+
+                            one_over_r = r.reciprocal();
                     
-                        //apply the cutoff - compare r against Rc. This will
-                        //return 1 if r is less than Rc, or 0 otherwise. Logical
-                        //and will then remove all energies where r >= Rc
-                        icnrg += tmp.logicalAnd( r.compareLess(Rc) );
+                            //calculate the coulomb energy using shift-electrostatics
+                            // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
+                            tmp = r - Rc;
+                            tmp *= one_over_Rc2;
+                            tmp -= one_over_Rc;
+                            tmp += one_over_r;
+                            tmp *= q * q1[j];
+                        
+                            //apply the cutoff - compare r against Rc. This will
+                            //return 1 if r is less than Rc, or 0 otherwise. Logical
+                            //and will then remove all energies where r >= Rc
+                            icnrg += tmp.logicalAnd( r.compareLess(Rc) );
+                        }
+                    }
+                    else
+                    {
+                        const MultiFloat sig(sig0[i][ii] * sig0[i][ii]);
+                        const MultiFloat eps(eps0[i][ii]);
+
+                        for (int j=0; j<atoms1.x().count(); ++j)
+                        {
+                            //calculate the distance between the fixed and mobile atoms
+                            tmp = x1[j] - x;
+                            r = tmp * tmp;
+                            tmp = y1[j] - y;
+                            r.multiplyAdd(tmp, tmp);
+                            tmp = z1[j] - z;
+                            r.multiplyAdd(tmp, tmp);
+                            r = r.sqrt();
+
+                            one_over_r = r.reciprocal();
+                    
+                            //calculate the coulomb energy using shift-electrostatics
+                            // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
+                            tmp = r - Rc;
+                            tmp *= one_over_Rc2;
+                            tmp -= one_over_Rc;
+                            tmp += one_over_r;
+                            tmp *= q * q1[j];
+                        
+                            //apply the cutoff - compare r against Rc. This will
+                            //return 1 if r is less than Rc, or 0 otherwise. Logical
+                            //and will then remove all energies where r >= Rc
+                            icnrg += tmp.logicalAnd( r.compareLess(Rc) );
+                    
+                            //arithmetic combining rules
+                            tmp = sig + (sig1[j]*sig1[j]);
+                            tmp *= half;
+                        
+                            sig2_over_r2 = tmp * one_over_r;
+                            sig2_over_r2 = sig2_over_r2*sig2_over_r2;
+                            sig6_over_r6 = sig2_over_r2*sig2_over_r2;
+                            sig6_over_r6 = sig6_over_r6*sig2_over_r2;
+
+                            tmp = sig6_over_r6 * sig6_over_r6;
+                            tmp -= sig6_over_r6;
+                            tmp *= eps;
+                            tmp *= eps1[j];
+                        
+                            //apply the cutoff - compare r against Rlj. This will
+                            //return 1 if r is less than Rlj, or 0 otherwise. Logical
+                            //and will then remove all energies where r >= Rlj
+                            iljnrg += tmp.logicalAnd( r.compareLess(Rlj) );
+                        }
                     }
                 }
-                else
+                else if (eps0[i][ii] != 0)
                 {
+                    //LJ energy only
+                    const MultiFloat x(x0[i][ii]);
+                    const MultiFloat y(y0[i][ii]);
+                    const MultiFloat z(z0[i][ii]);
                     const MultiFloat sig(sig0[i][ii] * sig0[i][ii]);
                     const MultiFloat eps(eps0[i][ii]);
 
@@ -292,19 +350,6 @@ void CLJVacShiftAriFunction::operator()(const CLJAtoms &atoms0, const CLJAtoms &
                         r = r.sqrt();
 
                         one_over_r = r.reciprocal();
-                
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = r - Rc;
-                        tmp *= one_over_Rc2;
-                        tmp -= one_over_Rc;
-                        tmp += one_over_r;
-                        tmp *= q * q1[j];
-                    
-                        //apply the cutoff - compare r against Rc. This will
-                        //return 1 if r is less than Rc, or 0 otherwise. Logical
-                        //and will then remove all energies where r >= Rc
-                        icnrg += tmp.logicalAnd( r.compareLess(Rc) );
                 
                         //arithmetic combining rules
                         tmp = sig + (sig1[j]*sig1[j]);
@@ -327,51 +372,9 @@ void CLJVacShiftAriFunction::operator()(const CLJAtoms &atoms0, const CLJAtoms &
                     }
                 }
             }
-            else if (eps0[i][ii] != 0)
-            {
-                //LJ energy only
-                const MultiFloat x(x0[i][ii]);
-                const MultiFloat y(y0[i][ii]);
-                const MultiFloat z(z0[i][ii]);
-                const MultiFloat sig(sig0[i][ii] * sig0[i][ii]);
-                const MultiFloat eps(eps0[i][ii]);
-
-                for (int j=0; j<atoms1.x().count(); ++j)
-                {
-                    //calculate the distance between the fixed and mobile atoms
-                    tmp = x1[j] - x;
-                    r = tmp * tmp;
-                    tmp = y1[j] - y;
-                    r.multiplyAdd(tmp, tmp);
-                    tmp = z1[j] - z;
-                    r.multiplyAdd(tmp, tmp);
-                    r = r.sqrt();
-
-                    one_over_r = r.reciprocal();
-            
-                    //arithmetic combining rules
-                    tmp = sig + (sig1[j]*sig1[j]);
-                    tmp *= half;
-                
-                    sig2_over_r2 = tmp * one_over_r;
-                    sig2_over_r2 = sig2_over_r2*sig2_over_r2;
-                    sig6_over_r6 = sig2_over_r2*sig2_over_r2;
-                    sig6_over_r6 = sig6_over_r6*sig2_over_r2;
-
-                    tmp = sig6_over_r6 * sig6_over_r6;
-                    tmp -= sig6_over_r6;
-                    tmp *= eps;
-                    tmp *= eps1[j];
-                
-                    //apply the cutoff - compare r against Rlj. This will
-                    //return 1 if r is less than Rlj, or 0 otherwise. Logical
-                    //and will then remove all energies where r >= Rlj
-                    iljnrg += tmp.logicalAnd( r.compareLess(Rlj) );
-                }
-            }
         }
     }
     
     cnrg = icnrg.sum();
-    ljnrg = 4.0 * iljnrg.sum();
+    ljnrg = iljnrg.sum();
 }

@@ -91,7 +91,7 @@ CLJAtom::CLJAtom() : x(0), y(0), z(0), chg(0), sig(0), eps(0), idnum(0)
 /** Construct from the passed coordinates, charge and LJ parameters */
 CLJAtom::CLJAtom(Vector coords, Charge charge, LJParameter ljparam, quint32 atomid)
         : x(coords.x()), y(coords.y()), z(coords.z()),
-          chg( sqrt(charge.value() * SireUnits::one_over_four_pi_eps0) ),
+          chg( charge.value() * std::sqrt(SireUnits::one_over_four_pi_eps0) ),
           sig( sqrt(ljparam.sigma()) ), eps( sqrt(4.0 * ljparam.epsilon()) ),
           idnum(atomid)
 {}
@@ -160,8 +160,7 @@ Vector CLJAtom::coordinates() const
 /** Return the partial charge of the atom */
 Charge CLJAtom::charge() const
 {
-    double c = chg * chg;
-    return Charge(c / SireUnits::one_over_four_pi_eps0);
+    return Charge(chg / std::sqrt(SireUnits::one_over_four_pi_eps0) );
 }
 
 /** Return the LJ parameters of the atom */
@@ -345,12 +344,12 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
     MultiFloat *e = _eps.data();
     
     const MultiFloat four(4.0);
-    const MultiFloat one_over_4_pi_eps_0( SireUnits::one_over_four_pi_eps0 );
+    const MultiFloat one_over_4_pi_eps_0( std::sqrt(SireUnits::one_over_four_pi_eps0) );
     
     //now reduce the charge, sigma and epsilon parameters
     for (int i=0; i<_q.count(); ++i)
     {
-        q[i] = (q[i] * one_over_4_pi_eps_0).sqrt();
+        q[i] = q[i] * one_over_4_pi_eps_0;
         s[i] = s[i].sqrt();
         e[i] = (e[i] * four).sqrt();
     }
@@ -427,12 +426,12 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
     MultiFloat *e = _eps.data();
     
     const MultiFloat four(4.0);
-    const MultiFloat one_over_4_pi_eps_0( SireUnits::one_over_four_pi_eps0 );
+    const MultiFloat one_over_4_pi_eps_0( std::sqrt(SireUnits::one_over_four_pi_eps0) );
     
     //now reduce the charge, sigma and epsilon parameters
     for (int i=0; i<_q.count(); ++i)
     {
-        q[i] = (q[i] * one_over_4_pi_eps_0).sqrt();
+        q[i] = q[i] * one_over_4_pi_eps_0;
         s[i] = s[i].sqrt();
         e[i] = (e[i] * four).sqrt();
     }
@@ -536,12 +535,12 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
     MultiFloat *e = _eps.data();
     
     const MultiFloat four(4.0);
-    const MultiFloat one_over_4_pi_eps_0( SireUnits::one_over_four_pi_eps0 );
+    const MultiFloat one_over_4_pi_eps_0( std::sqrt(SireUnits::one_over_four_pi_eps0) );
     
     //now reduce the charge, sigma and epsilon parameters
     for (int i=0; i<_q.count(); ++i)
     {
-        q[i] = (q[i] * one_over_4_pi_eps_0).sqrt();
+        q[i] = q[i] * one_over_4_pi_eps_0;
         s[i] = s[i].sqrt();
         e[i] = (e[i] * four).sqrt();
     }
@@ -697,12 +696,12 @@ void CLJAtoms::setCoordinates(int i, Vector coords)
 /** Set the charge of the ith atom to 'charge' */
 void CLJAtoms::setCharge(int i, Charge charge)
 {
-    float c = charge.value() * SireUnits::one_over_four_pi_eps0;
+    float c = charge.value() * std::sqrt(SireUnits::one_over_four_pi_eps0);
     
     int idx = i / MultiFloat::count();
     int sub_idx = i % MultiFloat::count();
 
-    _q[idx].set(sub_idx, sqrt(c));
+    _q[idx].set(sub_idx, c);
 }
 
 /** Set the LJ parameter of the ith atom to 'ljparam' */
@@ -828,8 +827,7 @@ QVector<Charge> CLJAtoms::charges() const
         
         for (int j=0; j<MultiFloat::count(); ++j)
         {
-            double charge = qf[j] * qf[j];
-            c[idx] = Charge( charge / SireUnits::one_over_four_pi_eps0 );
+            c[idx] = Charge( qf[j] / std::sqrt(SireUnits::one_over_four_pi_eps0) );
             ++idx;
         }
     }

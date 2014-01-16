@@ -38,7 +38,7 @@ using namespace SireMol;
 using namespace SireMaths;
 using namespace SireUnits;
 
-TestFF::TestFF() : cljfunc(new CLJVacShiftAriFunction(30*angstrom, 7.5*angstrom))
+TestFF::TestFF() : cljfunc(new CLJVacShiftAriFunction(50*angstrom, 50*angstrom))
 {}
 
 TestFF::TestFF(const TestFF &other)
@@ -77,5 +77,5 @@ void TestFF::calculateEnergy()
 
     quint64 ns = t.nsecsElapsed();
 
-    qDebug() << "TestFF" << cnrg << ljnrg << "took" << (0.000001*ns) << "ms";
+    qDebug() << "TestFF" << (cnrg+ljnrg) << cnrg << ljnrg << "took" << (0.000001*ns) << "ms";
 }

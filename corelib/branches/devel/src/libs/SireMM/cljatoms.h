@@ -222,8 +222,7 @@ private:
     QVector<MultiFloat> _z;
     
     /** Vector of the reduced partial charges of the 
-        atoms (square root of the charge divided by
-        4 pi epsilon0) */
+        atoms (charge divided by sqrt(4 pi epsilon0) ) */
     QVector<MultiFloat> _q;
     
     /** Vector of the square root of the sigma LJ parameters */

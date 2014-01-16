@@ -1466,15 +1466,7 @@ void GridFF2::calculateEnergy(const CoordGroup &coords0,
     atoms1.sig = close_mols_sig;
     atoms1.eps = close_mols_eps;
 
-    qint64 ns = t.nsecsElapsed();
-    qDebug() << "Setup took" << (0.000001*ns) << "ms";
-    t.restart();
-
     calculateEnergy(atoms0, atoms1, cnrg, ljnrg);
-
-    ns = t.nsecsElapsed();
-    qDebug() << "CLJ calculation took" << (0.000001*ns) << "ms";
-    t.restart();
 
     //now calculate the energy in the grid
     if (not gridpot.isEmpty())
@@ -1552,9 +1544,6 @@ void GridFF2::calculateEnergy(const CoordGroup &coords0,
             }
         }
     }
-
-    ns = t.nsecsElapsed();
-    qDebug() << "Grid calculation took" << (0.000001*ns) << "ms";
 
     return_cnrg = cnrg + gridnrg;
     return_ljnrg = ljnrg;

@@ -1729,9 +1729,6 @@ void GridFF::calculateEnergy(const CoordGroup &coords0,
         
     BOOST_ASSERT( closemols_coords.count() == closemols_params.count() );
 
-    QElapsedTimer t;
-    t.start();
-
     if (nats1 > 0)
     {
         if (shiftElectrostatics())
@@ -2332,10 +2329,6 @@ void GridFF::calculateEnergy(const CoordGroup &coords0,
         }
     }
 
-    qint64 ns = t.nsecsElapsed();
-    qDebug() << "CLJ calculation took" << (0.000001*ns) << "ms";
-    t.restart();
-
     double gridnrg = 0;
     const double *gridpot_array = gridpot.constData();
 
@@ -2410,9 +2403,6 @@ void GridFF::calculateEnergy(const CoordGroup &coords0,
             gridnrg += phi * p0.reduced_charge;
         }
     }
-
-    ns = t.nsecsElapsed();
-    qDebug() << "Grid calculation took" << (0.000001*ns) << "ms";
 
     cnrg = icnrg + gridnrg;
     ljnrg = 4.0*iljnrg;  // 4 epsilon (....)
