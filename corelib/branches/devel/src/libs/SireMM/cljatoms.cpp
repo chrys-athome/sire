@@ -439,7 +439,7 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
 }
 
 /** Construct from the parameters in the passed set of Molecules */
-CLJAtoms::CLJAtoms(const Molecules &molecules, const PropertyMap &map)
+void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
 {
     if (molecules.isEmpty())
         return;
@@ -545,6 +545,18 @@ CLJAtoms::CLJAtoms(const Molecules &molecules, const PropertyMap &map)
         s[i] = s[i].sqrt();
         e[i] = (e[i] * four).sqrt();
     }
+}
+
+/** Construct from the parameters in the passed molecule view */
+CLJAtoms::CLJAtoms(const MoleculeView &view, const PropertyMap &map)
+{
+    constructFrom(Molecules(view), map);
+}
+
+/** Construct from the parameters in the passed set of Molecules */
+CLJAtoms::CLJAtoms(const Molecules &molecules, const PropertyMap &map)
+{
+    constructFrom(molecules, map);
 }
 
 /** Copy constructor */

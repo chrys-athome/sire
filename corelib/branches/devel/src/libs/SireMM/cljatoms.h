@@ -58,6 +58,7 @@ QDataStream& operator>>(QDataStream&, SireMM::CLJAtoms&);
 namespace SireMol
 {
 class Molecules;
+class MoleculeView;
 }
 
 namespace SireMM
@@ -72,6 +73,7 @@ using SireMaths::MultiFloat;
 using SireMaths::MultiUInt;
 
 using SireMol::Molecules;
+using SireMol::MoleculeView;
 
 /** This class holds everything about a single CLJAtom */
 class SIREMM_EXPORT CLJAtom
@@ -152,6 +154,9 @@ public:
              const QVector<LJParameter> &ljparams,
              const QVector<quint32> &ids);
 
+    CLJAtoms(const MoleculeView &molecule,
+             const PropertyMap &map = PropertyMap());
+
     CLJAtoms(const Molecules &molecules,
              const PropertyMap &map = PropertyMap());
 
@@ -205,6 +210,8 @@ public:
     const QVector<MultiUInt>& ID() const;
     
 private:
+    void constructFrom(const Molecules &molecules, const PropertyMap &map);
+
     /** Vector of the x-coordinates of the atoms */
     QVector<MultiFloat> _x;
     
