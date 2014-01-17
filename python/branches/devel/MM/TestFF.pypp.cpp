@@ -72,6 +72,17 @@ void register_TestFF_class(){
                 , bp::return_self< >() );
         
         }
+        { //::SireMM::TestFF::setCutoff
+        
+            typedef void ( ::SireMM::TestFF::*setCutoff_function_type )( ::SireUnits::Dimension::Length,::SireUnits::Dimension::Length ) ;
+            setCutoff_function_type setCutoff_function_value( &::SireMM::TestFF::setCutoff );
+            
+            TestFF_exposer.def( 
+                "setCutoff"
+                , setCutoff_function_value
+                , ( bp::arg("coul_cutoff"), bp::arg("lj_cutoff") ) );
+        
+        }
         TestFF_exposer.def( "__copy__", &__copy__);
         TestFF_exposer.def( "__deepcopy__", &__copy__);
         TestFF_exposer.def( "clone", &__copy__);

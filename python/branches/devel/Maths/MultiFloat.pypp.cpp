@@ -13,6 +13,8 @@ namespace bp = boost::python;
 
 #include "multifloat.h"
 
+#include "multiuint.h"
+
 #include <QDebug>
 
 #include <QStringList>
@@ -251,6 +253,17 @@ void register_MultiFloat_class(){
         { //::SireMaths::MultiFloat::logicalAnd
         
             typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*logicalAnd_function_type )( ::SireMaths::MultiFloat const & ) const;
+            logicalAnd_function_type logicalAnd_function_value( &::SireMaths::MultiFloat::logicalAnd );
+            
+            MultiFloat_exposer.def( 
+                "logicalAnd"
+                , logicalAnd_function_value
+                , ( bp::arg("other") ) );
+        
+        }
+        { //::SireMaths::MultiFloat::logicalAnd
+        
+            typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*logicalAnd_function_type )( ::SireMaths::MultiUInt const & ) const;
             logicalAnd_function_type logicalAnd_function_value( &::SireMaths::MultiFloat::logicalAnd );
             
             MultiFloat_exposer.def( 

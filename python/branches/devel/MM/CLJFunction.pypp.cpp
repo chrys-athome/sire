@@ -51,6 +51,48 @@ void register_CLJFunction_class(){
                 , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("cnrg"), bp::arg("ljnrg") ) );
         
         }
+        { //::SireMM::CLJFunction::setArithmeticCombiningRules
+        
+            typedef void ( ::SireMM::CLJFunction::*setArithmeticCombiningRules_function_type )( bool ) ;
+            setArithmeticCombiningRules_function_type setArithmeticCombiningRules_function_value( &::SireMM::CLJFunction::setArithmeticCombiningRules );
+            
+            CLJFunction_exposer.def( 
+                "setArithmeticCombiningRules"
+                , setArithmeticCombiningRules_function_value
+                , ( bp::arg("on") ) );
+        
+        }
+        { //::SireMM::CLJFunction::setGeometricCombiningRules
+        
+            typedef void ( ::SireMM::CLJFunction::*setGeometricCombiningRules_function_type )( bool ) ;
+            setGeometricCombiningRules_function_type setGeometricCombiningRules_function_value( &::SireMM::CLJFunction::setGeometricCombiningRules );
+            
+            CLJFunction_exposer.def( 
+                "setGeometricCombiningRules"
+                , setGeometricCombiningRules_function_value
+                , ( bp::arg("on") ) );
+        
+        }
+        { //::SireMM::CLJFunction::usingArithmeticCombiningRules
+        
+            typedef bool ( ::SireMM::CLJFunction::*usingArithmeticCombiningRules_function_type )(  ) const;
+            usingArithmeticCombiningRules_function_type usingArithmeticCombiningRules_function_value( &::SireMM::CLJFunction::usingArithmeticCombiningRules );
+            
+            CLJFunction_exposer.def( 
+                "usingArithmeticCombiningRules"
+                , usingArithmeticCombiningRules_function_value );
+        
+        }
+        { //::SireMM::CLJFunction::usingGeometricCombiningRules
+        
+            typedef bool ( ::SireMM::CLJFunction::*usingGeometricCombiningRules_function_type )(  ) const;
+            usingGeometricCombiningRules_function_type usingGeometricCombiningRules_function_value( &::SireMM::CLJFunction::usingGeometricCombiningRules );
+            
+            CLJFunction_exposer.def( 
+                "usingGeometricCombiningRules"
+                , usingGeometricCombiningRules_function_value );
+        
+        }
         CLJFunction_exposer.def( "__rlshift__", &__rlshift__QDataStream< ::SireMM::CLJFunction >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CLJFunction_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireMM::CLJFunction >,

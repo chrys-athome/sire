@@ -35,6 +35,8 @@ namespace bp = boost::python;
 
 #include "cljatoms.h"
 
+#include <QElapsedTimer>
+
 #include "cljatoms.h"
 
 SireMM::CLJAtoms __copy__(const SireMM::CLJAtoms &other){ return SireMM::CLJAtoms(other); }
@@ -52,14 +54,14 @@ void register_CLJAtoms_class(){
         CLJAtoms_exposer_t CLJAtoms_exposer = CLJAtoms_exposer_t( "CLJAtoms", bp::init< >() );
         bp::scope CLJAtoms_scope( CLJAtoms_exposer );
         CLJAtoms_exposer.def( bp::init< QVector< SireMM::CLJAtom > const & >(( bp::arg("atoms") )) );
-        CLJAtoms_exposer.def( bp::init< QVector< SireMaths::Vector > const &, QVector< SireUnits::Dimension::PhysUnit< 0, 0, 0, 1, 0, 0, 0 > > const &, QVector< SireMM::LJParameter > const &, bp::optional< quint32 > >(( bp::arg("coordinates"), bp::arg("charges"), bp::arg("ljparams"), bp::arg("atomid")=(unsigned int)(1) )) );
-        CLJAtoms_exposer.def( bp::init< QVector< SireMaths::Vector > const &, QVector< SireUnits::Dimension::PhysUnit< 0, 0, 0, 1, 0, 0, 0 > > const &, QVector< SireMM::LJParameter > const &, QVector< unsigned int > const & >(( bp::arg("coordinates"), bp::arg("charges"), bp::arg("ljparams"), bp::arg("ids") )) );
+        CLJAtoms_exposer.def( bp::init< QVector< SireMaths::Vector > const &, QVector< SireUnits::Dimension::PhysUnit< 0, 0, 0, 1, 0, 0, 0 > > const &, QVector< SireMM::LJParameter > const &, bp::optional< qint32 > >(( bp::arg("coordinates"), bp::arg("charges"), bp::arg("ljparams"), bp::arg("atomid")=(int)(1) )) );
+        CLJAtoms_exposer.def( bp::init< QVector< SireMaths::Vector > const &, QVector< SireUnits::Dimension::PhysUnit< 0, 0, 0, 1, 0, 0, 0 > > const &, QVector< SireMM::LJParameter > const &, QVector< int > const & >(( bp::arg("coordinates"), bp::arg("charges"), bp::arg("ljparams"), bp::arg("ids") )) );
         CLJAtoms_exposer.def( bp::init< SireMol::MoleculeView const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecule"), bp::arg("map")=SireBase::PropertyMap() )) );
         CLJAtoms_exposer.def( bp::init< SireMol::Molecules const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecules"), bp::arg("map")=SireBase::PropertyMap() )) );
         CLJAtoms_exposer.def( bp::init< SireMM::CLJAtoms const & >(( bp::arg("other") )) );
         { //::SireMM::CLJAtoms::ID
         
-            typedef ::QVector< SireMaths::MultiUInt > const & ( ::SireMM::CLJAtoms::*ID_function_type )(  ) const;
+            typedef ::QVector< SireMaths::MultiInt > const & ( ::SireMM::CLJAtoms::*ID_function_type )(  ) const;
             ID_function_type ID_function_value( &::SireMM::CLJAtoms::ID );
             
             CLJAtoms_exposer.def( 
@@ -70,7 +72,7 @@ void register_CLJAtoms_class(){
         }
         { //::SireMM::CLJAtoms::IDs
         
-            typedef ::QVector< unsigned int > ( ::SireMM::CLJAtoms::*IDs_function_type )(  ) const;
+            typedef ::QVector< int > ( ::SireMM::CLJAtoms::*IDs_function_type )(  ) const;
             IDs_function_type IDs_function_value( &::SireMM::CLJAtoms::IDs );
             
             CLJAtoms_exposer.def( 
@@ -264,7 +266,7 @@ void register_CLJAtoms_class(){
         }
         { //::SireMM::CLJAtoms::setID
         
-            typedef void ( ::SireMM::CLJAtoms::*setID_function_type )( int,::quint32 ) ;
+            typedef void ( ::SireMM::CLJAtoms::*setID_function_type )( int,::qint32 ) ;
             setID_function_type setID_function_value( &::SireMM::CLJAtoms::setID );
             
             CLJAtoms_exposer.def( 

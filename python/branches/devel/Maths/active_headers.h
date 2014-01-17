@@ -17,6 +17,7 @@
 #include "multidouble.h"
 #include "multifixed.h"
 #include "multifloat.h"
+#include "multiint.h"
 #include "multiuint.h"
 #include "n4matrix.h"
 #include "nmatrix.h"

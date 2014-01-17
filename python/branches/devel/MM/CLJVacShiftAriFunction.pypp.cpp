@@ -35,28 +35,6 @@ void register_CLJVacShiftAriFunction_class(){
         CLJVacShiftAriFunction_exposer.def( bp::init< SireUnits::Dimension::Length, SireUnits::Dimension::Length >(( bp::arg("coul_cutoff"), bp::arg("lj_cutoff") )) );
         CLJVacShiftAriFunction_exposer.def( bp::init< SireMM::CLJVacShiftAriFunction const & >(( bp::arg("other") )) );
         CLJVacShiftAriFunction_exposer.def( bp::self != bp::self );
-        { //::SireMM::CLJVacShiftAriFunction::operator()
-        
-            typedef void ( ::SireMM::CLJVacShiftAriFunction::*__call___function_type )( ::SireMM::CLJAtoms const &,double &,double & ) const;
-            __call___function_type __call___function_value( &::SireMM::CLJVacShiftAriFunction::operator() );
-            
-            CLJVacShiftAriFunction_exposer.def( 
-                "__call__"
-                , __call___function_value
-                , ( bp::arg("atoms"), bp::arg("cnrg"), bp::arg("ljnrg") ) );
-        
-        }
-        { //::SireMM::CLJVacShiftAriFunction::operator()
-        
-            typedef void ( ::SireMM::CLJVacShiftAriFunction::*__call___function_type )( ::SireMM::CLJAtoms const &,::SireMM::CLJAtoms const &,double &,double & ) const;
-            __call___function_type __call___function_value( &::SireMM::CLJVacShiftAriFunction::operator() );
-            
-            CLJVacShiftAriFunction_exposer.def( 
-                "__call__"
-                , __call___function_value
-                , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("cnrg"), bp::arg("ljnrg") ) );
-        
-        }
         { //::SireMM::CLJVacShiftAriFunction::operator=
         
             typedef ::SireMM::CLJVacShiftAriFunction & ( ::SireMM::CLJVacShiftAriFunction::*assign_function_type )( ::SireMM::CLJVacShiftAriFunction const & ) ;
