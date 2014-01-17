@@ -71,13 +71,40 @@ public:
     
     virtual ~CLJFunction();
     
-    virtual void operator()(const CLJAtoms &atoms,
-                            double &cnrg, double &ljnrg) const=0;
+    void operator()(const CLJAtoms &atoms,
+                    double &cnrg, double &ljnrg) const;
     
-    virtual void operator()(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                            double &cnrg, double &ljnrg) const=0;
+    void operator()(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                    double &cnrg, double &ljnrg) const;
 
     virtual CLJFunction* clone() const=0;
+
+    void setArithmeticCombiningRules(bool on);
+    void setGeometricCombiningRules(bool on);
+    
+    bool usingArithmeticCombiningRules() const;
+    bool usingGeometricCombiningRules() const;
+
+protected:
+    CLJFunction& operator=(const CLJFunction &other);
+    
+    bool operator==(const CLJFunction &other) const;
+
+    virtual void calcEnergyAri(const CLJAtoms &atoms,
+                               double &cnrg, double &ljnrg) const=0;
+
+    virtual void calcEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                               double &cnrg, double &ljnrg) const=0;
+
+    virtual void calcEnergyGeo(const CLJAtoms &atoms,
+                               double &cnrg, double &ljnrg) const=0;
+
+    virtual void calcEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                               double &cnrg, double &ljnrg) const=0;
+
+private:
+    /** whether or not to use arithmetic combining rules */
+    bool use_arithmetic;
 };
 
 /** This CLJFunction calculates the coulomb and LJ energy of the passed
@@ -111,12 +138,19 @@ public:
     const char* what() const;
     
     CLJVacShiftAriFunction* clone() const;
+
+protected:
+    void calcEnergyAri(const CLJAtoms &atoms,
+                       double &cnrg, double &ljnrg) const;
     
-    void operator()(const CLJAtoms &atoms,
-                    double &cnrg, double &ljnrg) const;
+    void calcEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                       double &cnrg, double &ljnrg) const;
+
+    void calcEnergyGeo(const CLJAtoms &atoms,
+                       double &cnrg, double &ljnrg) const;
     
-    void operator()(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                    double &cnrg, double &ljnrg) const;
+    void calcEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                       double &cnrg, double &ljnrg) const;
     
 private:
     /** The coulomb cutoff */

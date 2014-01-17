@@ -38,7 +38,7 @@ using namespace SireMol;
 using namespace SireMaths;
 using namespace SireUnits;
 
-TestFF::TestFF() : cljfunc(new CLJVacShiftAriFunction(50*angstrom, 50*angstrom))
+TestFF::TestFF() : cljfunc(new CLJVacShiftAriFunction(15*angstrom, 15*angstrom))
 {}
 
 TestFF::TestFF(const TestFF &other)
@@ -64,6 +64,11 @@ void TestFF::add(const Molecules &molecules)
 void TestFF::addFixedAtoms(const Molecules &molecules)
 {
     atoms1 = CLJAtoms(molecules);
+}
+
+void TestFF::setCutoff(Length coul_cutoff, Length lj_cutoff)
+{
+    cljfunc.reset( new CLJVacShiftAriFunction(coul_cutoff, lj_cutoff) );
 }
 
 void TestFF::calculateEnergy()

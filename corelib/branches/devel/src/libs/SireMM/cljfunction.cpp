@@ -49,7 +49,9 @@ static const RegisterMetaType<CLJFunction> r_cljfunc(MAGIC_ONLY, "SireMM::CLJFun
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJFunction &cljfunc)
 {
     writeHeader(ds, r_cljfunc, 1);
-    ds << static_cast<const Property&>(cljfunc);
+    
+    ds << cljfunc.use_arithmetic << static_cast<const Property&>(cljfunc);
+    
     return ds;
 }
 
@@ -59,7 +61,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJFunction &cljfunc)
     
     if (v == 1)
     {
-        ds >> static_cast<Property&>(cljfunc);
+        ds >> cljfunc.use_arithmetic >> static_cast<Property&>(cljfunc);
     }
     else
         throw version_error(v, "1", r_cljfunc, CODELOC);
@@ -68,16 +70,97 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJFunction &cljfunc)
 }
 
 /** Constructor */
-CLJFunction::CLJFunction() : Property()
+CLJFunction::CLJFunction() : Property(), use_arithmetic(true)
 {}
 
 /** Copy constructor */
-CLJFunction::CLJFunction(const CLJFunction &other) : Property(other)
+CLJFunction::CLJFunction(const CLJFunction &other)
+            : Property(other), use_arithmetic(other.use_arithmetic)
 {}
 
 /** Destructor */
 CLJFunction::~CLJFunction()
 {}
+
+/** Copy assignment operator */
+CLJFunction& CLJFunction::operator=(const CLJFunction &other)
+{
+    use_arithmetic = other.use_arithmetic;
+    Property::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool CLJFunction::operator==(const CLJFunction &other) const
+{
+    return use_arithmetic == other.use_arithmetic and Property::operator==(other);
+}
+
+/** Tell the function to use arithmetic combining rules for LJ parameters */
+void CLJFunction::setArithmeticCombiningRules(bool on)
+{
+    use_arithmetic = on;
+}
+
+/** Tell the function to use geometric combining rules for LJ parameters */
+void CLJFunction::setGeometricCombiningRules(bool on)
+{
+    use_arithmetic = not on;
+}
+
+/** Return whether or not arithmetic combining rules are used */
+bool CLJFunction::usingArithmeticCombiningRules() const
+{
+    return use_arithmetic;
+}
+
+/** Return whether or not geometric combining rules are used */
+bool CLJFunction::usingGeometricCombiningRules() const
+{
+    return not use_arithmetic;
+}
+
+void CLJFunction::operator()(const CLJAtoms &atoms,
+                             double &cnrg, double &ljnrg) const
+{
+    if (atoms.isEmpty())
+    {
+        cnrg = 0;
+        ljnrg = 0;
+    }
+    else
+    {
+        if (use_arithmetic)
+            this->calcEnergyAri(atoms, cnrg, ljnrg);
+        else
+            this->calcEnergyGeo(atoms, cnrg, ljnrg);
+    }
+}
+
+void CLJFunction::operator()(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                             double &cnrg, double &ljnrg) const
+{
+    if (atoms0.isEmpty() or atoms1.isEmpty())
+    {
+        cnrg = 0;
+        ljnrg = 0;
+        return;
+    }
+    else if (atoms0.count() > atoms1.count())
+    {
+        if (use_arithmetic)
+            this->calcEnergyAri(atoms1, atoms0, cnrg, ljnrg);
+        else
+            this->calcEnergyGeo(atoms1, atoms0, cnrg, ljnrg);
+    }
+    else
+    {
+        if (use_arithmetic)
+            this->calcEnergyAri(atoms0, atoms1, cnrg, ljnrg);
+        else
+            this->calcEnergyGeo(atoms0, atoms1, cnrg, ljnrg);
+    }
+}
 
 /////////
 ///////// Implementation of CLJVacShiftAriFunction
@@ -196,8 +279,8 @@ CLJVacShiftAriFunction* CLJVacShiftAriFunction::clone() const
 
 /** Calculate the coulomb and LJ intermolecular energy of all of the atoms in 'atoms',
     returning the results in the arguments 'cnrg' and 'ljnrg' */
-void CLJVacShiftAriFunction::operator()(const CLJAtoms &atoms,
-                                        double &cnrg, double &ljnrg) const
+void CLJVacShiftAriFunction::calcEnergyGeo(const CLJAtoms &atoms,
+                                           double &cnrg, double &ljnrg) const
 {
     cnrg = 0;
     ljnrg = 0;
@@ -205,8 +288,26 @@ void CLJVacShiftAriFunction::operator()(const CLJAtoms &atoms,
 
 /** Calculate the intermolecular energy between all atoms in 'atoms0' and all
     atoms in 'atoms1', returning the result in the arguments 'cnrg' and 'ljnrg' */
-void CLJVacShiftAriFunction::operator()(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                                        double &cnrg, double &ljnrg) const
+void CLJVacShiftAriFunction::calcEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                           double &cnrg, double &ljnrg) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+}
+
+/** Calculate the coulomb and LJ intermolecular energy of all of the atoms in 'atoms',
+    returning the results in the arguments 'cnrg' and 'ljnrg' */
+void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms,
+                                           double &cnrg, double &ljnrg) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+}
+
+/** Calculate the intermolecular energy between all atoms in 'atoms0' and all
+    atoms in 'atoms1', returning the result in the arguments 'cnrg' and 'ljnrg' */
+void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                           double &cnrg, double &ljnrg) const
 {
     const MultiFloat *x0 = atoms0.x().constData();
     const MultiFloat *y0 = atoms0.y().constData();
@@ -214,7 +315,7 @@ void CLJVacShiftAriFunction::operator()(const CLJAtoms &atoms0, const CLJAtoms &
     const MultiFloat *q0 = atoms0.q().constData();
     const MultiFloat *sig0 = atoms0.sigma().constData();
     const MultiFloat *eps0 = atoms0.epsilon().constData();
-    const MultiUInt *id0 = atoms0.ID().constData();
+    const MultiInt *id0 = atoms0.ID().constData();
 
     const MultiFloat *x1 = atoms1.x().constData();
     const MultiFloat *y1 = atoms1.y().constData();
@@ -222,7 +323,7 @@ void CLJVacShiftAriFunction::operator()(const CLJAtoms &atoms0, const CLJAtoms &
     const MultiFloat *q1 = atoms1.q().constData();
     const MultiFloat *sig1 = atoms1.sigma().constData();
     const MultiFloat *eps1 = atoms1.epsilon().constData();
-    const MultiUInt *id1 = atoms1.ID().constData();
+    const MultiInt *id1 = atoms1.ID().constData();
     
     const MultiFloat Rc(coul_cutoff);
     const MultiFloat Rlj(lj_cutoff);
@@ -238,20 +339,24 @@ void CLJVacShiftAriFunction::operator()(const CLJAtoms &atoms0, const CLJAtoms &
     {
         for (int ii=0; ii<MultiFloat::count(); ++ii)
         {
-            //if (id0[i][ii] != 0)
+            if (id0[i][ii] != 0)
             {
+                const MultiInt id(id0[i][ii]);
+            
                 if (q0[i][ii] != 0)
                 {
                     const MultiFloat x(x0[i][ii]);
                     const MultiFloat y(y0[i][ii]);
                     const MultiFloat z(z0[i][ii]);
                     const MultiFloat q(q0[i][ii]);
-                
+
                     if (eps0[i][ii] == 0)
                     {
                         //coulomb energy only
                         for (int j=0; j<atoms1.x().count(); ++j)
                         {
+                            //MultiUInt idok = id1[j] * (id - id1[j]);
+                        
                             //calculate the distance between the fixed and mobile atoms
                             tmp = x1[j] - x;
                             r = tmp * tmp;
@@ -274,7 +379,11 @@ void CLJVacShiftAriFunction::operator()(const CLJAtoms &atoms0, const CLJAtoms &
                             //apply the cutoff - compare r against Rc. This will
                             //return 1 if r is less than Rc, or 0 otherwise. Logical
                             //and will then remove all energies where r >= Rc
+                            // Also compare against 0, as atoms that are on top of
+                            // each other are either dummy atoms or should not be
+                            // included in the energy (would make things infinite!)
                             icnrg += tmp.logicalAnd( r.compareLess(Rc) );
+                                       // .logicalAnd(idok);
                         }
                     }
                     else

@@ -39,7 +39,7 @@
 
 #include "SireMaths/vector.h"
 #include "SireMaths/multifloat.h"
-#include "SireMaths/multiuint.h"
+#include "SireMaths/multiint.h"
 
 SIRE_BEGIN_HEADER
 
@@ -70,7 +70,7 @@ using SireUnits::Dimension::Charge;
 
 using SireMaths::Vector;
 using SireMaths::MultiFloat;
-using SireMaths::MultiUInt;
+using SireMaths::MultiInt;
 
 using SireMol::Molecules;
 using SireMol::MoleculeView;
@@ -86,7 +86,7 @@ friend QDataStream& ::operator>>(QDataStream&, CLJAtom&);
 
 public:
     CLJAtom();
-    CLJAtom(Vector coords, Charge charge, LJParameter ljparam, quint32 idnum=1);
+    CLJAtom(Vector coords, Charge charge, LJParameter ljparam, qint32 idnum=1);
     
     CLJAtom(const CLJAtom &other);
     
@@ -104,7 +104,7 @@ public:
     Vector coordinates() const;
     Charge charge() const;
     LJParameter ljParameter() const;
-    quint32 ID() const;
+    qint32 ID() const;
     
 private:
     /** The coordinates of the atom */
@@ -123,7 +123,7 @@ private:
     
     /** The ID number for the atom - atoms with ID 0 are dummies,
         while atoms with the same ID are in the same molecule */
-    quint32 idnum;
+    qint32 idnum;
 };
 
 /** This class holds vectorised arrays of the coordinates,
@@ -147,12 +147,12 @@ public:
     CLJAtoms(const QVector<Vector> &coordinates,
              const QVector<Charge> &charges,
              const QVector<LJParameter> &ljparams,
-             quint32 atomid=1);
+             qint32 atomid=1);
 
     CLJAtoms(const QVector<Vector> &coordinates,
              const QVector<Charge> &charges,
              const QVector<LJParameter> &ljparams,
-             const QVector<quint32> &ids);
+             const QVector<qint32> &ids);
 
     CLJAtoms(const MoleculeView &molecule,
              const PropertyMap &map = PropertyMap());
@@ -187,7 +187,7 @@ public:
     void setCoordinates(int i, Vector coords);
     void setCharge(int i, Charge charge);
     void setLJParameter(int i, LJParameter ljparam);
-    void setID(int i, quint32 idnum);
+    void setID(int i, qint32 idnum);
 
     void makeDummy(int i);
     bool isDummy(int i);
@@ -197,7 +197,7 @@ public:
     QVector<Vector> coordinates() const;
     QVector<Charge> charges() const;
     QVector<LJParameter> ljParameters() const;
-    QVector<quint32> IDs() const;
+    QVector<qint32> IDs() const;
     
     const QVector<MultiFloat>& x() const;
     const QVector<MultiFloat>& y() const;
@@ -207,7 +207,7 @@ public:
     const QVector<MultiFloat>& sigma() const;
     const QVector<MultiFloat>& epsilon() const;
     
-    const QVector<MultiUInt>& ID() const;
+    const QVector<MultiInt>& ID() const;
     
 private:
     void constructFrom(const Molecules &molecules, const PropertyMap &map);
@@ -234,7 +234,7 @@ private:
     /** The molecule number for each atom - atoms with the same
         number are part of the same molecule. Also, if this number is
         zero, then this is a dummy atom */
-    QVector<MultiUInt> _id;
+    QVector<MultiInt> _id;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -277,7 +277,7 @@ inline const QVector<MultiFloat>& CLJAtoms::epsilon() const
 }
 
 /** Return the vector of vectorised atom IDs */
-inline const QVector<MultiUInt>& CLJAtoms::ID() const
+inline const QVector<MultiInt>& CLJAtoms::ID() const
 {
     return _id;
 }

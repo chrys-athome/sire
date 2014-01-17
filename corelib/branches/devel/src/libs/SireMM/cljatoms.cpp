@@ -91,7 +91,7 @@ CLJAtom::CLJAtom() : x(0), y(0), z(0), chg(0), sig(0), eps(0), idnum(0)
 {}
 
 /** Construct from the passed coordinates, charge and LJ parameters */
-CLJAtom::CLJAtom(Vector coords, Charge charge, LJParameter ljparam, quint32 atomid)
+CLJAtom::CLJAtom(Vector coords, Charge charge, LJParameter ljparam, qint32 atomid)
         : x(coords.x()), y(coords.y()), z(coords.z()),
           chg( charge.value() * std::sqrt(SireUnits::one_over_four_pi_eps0) ),
           sig( sqrt(ljparam.sigma()) ), eps( sqrt(4.0 * ljparam.epsilon()) ),
@@ -176,7 +176,7 @@ LJParameter CLJAtom::ljParameter() const
 }
 
 /** Return the ID number for the atom */
-quint32 CLJAtom::ID() const
+qint32 CLJAtom::ID() const
 {
     return idnum;
 }
@@ -236,7 +236,7 @@ CLJAtoms::CLJAtoms(const QVector<CLJAtom> &atoms)
     QVector<float> sf(atoms.count());
     QVector<float> ef(atoms.count());
     
-    QVector<quint32> idf(atoms.count());
+    QVector<qint32> idf(atoms.count());
     
     float *xa = xf.data();
     float *ya = yf.data();
@@ -246,7 +246,7 @@ CLJAtoms::CLJAtoms(const QVector<CLJAtom> &atoms)
     float *sa = sf.data();
     float *ea = ef.data();
     
-    quint32 *ida = idf.data();
+    qint32 *ida = idf.data();
     
     const CLJAtom *atms = atoms.constData();
     
@@ -269,7 +269,7 @@ CLJAtoms::CLJAtoms(const QVector<CLJAtom> &atoms)
     _q = MultiFloat::fromArray(cf);
     _sig = MultiFloat::fromArray(sf);
     _eps = MultiFloat::fromArray(ef);
-    _id = MultiUInt::fromArray(idf);
+    _id = MultiInt::fromArray(idf);
 }
 
 /** Construct from the passed set of coordinates, partial charges and LJ parameters.
@@ -277,7 +277,7 @@ CLJAtoms::CLJAtoms(const QVector<CLJAtom> &atoms)
 CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
                    const QVector<Charge> &charges,
                    const QVector<LJParameter> &ljparams,
-                   quint32 atomid)
+                   qint32 atomid)
 {
     if (coordinates.count() != charges.count() or
         coordinates.count() != ljparams.count())
@@ -301,7 +301,7 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
         QVector<float> sf(ljparams.count());
         QVector<float> ef(ljparams.count());
         
-        QVector<quint32> idf(coordinates.count());
+        QVector<qint32> idf(coordinates.count());
         
         float *xa = xf.data();
         float *ya = yf.data();
@@ -311,7 +311,7 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
         float *sa = sf.data();
         float *ea = ef.data();
         
-        quint32 *ida = idf.data();
+        qint32 *ida = idf.data();
         
         const Vector *coords = coordinates.constData();
         const Charge *chgs = charges.constData();
@@ -338,7 +338,7 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
         _sig = MultiFloat::fromArray(sf);
         _eps = MultiFloat::fromArray(ef);
         
-        _id = MultiUInt::fromArray(idf);
+        _id = MultiInt::fromArray(idf);
     }
     
     MultiFloat *q = _q.data();
@@ -362,7 +362,7 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
 CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
                    const QVector<Charge> &charges,
                    const QVector<LJParameter> &ljparams,
-                   const QVector<quint32> &atomids)
+                   const QVector<qint32> &atomids)
 {
     if (coordinates.count() != charges.count() or
         coordinates.count() != ljparams.count() or
@@ -420,7 +420,7 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
         _sig = MultiFloat::fromArray(sf);
         _eps = MultiFloat::fromArray(ef);
         
-        _id = MultiUInt::fromArray(atomids);
+        _id = MultiInt::fromArray(atomids);
     }
     
     MultiFloat *q = _q.data();
@@ -473,7 +473,7 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
         QVector<float> sigf(nats);
         QVector<float> epsf(nats);
         
-        QVector<quint32> idf(nats);
+        QVector<qint32> idf(nats);
         
         float *xa = xf.data();
         float *ya = yf.data();
@@ -483,7 +483,7 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
         float *siga = sigf.data();
         float *epsa = epsf.data();
         
-        quint32 *ida = idf.data();
+        qint32 *ida = idf.data();
         
         int idx = 0;
         
@@ -520,7 +520,8 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
                 siga[idx] = ljs[i].sigma();
                 epsa[idx] = ljs[i].epsilon();
                 
-                ida[idx] = it.key().value();
+                quint32 molid = it.key().value();
+                ida[idx] = *(reinterpret_cast<qint32*>(&molid));
                 
                 idx += 1;
             }
@@ -532,7 +533,7 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
         _q = MultiFloat::fromArray(qf);
         _sig = MultiFloat::fromArray(sigf);
         _eps = MultiFloat::fromArray(epsf);
-        _id = MultiUInt::fromArray(idf);
+        _id = MultiInt::fromArray(idf);
     }
     
     MultiFloat *q = _q.data();
@@ -728,7 +729,7 @@ void CLJAtoms::setLJParameter(int i, LJParameter ljparam)
 }
 
 /** Set the ID number for the ith atom to 'idnum' */
-void CLJAtoms::setID(int i, quint32 idnum)
+void CLJAtoms::setID(int i, qint32 idnum)
 {
     int idx = i / MultiFloat::count();
     int sub_idx = i % MultiFloat::count();
@@ -773,7 +774,7 @@ QVector<CLJAtom> CLJAtoms::atoms() const
         const MultiFloat &qf = _q[i];
         const MultiFloat &sigf = _sig[i];
         const MultiFloat &epsf = _eps[i];
-        const MultiUInt &idf = _id[i];
+        const MultiInt &idf = _id[i];
         
         for (int j=0; j<MultiFloat::count(); ++j)
         {
@@ -876,21 +877,21 @@ QVector<LJParameter> CLJAtoms::ljParameters() const
 }
 
 /** Return the IDs of all of the atoms */
-QVector<quint32> CLJAtoms::IDs() const
+QVector<qint32> CLJAtoms::IDs() const
 {
     if (this->isEmpty())
-        return QVector<quint32>();
+        return QVector<qint32>();
 
-    QVector<quint32> ids( _id.count() * MultiUInt::count() );
-    quint32 *idval = ids.data();
+    QVector<qint32> ids( _id.count() * MultiInt::count() );
+    qint32 *idval = ids.data();
 
     int idx = 0;
 
     for (int i=0; i<_id.count(); ++i)
     {
-        const MultiUInt &idf = _id[i];
+        const MultiInt &idf = _id[i];
 
-        for (int j=0; j<MultiUInt::count(); ++j)
+        for (int j=0; j<MultiInt::count(); ++j)
         {
             idval[idx] = idf[j];
             ++idx;

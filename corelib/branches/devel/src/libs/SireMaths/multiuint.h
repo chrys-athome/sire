@@ -146,6 +146,8 @@ public:
     quint64 doubleSum() const;
 
 private:
+    friend class MultiFloat;
+
     static void assertAligned(const void *ptr, size_t size);
 
     #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -720,6 +722,26 @@ quint64 MultiUInt::doubleSum() const
         sum += v.a[i];
     }
     return sum;
+}
+
+inline MultiFloat MultiFloat::logicalAnd(const MultiUInt &other) const
+{
+    MultiFloat ret;
+
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
+        const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
+        const unsigned char *other_char_v
+                    = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+        for (unsigned int j=0; j<sizeof(float); ++j)
+        {
+            ret_char_v[j] = char_v[j] & other_char_v[j];
+        }
+    }
+
+    return ret;
 }
 
 #endif // #ifndef SIRE_SKIP_INLINE_FUNCTIONS

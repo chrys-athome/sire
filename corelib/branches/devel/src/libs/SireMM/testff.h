@@ -61,6 +61,8 @@ public:
     
     void calculateEnergy();
     
+    void setCutoff(Length coul_cutoff, Length lj_cutoff);
+    
 private:
     CLJAtoms atoms0;
     CLJAtoms atoms1;

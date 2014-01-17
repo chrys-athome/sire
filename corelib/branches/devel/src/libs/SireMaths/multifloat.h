@@ -48,8 +48,8 @@
 #endif
 #endif
 
-//#undef SIRE_USE_AVX
-//#define SIRE_USE_SSE 1
+#undef SIRE_USE_AVX
+#define SIRE_USE_SSE 1
 //#undef SIRE_USE_SSE
 
 #define MULTIFLOAT_CHECK_ALIGNMENT 1
@@ -95,6 +95,7 @@ namespace SireMaths
 
 class MultiFixed;
 class MultiDouble;
+class MultiUInt;
 
 /** This class provides a vectorised float. This represents
     a single vector of floats on the compiled machine, e.g.
@@ -193,6 +194,8 @@ public:
     
     MultiFloat logicalOr(const MultiFloat &other) const;
     MultiFloat logicalXor(const MultiFloat &other) const;
+    
+    MultiFloat logicalAnd(const MultiUInt &other) const;
     
     MultiFloat& multiplyAdd(const MultiFloat &val0, const MultiFloat &val1);
     

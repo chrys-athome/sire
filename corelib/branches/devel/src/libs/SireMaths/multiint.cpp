@@ -26,9 +26,7 @@
   *
 \*********************************************/
 
-#include "multifloat.h"
-#include "multidouble.h"
-#include "multiuint.h"
+#include "multiint.h"
 
 #include <QStringList>
 
@@ -62,7 +60,7 @@ using namespace SireMaths;
     {
         if (not isAligned16(pointer))
             throw SireError::program_bug( QObject::tr(
-                    "An unaligned MultiFloat has been created! %1")
+                    "An unaligned MultiInt has been created! %1")
                         .arg((quintptr)pointer % size_t(16)), place );
     }
 #else
@@ -75,32 +73,32 @@ using namespace SireMaths;
     {
         if (not isAligned32(pointer))
             throw SireError::program_bug( QObject::tr(
-                    "An unaligned MultiFloat has been created! %1")
+                    "An unaligned MultiInt has been created! %1")
                         .arg((quintptr)pointer % size_t(32)), place );
     }
 #endif
 #endif
 
-void MultiFloat::assertAligned(const void *ptr, size_t size)
+void MultiInt::assertAligned(const void *ptr, size_t size)
 {
     if ( (quintptr)ptr % size != 0 )
         throw SireError::program_bug( QObject::tr(
-                "An unaligned MultiFloat has been created! %1, %2, %3")
+                "An unaligned MultiInt has been created! %1, %2, %3")
                     .arg((quintptr)ptr)
                     .arg((quintptr)ptr % size)
                     .arg(size), CODELOC );
 }
 
-/** Construct from the passed array. If size is greater than MultiFloat::size()
-    then an error will be raised. If size is less than MultiFloat::size() then
+/** Construct from the passed array. If size is greater than MultiInt::size()
+    then an error will be raised. If size is less than MultiInt::size() then
     this float will be padded with zeroes */
-MultiFloat::MultiFloat(const float *array, int size)
+MultiInt::MultiInt(const qint32 *array, int size)
 {
     assertAligned();
 
     if (size > MULTIFLOAT_SIZE)
         throw SireError::unsupported( QObject::tr(
-                "Cannot fit an array of size %1 in this MultiFloat, as it is only "
+                "Cannot fit an array of size %1 in this MultiInt, as it is only "
                 "capable of holding %2 values...").arg(size).arg(MULTIFLOAT_SIZE), CODELOC );
 
     if (size <= 0)
@@ -109,7 +107,7 @@ MultiFloat::MultiFloat(const float *array, int size)
             v.x = _mm256_set1_ps(0);
         #else
         #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-            v.x = _mm_set1_ps(0);
+            v.x = _mm_set1_epi32(0);
         #else
             for (int i=0; i<MULTIFLOAT_SIZE; ++i)
             {
@@ -126,7 +124,7 @@ MultiFloat::MultiFloat(const float *array, int size)
         #else
         #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
             //note that SSE packs things the 'wrong' way around
-            v.x = _mm_set_ps(array[3], array[2], array[1], array[0]);
+            v.x = _mm_set_epi32(array[3], array[2], array[1], array[0]);
         #else
             for (int i=0; i<MULTIFLOAT_SIZE; ++i)
             {
@@ -137,7 +135,7 @@ MultiFloat::MultiFloat(const float *array, int size)
     }
     else
     {
-        float tmp[MULTIFLOAT_SIZE];
+        qint32 tmp[MULTIFLOAT_SIZE];
         
         for (int i=0; i<size; ++i)
         {
@@ -155,7 +153,7 @@ MultiFloat::MultiFloat(const float *array, int size)
         #else
         #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
             //note that sse packs things the 'wrong' way around
-            v.x = _mm_set_ps(tmp[3], tmp[2], tmp[1], tmp[0]);
+            v.x = _mm_set_epi32(tmp[3], tmp[2], tmp[1], tmp[0]);
         #else
             for (int i=0; i<MULTIFLOAT_SIZE; ++i)
             {
@@ -167,31 +165,15 @@ MultiFloat::MultiFloat(const float *array, int size)
 }
 
 /** Construct from the passed array - this must be the same size as the vector */
-MultiFloat::MultiFloat(const QVector<float> &array)
+MultiInt::MultiInt(const QVector<qint32> &array)
 {
     assertAligned();
-    this->operator=( MultiFloat(array.constData(), array.size()) );
+    this->operator=( MultiInt(array.constData(), array.size()) );
 }
 
-/** Construct from the passed array - this must be the same size as the vector */
-MultiFloat::MultiFloat(const QVector<double> &array)
-{
-    assertAligned();
-
-    QVector<float> farray;
-    farray.reserve(array.count());
-    
-    for (int i=0; i<array.count(); ++i)
-    {
-        farray.append(array.constData()[i]);
-    }
-
-    this->operator=( MultiFloat(farray) );
-}
-
-/** Return whether or not this MultiFloat is correctly aligned. If it is not,
+/** Return whether or not this MultiInt is correctly aligned. If it is not,
     then any SSE operations will fail */
-bool MultiFloat::isAligned() const
+bool MultiInt::isAligned() const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
         return isAligned32(this);
@@ -204,77 +186,16 @@ bool MultiFloat::isAligned() const
     #endif
 }
 
-QVector<MultiFloat> MultiFloat::fromArray(const double *array, int size)
+QVector<MultiInt> MultiInt::fromArray(const qint32 *array, int size)
 {
     if (size == 0)
-        return QVector<MultiFloat>();
-
-    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        float _ALIGNED(16) tmp[MULTIFLOAT_SIZE];
-    #else
-        float _ALIGNED(32) tmp[MULTIFLOAT_SIZE];
-    #endif
-    
-    int nvecs = size / MULTIFLOAT_SIZE;
-    int nremain = size % MULTIFLOAT_SIZE;
-
-    QVector<MultiFloat> marray(nvecs + ( (nremain > 0) ? 1 : 0 ));
-    MultiFloat *a = marray.data();
-    
-    int idx = 0;
-    
-    for (int i=0; i<nvecs; ++i)
-    {
-        for (int j=0; j<MULTIFLOAT_SIZE; ++j)
-        {
-            tmp[j] = array[idx];
-            ++idx;
-        }
-    
-        a[i] = MultiFloat((float*)(&tmp), MULTIFLOAT_SIZE);
-    }
-    
-    if (nremain > 0)
-    {
-        for (int j=0; j<nremain; ++j)
-        {
-            tmp[j] = array[idx];
-            ++idx;
-        }
-        
-        a[marray.count()-1] = MultiFloat((float*)(&tmp), nremain);
-    }
-    
-    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        assertAligned32(marray.constData(), CODELOC);
-    #else
-    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        assertAligned16(marray.constData(), CODELOC);
-    #else
-        assertAligned32(marray.constData(), CODELOC);
-    #endif
-    #endif
-
-    return marray;
-}
-
-/** Create an array of MultiFloats from the passed array of doubles. This
-    will pad the end of the array with zeroes if necessary */
-QVector<MultiFloat> MultiFloat::fromArray(const QVector<double> &array)
-{
-    return MultiFloat::fromArray(array.constData(), array.count());
-}
-
-QVector<MultiFloat> MultiFloat::fromArray(const float *array, int size)
-{
-    if (size == 0)
-        return QVector<MultiFloat>();
+        return QVector<MultiInt>();
     
     int nvecs = size / MULTIFLOAT_SIZE;
     int nremain = size % MULTIFLOAT_SIZE;
     
-    QVector<MultiFloat> marray(nvecs + ( (nremain > 0) ? 1 : 0 ));
-    MultiFloat *ma = marray.data();
+    QVector<MultiInt> marray(nvecs + ( (nremain > 0) ? 1 : 0 ));
+    MultiInt *ma = marray.data();
     
     int idx = 0;
     
@@ -283,18 +204,18 @@ QVector<MultiFloat> MultiFloat::fromArray(const float *array, int size)
         {
             for (int i=0; i<nvecs; ++i)
             {
-                ma[i] = MultiFloat(array+idx, MULTIFLOAT_SIZE);
+                ma[i] = MultiInt(array+idx, MULTIFLOAT_SIZE);
                 idx += MULTIFLOAT_SIZE;
             }
     
             if (nremain > 0)
             {
-                ma[marray.count()-1] = MultiFloat(array+idx, nremain);
+                ma[marray.count()-1] = MultiInt(array+idx, nremain);
             }
         }
         else
         {
-            float _ALIGNED(16) tmp[MULTIFLOAT_SIZE];
+            qint32 _ALIGNED(16) tmp[MULTIFLOAT_SIZE];
 
             for (int i=0; i<nvecs; ++i)
             {
@@ -304,7 +225,7 @@ QVector<MultiFloat> MultiFloat::fromArray(const float *array, int size)
                     ++idx;
                 }
             
-                ma[i] = MultiFloat((float*)(&tmp), MULTIFLOAT_SIZE);
+                ma[i] = MultiInt((qint32*)(&tmp), MULTIFLOAT_SIZE);
             }
             
             if (nremain > 0)
@@ -315,7 +236,7 @@ QVector<MultiFloat> MultiFloat::fromArray(const float *array, int size)
                     ++idx;
                 }
                 
-                ma[marray.count()-1] = MultiFloat((float*)(&tmp), nremain);
+                ma[marray.count()-1] = MultiInt((qint32*)(&tmp), nremain);
             }
         }
     #else
@@ -323,18 +244,18 @@ QVector<MultiFloat> MultiFloat::fromArray(const float *array, int size)
         {
             for (int i=0; i<nvecs; ++i)
             {
-                ma[i] = MultiFloat(array+idx, MULTIFLOAT_SIZE);
+                ma[i] = MultiInt(array+idx, MULTIFLOAT_SIZE);
                 idx += MULTIFLOAT_SIZE;
             }
     
             if (nremain > 0)
             {
-                ma[marray.count()-1] = MultiFloat(array+idx, nremain);
+                ma[marray.count()-1] = MultiInt(array+idx, nremain);
             }
         }
         else
         {
-            float _ALIGNED(32) tmp[MULTIFLOAT_SIZE];
+            qint32 _ALIGNED(32) tmp[MULTIFLOAT_SIZE];
 
             for (int i=0; i<nvecs; ++i)
             {
@@ -344,7 +265,7 @@ QVector<MultiFloat> MultiFloat::fromArray(const float *array, int size)
                     ++idx;
                 }
             
-                ma[i] = MultiFloat((float*)(&tmp), MULTIFLOAT_SIZE);
+                ma[i] = MultiInt((qint32*)(&tmp), MULTIFLOAT_SIZE);
             }
             
             if (nremain > 0)
@@ -355,7 +276,7 @@ QVector<MultiFloat> MultiFloat::fromArray(const float *array, int size)
                     ++idx;
                 }
                 
-                ma[marray.count()-1] = MultiFloat((float*)(&tmp), nremain);
+                ma[marray.count()-1] = MultiInt((qint32*)(&tmp), nremain);
             }
         }
     #endif
@@ -373,47 +294,25 @@ QVector<MultiFloat> MultiFloat::fromArray(const float *array, int size)
     return marray;
 }
 
-/** Create an array of MultiFloats from the passed array of floats. This will
+/** Create an array of MultiInts from the passed array of integers. This will
     pad the end of the array with zeroes if necessary */
-QVector<MultiFloat> MultiFloat::fromArray(const QVector<float> &array)
+QVector<MultiInt> MultiInt::fromArray(const QVector<qint32> &array)
 {
-    return MultiFloat::fromArray(array.constData(), array.count());
+    return MultiInt::fromArray(array.constData(), array.count());
 }
 
-/** Return the passed MultiFloat converted back into a normal array */
-QVector<float> MultiFloat::toArray(const QVector<MultiFloat> &array)
+/** Return the passed MultiInt converted back into a normal array */
+QVector<qint32> MultiInt::toArray(const QVector<MultiInt> &array)
 {
     if (array.isEmpty())
-        return QVector<float>();
+        return QVector<qint32>();
     
-    QVector<float> ret;
+    QVector<qint32> ret;
     ret.reserve( array.count() * MULTIFLOAT_SIZE );
     
     for (int i=0; i<array.count(); ++i)
     {
-        const MultiFloat &f = array.constData()[i];
-        
-        for (int j=0; j<MULTIFLOAT_SIZE; ++j)
-        {
-            ret.append(f[j]);
-        }
-    }
-    
-    return ret;
-}
-
-/** Return the passed MultiFloat converted back into a normal array of doubles */
-QVector<double> MultiFloat::toDoubleArray(const QVector<MultiFloat> &array)
-{
-    if (array.isEmpty())
-        return QVector<double>();
-    
-    QVector<double> ret;
-    ret.reserve( array.count() * MULTIFLOAT_SIZE );
-    
-    for (int i=0; i<array.count(); ++i)
-    {
-        const MultiFloat &f = array.constData()[i];
+        const MultiInt &f = array.constData()[i];
         
         for (int j=0; j<MULTIFLOAT_SIZE; ++j)
         {
@@ -425,7 +324,7 @@ QVector<double> MultiFloat::toDoubleArray(const QVector<MultiFloat> &array)
 }
 
 /** Comparison operator - only returns true if all elements are equal */
-bool MultiFloat::operator==(const MultiFloat &other) const
+bool MultiInt::operator==(const MultiInt &other) const
 {
     for (int i=0; i<MULTIFLOAT_SIZE; ++i)
     {
@@ -437,7 +336,7 @@ bool MultiFloat::operator==(const MultiFloat &other) const
 }
 
 /** Comparison operator - only returns true if all elements are not equal */
-bool MultiFloat::operator!=(const MultiFloat &other) const
+bool MultiInt::operator!=(const MultiInt &other) const
 {
     for (int i=0; i<MULTIFLOAT_SIZE; ++i)
     {
@@ -448,9 +347,9 @@ bool MultiFloat::operator!=(const MultiFloat &other) const
     return true;
 }
 
-/** Return whether all of the elements of this MultiFloat are 
+/** Return whether all of the elements of this MultiInt are
     equal to 0x00000000 (e.g. every bit in the entire vector is 0) */
-bool MultiFloat::isBinaryZero() const
+bool MultiInt::isBinaryZero() const
 {
     for (int i=0; i<MULTIFLOAT_SIZE; ++i)
     {
@@ -463,16 +362,16 @@ bool MultiFloat::isBinaryZero() const
     return true;
 }
 
-/** Return whether all of the elements of this MultiFloat are
+/** Return whether all of the elements of this MultiInt are
     not equal to 0x00000000 (e.g. at least one bit in the entire vector is 1) */
-bool MultiFloat::isNotBinaryZero() const
+bool MultiInt::isNotBinaryZero() const
 {
     return not isBinaryZero();
 }
 
 /** Return whether or not at least one of the elements of this vector
     is binary zero (the float is equal to 0x00000000) */
-bool MultiFloat::hasBinaryZero() const
+bool MultiInt::hasBinaryZero() const
 {
     for (int i=0; i<MULTIFLOAT_SIZE; ++i)
     {
@@ -485,9 +384,9 @@ bool MultiFloat::hasBinaryZero() const
     return false;
 }
 
-/** Return whether all of the elements of this MultiFloat are 
+/** Return whether all of the elements of this MultiInt are
     equal to 0xFFFFFFFF (e.g. every bit in the entire vector is 1) */
-bool MultiFloat::isBinaryOne() const
+bool MultiInt::isBinaryOne() const
 {
     for (int i=0; i<MULTIFLOAT_SIZE; ++i)
     {
@@ -500,16 +399,16 @@ bool MultiFloat::isBinaryOne() const
     return true;
 }
 
-/** Return whether all of the elements of this MultiFloat are
+/** Return whether all of the elements of this MultiInt are
     not equal to 0xFFFFFFFF (e.g. at least one bit in the entire vector is 0) */
-bool MultiFloat::isNotBinaryOne() const
+bool MultiInt::isNotBinaryOne() const
 {
     return not isBinaryOne();
 }
 
 /** Return whether or not at least one of the elements of this vector
     is binary one (the float is equal to 0xFFFFFFFF) */
-bool MultiFloat::hasBinaryOne() const
+bool MultiInt::hasBinaryOne() const
 {
     for (int i=0; i<MULTIFLOAT_SIZE; ++i)
     {
@@ -523,7 +422,7 @@ bool MultiFloat::hasBinaryOne() const
 }
 
 /** Comparison operator - only returns true if all elements are less */
-bool MultiFloat::operator<(const MultiFloat &other) const
+bool MultiInt::operator<(const MultiInt &other) const
 {
     for (int i=0; i<MULTIFLOAT_SIZE; ++i)
     {
@@ -535,7 +434,7 @@ bool MultiFloat::operator<(const MultiFloat &other) const
 }
 
 /** Comparison operator - only returns true if all elements are greater */
-bool MultiFloat::operator>(const MultiFloat &other) const
+bool MultiInt::operator>(const MultiInt &other) const
 {
     for (int i=0; i<MULTIFLOAT_SIZE; ++i)
     {
@@ -547,7 +446,7 @@ bool MultiFloat::operator>(const MultiFloat &other) const
 }
 
 /** Comparison operator - only returns true if all elements are less or equal */
-bool MultiFloat::operator<=(const MultiFloat &other) const
+bool MultiInt::operator<=(const MultiInt &other) const
 {
     for (int i=0; i<MULTIFLOAT_SIZE; ++i)
     {
@@ -559,7 +458,7 @@ bool MultiFloat::operator<=(const MultiFloat &other) const
 }
 
 /** Comparison operator - only returns true if all elements are greater or equal */
-bool MultiFloat::operator>=(const MultiFloat &other) const
+bool MultiInt::operator>=(const MultiInt &other) const
 {
     for (int i=0; i<MULTIFLOAT_SIZE; ++i)
     {
@@ -571,7 +470,7 @@ bool MultiFloat::operator>=(const MultiFloat &other) const
 }
 
 /** Return the ith value in the multifloat */
-float MultiFloat::operator[](int i) const
+qint32 MultiInt::operator[](int i) const
 {
     if (i < 0)
         i = MULTIFLOAT_SIZE + i;
@@ -579,7 +478,7 @@ float MultiFloat::operator[](int i) const
     if (i < 0 or i >= MULTIFLOAT_SIZE)
     {
         throw SireError::invalid_index( QObject::tr(
-                "Cannot access element %1 of MultiFloat (holds only %2 values)")
+                "Cannot access element %1 of MultiInt (holds only %2 values)")
                     .arg(i).arg(MULTIFLOAT_SIZE), CODELOC );
     }
     
@@ -587,9 +486,9 @@ float MultiFloat::operator[](int i) const
 }
 
 /** Negative operator */
-MultiFloat MultiFloat::operator-() const
+MultiInt MultiInt::operator-() const
 {
-    MultiFloat ret;
+    MultiInt ret;
     
     for (int i=0; i<MULTIFLOAT_SIZE; ++i)
     {
@@ -599,8 +498,8 @@ MultiFloat MultiFloat::operator-() const
     return ret;
 }
 
-/** Set the ith value of the multifloat to 'value' */
-void MultiFloat::set(int i, float value)
+/** Set the ith value of the MultiInt to 'value' */
+void MultiInt::set(int i, qint32 value)
 {
     if (i < 0)
         i = MULTIFLOAT_SIZE + i;
@@ -608,30 +507,31 @@ void MultiFloat::set(int i, float value)
     if (i < 0 or i >= MULTIFLOAT_SIZE)
     {
         throw SireError::invalid_index( QObject::tr(
-                "Cannot access element %1 of MultiFloat (holds only %2 values)")
+                "Cannot access element %1 of MultiInt (holds only %2 values)")
                     .arg(i).arg(MULTIFLOAT_SIZE), CODELOC );
     }
 
     v.a[i] = value;
 }
 
-/** Return the ith value in the multifloat */
-float MultiFloat::get(int i) const
+/** Return the 
+ith value in the MultiInt */
+qint32 MultiInt::get(int i) const
 {
     return this->operator[](i);
 }
 
-const char* MultiFloat::what() const
+const char* MultiInt::what() const
 {
-    return MultiFloat::typeName();
+    return MultiInt::typeName();
 }
 
-const char* MultiFloat::typeName()
+const char* MultiInt::typeName()
 {
-    return "SireMaths::MultiFloat";
+    return "SireMaths::MultiInt";
 }
 
-QString MultiFloat::toString() const
+QString MultiInt::toString() const
 {
     QStringList vals;
     
@@ -643,7 +543,7 @@ QString MultiFloat::toString() const
     return QObject::tr("{ %1 }").arg(vals.join(", "));
 }
 
-QString MultiFloat::toBinaryString() const
+QString MultiInt::toBinaryString() const
 {
     QStringList vals;
     
@@ -653,7 +553,7 @@ QString MultiFloat::toBinaryString() const
         
         QString val("0x");
         
-        for (unsigned int j=0; j<sizeof(float); ++j)
+        for (unsigned int j=0; j<sizeof(qint32); ++j)
         {
             val.append( QString("%1").arg((unsigned short)(c[j]), 2, 16, QChar('0')) );
         }

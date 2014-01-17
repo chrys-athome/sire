@@ -12,6 +12,9 @@ from Sire.Qt import *
 
 import os
 
+coul_cutoff = 50 * angstrom
+lj_cutoff = 50 * angstrom
+
 amber = Amber()
 
 (molecules, space) = amber.readCrdTop("test/io/waterbox.crd", "test/io/waterbox.top")
@@ -51,8 +54,8 @@ gridff.setCombiningRules("arithmetic")
 print("Combining rules are %s" % gridff.combiningRules())
 gridff.setBuffer(2 * angstrom)
 gridff.setGridSpacing( 0.5 * angstrom )
-gridff.setLJCutoff( 50 * angstrom )
-gridff.setCoulombCutoff( 50 * angstrom )
+gridff.setLJCutoff(lj_cutoff)
+gridff.setCoulombCutoff(coul_cutoff)
 gridff.setShiftElectrostatics(True)
 #gridff.setUseAtomisticCutoff(True)
 #gridff.setUseReactionField(True)
@@ -65,8 +68,8 @@ gridff2 = GridFF2("gridff2")
 gridff2.setCombiningRules("arithmetic")
 gridff2.setBuffer(2*angstrom)
 gridff2.setGridSpacing( 0.5 * angstrom )
-gridff2.setLJCutoff( 50 * angstrom )
-gridff2.setCoulombCutoff( 50 * angstrom )
+gridff2.setLJCutoff(lj_cutoff)
+gridff2.setCoulombCutoff(coul_cutoff)
 gridff2.setShiftElectrostatics(True)
 #gridff2.setUseAtomisticCutoff(True)
 #gridff2.setUseReactionField(True)
@@ -78,9 +81,10 @@ gridff2.setSpace( Cartesian() )
 testff = TestFF()
 testff.add( swapwaters.molecules() )
 testff.addFixedAtoms(waters.molecules())
+testff.setCutoff(coul_cutoff, lj_cutoff)
 
 cljff = InterGroupCLJFF("cljff")
-cljff.setSwitchingFunction( HarmonicSwitchingFunction(50*angstrom,50*angstrom,50*angstrom,50*angstrom) )
+cljff.setSwitchingFunction( HarmonicSwitchingFunction(coul_cutoff,coul_cutoff,lj_cutoff,lj_cutoff) )
 cljff.add(swapwaters, MGIdx(0))
 cljff.add(waters, MGIdx(1))
 cljff.setShiftElectrostatics(True)
