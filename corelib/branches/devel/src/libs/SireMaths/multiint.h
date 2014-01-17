@@ -592,6 +592,36 @@ MultiInt MultiInt::logicalAnd(const MultiInt &other) const
     #endif
 }
 
+/** Bitwise logical "and" comparison */
+inline
+MultiFloat MultiFloat::logicalAnd(const MultiInt &other) const
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        return MultiFloat( _mm256_and_ps(v.x, other.v.x) );
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        return MultiFloat( _mm_and_ps(v.x, *(reinterpret_cast<const __m128*>(&(other.v.x)))) );
+    #else
+        MultiFloat ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
+            const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+            for (unsigned int j=0; j<sizeof(float); ++j)
+            {
+                ret_char_v[j] = char_v[j] & other_char_v[j];
+            }
+        }
+    
+        return ret;
+    #endif
+    #endif
+}
+
 /** Bitwise logical "and not" */
 inline
 MultiInt MultiInt::logicalAndNot(const MultiInt &other) const
@@ -747,6 +777,33 @@ MultiInt& MultiInt::operator&=(const MultiInt &other)
                         = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
 
             for (unsigned int j=0; j<sizeof(qint32); ++j)
+            {
+                char_v[j] &= other_char_v[j];
+            }
+        }
+    #endif
+    #endif
+
+    return *this;
+}
+
+/** In place logical and */
+inline
+MultiFloat& MultiFloat::operator&=(const MultiInt &other)
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        v.x = _mm256_and_ps(v.x, other.v.x);
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_and_ps( v.x, *(reinterpret_cast<const __m128*>(&(other.v.x))) );
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            unsigned char *char_v = reinterpret_cast<unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+            for (unsigned int j=0; j<sizeof(float); ++j)
             {
                 char_v[j] &= other_char_v[j];
             }

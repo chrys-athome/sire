@@ -331,6 +331,7 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
     const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
     const MultiFloat zero(0);
     const MultiFloat half(0.5);
+    const MultiInt izero(0);
 
     MultiFloat tmp, r, one_over_r, sig2_over_r2, sig6_over_r6;
     MultiDouble icnrg(0), iljnrg(0);
@@ -355,8 +356,6 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
                         //coulomb energy only
                         for (int j=0; j<atoms1.x().count(); ++j)
                         {
-                            //MultiUInt idok = id1[j] * (id - id1[j]);
-                        
                             //calculate the distance between the fixed and mobile atoms
                             tmp = x1[j] - x;
                             r = tmp * tmp;
@@ -379,11 +378,15 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
                             //apply the cutoff - compare r against Rc. This will
                             //return 1 if r is less than Rc, or 0 otherwise. Logical
                             //and will then remove all energies where r >= Rc
-                            // Also compare against 0, as atoms that are on top of
-                            // each other are either dummy atoms or should not be
-                            // included in the energy (would make things infinite!)
-                            icnrg += tmp.logicalAnd( r.compareLess(Rc) );
-                                       // .logicalAnd(idok);
+                            tmp &= r.compareLess(Rc);
+
+                            //make sure that the ID of atoms1 is not zero, and is
+                            //also not the same as the atoms0.
+                            //logical and will remove all energies where id1 == 0 or id0 == id1
+                            tmp &= id1[j].compareNotEqual(izero);
+                            tmp &= id1[j].compareNotEqual(id);
+                            
+                            icnrg += tmp;
                         }
                     }
                     else
@@ -415,8 +418,18 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
                             //apply the cutoff - compare r against Rc. This will
                             //return 1 if r is less than Rc, or 0 otherwise. Logical
                             //and will then remove all energies where r >= Rc
-                            icnrg += tmp.logicalAnd( r.compareLess(Rc) );
-                    
+                            tmp &= r.compareLess(Rc);
+
+                            //make sure that the ID of atoms1 is not zero, and is
+                            //also not the same as the atoms0.
+                            //logical and will remove all energies where id1 == 0 or id0 == id1
+                            tmp &= id1[j].compareNotEqual(izero);
+                            tmp &= id1[j].compareNotEqual(id);
+
+                            icnrg += tmp;
+                            
+                            //Now do the LJ energy
+
                             //arithmetic combining rules
                             tmp = sig + (sig1[j]*sig1[j]);
                             tmp *= half;
@@ -434,7 +447,11 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
                             //apply the cutoff - compare r against Rlj. This will
                             //return 1 if r is less than Rlj, or 0 otherwise. Logical
                             //and will then remove all energies where r >= Rlj
-                            iljnrg += tmp.logicalAnd( r.compareLess(Rlj) );
+                            tmp &= r.compareLess(Rlj);
+                            tmp &= id1[j].compareNotEqual(izero);
+                            tmp &= id1[j].compareNotEqual(id);
+                            
+                            iljnrg += tmp;
                         }
                     }
                 }
@@ -477,7 +494,12 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
                         //apply the cutoff - compare r against Rlj. This will
                         //return 1 if r is less than Rlj, or 0 otherwise. Logical
                         //and will then remove all energies where r >= Rlj
-                        iljnrg += tmp.logicalAnd( r.compareLess(Rlj) );
+                        tmp &= r.compareLess(Rlj);
+
+                        tmp &= id1[j].compareNotEqual(izero);
+                        tmp &= id1[j].compareNotEqual(id);
+
+                        iljnrg += tmp;
                     }
                 }
             }

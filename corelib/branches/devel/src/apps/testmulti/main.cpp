@@ -28,12 +28,65 @@
 
 #include "SireMaths/multifloat.h"
 #include "SireMaths/multidouble.h"
+#include "SireMaths/multiint.h"
 
 #include <QDebug>
 
 //#include <type_traits>
 
 using namespace SireMaths;
+
+void intTests()
+{
+    const int size = 100;
+
+    QVector<qint32> vals(size);
+
+    for (int i=0; i<size; ++i)
+    {
+        vals[i] = i;
+    }
+
+    QVector<MultiInt> mi = MultiInt::fromArray(vals);
+
+    for (int i=0; i<mi.count(); ++i)
+    {
+        qDebug() << mi[i].toString() << mi[i].toBinaryString();
+    }
+
+    MultiInt m = mi[0];
+
+    qDebug() << "ROTATE";
+    for (int i=0; i<MultiInt::size(); ++i)
+    {
+        qDebug() << i << m.toString();
+        m = m.rotate();
+    }
+
+    qDebug() << "ADD";
+    qDebug() << (m+m).toString();
+
+    qDebug() << "SUB";
+    qDebug() << (m-m).toString();
+
+    qDebug() << "COMPARE ==";
+    qDebug() << (m.compareEqual(m)).toBinaryString();
+
+    qDebug() << "COMPARE !=";
+    qDebug() << (m.compareNotEqual(m)).toBinaryString();
+
+    qDebug() << "COMPARE >";
+    qDebug() << (m.compareGreater(m.rotate())).toBinaryString();
+
+    qDebug() << "COMPARE <";
+    qDebug() << (m.rotate().compareLess(m)).toBinaryString();
+
+    qDebug() << "AND";
+    qDebug() << m.compareEqual(m).logicalAnd(m).toBinaryString();
+
+    qDebug() << "OR";
+    qDebug() << m.compareEqual(m).logicalOr(m).toBinaryString();
+}
 
 int main(int argc, const char **argv)
 {
@@ -87,6 +140,8 @@ int main(int argc, const char **argv)
         qDebug() << mfarray[i].toString();
         qDebug() << mdarray[i].toString();
     }
+
+    intTests();
 
     return 0;
 

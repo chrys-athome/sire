@@ -96,6 +96,7 @@ namespace SireMaths
 class MultiFixed;
 class MultiDouble;
 class MultiUInt;
+class MultiInt;
 
 /** This class provides a vectorised float. This represents
     a single vector of floats on the compiled machine, e.g.
@@ -187,6 +188,8 @@ public:
     MultiFloat& operator|=(const MultiFloat &other);
     MultiFloat& operator^=(const MultiFloat &other);
 
+    MultiFloat& operator&=(const MultiInt &other);
+
     MultiFloat logicalNot() const;
     
     MultiFloat logicalAnd(const MultiFloat &other) const;
@@ -196,6 +199,7 @@ public:
     MultiFloat logicalXor(const MultiFloat &other) const;
     
     MultiFloat logicalAnd(const MultiUInt &other) const;
+    MultiFloat logicalAnd(const MultiInt &other) const;
     
     MultiFloat& multiplyAdd(const MultiFloat &val0, const MultiFloat &val1);
     
