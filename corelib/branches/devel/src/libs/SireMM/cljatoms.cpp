@@ -236,7 +236,7 @@ CLJAtoms::CLJAtoms(const QVector<CLJAtom> &atoms)
     QVector<float> sf(atoms.count());
     QVector<float> ef(atoms.count());
     
-    QVector<qint32> idf(atoms.count());
+    QVector<float> idf(atoms.count());
     
     float *xa = xf.data();
     float *ya = yf.data();
@@ -246,7 +246,7 @@ CLJAtoms::CLJAtoms(const QVector<CLJAtom> &atoms)
     float *sa = sf.data();
     float *ea = ef.data();
     
-    qint32 *ida = idf.data();
+    float *ida = idf.data();
     
     const CLJAtom *atms = atoms.constData();
     
@@ -260,7 +260,7 @@ CLJAtoms::CLJAtoms(const QVector<CLJAtom> &atoms)
         ca[i] = atm.chg;
         sa[i] = atm.sig;
         ea[i] = atm.eps;
-        ida[i] = atm.idnum;
+        ida[i] = *(reinterpret_cast<const float*>(&(atm.idnum)));
     }
     
     _x = MultiFloat::fromArray(xf);
@@ -269,7 +269,7 @@ CLJAtoms::CLJAtoms(const QVector<CLJAtom> &atoms)
     _q = MultiFloat::fromArray(cf);
     _sig = MultiFloat::fromArray(sf);
     _eps = MultiFloat::fromArray(ef);
-    _id = MultiInt::fromArray(idf);
+    _id = MultiFloat::fromArray(idf);
 }
 
 /** Construct from the passed set of coordinates, partial charges and LJ parameters.
@@ -301,7 +301,7 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
         QVector<float> sf(ljparams.count());
         QVector<float> ef(ljparams.count());
         
-        QVector<qint32> idf(coordinates.count());
+        QVector<float> idf(coordinates.count());
         
         float *xa = xf.data();
         float *ya = yf.data();
@@ -311,7 +311,8 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
         float *sa = sf.data();
         float *ea = ef.data();
         
-        qint32 *ida = idf.data();
+        float *ida = idf.data();
+        float id_float = *(reinterpret_cast<const float*>(&atomid));
         
         const Vector *coords = coordinates.constData();
         const Charge *chgs = charges.constData();
@@ -327,7 +328,7 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
             sa[i] = ljs[i].sigma();
             ea[i] = ljs[i].epsilon();
             
-            ida[i] = atomid;
+            ida[i] = id_float;
         }
         
         _x = MultiFloat::fromArray(xf);
@@ -338,7 +339,7 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
         _sig = MultiFloat::fromArray(sf);
         _eps = MultiFloat::fromArray(ef);
         
-        _id = MultiInt::fromArray(idf);
+        _id = MultiFloat::fromArray(idf);
     }
     
     MultiFloat *q = _q.data();
@@ -389,6 +390,8 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
         QVector<float> sf(ljparams.count());
         QVector<float> ef(ljparams.count());
         
+        QVector<float> idf(atomids.count());
+        
         float *xa = xf.data();
         float *ya = yf.data();
         float *za = zf.data();
@@ -397,9 +400,12 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
         float *sa = sf.data();
         float *ea = ef.data();
         
+        float *ida = idf.data();
+        
         const Vector *coords = coordinates.constData();
         const Charge *chgs = charges.constData();
         const LJParameter *ljs = ljparams.constData();
+        const qint32 *atmids = atomids.constData();
         
         for (int i=0; i<coordinates.count(); ++i)
         {
@@ -410,6 +416,8 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
             ca[i] = chgs[i].value();
             sa[i] = ljs[i].sigma();
             ea[i] = ljs[i].epsilon();
+            
+            ida[i] = *(reinterpret_cast<const float*>(&(atmids[i])));
         }
         
         _x = MultiFloat::fromArray(xf);
@@ -420,7 +428,7 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
         _sig = MultiFloat::fromArray(sf);
         _eps = MultiFloat::fromArray(ef);
         
-        _id = MultiInt::fromArray(atomids);
+        _id = MultiFloat::fromArray(idf);
     }
     
     MultiFloat *q = _q.data();
@@ -473,7 +481,7 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
         QVector<float> sigf(nats);
         QVector<float> epsf(nats);
         
-        QVector<qint32> idf(nats);
+        QVector<float> idf(nats);
         
         float *xa = xf.data();
         float *ya = yf.data();
@@ -483,7 +491,7 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
         float *siga = sigf.data();
         float *epsa = epsf.data();
         
-        qint32 *ida = idf.data();
+        float *ida = idf.data();
         
         int idx = 0;
         
@@ -521,7 +529,7 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
                 epsa[idx] = ljs[i].epsilon();
                 
                 quint32 molid = it.key().value();
-                ida[idx] = *(reinterpret_cast<qint32*>(&molid));
+                ida[idx] = *(reinterpret_cast<float*>(&molid));
                 
                 idx += 1;
             }
@@ -533,7 +541,7 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
         _q = MultiFloat::fromArray(qf);
         _sig = MultiFloat::fromArray(sigf);
         _eps = MultiFloat::fromArray(epsf);
-        _id = MultiInt::fromArray(idf);
+        _id = MultiFloat::fromArray(idf);
     }
     
     MultiFloat *q = _q.data();
@@ -657,7 +665,8 @@ CLJAtom CLJAtoms::operator[](int i) const
     atom.chg = _q[idx][sub_idx];
     atom.sig = _sig[idx][sub_idx];
     atom.eps = _eps[idx][sub_idx];
-    atom.idnum = _id[idx][sub_idx];
+    float id = _id[idx][sub_idx];
+    atom.idnum = *(reinterpret_cast<const qint32*>(&id));
     
     return atom;
 }
@@ -688,7 +697,7 @@ void CLJAtoms::set(int i, const CLJAtom &atom)
     _q[idx].set(sub_idx, atom.chg);
     _sig[idx].set(sub_idx, atom.sig);
     _eps[idx].set(sub_idx, atom.eps);
-    _id[idx].set(sub_idx, atom.idnum);
+    _id[idx].set(sub_idx, *(reinterpret_cast<const float*>(&(atom.idnum))));
 }
 
 /** Set the coordinates of the ith atom to 'coords' */
@@ -734,7 +743,7 @@ void CLJAtoms::setID(int i, qint32 idnum)
     int idx = i / MultiFloat::count();
     int sub_idx = i % MultiFloat::count();
 
-    _id[idx].set(sub_idx, idnum);
+    _id[idx].set(sub_idx, *(reinterpret_cast<const float*>(&idnum)));
 }
 
 /** Make the ith atom into a dummy atom (set the atom ID to 0) */
@@ -743,7 +752,9 @@ void CLJAtoms::makeDummy(int i)
     int idx = i / MultiFloat::count();
     int sub_idx = i % MultiFloat::count();
 
-    _id[idx].set(sub_idx, 0);
+    const qint32 zero = 0;
+
+    _id[idx].set(sub_idx, *(reinterpret_cast<const float*>(&zero)));
 }
 
 /** Return whether or not the ith atom is a dummy atom (has an ID of 0) */
@@ -752,7 +763,9 @@ bool CLJAtoms::isDummy(int i)
     int idx = i / MultiFloat::count();
     int sub_idx = i % MultiFloat::count();
 
-    return (_id[idx][sub_idx] == 0);
+    const qint32 zero = 0;
+
+    return (_id[idx][sub_idx] == *(reinterpret_cast<const float*>(&zero)));
 }
 
 /** Return an array of all of the atoms */
@@ -774,7 +787,7 @@ QVector<CLJAtom> CLJAtoms::atoms() const
         const MultiFloat &qf = _q[i];
         const MultiFloat &sigf = _sig[i];
         const MultiFloat &epsf = _eps[i];
-        const MultiInt &idf = _id[i];
+        const MultiFloat &idf = _id[i];
         
         for (int j=0; j<MultiFloat::count(); ++j)
         {
@@ -787,7 +800,8 @@ QVector<CLJAtom> CLJAtoms::atoms() const
             atom.chg = qf[j];
             atom.sig = sigf[j];
             atom.eps = epsf[j];
-            atom.idnum = idf[j];
+            float id = idf[j];
+            atom.idnum = *(reinterpret_cast<const qint32*>(&id));
         }
     }
     
@@ -882,18 +896,19 @@ QVector<qint32> CLJAtoms::IDs() const
     if (this->isEmpty())
         return QVector<qint32>();
 
-    QVector<qint32> ids( _id.count() * MultiInt::count() );
+    QVector<qint32> ids( _id.count() * MultiFloat::count() );
     qint32 *idval = ids.data();
 
     int idx = 0;
 
     for (int i=0; i<_id.count(); ++i)
     {
-        const MultiInt &idf = _id[i];
+        const MultiFloat &idf = _id[i];
 
-        for (int j=0; j<MultiInt::count(); ++j)
+        for (int j=0; j<MultiFloat::count(); ++j)
         {
-            idval[idx] = idf[j];
+            float id = idf[j];
+            idval[idx] = *(reinterpret_cast<const qint32*>(&id));
             ++idx;
         }
     }
