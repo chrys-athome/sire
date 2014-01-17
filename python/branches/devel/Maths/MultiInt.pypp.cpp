@@ -346,6 +346,16 @@ void register_MultiInt_class(){
         }
         MultiInt_exposer.def( bp::self ^ bp::self );
         MultiInt_exposer.def( bp::self | bp::self );
+        { //::SireMaths::MultiInt::reinterpretCastToFloat
+        
+            typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiInt::*reinterpretCastToFloat_function_type )(  ) const;
+            reinterpretCastToFloat_function_type reinterpretCastToFloat_function_value( &::SireMaths::MultiInt::reinterpretCastToFloat );
+            
+            MultiInt_exposer.def( 
+                "reinterpretCastToFloat"
+                , reinterpretCastToFloat_function_value );
+        
+        }
         { //::SireMaths::MultiInt::rotate
         
             typedef ::SireMaths::MultiInt ( ::SireMaths::MultiInt::*rotate_function_type )(  ) const;

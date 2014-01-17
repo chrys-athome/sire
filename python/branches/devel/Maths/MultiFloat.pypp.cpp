@@ -21,6 +21,10 @@ namespace bp = boost::python;
 
 #include "multifloat.h"
 
+#include "multifloat.h"
+
+#include "multiint.h"
+
 SireMaths::MultiFloat __copy__(const SireMaths::MultiFloat &other){ return SireMaths::MultiFloat(other); }
 
 #include "Helpers/str.hpp"
@@ -264,6 +268,17 @@ void register_MultiFloat_class(){
         { //::SireMaths::MultiFloat::logicalAnd
         
             typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*logicalAnd_function_type )( ::SireMaths::MultiUInt const & ) const;
+            logicalAnd_function_type logicalAnd_function_value( &::SireMaths::MultiFloat::logicalAnd );
+            
+            MultiFloat_exposer.def( 
+                "logicalAnd"
+                , logicalAnd_function_value
+                , ( bp::arg("other") ) );
+        
+        }
+        { //::SireMaths::MultiFloat::logicalAnd
+        
+            typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*logicalAnd_function_type )( ::SireMaths::MultiInt const & ) const;
             logicalAnd_function_type logicalAnd_function_value( &::SireMaths::MultiFloat::logicalAnd );
             
             MultiFloat_exposer.def( 

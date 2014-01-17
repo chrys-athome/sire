@@ -61,7 +61,7 @@ void register_CLJAtoms_class(){
         CLJAtoms_exposer.def( bp::init< SireMM::CLJAtoms const & >(( bp::arg("other") )) );
         { //::SireMM::CLJAtoms::ID
         
-            typedef ::QVector< SireMaths::MultiInt > const & ( ::SireMM::CLJAtoms::*ID_function_type )(  ) const;
+            typedef ::QVector< SireMaths::MultiFloat > const & ( ::SireMM::CLJAtoms::*ID_function_type )(  ) const;
             ID_function_type ID_function_value( &::SireMM::CLJAtoms::ID );
             
             CLJAtoms_exposer.def( 

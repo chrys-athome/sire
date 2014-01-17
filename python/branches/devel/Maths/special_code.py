@@ -50,6 +50,8 @@ def fix_Array2D(c):
 
 def fix_Multi(c):
    c.decls( "multiplyAdd" ).call_policies = call_policies.return_self()
+   c.add_declaration_code("#include \"multifloat.h\"")
+   c.add_declaration_code("#include \"multiint.h\"")
 
 special_code = { "SireBase::Array2D<SireBase::PropPtr<SireMaths::Accumulator> >" : fix_Array2D,
                  "SireMaths::MultiFloat" : fix_Multi,
