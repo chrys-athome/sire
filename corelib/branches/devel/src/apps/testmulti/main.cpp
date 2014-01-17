@@ -63,6 +63,10 @@ void intTests()
         m = m.rotate();
     }
 
+    qDebug() << "CAST";
+    qDebug() << m.reinterpretCastToFloat().toString();
+    qDebug() << m.reinterpretCastToFloat().toBinaryString();
+
     qDebug() << "ADD";
     qDebug() << (m+m).toString();
 

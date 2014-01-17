@@ -236,6 +236,7 @@ private:
        can read the vector data directly */
     friend class MultiDouble;
     friend class MultiFixed;
+    friend class MultiInt;
 
     static void assertAligned(const void *ptr, size_t size);
 

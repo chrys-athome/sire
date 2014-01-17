@@ -85,6 +85,8 @@ public:
     MultiInt compareLessEqual(const MultiInt &other) const;
     MultiInt compareGreaterEqual(const MultiInt &other) const;
     
+    MultiFloat reinterpretCastToFloat() const;
+    
     const char* what() const;
     static const char* typeName();
     
@@ -393,6 +395,29 @@ MultiInt MultiInt::compareLess(const MultiInt &other) const
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
             ret.v.a[i] = (v.a[i] < other.v.a[i]) ? MULTIINT_BINONE : 0x0;
+        }
+    
+        return ret;
+    #endif
+    #endif
+}
+
+/** Reintepret cast this MultiInt to a MultiFloat. This is only useful if you
+    are going to use this to perform bitwise comparisons */
+inline
+MultiFloat MultiInt::reinterpretCastToFloat() const
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        return MultiFloat();
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        return MultiFloat( *(reinterpret_cast<const __m128*>(&v.x)) );
+    #else
+        MultiFloat ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = *(reinterpret_cast<const float*>(&v.a[i]));
         }
     
         return ret;

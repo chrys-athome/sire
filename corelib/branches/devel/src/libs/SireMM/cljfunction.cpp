@@ -331,7 +331,7 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
     const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
     const MultiFloat zero(0);
     const MultiFloat half(0.5);
-    const MultiInt izero(0);
+    const MultiFloat izero = MultiInt(0).reinterpretCastToFloat();
 
     MultiFloat tmp, r, one_over_r, sig2_over_r2, sig6_over_r6;
     MultiDouble icnrg(0), iljnrg(0);
@@ -342,7 +342,7 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
         {
             if (id0[i][ii] != 0)
             {
-                const MultiInt id(id0[i][ii]);
+                const MultiFloat id = MultiInt(id0[i][ii]).reinterpretCastToFloat();
             
                 if (q0[i][ii] != 0)
                 {
@@ -383,8 +383,9 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
                             //make sure that the ID of atoms1 is not zero, and is
                             //also not the same as the atoms0.
                             //logical and will remove all energies where id1 == 0 or id0 == id1
-                            tmp &= id1[j].compareNotEqual(izero);
-                            tmp &= id1[j].compareNotEqual(id);
+                            const MultiFloat id1_f = id1[j].reinterpretCastToFloat();
+                            tmp &= id1_f.compareNotEqual(izero);
+                            tmp &= id1_f.compareNotEqual(id);
                             
                             icnrg += tmp;
                         }
@@ -423,8 +424,9 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
                             //make sure that the ID of atoms1 is not zero, and is
                             //also not the same as the atoms0.
                             //logical and will remove all energies where id1 == 0 or id0 == id1
-                            tmp &= id1[j].compareNotEqual(izero);
-                            tmp &= id1[j].compareNotEqual(id);
+                            const MultiFloat id1_f = id1[j].reinterpretCastToFloat();
+                            tmp &= id1_f.compareNotEqual(izero);
+                            tmp &= id1_f.compareNotEqual(id);
 
                             icnrg += tmp;
                             
@@ -448,8 +450,8 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
                             //return 1 if r is less than Rlj, or 0 otherwise. Logical
                             //and will then remove all energies where r >= Rlj
                             tmp &= r.compareLess(Rlj);
-                            tmp &= id1[j].compareNotEqual(izero);
-                            tmp &= id1[j].compareNotEqual(id);
+                            tmp &= id1_f.compareNotEqual(izero);
+                            tmp &= id1_f.compareNotEqual(id);
                             
                             iljnrg += tmp;
                         }
@@ -496,8 +498,9 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
                         //and will then remove all energies where r >= Rlj
                         tmp &= r.compareLess(Rlj);
 
-                        tmp &= id1[j].compareNotEqual(izero);
-                        tmp &= id1[j].compareNotEqual(id);
+                        const MultiFloat id1_f = id1[j].reinterpretCastToFloat();
+                        tmp &= id1_f.compareNotEqual(izero);
+                        tmp &= id1_f.compareNotEqual(id);
 
                         iljnrg += tmp;
                     }
