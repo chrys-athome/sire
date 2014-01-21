@@ -159,21 +159,22 @@ private:
         #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
             union
             {
-                __m256 x;
+                __m128 x[2];
                 float a[8];
             } v;
             #define MULTIFLOAT_SIZE 8
         
             #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-            MultiFloat(__m256 avx_val)
+            MultiInt(__m128 val0, __m128 val1)
             {
-                v.x = avx_val;
+                v.x[0] = val0;
+                v.x[1] = val1;
             }
                 #ifdef MULTIFLOAT_CHECK_ALIGNMENT
                     void assertAligned()
                     {
-                        if (quintptr(this) % 32 != 0)
-                            assertAligned(this, 32);
+                        if (quintptr(this) % 16 != 0)
+                            assertAligned(this, 16);
                     }
                 #endif
             #endif
@@ -234,7 +235,8 @@ MultiInt::MultiInt()
     assertAligned();
 
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        v.x = _mm256_set1_ps(0);
+        v.x[0] = _mm_set1_epi32(0);
+        v.x[1] = _mm_set1_epi32(0);
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         v.x = _mm_set1_epi32(0);
@@ -254,7 +256,8 @@ MultiInt::MultiInt(qint32 val)
     assertAligned();
 
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        v.x = _mm256_set1_ps(val);
+        v.x[0] = _mm_set1_epi32(val);
+        v.x[1] = _mm_set1_epi32(val);
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         v.x = _mm_set1_epi32(val);
@@ -272,7 +275,8 @@ inline
 MultiInt::MultiInt(const MultiInt &other)
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        v.x = other.v.x;
+        v.x[0] = other.v.x[0];
+        v.x[1] = other.v.x[1];
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         v.x = other.v.x;
@@ -292,7 +296,8 @@ MultiInt& MultiInt::operator=(const MultiInt &other)
     if (this != &other)
     {
         #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-            v.x = other.v.x;
+            v.x[0] = other.v.x[0];
+            v.x[1] = other.v.x[1];
         #else
         #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
             v.x = other.v.x;
@@ -313,7 +318,8 @@ inline
 MultiInt& MultiInt::operator=(qint32 value)
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        v.x = _mm256_set1_ps(value);
+        v.x[0] = _mm_set1_epi32(value);
+        v.x[1] = _mm_set1_epi32(value);
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         v.x = _mm_set1_epi32(value);
@@ -339,7 +345,8 @@ inline
 MultiInt MultiInt::compareEqual(const MultiInt &other) const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiFloat( _mm256_cmp_ps(v.x, other.v.x, _CMP_EQ_OQ) );
+        return MultiInt( _mm_cmpeq_epi32(v.x[0], other.v.x[0]),
+                         _mm_cmpeq_epi32(v.x[1], other.v.x[1]) );
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiInt( _mm_cmpeq_epi32(v.x, other.v.x) );
@@ -361,7 +368,12 @@ inline
 MultiInt MultiInt::compareNotEqual(const MultiInt &other) const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiFloat( _mm256_cmp_ps(v.x, other.v.x, _CMP_NEQ_OQ) );
+        return MultiInt( reinterpret_cast<__m128i>(_mm_cmpneq_ps(
+                            reinterpret_cast<__m128>(v.x[0]),
+                            reinterpret_cast<__m128>(other.v.x[0]) )),
+                         reinterpret_cast<__m128i>(_mm_cmpneq_ps(
+                            reinterpret_cast<__m128>(v.x[1]),
+                            reinterpret_cast<__m128>(other.v.x[1]) )) );
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiInt( reinterpret_cast<__m128i>(_mm_cmpneq_ps(
@@ -385,7 +397,8 @@ inline
 MultiInt MultiInt::compareLess(const MultiInt &other) const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiFloat( _mm256_cmp_ps(v.x, other.v.x, _CMP_LT_OQ) );
+        return MultiInt( _mm_cmplt_epi32(v.x[0], other.v.x[0]),
+                         _mm_cmplt_epi32(v.x[1], other.v.x[1]) );
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiInt( _mm_cmplt_epi32(v.x, other.v.x) );
@@ -408,7 +421,7 @@ inline
 MultiFloat MultiInt::reinterpretCastToFloat() const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiFloat();
+        return MultiFloat(0);
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiFloat( *(reinterpret_cast<const __m128*>(&v.x)) );
@@ -430,7 +443,8 @@ inline
 MultiInt MultiInt::compareGreater(const MultiInt &other) const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiFloat( _mm256_cmp_ps(v.x, other.v.x, _CMP_GT_OQ) );
+        return MultiInt( _mm_cmpgt_epi32(v.x[0], other.v.x[0]),
+                         _mm_cmpgt_epi32(v.x[1], other.v.x[1]) );
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiInt( _mm_cmpgt_epi32(v.x, other.v.x) );
@@ -452,7 +466,10 @@ inline
 MultiInt MultiInt::compareLessEqual(const MultiInt &other) const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiFloat( _mm256_cmp_ps(v.x, other.v.x, _CMP_LE_OQ) );
+        return MultiInt( _mm_or_si128( _mm_cmplt_epi32(v.x[0], other.v.x[0]),
+                                       _mm_cmpeq_epi32(v.x[0], other.v.x[0]) ),
+                         _mm_or_si128( _mm_cmplt_epi32(v.x[1], other.v.x[1]),
+                                       _mm_cmpeq_epi32(v.x[1], other.v.x[1]) ));
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiInt( _mm_or_si128( _mm_cmplt_epi32(v.x, other.v.x),
@@ -475,7 +492,10 @@ inline
 MultiInt MultiInt::compareGreaterEqual(const MultiInt &other) const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiFloat( _mm256_cmp_ps(v.x, other.v.x, _CMP_GE_OQ) );
+        return MultiInt( _mm_or_si128( _mm_cmpgt_epi32(v.x[0], other.v.x[0]),
+                                       _mm_cmpeq_epi32(v.x[0], other.v.x[0]) ),
+                         _mm_or_si128( _mm_cmpgt_epi32(v.x[1], other.v.x[1]),
+                                       _mm_cmpeq_epi32(v.x[1], other.v.x[1]) ));
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiInt( _mm_or_si128( _mm_cmpgt_epi32(v.x, other.v.x),
@@ -512,7 +532,8 @@ inline
 MultiInt MultiInt::operator+(const MultiInt &other) const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiFloat( _mm256_add_ps(v.x, other.v.x) );
+        return MultiInt( _mm_add_epi32(v.x[0], other.v.x[0]),
+                         _mm_add_epi32(v.x[1], other.v.x[1]) );
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiInt( _mm_add_epi32(v.x, other.v.x) );
@@ -532,7 +553,8 @@ inline
 MultiInt MultiInt::operator-(const MultiInt &other) const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiFloat( _mm256_sub_ps(v.x, other.v.x) );
+        return MultiInt( _mm_sub_epi32(v.x[0], other.v.x[0]),
+                         _mm_sub_epi32(v.x[1], other.v.x[1]) );
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiInt( _mm_sub_epi32(v.x, other.v.x) );
@@ -552,7 +574,8 @@ inline
 MultiInt& MultiInt::operator+=(const MultiInt &other)
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        v.x = _mm256_add_ps(v.x, other.v.x);
+        v.x[0] = _mm_add_epi32(v.x[0], other.v.x[0]);
+        v.x[1] = _mm_add_epi32(v.x[1], other.v.x[1]);
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         v.x = _mm_add_epi32(v.x, other.v.x);
@@ -572,7 +595,8 @@ inline
 MultiInt& MultiInt::operator-=(const MultiInt &other)
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        v.x = _mm256_sub_ps(v.x, other.v.x);
+        v.x[0] = _mm_sub_epi32(v.x[0], other.v.x[0]);
+        v.x[1] = _mm_sub_epi32(v.x[1], other.v.x[1]);
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         v.x = _mm_sub_epi32(v.x, other.v.x);
@@ -592,7 +616,8 @@ inline
 MultiInt MultiInt::logicalAnd(const MultiInt &other) const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiFloat( _mm256_and_ps(v.x, other.v.x) );
+        return MultiInt( _mm_and_si128(v.x[0], other.v.x[1]),
+                         _mm_and_si128(v.x[0], other.v.x[1]) );
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiInt( _mm_and_si128(v.x, other.v.x) );
@@ -622,7 +647,7 @@ inline
 MultiFloat MultiFloat::logicalAnd(const MultiInt &other) const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiFloat( _mm256_and_ps(v.x, other.v.x) );
+        return MultiFloat(0);
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiFloat( _mm_and_ps(v.x, *(reinterpret_cast<const __m128*>(&(other.v.x)))) );
@@ -652,7 +677,8 @@ inline
 MultiInt MultiInt::logicalAndNot(const MultiInt &other) const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiFloat( _mm256_andnot_ps(v.x, other.v.x) );
+        return MultiInt( _mm_andnot_si128(v.x[0], other.v.x[0]),
+                         _mm_andnot_si128(v.x[0], other.v.x[0]) );
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiInt( _mm_andnot_si128(v.x, other.v.x) );
@@ -682,7 +708,8 @@ inline
 MultiInt MultiInt::logicalOr(const MultiInt &other) const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiFloat( _mm256_or_ps(v.x, other.v.x) );
+        return MultiInt( _mm_or_si128(v.x[0], other.v.x[0]),
+                         _mm_or_si128(v.x[1], other.v.x[1]) );
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiInt( _mm_or_si128(v.x, other.v.x) );
@@ -712,7 +739,8 @@ inline
 MultiInt MultiInt::logicalXor(const MultiInt &other) const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiFloat( _mm256_xor_ps(v.x, other.v.x) );
+        return MultiInt( _mm_xor_si128(v.x[0], other.v.x[1]),
+                         _mm_xor_si128(v.x[0], other.v.x[1]) );
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiInt( _mm_xor_si128(v.x, other.v.x) );
@@ -790,7 +818,8 @@ inline
 MultiInt& MultiInt::operator&=(const MultiInt &other)
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        v.x = _mm256_and_ps(v.x, other.v.x);
+        v.x[0] = _mm_and_si128(v.x[0], other.v.x[0]);
+        v.x[1] = _mm_and_si128(v.x[1], other.v.x[1]);
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         v.x = _mm_and_si128(v.x, other.v.x);
@@ -817,7 +846,17 @@ inline
 MultiFloat& MultiFloat::operator&=(const MultiInt &other)
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        v.x = _mm256_and_ps(v.x, other.v.x);
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            unsigned char *char_v = reinterpret_cast<unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+            for (unsigned int j=0; j<sizeof(float); ++j)
+            {
+                char_v[j] &= other_char_v[j];
+            }
+        }
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         v.x = _mm_and_ps( v.x, *(reinterpret_cast<const __m128*>(&(other.v.x))) );
@@ -844,7 +883,8 @@ inline
 MultiInt& MultiInt::operator|=(const MultiInt &other)
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        v.x = _mm256_or_ps(v.x, other.v.x);
+        v.x[0] = _mm_or_si128(v.x[0], other.v.x[0]);
+        v.x[1] = _mm_or_si128(v.x[1], other.v.x[1]);
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         v.x = _mm_or_si128(v.x, other.v.x);
@@ -871,7 +911,8 @@ inline
 MultiInt& MultiInt::operator^=(const MultiInt &other)
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        v.x = _mm256_xor_ps(v.x, other.v.x);
+        v.x[0] = _mm_xor_si128(v.x[0], other.v.x[0]);
+        v.x[1] = _mm_xor_si128(v.x[1], other.v.x[1]);
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         v.x = _mm_xor_si128(v.x, other.v.x);
@@ -898,7 +939,12 @@ inline
 MultiInt MultiInt::max(const MultiInt &other) const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiFloat( _mm256_max_ps(v.x, other.v.x) );
+        MultiInt ret;
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = std::max(v.a[i], other.v.a[i]);
+        }
+        return ret;
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         #ifdef MULTIFLOAT_SSE4_IS_AVAILABLE
@@ -927,7 +973,12 @@ inline
 MultiInt MultiInt::min(const MultiInt &other) const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiFloat( _mm256_min_ps(v.x, other.v.x) );
+        MultiInt ret;
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = std::min(v.a[i], other.v.a[i]);
+        }
+        return ret;
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         #ifdef MULTIFLOAT_SSE4_IS_AVAILABLE
@@ -957,8 +1008,7 @@ inline
 MultiInt MultiInt::rotate() const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        __m256 tmp =  _mm256_permute_ps(v.x, _MM_SHUFFLE ( 0,3,2,1 ));
-        return MultiFloat( _mm256_blend_ps(tmp, _mm256_permute2f128_ps ( tmp,tmp,1 ), 136) );
+        return MultiInt(0);
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         // there must be an SSE intrinsic to rotate left...

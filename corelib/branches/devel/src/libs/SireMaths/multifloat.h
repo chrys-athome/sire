@@ -48,8 +48,8 @@
 #endif
 #endif
 
-#undef SIRE_USE_AVX
-#define SIRE_USE_SSE 1
+//#undef SIRE_USE_AVX
+//#define SIRE_USE_SSE 1
 //#undef SIRE_USE_SSE
 
 #define MULTIFLOAT_CHECK_ALIGNMENT 1
