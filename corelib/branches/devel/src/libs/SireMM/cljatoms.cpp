@@ -217,22 +217,37 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJAtoms &cljatoms)
     return ds;
 }
 
-static qint32 castFromFloat(float value)
+static float castFromInt(qint32 value, int check=1);
+static qint32 castFromFloat(float value, int check=1);
+
+static qint32 castFromFloat(float value, int check)
 {
     qint32 ivalue = *(reinterpret_cast<qint32*>(&value));
 
     qDebug() << "Converted" << value << "to" << ivalue;
     
+    if (check)
+        qDebug() << "Checking" << ivalue << "is" << castFromInt(ivalue, 0);
+    
     return ivalue;
 }
 
-static float castFromInt(qint32 value)
+static float castFromInt(qint32 value, int check)
 {
     float fvalue = *(reinterpret_cast<float*>(&value));
     
     qDebug() << "Converted" << value << "to" << fvalue;
     
+    if (check)
+        qDebug() << "Checking" << fvalue << "is" << castFromFloat(fvalue, 0);
+    
     return fvalue;
+}
+
+/** Return a MultiFloat of the ID of a dummy atom */
+MultiFloat CLJAtoms::idOfDummy()
+{
+    return MultiFloat( castFromInt(0) );
 }
 
 /** Null constructor */

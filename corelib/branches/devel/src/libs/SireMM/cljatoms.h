@@ -209,6 +209,8 @@ public:
     
     const QVector<MultiFloat>& ID() const;
     
+    static MultiFloat idOfDummy();
+    
 private:
     void constructFrom(const Molecules &molecules, const PropertyMap &map);
 
