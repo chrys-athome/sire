@@ -383,8 +383,8 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
                             //make sure that the ID of atoms1 is not zero, and is
                             //also not the same as the atoms0.
                             //logical and will remove all energies where id1 == 0 or id0 == id1
-                            tmp &= id1[j].compareNotEqual(dummy_id);
-                            tmp &= id1[j].compareNotEqual(id);
+                            tmp = tmp.logicalAndNot( id1[j].compareEqual(dummy_id) );
+                            tmp = tmp.logicalAndNot( id1[j].compareEqual(id) );
                             
                             icnrg += tmp;
                         }

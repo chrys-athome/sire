@@ -767,15 +767,15 @@ MultiFloat MultiFloat::logicalAnd(const MultiFloat &other) const
     #endif
 }
 
-/** Bitwise logical "and not" */
+/** Bitwise logical "and not" (this is *this and (not other)) */
 inline
 MultiFloat MultiFloat::logicalAndNot(const MultiFloat &other) const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiFloat( _mm256_andnot_ps(v.x, other.v.x) );
+        return MultiFloat( _mm256_andnot_ps(other.v.x, v.x) );
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiFloat( _mm_andnot_ps(v.x, other.v.x) );
+        return MultiFloat( _mm_andnot_ps(other.v.x, v.x) );
     #else
         MultiFloat ret;
     
