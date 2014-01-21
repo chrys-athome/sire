@@ -145,7 +145,17 @@ int main(int argc, const char **argv)
         qDebug() << mdarray[i].toString();
     }
 
+    qDebug() << "\nMultiFloat tests";
+    MultiFloat a(1);
+    MultiFloat b(2);
+
+    qDebug() << a.compareNotEqual(a).toBinaryString();
+    qDebug() << a.compareNotEqual(b).toBinaryString();
+
+    /*
+    qDebug() << "\nMultiInt tests";
     intTests();
+    */
 
     return 0;
 
