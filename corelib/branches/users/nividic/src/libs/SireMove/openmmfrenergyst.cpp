@@ -294,11 +294,53 @@ OpenMMFrEnergyST& OpenMMFrEnergyST::operator=(const OpenMMFrEnergyST &other)
     return *this;
 }
 
+
 /** Comparison operator */
 bool OpenMMFrEnergyST::operator==(const OpenMMFrEnergyST &other) const
 {
-    return frequent_save_velocities == other.frequent_save_velocities and Integrator::operator==(other);
+    return frequent_save_velocities == other.frequent_save_velocities 
+    and isSystemInitialised == other.isSystemInitialised
+    and isContextInitialised == other.isContextInitialised
+    and CutoffType == other.CutoffType
+    and cutoff_distance == other.cutoff_distance
+    and field_dielectric == other.field_dielectric
+    and Andersen_flag == other.Andersen_flag
+    and Andersen_frequency == other.Andersen_frequency
+    and MCBarostat_flag == other.MCBarostat_flag
+    and MCBarostat_frequency == other.MCBarostat_frequency
+    and ConstraintType == other.ConstraintType
+    and Pressure == other.Pressure
+    and Temperature == other.Temperature
+    and platform_type == other.platform_type
+    and Restraint_flag == other.Restraint_flag
+    and CMMremoval_frequency == other.CMMremoval_frequency
+    and buffer_frequency == other.buffer_frequency
+    and energy_frequency == other.energy_frequency
+    and device_index == other.device_index
+    and precision == other.precision
+    and Alchemical_value == other.Alchemical_value
+    and coulomb_power == other.coulomb_power
+    and shift_delta == other.shift_delta
+    and delta_alchemical == other.delta_alchemical
+    and gradients == other.gradients
+    and energies == other.energies
+    and perturbed_energies == other.perturbed_energies
+    and Integrator_type == other.Integrator_type
+    and friction == other.friction
+    and integration_tol == other.integration_tol
+    and timeskip == other.timeskip
+    and minimize == other.minimize
+    and minimize_tol == other.minimize_tol
+    and minimize_iterations == other.minimize_iterations
+    and equilib_iterations == other.equilib_iterations
+    and equilib_time_step == other.equilib_time_step
+    and reinetialize_context == other.reinetialize_context
+    and GF_acc == other.GF_acc
+    and GB_acc == other.GB_acc
+    and gradient == other.gradient
+    and Integrator::operator==(other);
 }
+
 
 /** Comparison operator */
 bool OpenMMFrEnergyST::operator!=(const OpenMMFrEnergyST &other) const
