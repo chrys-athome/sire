@@ -298,6 +298,17 @@ void register_MultiFloat_class(){
                 , ( bp::arg("other") ) );
         
         }
+        { //::SireMaths::MultiFloat::logicalAndNot
+        
+            typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*logicalAndNot_function_type )( ::SireMaths::MultiInt const & ) const;
+            logicalAndNot_function_type logicalAndNot_function_value( &::SireMaths::MultiFloat::logicalAndNot );
+            
+            MultiFloat_exposer.def( 
+                "logicalAndNot"
+                , logicalAndNot_function_value
+                , ( bp::arg("other") ) );
+        
+        }
         { //::SireMaths::MultiFloat::logicalNot
         
             typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*logicalNot_function_type )(  ) const;

@@ -61,7 +61,7 @@ void register_CLJAtoms_class(){
         CLJAtoms_exposer.def( bp::init< SireMM::CLJAtoms const & >(( bp::arg("other") )) );
         { //::SireMM::CLJAtoms::ID
         
-            typedef ::QVector< SireMaths::MultiFloat > const & ( ::SireMM::CLJAtoms::*ID_function_type )(  ) const;
+            typedef ::QVector< SireMaths::MultiInt > const & ( ::SireMM::CLJAtoms::*ID_function_type )(  ) const;
             ID_function_type ID_function_value( &::SireMM::CLJAtoms::ID );
             
             CLJAtoms_exposer.def( 
@@ -151,6 +151,16 @@ void register_CLJAtoms_class(){
                 "getitem"
                 , getitem_function_value
                 , ( bp::arg("i") ) );
+        
+        }
+        { //::SireMM::CLJAtoms::idOfDummy
+        
+            typedef ::SireMaths::MultiInt ( *idOfDummy_function_type )(  );
+            idOfDummy_function_type idOfDummy_function_value( &::SireMM::CLJAtoms::idOfDummy );
+            
+            CLJAtoms_exposer.def( 
+                "idOfDummy"
+                , idOfDummy_function_value );
         
         }
         { //::SireMM::CLJAtoms::isDummy
@@ -360,6 +370,7 @@ void register_CLJAtoms_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        CLJAtoms_exposer.staticmethod( "idOfDummy" );
         CLJAtoms_exposer.staticmethod( "typeName" );
         CLJAtoms_exposer.def( "__copy__", &__copy__);
         CLJAtoms_exposer.def( "__deepcopy__", &__copy__);
