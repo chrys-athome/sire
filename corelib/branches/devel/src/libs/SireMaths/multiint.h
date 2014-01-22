@@ -160,9 +160,8 @@ private:
             union
             {
                 __m128 x[2];
-                float a[8];
+                qint32 a[8];
             } v;
-            #define MULTIFLOAT_SIZE 8
         
             #ifndef SIRE_SKIP_INLINE_FUNCTIONS
             MultiInt(__m128 val0, __m128 val1)

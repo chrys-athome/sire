@@ -332,18 +332,20 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
     const MultiFloat zero(0);
     const MultiFloat half(0.5);
     const MultiInt dummy_id = CLJAtoms::idOfDummy();
+    const qint32 dummy_int = dummy_id[0];
 
     MultiFloat tmp, r, one_over_r, sig2_over_r2, sig6_over_r6;
     MultiDouble icnrg(0), iljnrg(0);
+    MultiInt itmp;
 
     for (int i=0; i<atoms0.x().count(); ++i)
     {
         for (int ii=0; ii<MultiFloat::count(); ++ii)
         {
-            const MultiInt id(id0[i][ii]);
-
-            if (id != dummy_id)
+            if (id0[i][ii] != dummy_int)
             {
+                const MultiInt id(id0[i][ii]);
+            
                 if (q0[i][ii] != 0)
                 {
                     const MultiFloat x(x0[i][ii]);
@@ -382,11 +384,10 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
 
                             //make sure that the ID of atoms1 is not zero, and is
                             //also not the same as the atoms0.
-                            //logical and will remove all energies where id1 == 0 or id0 == id1
-                            tmp = tmp.logicalAndNot( id1[j].compareEqual(dummy_id) );
-                            tmp = tmp.logicalAndNot( id1[j].compareEqual(id) );
+                            itmp = id1[j].compareEqual(dummy_id);
+                            itmp |= id1[j].compareEqual(id);
                             
-                            icnrg += tmp;
+                            icnrg += tmp.logicalAndNot(itmp);
                         }
                     }
                     else
@@ -423,10 +424,10 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
                             //make sure that the ID of atoms1 is not zero, and is
                             //also not the same as the atoms0.
                             //logical and will remove all energies where id1 == 0 or id0 == id1
-                            tmp = tmp.logicalAndNot( id1[j].compareEqual(dummy_id) );
-                            tmp = tmp.logicalAndNot( id1[j].compareEqual(id) );
+                            itmp = id1[j].compareEqual(dummy_id);
+                            itmp |= id1[j].compareEqual(id);
 
-                            icnrg += tmp;
+                            icnrg += tmp.logicalAndNot(itmp);
                             
                             //Now do the LJ energy
 
@@ -448,10 +449,7 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
                             //return 1 if r is less than Rlj, or 0 otherwise. Logical
                             //and will then remove all energies where r >= Rlj
                             tmp &= r.compareLess(Rlj);
-                            tmp = tmp.logicalAndNot( id1[j].compareEqual(dummy_id) );
-                            tmp = tmp.logicalAndNot( id1[j].compareEqual(id) );
-                            
-                            iljnrg += tmp;
+                            iljnrg += tmp.logicalAndNot(itmp);
                         }
                     }
                 }
@@ -495,10 +493,10 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms0, const CLJAtom
                         //return 1 if r is less than Rlj, or 0 otherwise. Logical
                         //and will then remove all energies where r >= Rlj
                         tmp &= r.compareLess(Rlj);
-                        tmp = tmp.logicalAndNot( id1[j].compareEqual(dummy_id) );
-                        tmp = tmp.logicalAndNot( id1[j].compareEqual(id) );
+                        itmp = id1[j].compareEqual(dummy_id);
+                        itmp |= id1[j].compareEqual(id);
 
-                        iljnrg += tmp;
+                        iljnrg += tmp.logicalAndNot(itmp);
                     }
                 }
             }
