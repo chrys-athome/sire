@@ -713,7 +713,7 @@ MultiFloat MultiFloat::logicalAndNot(const MultiInt &other) const
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         const __m128 val = *(reinterpret_cast<const __m128*>(&other.v.x));
-        return MultiFloat( _mm_andnot_ps(other.v.x, v.x) );
+        return MultiFloat( _mm_andnot_ps(val, v.x) );
     #else
         MultiFloat ret;
     
