@@ -276,11 +276,20 @@ private:
         } v;
         #define MULTIFLOAT_SIZE 4
 
+       	#define MULTIFLOAT_BINONE getBinaryOne()
+
         #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-        MultiFloat(__m128 sse_val)
-        {
-            v.x = sse_val;
-        }
+            MultiFloat(__m128 sse_val)
+            {
+                v.x = sse_val;
+            }
+
+            static float getBinaryOne()
+            {
+             	const quint32 x = 0xFFFFFFFF;
+                return *(reinterpret_cast<const float*>(&x));
+            }
+  
             #ifdef MULTIFLOAT_CHECK_ALIGNMENT
                 void assertAligned()
                 {
@@ -298,11 +307,11 @@ private:
         #define MULTIFLOAT_BINONE getBinaryOne()
 
         #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-        static float getBinaryOne()
-        {
-            const quint32 x = 0xFFFFFFFF;
-            return *(reinterpret_cast<const float*>(&x));
-        }
+            static float getBinaryOne()
+            {
+                const quint32 x = 0xFFFFFFFF;
+                return *(reinterpret_cast<const float*>(&x));
+            }
             #ifdef MULTIFLOAT_CHECK_ALIGNMENT
                 void assertAligned()
                 {
@@ -439,7 +448,16 @@ MultiFloat MultiFloat::compareEqual(const MultiFloat &other) const
         return MultiFloat( _mm256_cmp_ps(v.x, other.v.x, _CMP_EQ_OQ) );
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiFloat( _mm_cmpeq_ps(v.x, other.v.x) );
+	MultiFloat ret;
+
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = (v.a[i] == other.v.a[i]) ? MULTIFLOAT_BINONE : 0x0;
+        }
+
+        return ret;
+
+        //return MultiFloat( _mm_cmpeq_ps(v.x, other.v.x) );
     #else
         MultiFloat ret;
 
