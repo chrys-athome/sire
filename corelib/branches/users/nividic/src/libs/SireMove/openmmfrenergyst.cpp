@@ -2217,6 +2217,7 @@ void OpenMMFrEnergyST::initialise()  {
 
 }
 
+
 void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) {
 
     bool Debug = false; 
@@ -2558,7 +2559,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     if(time_skip != 0.0){
 
-        if(Debug)
+        if(true)
             qDebug() << "Time to Skip = " << time_skip << "ps";
 
         int new_nmoves = time_skip / dt;
@@ -2568,13 +2569,14 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             exit(-1);
         }
 
-        
         (openmm_context->getIntegrator()).step(new_nmoves);
 
         n_samples = (nmoves - new_nmoves) / energy_frequency;
+
+        if ( coord_freq > 0 )
+            nframes = ( nmoves- new_nmoves) / coord_freq ;
+
     }
-
-
 
 
     /*std::map<std::string,double> pippo;//EXTRACT GLOBAL PARAMETERS FROM THE CONTEXT
@@ -2591,8 +2593,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     exit();*/
 
 
-
-    // Why is sample_count double precision?
     while(sample_count <= n_samples){
 
 
@@ -2654,13 +2654,9 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             throw SireError::program_bug(QObject::tr("********************* Energy Too High. Error! *******************"), CODELOC);
             exit(-1);
         }
-        
-          if(potential_energy_lambda != potential_energy_lambda){
-            throw SireError::program_bug(QObject::tr("********************* NAN Error! *******************"), CODELOC);
-            exit(-1);
-        }
 
 
+        //Try to catch NaN apperance*******************************
 
 
         if((Alchemical_value + delta_alchemical)>1.0){
@@ -2888,7 +2884,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         }
 
 
-
     }//end while
 
 
@@ -2900,8 +2895,9 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         minimize=false;
     //Disable Time to Skip because of multiple cycles
     if(time_skip!=0){
-        //timeskip = 0.0;
+        timeskip = SireUnits::Dimension::Time(0.0);
     }
+
     gradient = (-1.0/(2.0*delta_alchemical*beta) * log(GF_acc / GB_acc)) * OpenMM::KcalPerKJ;
 
 
@@ -2920,6 +2916,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             buffered_workspace[i][j].resize(nats);
         }
     }
+
 
     int k=0;
 
