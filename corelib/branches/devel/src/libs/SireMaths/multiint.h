@@ -703,6 +703,38 @@ MultiInt MultiInt::logicalAndNot(const MultiInt &other) const
     #endif
 }
 
+/** Bitwise logical "and not" (this is *this and (not other)) */
+inline
+MultiFloat MultiFloat::logicalAndNot(const MultiInt &other) const
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        const __m256 val = *(reinterpret_cast<const __m256*>(&other.v.x));
+        return MultiFloat( _mm256_andnot_ps(val, v.x) );
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        const __m128 val = *(reinterpret_cast<const __m128*>(&other.v.x));
+        return MultiFloat( _mm_andnot_ps(other.v.x, v.x) );
+    #else
+        MultiFloat ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
+            const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+            for (unsigned int j=0; j<sizeof(float); ++j)
+            {
+                ret_char_v[j] = !(char_v[j] & other_char_v[j]);
+            }
+        }
+    
+        return ret;
+    #endif
+    #endif
+}
+
 /** Bitwise logical or operator */
 inline
 MultiInt MultiInt::logicalOr(const MultiInt &other) const

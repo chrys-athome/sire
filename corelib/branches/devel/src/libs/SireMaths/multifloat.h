@@ -200,6 +200,7 @@ public:
     
     MultiFloat logicalAnd(const MultiUInt &other) const;
     MultiFloat logicalAnd(const MultiInt &other) const;
+    MultiFloat logicalAndNot(const MultiInt &other) const;
     
     MultiFloat& multiplyAdd(const MultiFloat &val0, const MultiFloat &val1);
     
@@ -255,10 +256,10 @@ private:
         #define MULTIFLOAT_SIZE 8
     
         #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-        MultiFloat(__m256 avx_val)
-        {
-            v.x = avx_val;
-        }
+            MultiFloat(__m256 avx_val)
+            {
+                v.x = avx_val;
+            }
             #ifdef MULTIFLOAT_CHECK_ALIGNMENT
                 void assertAligned()
                 {
@@ -448,16 +449,7 @@ MultiFloat MultiFloat::compareEqual(const MultiFloat &other) const
         return MultiFloat( _mm256_cmp_ps(v.x, other.v.x, _CMP_EQ_OQ) );
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-	MultiFloat ret;
-
-        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-        {
-            ret.v.a[i] = (v.a[i] == other.v.a[i]) ? MULTIFLOAT_BINONE : 0x0;
-        }
-
-        return ret;
-
-        //return MultiFloat( _mm_cmpeq_ps(v.x, other.v.x) );
+        return MultiFloat( _mm_cmpeq_ps(v.x, other.v.x) );
     #else
         MultiFloat ret;
 

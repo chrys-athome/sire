@@ -207,9 +207,9 @@ public:
     const QVector<MultiFloat>& sigma() const;
     const QVector<MultiFloat>& epsilon() const;
     
-    const QVector<MultiFloat>& ID() const;
+    const QVector<MultiInt>& ID() const;
     
-    static MultiFloat idOfDummy();
+    static MultiInt idOfDummy();
     
 private:
     void constructFrom(const Molecules &molecules, const PropertyMap &map);
@@ -236,7 +236,7 @@ private:
     /** The molecule number for each atom - atoms with the same
         number are part of the same molecule. Also, if this number is
         zero, then this is a dummy atom */
-    QVector<MultiFloat> _id;
+    QVector<MultiInt> _id;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -279,7 +279,7 @@ inline const QVector<MultiFloat>& CLJAtoms::epsilon() const
 }
 
 /** Return the vector of vectorised atom IDs */
-inline const QVector<MultiFloat>& CLJAtoms::ID() const
+inline const QVector<MultiInt>& CLJAtoms::ID() const
 {
     return _id;
 }
