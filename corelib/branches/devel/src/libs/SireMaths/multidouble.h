@@ -108,6 +108,9 @@ public:
     void set(int i, double value);
     double get(int i) const;
     
+    double at(int i) const;
+    double getitem(int i) const;
+    
     MultiDouble operator-() const;
     
     MultiDouble operator+(const MultiDouble &other) const;
@@ -337,6 +340,13 @@ MultiDouble::MultiDouble(const MultiDouble &other)
 inline
 MultiDouble::~MultiDouble()
 {}
+
+/** Return the ith value in the MultiDouble - note that
+    this is a fast function that does no bounds checking */
+inline double MultiDouble::operator[](int i) const
+{
+    return v.a[i];
+}
 
 /** Assignment operator */
 inline

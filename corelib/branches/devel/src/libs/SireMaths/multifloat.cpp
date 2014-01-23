@@ -570,22 +570,6 @@ bool MultiFloat::operator>=(const MultiFloat &other) const
     return true;
 }
 
-/** Return the ith value in the multifloat */
-float MultiFloat::operator[](int i) const
-{
-    if (i < 0)
-        i = MULTIFLOAT_SIZE + i;
-    
-    if (i < 0 or i >= MULTIFLOAT_SIZE)
-    {
-        throw SireError::invalid_index( QObject::tr(
-                "Cannot access element %1 of MultiFloat (holds only %2 values)")
-                    .arg(i).arg(MULTIFLOAT_SIZE), CODELOC );
-    }
-    
-    return v.a[i];
-}
-
 /** Negative operator */
 MultiFloat MultiFloat::operator-() const
 {
@@ -618,7 +602,27 @@ void MultiFloat::set(int i, float value)
 /** Return the ith value in the multifloat */
 float MultiFloat::get(int i) const
 {
-    return this->operator[](i);
+    if (i < 0)
+        i = MULTIFLOAT_SIZE + i;
+    
+    if (i < 0 or i >= MULTIFLOAT_SIZE)
+    {
+        throw SireError::invalid_index( QObject::tr(
+                "Cannot access element %1 of MultiFloat (holds only %2 values)")
+                    .arg(i).arg(MULTIFLOAT_SIZE), CODELOC );
+    }
+    
+    return v.a[i];
+}
+
+float MultiFloat::at(int i) const
+{
+    return this->get(i);
+}
+
+float MultiFloat::getitem(int i) const
+{
+    return this->get(i);
 }
 
 const char* MultiFloat::what() const

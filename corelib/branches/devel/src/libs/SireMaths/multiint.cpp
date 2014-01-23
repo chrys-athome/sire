@@ -485,7 +485,7 @@ bool MultiInt::operator>=(const MultiInt &other) const
 }
 
 /** Return the ith value in the multifloat */
-qint32 MultiInt::operator[](int i) const
+qint32 MultiInt::at(int i) const
 {
     if (i < 0)
         i = MULTIFLOAT_SIZE + i;
@@ -498,6 +498,11 @@ qint32 MultiInt::operator[](int i) const
     }
     
     return v.a[i];
+}
+
+qint32 MultiInt::getitem(int i) const
+{
+    return at(i);
 }
 
 /** Negative operator */
@@ -533,7 +538,7 @@ void MultiInt::set(int i, qint32 value)
 ith value in the MultiInt */
 qint32 MultiInt::get(int i) const
 {
-    return this->operator[](i);
+    return at(i);
 }
 
 const char* MultiInt::what() const

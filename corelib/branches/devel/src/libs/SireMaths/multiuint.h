@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2014  Christopher Woods
+  *  Copyright (C) 2013  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -36,9 +36,11 @@ SIRE_BEGIN_HEADER
 namespace SireMaths
 {
 
-/** This class provides a vectorised unsigned 32 bit integer. This represents
+/** This class provides a vectorised 32bit unsigned integer. This represents
     a single vector of integers on the compiled machine, e.g.
-    4 integers if we use SSE2, 8 integers for AVX
+    4 integers if we use SSE2, 8 integers for AVX/AVX2
+    (note that AVX represents it as two SSE vectors, while AVX2 
+     uses a single AVX vector)
     
     @author Christopher Woods
 */
@@ -59,7 +61,6 @@ public:
     bool isAligned() const;
     
     static QVector<MultiUInt> fromArray(const QVector<quint32> &array);
-    
     static QVector<MultiUInt> fromArray(const quint32 *array, int size);
     
     static QVector<quint32> toArray(const QVector<MultiUInt> &array);
@@ -85,6 +86,8 @@ public:
     MultiUInt compareLessEqual(const MultiUInt &other) const;
     MultiUInt compareGreaterEqual(const MultiUInt &other) const;
     
+    MultiFloat reinterpretCastToFloat() const;
+    
     const char* what() const;
     static const char* typeName();
     
@@ -99,16 +102,14 @@ public:
     void set(int i, quint32 value);
     quint32 get(int i) const;
     
+    quint32 at(int i) const;
+    quint32 getitem(int i) const;
+    
     MultiUInt operator+(const MultiUInt &other) const;
     MultiUInt operator-(const MultiUInt &other) const;
-    MultiUInt operator*(const MultiUInt &other) const;
-    MultiUInt operator/(const MultiUInt &other) const;
-    MultiUInt operator%(const MultiUInt &other) const;
     
     MultiUInt& operator+=(const MultiUInt &other);
     MultiUInt& operator-=(const MultiUInt &other);
-    MultiUInt& operator*=(const MultiUInt &other);
-    MultiUInt& operator/=(const MultiUInt &other);
     
     MultiUInt operator!() const;
     MultiUInt operator&(const MultiUInt &other) const;
@@ -127,8 +128,6 @@ public:
     MultiUInt logicalOr(const MultiUInt &other) const;
     MultiUInt logicalXor(const MultiUInt &other) const;
     
-    MultiUInt& multiplyAdd(const MultiUInt &val0, const MultiUInt &val1);
-    
     MultiUInt max(const MultiUInt &other) const;
     MultiUInt min(const MultiUInt &other) const;
     
@@ -146,73 +145,194 @@ public:
     quint64 doubleSum() const;
 
 private:
+    /* Make the other Multi?? classes friends, so that they
+       can read the vector data directly */
     friend class MultiFloat;
+    friend class MultiInt;
 
     static void assertAligned(const void *ptr, size_t size);
 
     #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
         #ifndef MULTIFLOAT_CHECK_ALIGNMENT
             void assertAligned(){}
         #endif
 
-        union
-        {
-            quint32 a[MULTIFLOAT_SIZE];
-        } v;
-        #define MULTIUINT_BINONE getBinaryOne()
+        #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+            #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+                _ALIGNED(32) union
+                {
+                    __m256i x;
+                    quint32 a[8];
+                } v;
+    
+                MultiUInt(__m256i val)
+                {
+                    v.x = val;
+                }
+            #else
+                _ALIGNED(32) union
+                {
+                    __m128i x[2];
+                    quint32 a[8];
+                } v;
+        
+                MultiUInt(__m128i val0, __m128i val1)
+                {
+                    v.x[0] = val0;
+                    v.x[1] = val1;
+                }
+            #endif
 
-        #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-        static quint32 getBinaryOne()
-        {
-            const quint32 x = 0xFFFFFFFF;
-            return x;
-        }
+            #define MULTIUINT_BINONE getBinaryOne()
+
+            static quint32 getBinaryOne()
+            {
+                const quint32 x = 0xFFFFFFFF;
+                return x;
+            }
+
             #ifdef MULTIFLOAT_CHECK_ALIGNMENT
                 void assertAligned()
                 {
-                    /*if (quintptr(this) % 32 != 0)
-                        assertAligned(this, 32);*/
+                    if (quintptr(this) % 32 != 0)
+                        assertAligned(this, 32);
+                }
+            #endif
+        #else
+        #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+            _ALIGNED(16) union
+            {
+                __m128i x;
+                quint32 a[4];
+            } v;
+
+            MultiUInt(__m128i sse_val)
+            {
+                v.x = sse_val;
+            }
+
+            #define MULTIUINT_BINONE getBinaryOne()
+
+            static quint32 getBinaryOne()
+            {
+                const quint32 x = 0xFFFFFFFF;
+                return x;
+            }
+
+            #ifdef MULTIFLOAT_CHECK_ALIGNMENT
+                void assertAligned()
+                {
+                    if (quintptr(this) % 16 != 0)
+                        assertAligned(this, 16);
+                }
+            #endif
+        #else
+            _ALIGNED(32) union
+            {
+                quint32 a[MULTIFLOAT_SIZE];
+            } v;
+            #define MULTIINT_BINONE getBinaryOne()
+
+            static quint32 getBinaryOne()
+            {
+                const quint32 x = 0xFFFFFFFF;
+                return x;
+            }
+            #ifdef MULTIFLOAT_CHECK_ALIGNMENT
+                void assertAligned()
+                {
+                    if (quintptr(this) % 32 != 0)
+                        assertAligned(this, 32);
                 }
             #endif
         #endif
+        #endif
     #endif
+
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
-/** Constructor. This creates a MultiUInt with an undefined initial state */
+/** Constructor. This creates a MultiInt with an undefined initial state */
 inline
 MultiUInt::MultiUInt()
 {
     assertAligned();
 
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        v.a[i] = 0;
-    }
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            v.x = _mm256_set1_epi32(0);
+        #else
+            v.x[0] = _mm_set1_epi32(0);
+            v.x[1] = _mm_set1_epi32(0);
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_set1_epi32(0);
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            v.a[i] = 0;
+        }
+    #endif
+    #endif
 }
 
-/** Construct a MultiUInt with all values equal to 'val' */
+/** Construct a MultiFloat with all values equal to 'val' */
 inline
-MultiUInt::MultiUInt(quint32 val)
+MultiUInt::MultiUInt(quint32 uval)
 {
     assertAligned();
 
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        v.a[i] = val;
-    }
+    qint32 val = *(reinterpret_cast<qint32*>(&uval));
+
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            v.x = _mm256_set1_epi32(val);
+        #else
+            v.x[0] = _mm_set1_epi32(val);
+            v.x[1] = _mm_set1_epi32(val);
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_set1_epi32(val);
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            v.a[i] = val;
+        }
+    #endif
+    #endif
 }
 
 /** Copy constructor */
 inline
 MultiUInt::MultiUInt(const MultiUInt &other)
 {
-   for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-   {
-       v.a[i] = other.v.a[i];
-   }
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            v.x = other.v.x;
+        #else
+            v.x[0] = other.v.x[0];
+            v.x[1] = other.v.x[1];
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = other.v.x;
+    #else
+       for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+       {
+           v.a[i] = other.v.a[i];
+       }
+    #endif
+    #endif
+}
+
+/** Return the ith value in the MultiUInt - note that this is
+    a quick function that does no bounds checking */
+inline quint32 MultiUInt::operator[](int i) const
+{
+    return *(reinterpret_cast<const quint32*>(&(v.a[i])));
 }
 
 /** Assignment operator */
@@ -221,10 +341,23 @@ MultiUInt& MultiUInt::operator=(const MultiUInt &other)
 {
     if (this != &other)
     {
-        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-        {
-            v.a[i] = other.v.a[i];
-        }
+        #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+            #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+                v.x = other.v.x;
+            #else
+                v.x[0] = other.v.x[0];
+                v.x[1] = other.v.x[1];
+            #endif
+        #else
+        #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+            v.x = other.v.x;
+        #else
+            for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+            {
+                v.a[i] = other.v.a[i];
+            }
+        #endif
+        #endif
     }
     
     return *this;
@@ -232,12 +365,27 @@ MultiUInt& MultiUInt::operator=(const MultiUInt &other)
 
 /** Assignment operator */
 inline
-MultiUInt& MultiUInt::operator=(quint32 value)
+MultiUInt& MultiUInt::operator=(quint32 uvalue)
 {
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        v.a[i] = value;
-    }
+    qint32 value = *(reinterpret_cast<qint32*>(&uvalue));
+
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            v.x = _mm256_set1_epi32(value);
+        #else
+            v.x[0] = _mm_set1_epi32(value);
+            v.x[1] = _mm_set1_epi32(value);
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_set1_epi32(value);
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            v.a[i] = value;
+        }
+    #endif
+    #endif
     
     return *this;
 }
@@ -247,89 +395,259 @@ inline
 MultiUInt::~MultiUInt()
 {}
 
-/** Comparison operator. This will return a MultiUInt with elements
-    set to zero for each integer that is not equal */
+/** Comparison operator. This will return a MultiFloat with elements
+    set to zero for each float that is not equal */
 inline
 MultiUInt MultiUInt::compareEqual(const MultiUInt &other) const
 {
-    MultiUInt ret;
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            return MultiUInt( _mm256_cmpeq_epi32(v.x, other.v.x) );
+        #else
+            return MultiUInt( _mm_cmpeq_epi32(v.x[0], other.v.x[0]),
+                              _mm_cmpeq_epi32(v.x[1], other.v.x[1]) );
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        return MultiUInt( _mm_cmpeq_epi32(v.x, other.v.x) );
+    #else
+        MultiUInt ret;
 
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        ret.v.a[i] = (v.a[i] == other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
-    }
-
-    return ret;
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = (v.a[i] == other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+        }
+    
+        return ret;
+    #endif
+    #endif
 }
 
 /** Not equals comparison operator */
 inline
 MultiUInt MultiUInt::compareNotEqual(const MultiUInt &other) const
 {
-    MultiUInt ret;
-
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        ret.v.a[i] = (v.a[i] != other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
-    }
-
-    return ret;
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        MultiUInt ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = (v.a[i] != other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+        }
+    
+        return ret;
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        MultiUInt ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = (v.a[i] != other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+        }
+    
+        return ret;
+    #else
+        MultiUInt ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = (v.a[i] != other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+        }
+    
+        return ret;
+    #endif
+    #endif
 }
 
 /** Less than comparison operator */
 inline
 MultiUInt MultiUInt::compareLess(const MultiUInt &other) const
 {
-    MultiUInt ret;
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            MultiUInt ret;
 
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        ret.v.a[i] = (v.a[i] < other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
-    }
+            for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+            {
+                ret.v.a[i] = (v.a[i] < other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+            }
+            return ret;
+        #else
+            MultiUInt ret;
 
-    return ret;
+            for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+            {
+                ret.v.a[i] = (v.a[i] < other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+            }
+            return ret;
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        MultiUInt ret;
+
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = (v.a[i] < other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+        }
+        return ret;
+    #else
+        MultiUInt ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = (v.a[i] < other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+        }
+    
+        return ret;
+    #endif
+    #endif
+}
+
+/** Reintepret cast this MultiInt to a MultiFloat. This is only useful if you
+    are going to use this to perform bitwise comparisons */
+inline
+MultiFloat MultiUInt::reinterpretCastToFloat() const
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            return MultiFloat( *(reinterpret_cast<const __m256*>(&v.x)) );
+        #else
+            //allowable as v.x is 32bit aligned
+            return MultiFloat( *(reinterpret_cast<const __m256*>(&v.x[0])) );
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        return MultiFloat( *(reinterpret_cast<const __m128*>(&v.x)) );
+    #else
+        MultiFloat ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = *(reinterpret_cast<const float*>(&v.a[i]));
+        }
+    
+        return ret;
+    #endif
+    #endif
 }
 
 /** Greater than comparison operator */
 inline
 MultiUInt MultiUInt::compareGreater(const MultiUInt &other) const
 {
-    MultiUInt ret;
-
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        ret.v.a[i] = (v.a[i] > other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
-    }
-
-    return ret;
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            MultiUInt ret;
+        
+            for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+            {
+                ret.v.a[i] = (v.a[i] > other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+            }
+        
+            return ret;
+        #else
+            MultiUInt ret;
+        
+            for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+            {
+                ret.v.a[i] = (v.a[i] > other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+            }
+        
+            return ret;
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        MultiUInt ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = (v.a[i] > other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+        }
+    
+        return ret;
+    #else
+        MultiUInt ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = (v.a[i] > other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+        }
+    
+        return ret;
+    #endif
+    #endif
 }
 
 /** Less than or equal comparison */
 inline
 MultiUInt MultiUInt::compareLessEqual(const MultiUInt &other) const
 {
-    MultiUInt ret;
-
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        ret.v.a[i] = (v.a[i] <= other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
-    }
-
-    return ret;
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        MultiUInt ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = (v.a[i] <= other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+        }
+    
+        return ret;
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        MultiUInt ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = (v.a[i] <= other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+        }
+    
+        return ret;
+    #else
+        MultiUInt ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = (v.a[i] <= other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+        }
+    
+        return ret;
+    #endif
+    #endif
 }
 
 /** Greater than or equal comparison */
 inline
 MultiUInt MultiUInt::compareGreaterEqual(const MultiUInt &other) const
 {
-    MultiUInt ret;
-
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        ret.v.a[i] = (v.a[i] >= other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
-    }
-
-    return ret;
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        MultiUInt ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = (v.a[i] >= other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+        }
+    
+        return ret;
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        MultiUInt ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = (v.a[i] >= other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+        }
+    
+        return ret;
+    #else
+        MultiUInt ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = (v.a[i] >= other.v.a[i]) ? MULTIUINT_BINONE : 0x0;
+        }
+    
+        return ret;
+    #endif
+    #endif
 }
 
 /** Return the number of values in the vector */
@@ -350,70 +668,73 @@ int MultiUInt::count()
 inline
 MultiUInt MultiUInt::operator+(const MultiUInt &other) const
 {
-    MultiUInt ret;
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        ret.v.a[i] = v.a[i] + other.v.a[i];
-    }
-    return ret;
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            return MultiUInt( _mm256_add_epi32(v.x, other.v.x) );
+        #else
+            return MultiUInt( _mm_add_epi32(v.x[0], other.v.x[0]),
+                              _mm_add_epi32(v.x[1], other.v.x[1]) );
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        return MultiUInt( _mm_add_epi32(v.x, other.v.x) );
+    #else
+        MultiUInt ret;
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = v.a[i] + other.v.a[i];
+        }
+        return ret;
+    #endif
+    #endif
 }
 
 /** Subtraction operator */
 inline
 MultiUInt MultiUInt::operator-(const MultiUInt &other) const
 {
-    MultiUInt ret;
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        ret.v.a[i] = v.a[i] - other.v.a[i];
-    }
-    return ret;
-}
-
-/** Multiplication operator */
-inline
-MultiUInt MultiUInt::operator*(const MultiUInt &other) const
-{
-    MultiUInt ret;
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        ret.v.a[i] = v.a[i] * other.v.a[i];
-    }
-    return ret;
-}
-
-/** Division operator */
-inline
-MultiUInt MultiUInt::operator/(const MultiUInt &other) const
-{
-    MultiUInt ret;
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        ret.v.a[i] = v.a[i] / other.v.a[i];
-    }
-    return ret;
-}
-
-/** Remainder operator */
-inline
-MultiUInt MultiUInt::operator%(const MultiUInt &other) const
-{
-    MultiUInt ret;
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        ret.v.a[i] = v.a[i] % other.v.a[i];
-    }
-    return ret;
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            return MultiUInt( _mm256_sub_epi32(v.x, other.v.x) );
+        #else
+            return MultiUInt( _mm_sub_epi32(v.x[0], other.v.x[0]),
+                              _mm_sub_epi32(v.x[1], other.v.x[1]) );
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        return MultiUInt( _mm_sub_epi32(v.x, other.v.x) );
+    #else
+        MultiUInt ret;
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = v.a[i] - other.v.a[i];
+        }
+        return ret;
+    #endif
+    #endif
 }
 
 /** In-place addition operator */
 inline
 MultiUInt& MultiUInt::operator+=(const MultiUInt &other)
 {
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        v.a[i] += other.v.a[i];
-    }
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            v.x = _mm256_add_epi32(v.x, other.v.x);
+        #else
+            v.x[0] = _mm_add_epi32(v.x[0], other.v.x[0]);
+            v.x[1] = _mm_add_epi32(v.x[1], other.v.x[1]);
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_add_epi32(v.x, other.v.x);
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            v.a[i] += other.v.a[i];
+        }
+    #endif
+    #endif
 
     return *this;
 }
@@ -422,34 +743,23 @@ MultiUInt& MultiUInt::operator+=(const MultiUInt &other)
 inline
 MultiUInt& MultiUInt::operator-=(const MultiUInt &other)
 {
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        v.a[i] -= other.v.a[i];
-    }
-
-    return *this;
-}
-
-/** In-place multiplication operator */
-inline
-MultiUInt& MultiUInt::operator*=(const MultiUInt &other)
-{
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        v.a[i] *= other.v.a[i];
-    }
-
-    return *this;
-}
-
-/** In-place division operator */
-inline
-MultiUInt& MultiUInt::operator/=(const MultiUInt &other)
-{
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        v.a[i] /= other.v.a[i];
-    }
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            v.x = _mm256_sub_epi32(v.x, other.v.x);
+        #else
+            v.x[0] = _mm_sub_epi32(v.x[0], other.v.x[0]);
+            v.x[1] = _mm_sub_epi32(v.x[1], other.v.x[1]);
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_sub_epi32(v.x, other.v.x);
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            v.a[i] -= other.v.a[i];
+        }
+    #endif
+    #endif
 
     return *this;
 }
@@ -458,88 +768,215 @@ MultiUInt& MultiUInt::operator/=(const MultiUInt &other)
 inline
 MultiUInt MultiUInt::logicalAnd(const MultiUInt &other) const
 {
-    MultiUInt ret;
-
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
-        const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
-        const unsigned char *other_char_v
-                    = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
-
-        for (unsigned int j=0; j<sizeof(float); ++j)
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            return MultiUInt( _mm256_and_si256(v.x, other.v.x) );
+        #else
+            return MultiUInt( _mm_and_si128(v.x[0], other.v.x[0]),
+                              _mm_and_si128(v.x[1], other.v.x[1]) );
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        return MultiUInt( _mm_and_si128(v.x, other.v.x) );
+    #else
+        MultiUInt ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret_char_v[j] = char_v[j] & other_char_v[j];
-        }
-    }
+            unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
+            const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
 
-    return ret;
+            for (unsigned int j=0; j<sizeof(qint32); ++j)
+            {
+                ret_char_v[j] = char_v[j] & other_char_v[j];
+            }
+        }
+    
+        return ret;
+    #endif
+    #endif
+}
+
+/** Bitwise logical "and" comparison */
+inline
+MultiFloat MultiFloat::logicalAnd(const MultiUInt &other) const
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            return MultiFloat(_mm256_and_ps(v.x,
+                                *(reinterpret_cast<const __m256*>(&(other.v.x)))));
+        #else
+            //allowable as other.v.x is 32bit aligned
+            return MultiFloat(_mm256_and_ps(v.x,
+                                *(reinterpret_cast<const __m256*>(&(other.v.x[0])))));
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        return MultiFloat( _mm_and_ps(v.x, *(reinterpret_cast<const __m128*>(&(other.v.x)))) );
+    #else
+        MultiFloat ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
+            const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+            for (unsigned int j=0; j<sizeof(float); ++j)
+            {
+                ret_char_v[j] = char_v[j] & other_char_v[j];
+            }
+        }
+    
+        return ret;
+    #endif
+    #endif
 }
 
 /** Bitwise logical "and not" */
 inline
 MultiUInt MultiUInt::logicalAndNot(const MultiUInt &other) const
 {
-    MultiUInt ret;
-
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
-        const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
-        const unsigned char *other_char_v
-                    = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
-
-        for (unsigned int j=0; j<sizeof(float); ++j)
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            return MultiUInt( _mm256_andnot_si256(v.x, other.v.x) );
+        #else
+            return MultiUInt( _mm_andnot_si128(v.x[0], other.v.x[0]),
+                              _mm_andnot_si128(v.x[1], other.v.x[1]) );
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        return MultiUInt( _mm_andnot_si128(v.x, other.v.x) );
+    #else
+        MultiUInt ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret_char_v[j] = !(char_v[j] & other_char_v[j]);
-        }
-    }
+            unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
+            const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
 
-    return ret;
+            for (unsigned int j=0; j<sizeof(qint32); ++j)
+            {
+                ret_char_v[j] = char_v[j] & (!other_char_v[j]);
+            }
+        }
+    
+        return ret;
+    #endif
+    #endif
+}
+
+/** Bitwise logical "and not" (this is *this and (not other)) */
+inline
+MultiFloat MultiFloat::logicalAndNot(const MultiUInt &other) const
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            const __m256 val = *(reinterpret_cast<const __m256*>(&other.v.x));
+            return MultiFloat( _mm256_andnot_ps(val, v.x) );
+        #else
+            //possible as other.v.x is 32bit aligned
+            const __m256 val = *(reinterpret_cast<const __m256*>(&other.v.x[0]));
+            return MultiFloat( _mm256_andnot_ps(val, v.x) );
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        const __m128 val = *(reinterpret_cast<const __m128*>(&other.v.x));
+        return MultiFloat( _mm_andnot_ps(val, v.x) );
+    #else
+        MultiFloat ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
+            const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+            for (unsigned int j=0; j<sizeof(float); ++j)
+            {
+                ret_char_v[j] = char_v[j] & (!other_char_v[j]);
+            }
+        }
+    
+        return ret;
+    #endif
+    #endif
 }
 
 /** Bitwise logical or operator */
 inline
 MultiUInt MultiUInt::logicalOr(const MultiUInt &other) const
 {
-    MultiUInt ret;
-
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
-        const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
-        const unsigned char *other_char_v
-                    = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
-
-        for (unsigned int j=0; j<sizeof(float); ++j)
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            return MultiUInt( _mm256_or_si256(v.x, other.v.x) );
+        #else
+            return MultiUInt( _mm_or_si128(v.x[0], other.v.x[0]),
+                              _mm_or_si128(v.x[1], other.v.x[1]) );
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        return MultiUInt( _mm_or_si128(v.x, other.v.x) );
+    #else
+        MultiUInt ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret_char_v[j] = char_v[j] | other_char_v[j];
-        }
-    }
+            unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
+            const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
 
-    return ret;
+            for (unsigned int j=0; j<sizeof(qint32); ++j)
+            {
+                ret_char_v[j] = char_v[j] | other_char_v[j];
+            }
+        }
+    
+        return ret;
+    #endif
+    #endif
 }
 
 /** Bitwise logical xor */
 inline
 MultiUInt MultiUInt::logicalXor(const MultiUInt &other) const
 {
-    MultiUInt ret;
-
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
-        const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
-        const unsigned char *other_char_v
-                    = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
-
-        for (unsigned int j=0; j<sizeof(float); ++j)
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            return MultiUInt( _mm256_xor_si256(v.x, other.v.x) );
+        #else
+            return MultiUInt( _mm_xor_si128(v.x[0], other.v.x[0]),
+                              _mm_xor_si128(v.x[1], other.v.x[1]) );
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        return MultiUInt( _mm_xor_si128(v.x, other.v.x) );
+    #else
+        MultiUInt ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret_char_v[j] = char_v[j] ^ other_char_v[j];
-        }
-    }
+            unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
+            const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
 
-    return ret;
+            for (unsigned int j=0; j<sizeof(qint32); ++j)
+            {
+                ret_char_v[j] = char_v[j] ^ other_char_v[j];
+            }
+        }
+    
+        return ret;
+    #endif
+    #endif
 }
 
 /** Logical not operator */
@@ -553,7 +990,7 @@ MultiUInt MultiUInt::logicalNot() const
         unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
         const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
 
-        for (unsigned int j=0; j<sizeof(float); ++j)
+        for (unsigned int j=0; j<sizeof(qint32); ++j)
         {
             ret_char_v[j] = !char_v[j];
         }
@@ -594,17 +1031,62 @@ MultiUInt MultiUInt::operator^(const MultiUInt &other) const
 inline
 MultiUInt& MultiUInt::operator&=(const MultiUInt &other)
 {
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        unsigned char *char_v = reinterpret_cast<unsigned char*>(&(v.a[i]));
-        const unsigned char *other_char_v
-                    = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
-
-        for (unsigned int j=0; j<sizeof(float); ++j)
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            v.x = _mm256_and_si256(v.x, other.v.x);
+        #else
+            v.x[0] = _mm_and_si128(v.x[0], other.v.x[0]);
+            v.x[1] = _mm_and_si128(v.x[1], other.v.x[1]);
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_and_si128(v.x, other.v.x);
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            char_v[j] &= other_char_v[j];
+            unsigned char *char_v = reinterpret_cast<unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+            for (unsigned int j=0; j<sizeof(qint32); ++j)
+            {
+                char_v[j] &= other_char_v[j];
+            }
         }
-    }
+    #endif
+    #endif
+
+    return *this;
+}
+
+/** In place logical and */
+inline
+MultiFloat& MultiFloat::operator&=(const MultiUInt &other)
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            v.x = _mm256_and_ps( v.x, *(reinterpret_cast<const __m256*>(&(other.v.x))) );
+        #else
+            //possible as other.v.x[0] is 32bit aligned
+            v.x = _mm256_and_ps( v.x, *(reinterpret_cast<const __m256*>(&(other.v.x[0]))) );
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_and_ps( v.x, *(reinterpret_cast<const __m128*>(&(other.v.x))) );
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            unsigned char *char_v = reinterpret_cast<unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+            for (unsigned int j=0; j<sizeof(float); ++j)
+            {
+                char_v[j] &= other_char_v[j];
+            }
+        }
+    #endif
+    #endif
 
     return *this;
 }
@@ -613,17 +1095,30 @@ MultiUInt& MultiUInt::operator&=(const MultiUInt &other)
 inline
 MultiUInt& MultiUInt::operator|=(const MultiUInt &other)
 {
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        unsigned char *char_v = reinterpret_cast<unsigned char*>(&(v.a[i]));
-        const unsigned char *other_char_v
-                    = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
-
-        for (unsigned int j=0; j<sizeof(float); ++j)
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            v.x = _mm256_or_si256(v.x, other.v.x);
+        #else
+            v.x[0] = _mm_or_si128(v.x[0], other.v.x[0]);
+            v.x[1] = _mm_or_si128(v.x[1], other.v.x[1]);
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_or_si128(v.x, other.v.x);
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            char_v[j] |= other_char_v[j];
+            unsigned char *char_v = reinterpret_cast<unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+            for (unsigned int j=0; j<sizeof(qint32); ++j)
+            {
+                char_v[j] |= other_char_v[j];
+            }
         }
-    }
+    #endif
+    #endif
 
     return *this;
 }
@@ -632,29 +1127,30 @@ MultiUInt& MultiUInt::operator|=(const MultiUInt &other)
 inline
 MultiUInt& MultiUInt::operator^=(const MultiUInt &other)
 {
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        unsigned char *char_v = reinterpret_cast<unsigned char*>(&(v.a[i]));
-        const unsigned char *other_char_v
-                    = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
-
-        for (unsigned int j=0; j<sizeof(float); ++j)
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+            v.x = _mm256_xor_si256(v.x, other.v.x);
+        #else
+            v.x[0] = _mm_xor_si128(v.x[0], other.v.x[0]);
+            v.x[1] = _mm_xor_si128(v.x[1], other.v.x[1]);
+        #endif
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_xor_si128(v.x, other.v.x);
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            char_v[j] ^= other_char_v[j];
+            unsigned char *char_v = reinterpret_cast<unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+            for (unsigned int j=0; j<sizeof(qint32); ++j)
+            {
+                char_v[j] ^= other_char_v[j];
+            }
         }
-    }
-
-    return *this;
-}
-
-/** Multiply val0 and val1 and add it onto this value */
-inline
-MultiUInt& MultiUInt::multiplyAdd(const MultiUInt &v0, const MultiUInt &v1)
-{
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        v.a[i] += v0.v.a[i] * v1.v.a[i];
-    }
+    #endif
+    #endif
 
     return *this;
 }
@@ -663,24 +1159,68 @@ MultiUInt& MultiUInt::multiplyAdd(const MultiUInt &v0, const MultiUInt &v1)
 inline
 MultiUInt MultiUInt::max(const MultiUInt &other) const
 {
-    MultiUInt ret;
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        ret.v.a[i] = std::max(v.a[i], other.v.a[i]);
-    }
-    return ret;
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        MultiUInt ret;
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = std::max(v.a[i], other.v.a[i]);
+        }
+        return ret;
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        #ifdef MULTIFLOAT_SSE4_IS_AVAILABLE
+            return MultiUInt( _mm_max_epi32(v.x, other.v.x) );
+        #else
+            MultiUInt ret;
+            for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+            {
+                ret.v.a[i] = std::max(v.a[i], other.v.a[i]);
+            }
+            return ret;
+        #endif
+    #else
+        MultiUInt ret;
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = std::max(v.a[i], other.v.a[i]);
+        }
+        return ret;
+    #endif
+    #endif
 }
 
 /** Return the minimum vector between this and other */
 inline
 MultiUInt MultiUInt::min(const MultiUInt &other) const
 {
-    MultiUInt ret;
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        ret.v.a[i] = std::min(v.a[i], other.v.a[i]);
-    }
-    return ret;
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        MultiUInt ret;
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = std::min(v.a[i], other.v.a[i]);
+        }
+        return ret;
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        #ifdef MULTIFLOAT_SSE4_IS_AVAILABLE
+            return MultiUInt( _mm_min_epi32(v.x, other.v.x) );
+        #else
+            MultiUInt ret;
+            for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+            {
+                ret.v.a[i] = std::min(v.a[i], other.v.a[i]);
+            }
+            return ret;
+        #endif
+    #else
+        MultiUInt ret;
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = std::min(v.a[i], other.v.a[i]);
+        }
+        return ret;
+    #endif
+    #endif
 }
 
 /** Rotate this vector. This moves each element one space to the left, moving the
@@ -688,16 +1228,34 @@ MultiUInt MultiUInt::min(const MultiUInt &other) const
 inline
 MultiUInt MultiUInt::rotate() const
 {
-    MultiUInt ret;
-    
-    for (int i=1; i<MULTIFLOAT_SIZE; ++i)
-    {
-        ret.v.a[i-1] = v.a[i];
-    }
-    
-    ret.v.a[MULTIFLOAT_SIZE-1] = v.a[0];
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        MultiUInt ret;
+        
+        for (int i=1; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i-1] = v.a[i];
+        }
+        
+        ret.v.a[MULTIFLOAT_SIZE-1] = v.a[0];
 
-    return ret;
+        return ret;
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        // there must be an SSE intrinsic to rotate left...
+        return MultiUInt( _mm_shuffle_epi32(v.x, _MM_SHUFFLE(0,3,2,1)) );
+    #else
+        MultiUInt ret;
+        
+        for (int i=1; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i-1] = v.a[i];
+        }
+        
+        ret.v.a[MULTIFLOAT_SIZE-1] = v.a[0];
+
+        return ret;
+    #endif
+    #endif
 }
 
 /** Return the sum of all elements of this vector */
@@ -712,7 +1270,7 @@ quint32 MultiUInt::sum() const
     return sum;
 }
 
-/** Return the sum of all elements of this vector, using 64 bit integers for the sum */
+/** Return the sum of all elements of this vector, using doubles for the sum */
 inline
 quint64 MultiUInt::doubleSum() const
 {
@@ -724,31 +1282,11 @@ quint64 MultiUInt::doubleSum() const
     return sum;
 }
 
-inline MultiFloat MultiFloat::logicalAnd(const MultiUInt &other) const
-{
-    MultiFloat ret;
-
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
-        const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
-        const unsigned char *other_char_v
-                    = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
-
-        for (unsigned int j=0; j<sizeof(float); ++j)
-        {
-            ret_char_v[j] = char_v[j] & other_char_v[j];
-        }
-    }
-
-    return ret;
-}
-
 #endif // #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 
-SIRE_EXPOSE_CLASS( SireMaths::MultiUInt )
+SIRE_EXPOSE_CLASS( SireMaths::MultiInt )
 
 SIRE_END_HEADER
 

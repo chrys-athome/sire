@@ -329,68 +329,163 @@ void CLJVacShiftAriFunction::calcEnergyAri(const CLJAtoms &atoms,
         {
             if (ida[i][ii] != dummy_int)
             {
+                const MultiInt id( ida[i][ii] );
                 const MultiFloat x( xa[i][ii] );
                 const MultiFloat y( ya[i][ii] );
                 const MultiFloat z( za[i][ii] );
-                const MultiFloat q( qa[i][ii] );
-                const MultiFloat sig( siga[i][ii] * siga[i][ii] );
-                const MultiFloat eps( epsa[i][ii] );
-                const MultiInt id( ida[i][ii] );
-
-                for (int j=i; j<n; ++j)
+                
+                if (qa[i][ii] != 0)
                 {
-                    const MultiFloat scale( i == j ? 0.5 : 1.0 );
-                
-                    //calculate the distance between the fixed and mobile atoms
-                    tmp = xa[j] - x;
-                    r = tmp * tmp;
-                    tmp = ya[j] - y;
-                    r.multiplyAdd(tmp, tmp);
-                    tmp = za[j] - z;
-                    r.multiplyAdd(tmp, tmp);
-                    r = r.sqrt();
-
-                    one_over_r = r.reciprocal();
-            
-                    //calculate the coulomb energy using shift-electrostatics
-                    // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                    tmp = r - Rc;
-                    tmp *= one_over_Rc2;
-                    tmp -= one_over_Rc;
-                    tmp += one_over_r;
-                    tmp *= q * qa[j];
-                
-                    //apply the cutoff - compare r against Rc. This will
-                    //return 1 if r is less than Rc, or 0 otherwise. Logical
-                    //and will then remove all energies where r >= Rc
-                    tmp &= r.compareLess(Rc);
-
-                    //make sure that the ID of atoms1 is not zero, and is
-                    //also not the same as the atoms0.
-                    itmp = ida[j].compareEqual(dummy_id);
-                    itmp |= ida[j].compareEqual(id);
+                    const MultiFloat q( qa[i][ii] );
                     
-                    icnrg += scale * tmp.logicalAndNot(itmp);
+                    if (epsa[i][ii] == 0)
+                    {
+                        //coulomb calculation only
+                        for (int j=i; j<n; ++j)
+                        {
+                            // if i == j then we double-calculate the energies, so must
+                            // scale them by 0.5
+                            const MultiFloat scale( i == j ? 0.5 : 1.0 );
+                        
+                            //calculate the distance between the fixed and mobile atoms
+                            tmp = xa[j] - x;
+                            r = tmp * tmp;
+                            tmp = ya[j] - y;
+                            r.multiplyAdd(tmp, tmp);
+                            tmp = za[j] - z;
+                            r.multiplyAdd(tmp, tmp);
+                            r = r.sqrt();
 
-                    //now the LJ energy
-                    tmp = sig + (siga[j]*siga[j]);
-                    tmp *= half;
-                
-                    sig2_over_r2 = tmp * one_over_r;
-                    sig2_over_r2 = sig2_over_r2*sig2_over_r2;
-                    sig6_over_r6 = sig2_over_r2*sig2_over_r2;
-                    sig6_over_r6 = sig6_over_r6*sig2_over_r2;
+                            one_over_r = r.reciprocal();
+                    
+                            //calculate the coulomb energy using shift-electrostatics
+                            // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
+                            tmp = r - Rc;
+                            tmp *= one_over_Rc2;
+                            tmp -= one_over_Rc;
+                            tmp += one_over_r;
+                            tmp *= q * qa[j];
+                        
+                            //apply the cutoff - compare r against Rc. This will
+                            //return 1 if r is less than Rc, or 0 otherwise. Logical
+                            //and will then remove all energies where r >= Rc
+                            tmp &= r.compareLess(Rc);
 
-                    tmp = sig6_over_r6 * sig6_over_r6;
-                    tmp -= sig6_over_r6;
-                    tmp *= eps;
-                    tmp *= epsa[j];
-                
-                    //apply the cutoff - compare r against Rlj. This will
-                    //return 1 if r is less than Rlj, or 0 otherwise. Logical
-                    //and will then remove all energies where r >= Rlj
-                    tmp &= r.compareLess(Rlj);
-                    iljnrg += scale * tmp.logicalAndNot(itmp);
+                            //make sure that the ID of atoms1 is not zero, and is
+                            //also not the same as the atoms0.
+                            itmp = ida[j].compareEqual(dummy_id);
+                            itmp |= ida[j].compareEqual(id);
+                            
+                            icnrg += scale * tmp.logicalAndNot(itmp);
+                        }
+                    }
+                    else
+                    {
+                        //calculate both coulomb and LJ
+                        const MultiFloat sig( siga[i][ii] * siga[i][ii] );
+                        const MultiFloat eps( epsa[i][ii] );
+
+                        for (int j=i; j<n; ++j)
+                        {
+                            // if i == j then we double-calculate the energies, so must
+                            // scale them by 0.5
+                            const MultiFloat scale( i == j ? 0.5 : 1.0 );
+                        
+                            //calculate the distance between the fixed and mobile atoms
+                            tmp = xa[j] - x;
+                            r = tmp * tmp;
+                            tmp = ya[j] - y;
+                            r.multiplyAdd(tmp, tmp);
+                            tmp = za[j] - z;
+                            r.multiplyAdd(tmp, tmp);
+                            r = r.sqrt();
+
+                            one_over_r = r.reciprocal();
+                    
+                            //calculate the coulomb energy using shift-electrostatics
+                            // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
+                            tmp = r - Rc;
+                            tmp *= one_over_Rc2;
+                            tmp -= one_over_Rc;
+                            tmp += one_over_r;
+                            tmp *= q * qa[j];
+                        
+                            //apply the cutoff - compare r against Rc. This will
+                            //return 1 if r is less than Rc, or 0 otherwise. Logical
+                            //and will then remove all energies where r >= Rc
+                            tmp &= r.compareLess(Rc);
+
+                            //make sure that the ID of atoms1 is not zero, and is
+                            //also not the same as the atoms0.
+                            itmp = ida[j].compareEqual(dummy_id);
+                            itmp |= ida[j].compareEqual(id);
+                            
+                            icnrg += scale * tmp.logicalAndNot(itmp);
+
+                            //now the LJ energy
+                            tmp = sig + (siga[j]*siga[j]);
+                            tmp *= half;
+                        
+                            sig2_over_r2 = tmp * one_over_r;
+                            sig2_over_r2 = sig2_over_r2*sig2_over_r2;
+                            sig6_over_r6 = sig2_over_r2*sig2_over_r2;
+                            sig6_over_r6 = sig6_over_r6*sig2_over_r2;
+
+                            tmp = sig6_over_r6 * sig6_over_r6;
+                            tmp -= sig6_over_r6;
+                            tmp *= eps;
+                            tmp *= epsa[j];
+                        
+                            //apply the cutoff - compare r against Rlj. This will
+                            //return 1 if r is less than Rlj, or 0 otherwise. Logical
+                            //and will then remove all energies where r >= Rlj
+                            tmp &= r.compareLess(Rlj);
+                            iljnrg += scale * tmp.logicalAndNot(itmp);
+                        }
+                    }
+                }
+                else
+                {
+                    //LJ calculation only
+                    const MultiFloat sig( siga[i][ii] * siga[i][ii] );
+                    const MultiFloat eps( epsa[i][ii] );
+
+                    for (int j=i; j<n; ++j)
+                    {
+                        // if i == j then we double-calculate the energies, so must
+                        // scale them by 0.5
+                        const MultiFloat scale( i == j ? 0.5 : 1.0 );
+                    
+                        //calculate the distance between the fixed and mobile atoms
+                        tmp = xa[j] - x;
+                        r = tmp * tmp;
+                        tmp = ya[j] - y;
+                        r.multiplyAdd(tmp, tmp);
+                        tmp = za[j] - z;
+                        r.multiplyAdd(tmp, tmp);
+                        r = r.sqrt();
+
+                        one_over_r = r.reciprocal();
+
+                        tmp = sig + (siga[j]*siga[j]);
+                        tmp *= half;
+                    
+                        sig2_over_r2 = tmp * one_over_r;
+                        sig2_over_r2 = sig2_over_r2*sig2_over_r2;
+                        sig6_over_r6 = sig2_over_r2*sig2_over_r2;
+                        sig6_over_r6 = sig6_over_r6*sig2_over_r2;
+
+                        tmp = sig6_over_r6 * sig6_over_r6;
+                        tmp -= sig6_over_r6;
+                        tmp *= eps;
+                        tmp *= epsa[j];
+                    
+                        //apply the cutoff - compare r against Rlj. This will
+                        //return 1 if r is less than Rlj, or 0 otherwise. Logical
+                        //and will then remove all energies where r >= Rlj
+                        tmp &= r.compareLess(Rlj);
+                        iljnrg += scale * tmp.logicalAndNot(itmp);
+                    }
                 }
             }
         }

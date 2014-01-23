@@ -172,6 +172,9 @@ public:
     
     float operator[](int i) const;
     
+    float at(int i) const;
+    float getitem(int i) const;
+    
     void set(int i, float value);
     float get(int i) const;
     
@@ -197,6 +200,7 @@ public:
     MultiFloat& operator^=(const MultiFloat &other);
 
     MultiFloat& operator&=(const MultiInt &other);
+    MultiFloat& operator&=(const MultiUInt &other);
 
     MultiFloat logicalNot() const;
     
@@ -208,7 +212,9 @@ public:
     
     MultiFloat logicalAnd(const MultiUInt &other) const;
     MultiFloat logicalAnd(const MultiInt &other) const;
+    
     MultiFloat logicalAndNot(const MultiInt &other) const;
+    MultiFloat logicalAndNot(const MultiUInt &other) const;
     
     MultiFloat& multiplyAdd(const MultiFloat &val0, const MultiFloat &val1);
     
@@ -246,6 +252,7 @@ private:
     friend class MultiDouble;
     friend class MultiFixed;
     friend class MultiInt;
+    friend class MultiUInt;
 
     static void assertAligned(const void *ptr, size_t size);
 
@@ -439,6 +446,13 @@ MultiFloat& MultiFloat::operator=(float value)
 inline
 MultiFloat::~MultiFloat()
 {}
+
+/** Return the ith value in the MultiFloat. This is a fast function
+    that performs no bounds checking! */
+inline float MultiFloat::operator[](int i) const
+{
+    return v.a[i];
+}
 
 /** Comparison operator. This will return a MultiFloat with elements
     set to zero for each float that is not equal */

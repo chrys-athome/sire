@@ -39,7 +39,8 @@ namespace SireMaths
 /** This class provides a vectorised 32bit signed integer. This represents
     a single vector of integers on the compiled machine, e.g.
     4 integers if we use SSE2, 8 integers for AVX/AVX2
-    (note that AVX represents it as two SSE vectors)
+    (note that AVX represents it as two SSE vectors, while AVX2 
+     uses a single AVX vector)
     
     @author Christopher Woods
 */
@@ -100,6 +101,9 @@ public:
     
     void set(int i, qint32 value);
     qint32 get(int i) const;
+    
+    qint32 at(int i) const;
+    qint32 getitem(int i) const;
     
     MultiInt operator-() const;
     
@@ -322,6 +326,13 @@ MultiInt::MultiInt(const MultiInt &other)
        }
     #endif
     #endif
+}
+
+/** Return the ith value in the MultiInt - note that this is
+    a quick function that does no bounds checking */
+inline qint32 MultiInt::operator[](int i) const
+{
+    return v.a[i];
 }
 
 /** Assignment operator */
