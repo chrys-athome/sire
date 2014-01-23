@@ -159,16 +159,16 @@ private:
         #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
             union
             {
-                __m128 x[2];
+                __m128i x[2];
                 qint32 a[8];
             } v;
         
             #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-            MultiInt(__m128 val0, __m128 val1)
-            {
-                v.x[0] = val0;
-                v.x[1] = val1;
-            }
+                MultiInt(__m128 val0, __m128 val1)
+                {
+                    v.x[0] = val0;
+                    v.x[1] = val1;
+                }
                 #ifdef MULTIFLOAT_CHECK_ALIGNMENT
                     void assertAligned()
                     {
@@ -186,10 +186,10 @@ private:
             } v;
 
             #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-            MultiInt(__m128i sse_val)
-            {
-                v.x = sse_val;
-            }
+                MultiInt(__m128i sse_val)
+                {
+                    v.x = sse_val;
+                }
                 #ifdef MULTIFLOAT_CHECK_ALIGNMENT
                     void assertAligned()
                     {
