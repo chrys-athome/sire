@@ -49,19 +49,6 @@ using namespace SireMaths;
                     "An unaligned MultiInt has been created! %1")
                         .arg((quintptr)pointer % size_t(32)), place );
     }
-
-    static inline bool isAligned16(const void *pointer)
-    {
-        return (quintptr)pointer % size_t(16) == 0;
-    }
-
-    static void assertAligned16(const void *pointer, QString place)
-    {
-        if (not isAligned16(pointer))
-            throw SireError::program_bug( QObject::tr(
-                    "An unaligned MultiInt has been created! %1")
-                        .arg((quintptr)pointer % size_t(16)), place );
-    }
 #else
 #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
     static inline bool isAligned16(const void *pointer)
@@ -296,7 +283,7 @@ QVector<MultiInt> MultiInt::fromArray(const qint32 *array, int size)
     #endif
 
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        assertAligned16(marray.constData(), CODELOC);
+        assertAligned32(marray.constData(), CODELOC);
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         assertAligned16(marray.constData(), CODELOC);

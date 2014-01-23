@@ -300,10 +300,10 @@ private:
             #endif
         #endif
     #else
-        union
+        _ALIGNED(32) union
         {
             float a[8];
-        } _ALIGNED(32) v;
+        } v;
         #define MULTIFLOAT_SIZE 8
         #define MULTIFLOAT_BINONE getBinaryOne()
 

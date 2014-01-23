@@ -157,7 +157,7 @@ private:
         #endif
 
         #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-            union
+            _ALIGNED(32) union
             {
                 __m128i x[2];
                 qint32 a[8];
@@ -172,14 +172,14 @@ private:
                 #ifdef MULTIFLOAT_CHECK_ALIGNMENT
                     void assertAligned()
                     {
-                        if (quintptr(this) % 16 != 0)
-                            assertAligned(this, 16);
+                        if (quintptr(this) % 32 != 0)
+                            assertAligned(this, 32);
                     }
                 #endif
             #endif
         #else
         #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-            union
+            _ALIGNED(16) union
             {
                 __m128i x;
                 qint32 a[4];
@@ -199,7 +199,7 @@ private:
                 #endif
             #endif
         #else
-            union
+            _ALIGNED(32) union
             {
                 qint32 a[MULTIFLOAT_SIZE];
             } v;
