@@ -452,7 +452,13 @@ MultiInt MultiInt::compareLess(const MultiInt &other) const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
         #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
-            return MultiInt( _mm256_cmplt_epi32(v.x, other.v.x) );
+            MultiInt ret;
+
+            for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+            {
+                ret.v.a[i] = (v.a[i] < other.v.a[i]) ? MULTIINT_BINONE : 0x0;
+            }
+            return ret;
         #else
             return MultiInt( _mm_cmplt_epi32(v.x[0], other.v.x[0]),
                              _mm_cmplt_epi32(v.x[1], other.v.x[1]) );
