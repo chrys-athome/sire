@@ -104,8 +104,12 @@ MultiInt::MultiInt(const qint32 *array, int size)
     if (size <= 0)
     {
         #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-            v.x[0] = _mm_set1_epi32(0);
-            v.x[1] = _mm_set1_epi32(0);
+            #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+                v.x = _mm256_set1_epi32(0);
+            #else
+                v.x[0] = _mm_set1_epi32(0);
+                v.x[1] = _mm_set1_epi32(0);
+            #endif
         #else
         #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
             v.x = _mm_set1_epi32(0);
@@ -120,8 +124,13 @@ MultiInt::MultiInt(const qint32 *array, int size)
     else if (size == MULTIFLOAT_SIZE)
     {
         #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-            v.x[0] = _mm_set_epi32(array[7], array[6], array[5], array[4]);
-            v.x[1] = _mm_set_epi32(array[3], array[2], array[1], array[0]);
+            #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+                v.x = _mm256_set_epi32(array[7], array[6], array[5], array[4],
+                                       array[3], array[2], array[1], array[0]);
+            #else
+                v.x[1] = _mm_set_epi32(array[7], array[6], array[5], array[4]);
+                v.x[0] = _mm_set_epi32(array[3], array[2], array[1], array[0]);
+            #endif
         #else
         #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
             //note that SSE packs things the 'wrong' way around
@@ -149,8 +158,13 @@ MultiInt::MultiInt(const qint32 *array, int size)
         }
         
         #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-            v.x[1] = _mm_set_epi32(tmp[7], tmp[6], tmp[5], tmp[4]);
-            v.x[0] = _mm_set_epi32(tmp[3], tmp[2], tmp[1], tmp[0]);
+            #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
+                v.x = _mm256_set_epi32(tmp[7], tmp[6], tmp[5], tmp[4],
+                                       tmp[3], tmp[2], tmp[1], tmp[0]);
+            #else
+                v.x[1] = _mm_set_epi32(tmp[7], tmp[6], tmp[5], tmp[4]);
+                v.x[0] = _mm_set_epi32(tmp[3], tmp[2], tmp[1], tmp[0]);
+            #endif
         #else
         #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
             //note that sse packs things the 'wrong' way around

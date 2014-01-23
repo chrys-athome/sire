@@ -60,8 +60,16 @@
         #include <immintrin.h>   // CONDITIONAL_INCLUDE
         #define MULTIFLOAT_AVX_IS_AVAILABLE 1
         #undef MULTIFLOAT_SSE_IS_AVAILABLE
+
+        #undef MULTIFLOAT_AVX2_IS_AVAILABLE
+
+        #ifdef SIRE_USE_AVX2
+            #ifdef __AVX2__
+                #define MULTIFLOAT_AVX2_IS_AVAILABLE 1
+            #endif
+        #endif
     #else
-    #ifdef __SSE__
+    #ifdef __SSE2__
         #include <emmintrin.h>   // CONDITIONAL_INCLUDE
         #define MULTIFLOAT_SSE_IS_AVAILABLE 1
         #undef MULTIFLOAT_AVX_IS_AVAILABLE
@@ -73,7 +81,7 @@
     #endif
 #else
 #ifdef SIRE_USE_SSE
-    #ifdef __SSE__
+    #ifdef __SSE2__
         #include <emmintrin.h>   // CONDITIONAL_INCLUDE
         #define MULTIFLOAT_SSE_IS_AVAILABLE 1
         #undef MULTIFLOAT_AVX_IS_AVAILABLE
@@ -242,20 +250,18 @@ private:
     static void assertAligned(const void *ptr, size_t size);
 
     #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
         #ifndef MULTIFLOAT_CHECK_ALIGNMENT
             void assertAligned(){}
         #endif
 
-    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        union
-        {
-            __m256 x;
-            float a[8];
-        } v;
-        #define MULTIFLOAT_SIZE 8
-    
-        #ifndef SIRE_SKIP_INLINE_FUNCTIONS
+        #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+            _ALIGNED(32) union
+            {
+                __m256 x;
+                float a[8];
+            } v;
+            #define MULTIFLOAT_SIZE 8
+        
             MultiFloat(__m256 avx_val)
             {
                 v.x = avx_val;
@@ -267,19 +273,17 @@ private:
                         assertAligned(this, 32);
                 }
             #endif
-        #endif
-    #else
-    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        union
-        {
-            __m128 x;
-            float a[4];
-        } v;
-        #define MULTIFLOAT_SIZE 4
+        #else
+        #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+            _ALIGNED(16) union
+            {
+                __m128 x;
+                float a[4];
+            } v;
+            #define MULTIFLOAT_SIZE 4
 
-       	#define MULTIFLOAT_BINONE getBinaryOne()
+            #define MULTIFLOAT_BINONE getBinaryOne()
 
-        #ifndef SIRE_SKIP_INLINE_FUNCTIONS
             MultiFloat(__m128 sse_val)
             {
                 v.x = sse_val;
@@ -287,7 +291,7 @@ private:
 
             static float getBinaryOne()
             {
-             	const quint32 x = 0xFFFFFFFF;
+                const quint32 x = 0xFFFFFFFF;
                 return *(reinterpret_cast<const float*>(&x));
             }
   
@@ -298,16 +302,14 @@ private:
                         assertAligned(this, 16);
                 }
             #endif
-        #endif
-    #else
-        _ALIGNED(32) union
-        {
-            float a[8];
-        } v;
-        #define MULTIFLOAT_SIZE 8
-        #define MULTIFLOAT_BINONE getBinaryOne()
+        #else
+            _ALIGNED(32) union
+            {
+                float a[8];
+            } v;
+            #define MULTIFLOAT_SIZE 8
+            #define MULTIFLOAT_BINONE getBinaryOne()
 
-        #ifndef SIRE_SKIP_INLINE_FUNCTIONS
             static float getBinaryOne()
             {
                 const quint32 x = 0xFFFFFFFF;
@@ -321,9 +323,7 @@ private:
                 }
             #endif
         #endif
-    #endif
-    #endif
-    
+        #endif
     #else
         #define MULTIFLOAT_SIZE 16
     #endif //#ifndef SIRE_SKIP_INLINE_FUNCTIONS
