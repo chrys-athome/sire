@@ -164,7 +164,7 @@ private:
             } v;
         
             #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-                MultiInt(__m128 val0, __m128 val1)
+                MultiInt(__m128i val0, __m128i val1)
                 {
                     v.x[0] = val0;
                     v.x[1] = val1;
