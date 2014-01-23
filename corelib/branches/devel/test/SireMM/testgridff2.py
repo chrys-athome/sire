@@ -92,6 +92,12 @@ cljff.setShiftElectrostatics(True)
 #cljff.setUseReactionField(True)
 cljff.setSpace( Cartesian() )
 
+cljff2 = InterCLJFF("cljff2")
+cljff2.setSwitchingFunction( HarmonicSwitchingFunction(coul_cutoff,coul_cutoff,lj_cutoff,lj_cutoff) )
+cljff2.add(waters)
+cljff2.setShiftElectrostatics(True)
+cljff2.setSpace( Cartesian() )
+
 print(gridff.energies())
 print(gridff2.energies())
 
@@ -108,3 +114,10 @@ print("Took %d ms" % ms)
 
 testff.calculateEnergy()
 
+t.start()
+nrgs = cljff2.energies()
+ms = t.elapsed()
+
+print("\nExact compare")
+print(cljff2.energies())
+print("Took %d ms" % ms)
