@@ -33,6 +33,17 @@ void register_MultiInt_class(){
         MultiInt_exposer.def( bp::init< qint32 const *, int >(( bp::arg("array"), bp::arg("size") )) );
         MultiInt_exposer.def( bp::init< QVector< int > const & >(( bp::arg("array") )) );
         MultiInt_exposer.def( bp::init< SireMaths::MultiInt const & >(( bp::arg("other") )) );
+        { //::SireMaths::MultiInt::at
+        
+            typedef ::qint32 ( ::SireMaths::MultiInt::*at_function_type )( int ) const;
+            at_function_type at_function_value( &::SireMaths::MultiInt::at );
+            
+            MultiInt_exposer.def( 
+                "at"
+                , at_function_value
+                , ( bp::arg("i") ) );
+        
+        }
         { //::SireMaths::MultiInt::compareEqual
         
             typedef ::SireMaths::MultiInt ( ::SireMaths::MultiInt::*compareEqual_function_type )( ::SireMaths::MultiInt const & ) const;
@@ -149,6 +160,17 @@ void register_MultiInt_class(){
             MultiInt_exposer.def( 
                 "get"
                 , get_function_value
+                , ( bp::arg("i") ) );
+        
+        }
+        { //::SireMaths::MultiInt::getitem
+        
+            typedef ::qint32 ( ::SireMaths::MultiInt::*getitem_function_type )( int ) const;
+            getitem_function_type getitem_function_value( &::SireMaths::MultiInt::getitem );
+            
+            MultiInt_exposer.def( 
+                "getitem"
+                , getitem_function_value
                 , ( bp::arg("i") ) );
         
         }
@@ -459,6 +481,7 @@ void register_MultiInt_class(){
         MultiInt_exposer.def( "__str__", &__str__< ::SireMaths::MultiInt > );
         MultiInt_exposer.def( "__repr__", &__str__< ::SireMaths::MultiInt > );
         MultiInt_exposer.def( "__len__", &__len_size< ::SireMaths::MultiInt > );
+        MultiInt_exposer.def( "__getitem__", &::SireMaths::MultiInt::getitem );
     }
 
 }

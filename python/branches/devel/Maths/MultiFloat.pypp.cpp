@@ -43,6 +43,17 @@ void register_MultiFloat_class(){
         MultiFloat_exposer.def( bp::init< QVector< double > const & >(( bp::arg("array") )) );
         MultiFloat_exposer.def( bp::init< SireMaths::MultiDouble const & >(( bp::arg("other") )) );
         MultiFloat_exposer.def( bp::init< SireMaths::MultiFloat const & >(( bp::arg("other") )) );
+        { //::SireMaths::MultiFloat::at
+        
+            typedef float ( ::SireMaths::MultiFloat::*at_function_type )( int ) const;
+            at_function_type at_function_value( &::SireMaths::MultiFloat::at );
+            
+            MultiFloat_exposer.def( 
+                "at"
+                , at_function_value
+                , ( bp::arg("i") ) );
+        
+        }
         { //::SireMaths::MultiFloat::compareEqual
         
             typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*compareEqual_function_type )( ::SireMaths::MultiFloat const & ) const;
@@ -184,6 +195,17 @@ void register_MultiFloat_class(){
                 , ( bp::arg("i") ) );
         
         }
+        { //::SireMaths::MultiFloat::getitem
+        
+            typedef float ( ::SireMaths::MultiFloat::*getitem_function_type )( int ) const;
+            getitem_function_type getitem_function_value( &::SireMaths::MultiFloat::getitem );
+            
+            MultiFloat_exposer.def( 
+                "getitem"
+                , getitem_function_value
+                , ( bp::arg("i") ) );
+        
+        }
         { //::SireMaths::MultiFloat::hasBinaryOne
         
             typedef bool ( ::SireMaths::MultiFloat::*hasBinaryOne_function_type )(  ) const;
@@ -301,6 +323,17 @@ void register_MultiFloat_class(){
         { //::SireMaths::MultiFloat::logicalAndNot
         
             typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*logicalAndNot_function_type )( ::SireMaths::MultiInt const & ) const;
+            logicalAndNot_function_type logicalAndNot_function_value( &::SireMaths::MultiFloat::logicalAndNot );
+            
+            MultiFloat_exposer.def( 
+                "logicalAndNot"
+                , logicalAndNot_function_value
+                , ( bp::arg("other") ) );
+        
+        }
+        { //::SireMaths::MultiFloat::logicalAndNot
+        
+            typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*logicalAndNot_function_type )( ::SireMaths::MultiUInt const & ) const;
             logicalAndNot_function_type logicalAndNot_function_value( &::SireMaths::MultiFloat::logicalAndNot );
             
             MultiFloat_exposer.def( 
@@ -642,6 +675,7 @@ void register_MultiFloat_class(){
         MultiFloat_exposer.def( "__str__", &__str__< ::SireMaths::MultiFloat > );
         MultiFloat_exposer.def( "__repr__", &__str__< ::SireMaths::MultiFloat > );
         MultiFloat_exposer.def( "__len__", &__len_size< ::SireMaths::MultiFloat > );
+        MultiFloat_exposer.def( "__getitem__", &::SireMaths::MultiFloat::getitem );
     }
 
 }

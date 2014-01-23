@@ -49,7 +49,12 @@ def fix_Array2D(c):
    c.add_declaration_code( "#include \"SireBase/array2d.hpp\"" )
 
 def fix_Multi(c):
-   c.decls( "multiplyAdd" ).call_policies = call_policies.return_self()
+
+   try:
+       c.decls( "multiplyAdd" ).call_policies = call_policies.return_self()
+   except:
+       pass
+
    c.add_declaration_code("#include \"multifloat.h\"")
    c.add_declaration_code("#include \"multiint.h\"")
 

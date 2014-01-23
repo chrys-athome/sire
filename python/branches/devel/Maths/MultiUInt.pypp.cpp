@@ -37,6 +37,17 @@ void register_MultiUInt_class(){
         MultiUInt_exposer.def( bp::init< quint32 const *, int >(( bp::arg("array"), bp::arg("size") )) );
         MultiUInt_exposer.def( bp::init< QVector< unsigned int > const & >(( bp::arg("array") )) );
         MultiUInt_exposer.def( bp::init< SireMaths::MultiUInt const & >(( bp::arg("other") )) );
+        { //::SireMaths::MultiUInt::at
+        
+            typedef ::quint32 ( ::SireMaths::MultiUInt::*at_function_type )( int ) const;
+            at_function_type at_function_value( &::SireMaths::MultiUInt::at );
+            
+            MultiUInt_exposer.def( 
+                "at"
+                , at_function_value
+                , ( bp::arg("i") ) );
+        
+        }
         { //::SireMaths::MultiUInt::compareEqual
         
             typedef ::SireMaths::MultiUInt ( ::SireMaths::MultiUInt::*compareEqual_function_type )( ::SireMaths::MultiUInt const & ) const;
@@ -153,6 +164,17 @@ void register_MultiUInt_class(){
             MultiUInt_exposer.def( 
                 "get"
                 , get_function_value
+                , ( bp::arg("i") ) );
+        
+        }
+        { //::SireMaths::MultiUInt::getitem
+        
+            typedef ::quint32 ( ::SireMaths::MultiUInt::*getitem_function_type )( int ) const;
+            getitem_function_type getitem_function_value( &::SireMaths::MultiUInt::getitem );
+            
+            MultiUInt_exposer.def( 
+                "getitem"
+                , getitem_function_value
                 , ( bp::arg("i") ) );
         
         }
@@ -302,26 +324,11 @@ void register_MultiUInt_class(){
                 , ( bp::arg("other") ) );
         
         }
-        { //::SireMaths::MultiUInt::multiplyAdd
-        
-            typedef ::SireMaths::MultiUInt & ( ::SireMaths::MultiUInt::*multiplyAdd_function_type )( ::SireMaths::MultiUInt const &,::SireMaths::MultiUInt const & ) ;
-            multiplyAdd_function_type multiplyAdd_function_value( &::SireMaths::MultiUInt::multiplyAdd );
-            
-            MultiUInt_exposer.def( 
-                "multiplyAdd"
-                , multiplyAdd_function_value
-                , ( bp::arg("val0"), bp::arg("val1") )
-                , bp::return_self< >() );
-        
-        }
         MultiUInt_exposer.def( !bp::self );
         MultiUInt_exposer.def( bp::self != bp::self );
-        MultiUInt_exposer.def( bp::self % bp::self );
         MultiUInt_exposer.def( bp::self & bp::self );
-        MultiUInt_exposer.def( bp::self * bp::self );
         MultiUInt_exposer.def( bp::self + bp::self );
         MultiUInt_exposer.def( bp::self - bp::self );
-        MultiUInt_exposer.def( bp::self / bp::self );
         MultiUInt_exposer.def( bp::self < bp::self );
         MultiUInt_exposer.def( bp::self <= bp::self );
         { //::SireMaths::MultiUInt::operator=
@@ -364,6 +371,16 @@ void register_MultiUInt_class(){
         }
         MultiUInt_exposer.def( bp::self ^ bp::self );
         MultiUInt_exposer.def( bp::self | bp::self );
+        { //::SireMaths::MultiUInt::reinterpretCastToFloat
+        
+            typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiUInt::*reinterpretCastToFloat_function_type )(  ) const;
+            reinterpretCastToFloat_function_type reinterpretCastToFloat_function_value( &::SireMaths::MultiUInt::reinterpretCastToFloat );
+            
+            MultiUInt_exposer.def( 
+                "reinterpretCastToFloat"
+                , reinterpretCastToFloat_function_value );
+        
+        }
         { //::SireMaths::MultiUInt::rotate
         
             typedef ::SireMaths::MultiUInt ( ::SireMaths::MultiUInt::*rotate_function_type )(  ) const;
@@ -467,6 +484,7 @@ void register_MultiUInt_class(){
         MultiUInt_exposer.def( "__str__", &__str__< ::SireMaths::MultiUInt > );
         MultiUInt_exposer.def( "__repr__", &__str__< ::SireMaths::MultiUInt > );
         MultiUInt_exposer.def( "__len__", &__len_size< ::SireMaths::MultiUInt > );
+        MultiUInt_exposer.def( "__getitem__", &::SireMaths::MultiUInt::getitem );
     }
 
 }
