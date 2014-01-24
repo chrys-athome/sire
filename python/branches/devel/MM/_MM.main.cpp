@@ -45,6 +45,12 @@
 
 #include "CLJAtoms.pypp.hpp"
 
+#include "CLJBox.pypp.hpp"
+
+#include "CLJBoxIndex.pypp.hpp"
+
+#include "CLJBoxes.pypp.hpp"
+
 #include "CLJComponent.pypp.hpp"
 
 #include "CLJFunction.pypp.hpp"
@@ -429,6 +435,12 @@ BOOST_PYTHON_MODULE(_MM){
     register_CLJAtom_class();
 
     register_CLJAtoms_class();
+
+    register_CLJBox_class();
+
+    register_CLJBoxIndex_class();
+
+    register_CLJBoxes_class();
 
     register_CLJComponent_class();
 

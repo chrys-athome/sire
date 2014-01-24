@@ -11,6 +11,7 @@
 #include "restraintcomponent.h"
 #include "gridff.h"
 #include "anglerestraint.h"
+#include "cljboxes.h"
 #include "interljff.h"
 #include "cljnbpairs.h"
 #include "cljprobe.h"
@@ -55,6 +56,9 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::RestraintComponent >();
     ObjectRegistry::registerConverterFor< SireMM::GridFF >();
     ObjectRegistry::registerConverterFor< SireMM::AngleRestraint >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJBox >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJBoxIndex >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJBoxes >();
     ObjectRegistry::registerConverterFor< SireMM::InterLJFFBase >();
     ObjectRegistry::registerConverterFor< SireMM::InterLJFF >();
     ObjectRegistry::registerConverterFor< SireMM::InterGroupLJFFBase >();

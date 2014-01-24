@@ -207,6 +207,8 @@ void register_CLJAtoms_class(){
         }
         CLJAtoms_exposer.def( bp::self != bp::self );
         CLJAtoms_exposer.def( bp::self + bp::self );
+        CLJAtoms_exposer.def( bp::self + bp::other< SireMM::CLJAtom >() );
+        CLJAtoms_exposer.def( bp::self + bp::other< QVector< SireMM::CLJAtom > >() );
         { //::SireMM::CLJAtoms::operator=
         
             typedef ::SireMM::CLJAtoms & ( ::SireMM::CLJAtoms::*assign_function_type )( ::SireMM::CLJAtoms const & ) ;
