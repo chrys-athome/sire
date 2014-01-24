@@ -153,6 +153,129 @@ const char* CLJAtom::what() const
     return CLJAtom::typeName();
 }
 
+/** Construct an array of CLJAtom atoms from the passed molecule view */
+QVector<CLJAtom> CLJAtom::from(const MoleculeView &molecule, const PropertyMap &map)
+{
+    QElapsedTimer t;
+    t.start();
+    
+    const PropertyName coords_property = map["coordinates"];
+    const PropertyName chg_property = map["charge"];
+    const PropertyName lj_property = map["LJ"];
+    
+    QVector<CLJAtom> cljatoms;
+    
+    if (molecule.selectedAll())
+    {
+        Molecule mol = molecule.molecule();
+        
+        const int nats = mol.nAtoms();
+        
+        if (nats == 0)
+            return QVector<CLJAtom>();
+        
+        //reserve space for the data
+        cljatoms = QVector<CLJAtom>(nats);
+        CLJAtom *cljatms = cljatoms.data();
+
+        const AtomCoords &coords = mol.property(coords_property).asA<AtomCoords>();
+        const AtomCharges &chgs = mol.property(chg_property).asA<AtomCharges>();
+        const AtomLJs &ljs = mol.property(lj_property).asA<AtomLJs>();
+
+        const quint32 molid = mol.number().value();
+        const qint32 s_molid = *(reinterpret_cast<const qint32*>(&molid));
+        
+        int idx = 0;
+        
+        for (int i=0; i<coords.nCutGroups(); ++i)
+        {
+            const CGIdx cgidx(i);
+        
+            const Vector *icoords = coords.constData(cgidx);
+            const Charge *ichg = chgs.constData(cgidx);
+            const LJParameter *ilj = ljs.constData(cgidx);
+            
+            for (int j=0; j<coords.nAtoms(cgidx); ++j)
+            {
+                CLJAtom &cljatm = cljatms[idx];
+            
+                cljatm.x = icoords[j].x();
+                cljatm.y = icoords[j].y();
+                cljatm.z = icoords[j].z();
+                
+                cljatm.chg = ichg[j].value() * std::sqrt(SireUnits::one_over_four_pi_eps0);
+
+                cljatm.sig = std::sqrt(ilj[j].sigma());
+                cljatm.eps = std::sqrt(4.0 * ilj[j].epsilon());
+                
+                cljatm.idnum = s_molid;
+                
+                idx += 1;
+            }
+        }
+    }
+    else
+    {
+        Selector<Atom> atoms = molecule.atoms();
+        
+        QList<Vector> coords = atoms.property<Vector>(coords_property);
+        QList<Charge> chgs = atoms.property<Charge>(chg_property);
+        QList<LJParameter> ljs = atoms.property<LJParameter>(lj_property);
+        
+        if (coords.count() != chgs.count() or
+            coords.count() != ljs.count())
+        {
+            throw SireError::program_bug( QObject::tr(
+                    "It should not be possible for the number of coordinates (%1) "
+                    "to be different to the number of charges (%2) or LJs (%3) "
+                    "for molecule %4.")
+                        .arg(coords.count())
+                        .arg(chgs.count())
+                        .arg(ljs.count())
+                        .arg(atoms.molecule().toString()), CODELOC );
+        }
+
+        const quint32 molid = atoms.data().number().value();
+        const qint32 s_molid = *(reinterpret_cast<const qint32*>(&molid));
+        
+        const int nats = coords.count();
+        
+        if (nats == 0)
+            return QVector<CLJAtom>();
+        
+        //reserve space for the data
+        cljatoms = QVector<CLJAtom>(nats);
+        CLJAtom *cljatms = cljatoms.data();
+        
+        int idx = 0;
+        
+        for (int i=0; i<nats; ++i)
+        {
+            CLJAtom &cljatm = cljatms[idx];
+        
+            cljatm.x = coords[i].x();
+            cljatm.y = coords[i].y();
+            cljatm.z = coords[i].z();
+            
+            cljatm.chg = chgs[i].value() * std::sqrt(SireUnits::one_over_four_pi_eps0);
+
+            cljatm.sig = std::sqrt(ljs[i].sigma());
+            cljatm.eps = std::sqrt(4.0 * ljs[i].epsilon());
+            
+            cljatm.idnum = s_molid;
+            
+            idx += 1;
+        }
+    }
+    
+    quint64 ns = t.nsecsElapsed();
+    
+    qDebug() << "Converting" << cljatoms.count() << "atoms took"
+             << (0.000001*ns) << "ms";
+    
+    return cljatoms;
+}
+
 /** Return the coordinates of the atom */
 Vector CLJAtom::coordinates() const
 {
@@ -217,33 +340,6 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJAtoms &cljatoms)
     return ds;
 }
 
-static float castFromInt(qint32 value, int check=1);
-static qint32 castFromFloat(float value, int check=1);
-
-static qint32 castFromFloat(float value, int check)
-{
-    qint32 ivalue = *(reinterpret_cast<qint32*>(&value));
-
-    qDebug() << "Converted" << value << "to" << ivalue;
-    
-    if (check)
-        qDebug() << "Checking" << ivalue << "is" << castFromInt(ivalue, 0);
-    
-    return ivalue;
-}
-
-static float castFromInt(qint32 value, int check)
-{
-    float fvalue = *(reinterpret_cast<float*>(&value));
-    
-    qDebug() << "Converted" << value << "to" << fvalue;
-    
-    if (check)
-        qDebug() << "Checking" << fvalue << "is" << castFromFloat(fvalue, 0);
-    
-    return fvalue;
-}
-
 /** Return a MultiFloat of the ID of a dummy atom */
 MultiInt CLJAtoms::idOfDummy()
 {
@@ -283,26 +379,38 @@ CLJAtoms::CLJAtoms(const QVector<CLJAtom> &atoms)
     
     const CLJAtom *atms = atoms.constData();
     
+    int idx = 0;
+    
     for (int i=0; i<atoms.count(); ++i)
     {
         const CLJAtom &atm = atms[i];
     
-        xa[i] = atm.x;
-        ya[i] = atm.y;
-        za[i] = atm.z;
-        ca[i] = atm.chg;
-        sa[i] = atm.sig;
-        ea[i] = atm.eps;
-        ida[i] = atm.idnum;
+        if (atm.chg != 0 or atm.eps != 0)
+        {
+            xa[idx] = atm.x;
+            ya[idx] = atm.y;
+            za[idx] = atm.z;
+            ca[idx] = atm.chg;
+            sa[idx] = atm.sig;
+            ea[idx] = atm.eps;
+            ida[idx] = atm.idnum;
+            
+            idx += 1;
+        }
     }
     
-    _x = MultiFloat::fromArray(xf);
-    _y = MultiFloat::fromArray(yf);
-    _z = MultiFloat::fromArray(zf);
-    _q = MultiFloat::fromArray(cf);
-    _sig = MultiFloat::fromArray(sf);
-    _eps = MultiFloat::fromArray(ef);
-    _id = MultiInt::fromArray(idf);
+    if (idx > 0)
+    {
+        _x = MultiFloat::fromArray(xf.constData(), idx);
+        _y = MultiFloat::fromArray(yf.constData(), idx);
+        _z = MultiFloat::fromArray(zf.constData(), idx);
+        
+        _q = MultiFloat::fromArray(cf.constData(), idx);
+        _sig = MultiFloat::fromArray(sf.constData(), idx);
+        _eps = MultiFloat::fromArray(ef.constData(), idx);
+        
+        _id = MultiInt::fromArray(idf.constData(), idx);
+    }
 }
 
 /** Construct from the passed set of coordinates, partial charges and LJ parameters.
@@ -350,28 +458,38 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
         const Charge *chgs = charges.constData();
         const LJParameter *ljs = ljparams.constData();
         
+        int idx = 0;
+        
         for (int i=0; i<coordinates.count(); ++i)
         {
-            xa[i] = coords[i].x();
-            ya[i] = coords[i].y();
-            za[i] = coords[i].z();
+            if (chgs[i].value() != 0 or (not ljs[i].isDummy()))
+            {
+                xa[idx] = coords[i].x();
+                ya[idx] = coords[i].y();
+                za[idx] = coords[i].z();
+                
+                ca[idx] = chgs[i].value();
+                sa[idx] = ljs[i].sigma();
+                ea[idx] = ljs[i].epsilon();
+                
+                ida[idx] = atomid;
             
-            ca[i] = chgs[i].value();
-            sa[i] = ljs[i].sigma();
-            ea[i] = ljs[i].epsilon();
-            
-            ida[i] = atomid;
+                idx += 1;
+            }
         }
         
-        _x = MultiFloat::fromArray(xf);
-        _y = MultiFloat::fromArray(yf);
-        _z = MultiFloat::fromArray(zf);
-        
-        _q = MultiFloat::fromArray(cf);
-        _sig = MultiFloat::fromArray(sf);
-        _eps = MultiFloat::fromArray(ef);
-        
-        _id = MultiInt::fromArray(idf);
+        if (idx > 0)
+        {
+            _x = MultiFloat::fromArray(xf.constData(), idx);
+            _y = MultiFloat::fromArray(yf.constData(), idx);
+            _z = MultiFloat::fromArray(zf.constData(), idx);
+            
+            _q = MultiFloat::fromArray(cf.constData(), idx);
+            _sig = MultiFloat::fromArray(sf.constData(), idx);
+            _eps = MultiFloat::fromArray(ef.constData(), idx);
+            
+            _id = MultiInt::fromArray(idf.constData(), idx);
+        }
     }
     
     MultiFloat *q = _q.data();
@@ -397,6 +515,9 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
                    const QVector<LJParameter> &ljparams,
                    const QVector<qint32> &atomids)
 {
+    QElapsedTimer t;
+    t.start();
+
     if (coordinates.count() != charges.count() or
         coordinates.count() != ljparams.count() or
         coordinates.count() != atomids.count())
@@ -439,28 +560,38 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
         const LJParameter *ljs = ljparams.constData();
         const qint32 *atmids = atomids.constData();
         
+        int idx = 0;
+        
         for (int i=0; i<coordinates.count(); ++i)
         {
-            xa[i] = coords[i].x();
-            ya[i] = coords[i].y();
-            za[i] = coords[i].z();
+            if (chgs[i].value() != 0 or (not ljs[i].isDummy()))
+            {
+                xa[idx] = coords[i].x();
+                ya[idx] = coords[i].y();
+                za[idx] = coords[i].z();
+                
+                ca[idx] = chgs[i].value();
+                sa[idx] = ljs[i].sigma();
+                ea[idx] = ljs[i].epsilon();
+                
+                ida[idx] = atmids[i];
             
-            ca[i] = chgs[i].value();
-            sa[i] = ljs[i].sigma();
-            ea[i] = ljs[i].epsilon();
-            
-            ida[i] = atmids[i];
+                idx += 1;
+            }
         }
         
-        _x = MultiFloat::fromArray(xf);
-        _y = MultiFloat::fromArray(yf);
-        _z = MultiFloat::fromArray(zf);
-        
-        _q = MultiFloat::fromArray(cf);
-        _sig = MultiFloat::fromArray(sf);
-        _eps = MultiFloat::fromArray(ef);
-        
-        _id = MultiInt::fromArray(idf);
+        if (idx > 0)
+        {
+            _x = MultiFloat::fromArray(xf.constData(), idx);
+            _y = MultiFloat::fromArray(yf.constData(), idx);
+            _z = MultiFloat::fromArray(zf.constData(), idx);
+            
+            _q = MultiFloat::fromArray(cf.constData(), idx);
+            _sig = MultiFloat::fromArray(sf.constData(), idx);
+            _eps = MultiFloat::fromArray(ef.constData(), idx);
+            
+            _id = MultiInt::fromArray(idf.constData(), idx);
+        }
     }
     
     MultiFloat *q = _q.data();
@@ -477,6 +608,205 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
         s[i] = s[i].sqrt();
         e[i] = (e[i] * four).sqrt();
     }
+    
+    quint64 ns = t.nsecsElapsed();
+    
+    qDebug() << "Converting" << (_q.count() * MultiFloat::count()) << "atoms took"
+             << (0.000001*ns) << "ms";
+}
+
+/** Construct from the passed MoleculeView */
+void CLJAtoms::constructFrom(const MoleculeView &molecule, const PropertyMap &map)
+{
+    QElapsedTimer t;
+    t.start();
+    
+    //extract all of the data from the passed molecules
+    {
+        const PropertyName coords_property = map["coordinates"];
+        const PropertyName chg_property = map["charge"];
+        const PropertyName lj_property = map["LJ"];
+        
+        if (molecule.selectedAll())
+        {
+            Molecule mol = molecule.molecule();
+            
+            const int nats = mol.nAtoms();
+            
+            if (nats == 0)
+                return;
+            
+            //reserve space for the data
+            QVector<float> xf(nats);
+            QVector<float> yf(nats);
+            QVector<float> zf(nats);
+            
+            QVector<float> qf(nats);
+            QVector<float> sigf(nats);
+            QVector<float> epsf(nats);
+            
+            QVector<qint32> idf(nats);
+            
+            float *xa = xf.data();
+            float *ya = yf.data();
+            float *za = zf.data();
+            
+            float *qa = qf.data();
+            float *siga = sigf.data();
+            float *epsa = epsf.data();
+            
+            qint32 *ida = idf.data();
+            
+            int idx = 0;
+
+            const AtomCoords &coords = mol.property(coords_property).asA<AtomCoords>();
+            const AtomCharges &chgs = mol.property(chg_property).asA<AtomCharges>();
+            const AtomLJs &ljs = mol.property(lj_property).asA<AtomLJs>();
+
+            const quint32 molid = mol.number().value();
+            const qint32 s_molid = *(reinterpret_cast<const qint32*>(&molid));
+            
+            for (int i=0; i<coords.nCutGroups(); ++i)
+            {
+                const CGIdx cgidx(i);
+            
+                const Vector *icoords = coords.constData(cgidx);
+                const Charge *ichg = chgs.constData(cgidx);
+                const LJParameter *ilj = ljs.constData(cgidx);
+                
+                for (int j=0; j<coords.nAtoms(cgidx); ++j)
+                {
+                    if (ichg[j].value() != 0 or (not ilj[j].isDummy()))
+                    {
+                        xa[idx] = icoords[j].x();
+                        ya[idx] = icoords[j].y();
+                        za[idx] = icoords[j].z();
+
+                        qa[idx] = ichg[j].value();
+
+                        siga[idx] = ilj[j].sigma();
+                        epsa[idx] = ilj[j].epsilon();
+                        
+                        ida[idx] = s_molid;
+                    
+                        idx += 1;
+                    }
+                }
+            }
+
+            if (idx > 0)
+            {
+                _x = MultiFloat::fromArray(xf.constData(), idx);
+                _y = MultiFloat::fromArray(yf.constData(), idx);
+                _z = MultiFloat::fromArray(zf.constData(), idx);
+                _q = MultiFloat::fromArray(qf.constData(), idx);
+                _sig = MultiFloat::fromArray(sigf.constData(), idx);
+                _eps = MultiFloat::fromArray(epsf.constData(), idx);
+                _id = MultiInt::fromArray(idf.constData(), idx);
+            }
+        }
+        else
+        {
+            Selector<Atom> atoms = molecule.atoms();
+            
+            QList<Vector> coords = atoms.property<Vector>(coords_property);
+            QList<Charge> chgs = atoms.property<Charge>(chg_property);
+            QList<LJParameter> ljs = atoms.property<LJParameter>(lj_property);
+            
+            if (coords.count() != chgs.count() or
+                coords.count() != ljs.count())
+            {
+                throw SireError::program_bug( QObject::tr(
+                        "It should not be possible for the number of coordinates (%1) "
+                        "to be different to the number of charges (%2) or LJs (%3) "
+                        "for molecule %4.")
+                            .arg(coords.count())
+                            .arg(chgs.count())
+                            .arg(ljs.count())
+                            .arg(atoms.molecule().toString()), CODELOC );
+            }
+
+            const quint32 molid = atoms.data().number().value();
+            const qint32 s_molid = *(reinterpret_cast<const qint32*>(&molid));
+            
+            const int nats = coords.count();
+            
+            if (nats == 0)
+                return;
+            
+            //reserve space for the data
+            QVector<float> xf(nats);
+            QVector<float> yf(nats);
+            QVector<float> zf(nats);
+            
+            QVector<float> qf(nats);
+            QVector<float> sigf(nats);
+            QVector<float> epsf(nats);
+            
+            QVector<qint32> idf(nats);
+            
+            float *xa = xf.data();
+            float *ya = yf.data();
+            float *za = zf.data();
+            
+            float *qa = qf.data();
+            float *siga = sigf.data();
+            float *epsa = epsf.data();
+            
+            qint32 *ida = idf.data();
+            
+            int idx = 0;
+            
+            for (int i=0; i<nats; ++i)
+            {
+                if (chgs[i].value() != 0 or (not ljs[i].isDummy()))
+                {
+                    xa[idx] = coords[i].x();
+                    ya[idx] = coords[i].y();
+                    za[idx] = coords[i].z();
+                    
+                    qa[idx] = chgs[i].value();
+                    siga[idx] = ljs[i].sigma();
+                    epsa[idx] = ljs[i].epsilon();
+
+                    ida[idx] = s_molid;
+                    
+                    idx += 1;
+                }
+            }
+        
+            if (idx > 0)
+            {
+                _x = MultiFloat::fromArray(xf.constData(), idx);
+                _y = MultiFloat::fromArray(yf.constData(), idx);
+                _z = MultiFloat::fromArray(zf.constData(), idx);
+                _q = MultiFloat::fromArray(qf.constData(), idx);
+                _sig = MultiFloat::fromArray(sigf.constData(), idx);
+                _eps = MultiFloat::fromArray(epsf.constData(), idx);
+                _id = MultiInt::fromArray(idf.constData(), idx);
+            }
+        }
+    }
+    
+    MultiFloat *q = _q.data();
+    MultiFloat *s = _sig.data();
+    MultiFloat *e = _eps.data();
+    
+    const MultiFloat four(4.0);
+    const MultiFloat one_over_4_pi_eps_0( std::sqrt(SireUnits::one_over_four_pi_eps0) );
+    
+    //now reduce the charge, sigma and epsilon parameters
+    for (int i=0; i<_q.count(); ++i)
+    {
+        q[i] = q[i] * one_over_4_pi_eps_0;
+        s[i] = s[i].sqrt();
+        e[i] = (e[i] * four).sqrt();
+    }
+    
+    quint64 ns = t.nsecsElapsed();
+    
+    qDebug() << "Converting" << (_q.count() * MultiFloat::count()) << "atoms took"
+             << (0.000001*ns) << "ms";
 }
 
 /** Construct from the parameters in the passed set of Molecules */
@@ -501,7 +831,7 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
              it != molecules.constEnd();
              ++it)
         {
-            nats += it.value().join().nAtoms();
+            nats += it.value().selection().nSelected();
         }
         
         //reserve space for the data
@@ -531,49 +861,99 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
              it != molecules.constEnd();
              ++it)
         {
-            Selector<Atom> atoms = it.value().atoms();
-            
-            QList<Vector> coords = atoms.property<Vector>(coords_property);
-            QList<Charge> chgs = atoms.property<Charge>(chg_property);
-            QList<LJParameter> ljs = atoms.property<LJParameter>(lj_property);
-            
-            if (coords.count() != chgs.count() or
-                coords.count() != ljs.count())
+            if (it.value().selectedAll())
             {
-                throw SireError::program_bug( QObject::tr(
-                        "It should not be possible for the number of coordinates (%1) "
-                        "to be different to the number of charges (%2) or LJs (%3) "
-                        "for molecule %4.")
-                            .arg(coords.count())
-                            .arg(chgs.count())
-                            .arg(ljs.count())
-                            .arg(atoms.molecule().toString()), CODELOC );
+                Molecule mol = it.value().molecule();
+                
+                const AtomCoords &coords = mol.property(coords_property).asA<AtomCoords>();
+                const AtomCharges &chgs = mol.property(chg_property).asA<AtomCharges>();
+                const AtomLJs &ljs = mol.property(lj_property).asA<AtomLJs>();
+
+                const quint32 molid = it.key().value();
+                const qint32 s_molid = *(reinterpret_cast<const qint32*>(&molid));
+                
+                for (int i=0; i<coords.nCutGroups(); ++i)
+                {
+                    const CGIdx cgidx(i);
+                
+                    const Vector *icoords = coords.constData(cgidx);
+                    const Charge *ichg = chgs.constData(cgidx);
+                    const LJParameter *ilj = ljs.constData(cgidx);
+                    
+                    for (int j=0; j<coords.nAtoms(cgidx); ++j)
+                    {
+                        if (ichg[j].value() != 0 or (not ilj[j].isDummy()))
+                        {
+                            xa[idx] = icoords[j].x();
+                            ya[idx] = icoords[j].y();
+                            za[idx] = icoords[j].z();
+
+                            qa[idx] = ichg[j].value();
+
+                            siga[idx] = ilj[j].sigma();
+                            epsa[idx] = ilj[j].epsilon();
+                            
+                            ida[idx] = s_molid;
+                        
+                            idx += 1;
+                        }
+                    }
+                }
             }
-            
-            for (int i=0; i<coords.count(); ++i)
+            else
             {
-                xa[idx] = coords[i].x();
-                ya[idx] = coords[i].y();
-                za[idx] = coords[i].z();
+                Selector<Atom> atoms = it.value().atoms();
                 
-                qa[idx] = chgs[i].value();
-                siga[idx] = ljs[i].sigma();
-                epsa[idx] = ljs[i].epsilon();
+                QList<Vector> coords = atoms.property<Vector>(coords_property);
+                QList<Charge> chgs = atoms.property<Charge>(chg_property);
+                QList<LJParameter> ljs = atoms.property<LJParameter>(lj_property);
                 
-                quint32 molid = it.key().value();
-                ida[idx] = *(reinterpret_cast<qint32*>(&molid));
+                if (coords.count() != chgs.count() or
+                    coords.count() != ljs.count())
+                {
+                    throw SireError::program_bug( QObject::tr(
+                            "It should not be possible for the number of coordinates (%1) "
+                            "to be different to the number of charges (%2) or LJs (%3) "
+                            "for molecule %4.")
+                                .arg(coords.count())
+                                .arg(chgs.count())
+                                .arg(ljs.count())
+                                .arg(atoms.molecule().toString()), CODELOC );
+                }
+
+                const quint32 molid = it.key().value();
+                const qint32 s_molid = *(reinterpret_cast<const qint32*>(&molid));
                 
-                idx += 1;
+                for (int i=0; i<coords.count(); ++i)
+                {
+                    if (chgs[i].value() != 0 or (not ljs[i].isDummy()))
+                    {
+                        xa[idx] = coords[i].x();
+                        ya[idx] = coords[i].y();
+                        za[idx] = coords[i].z();
+                        
+                        qa[idx] = chgs[i].value();
+                        siga[idx] = ljs[i].sigma();
+                        epsa[idx] = ljs[i].epsilon();
+
+                        ida[idx] = s_molid;
+                        
+                        idx += 1;
+                    }
+                }
             }
         }
         
-        _x = MultiFloat::fromArray(xf);
-        _y = MultiFloat::fromArray(yf);
-        _z = MultiFloat::fromArray(zf);
-        _q = MultiFloat::fromArray(qf);
-        _sig = MultiFloat::fromArray(sigf);
-        _eps = MultiFloat::fromArray(epsf);
-        _id = MultiInt::fromArray(idf);
+        if (idx > 0)
+        {
+            _x = MultiFloat::fromArray(xf.constData(), idx);
+            _y = MultiFloat::fromArray(yf.constData(), idx);
+            _z = MultiFloat::fromArray(zf.constData(), idx);
+            _q = MultiFloat::fromArray(qf.constData(), idx);
+            _sig = MultiFloat::fromArray(sigf.constData(), idx);
+            _eps = MultiFloat::fromArray(epsf.constData(), idx);
+            _id = MultiInt::fromArray(idf.constData(), idx);
+        }
     }
     
     MultiFloat *q = _q.data();
@@ -600,7 +980,7 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
 /** Construct from the parameters in the passed molecule view */
 CLJAtoms::CLJAtoms(const MoleculeView &view, const PropertyMap &map)
 {
-    constructFrom(Molecules(view), map);
+    constructFrom(view, map);
 }
 
 /** Construct from the parameters in the passed set of Molecules */
@@ -660,6 +1040,36 @@ const char* CLJAtoms::typeName()
 const char* CLJAtoms::what() const
 {
     return CLJAtoms::typeName();
+}
+
+/** Append the passed array of CLJAtoms onto this array */
+CLJAtoms& CLJAtoms::operator+=(const CLJAtoms &other)
+{
+    if (_x.isEmpty())
+    {
+        this->operator=(other);
+    }
+    else if (not other._x.isEmpty())
+    {
+        _x += other._x;
+        _y += other._y;
+        _z += other._z;
+        _q += other._q;
+        _sig += other._sig;
+        _eps += other._eps;
+        _id += other._id;
+    }
+    
+    return *this;
+}
+
+/** Return the combination of this CLJAtoms with 'other' pasted
+    onto the end */
+CLJAtoms CLJAtoms::operator+(const CLJAtoms &other) const
+{
+    CLJAtoms ret(*this);
+    ret += other;
+    return ret;
 }
 
 /** Return whether or not this array is empty */

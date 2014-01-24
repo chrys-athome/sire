@@ -57,6 +57,7 @@ QDataStream& operator>>(QDataStream&, SireMM::CLJAtoms&);
 
 namespace SireMol
 {
+class Molecule;
 class Molecules;
 class MoleculeView;
 }
@@ -100,6 +101,9 @@ public:
     static const char* typeName();
     
     const char* what() const;
+    
+    static QVector<CLJAtom> from(const MoleculeView &molecule,
+                                 const PropertyMap &map = PropertyMap());
     
     Vector coordinates() const;
     Charge charge() const;
@@ -182,6 +186,10 @@ public:
     CLJAtom at(int i) const;
     CLJAtom getitem(int i) const;
     
+    CLJAtoms operator+(const CLJAtoms &other) const;
+    
+    CLJAtoms& operator+=(const CLJAtoms &other);
+    
     void set(int i, const CLJAtom &atom);
     
     void setCoordinates(int i, Vector coords);
@@ -213,6 +221,7 @@ public:
     
 private:
     void constructFrom(const Molecules &molecules, const PropertyMap &map);
+    void constructFrom(const MoleculeView &molecule, const PropertyMap &map);
 
     /** Vector of the x-coordinates of the atoms */
     QVector<MultiFloat> _x;
