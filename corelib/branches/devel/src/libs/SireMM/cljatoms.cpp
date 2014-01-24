@@ -365,6 +365,9 @@ CLJAtoms::CLJAtoms(const QVector<CLJAtom> &atoms)
     if (atoms.isEmpty())
         return;
     
+    QElapsedTimer t;
+    t.start();
+    
     //vectorise all of the parameters
     QVector<float> xf(atoms.count());
     QVector<float> yf(atoms.count());
@@ -420,6 +423,11 @@ CLJAtoms::CLJAtoms(const QVector<CLJAtom> &atoms)
         
         _id = MultiInt::fromArray(idf.constData(), idx);
     }
+    
+    quint64 ns = t.elapsed();
+
+    qDebug() << "Converting" << (_q.count() * MultiFloat::count()) << "atoms took"
+             << (0.000001*ns) << "ms";    
 }
 
 /** Construct from the passed set of coordinates, partial charges and LJ parameters.
@@ -1072,12 +1080,41 @@ CLJAtoms& CLJAtoms::operator+=(const CLJAtoms &other)
     return *this;
 }
 
+/** Append the passed array of CLJAtom objects onto this array */
+CLJAtoms& CLJAtoms::operator+=(const QVector<CLJAtom> &atoms)
+{
+    return this->operator+=( CLJAtoms(atoms) );
+}
+
+/** Append the passed CLJAtom onto this array */
+CLJAtoms& CLJAtoms::operator+=(const CLJAtom &atom)
+{
+    return this->operator+=( QVector<CLJAtom>(1,atom) );
+}
+
 /** Return the combination of this CLJAtoms with 'other' pasted
     onto the end */
 CLJAtoms CLJAtoms::operator+(const CLJAtoms &other) const
 {
     CLJAtoms ret(*this);
     ret += other;
+    return ret;
+}
+
+/** Return the combination of this CLJAtoms with 'atom' pasted onto the end */
+CLJAtoms CLJAtoms::operator+(const CLJAtom &atom) const
+{
+    CLJAtoms ret(*this);
+    ret += atom;
+    return ret;
+}
+
+/** Return the combination of this CLJAToms with the array of CLJAtoms in 'atoms'
+    pasted onto the end */
+CLJAtoms CLJAtoms::operator+(const QVector<CLJAtom> &atoms) const
+{
+    CLJAtoms ret(*this);
+    ret += atoms;
     return ret;
 }
 

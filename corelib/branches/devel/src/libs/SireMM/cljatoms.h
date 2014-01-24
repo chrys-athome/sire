@@ -192,7 +192,13 @@ public:
     
     CLJAtoms operator+(const CLJAtoms &other) const;
     
+    CLJAtoms operator+(const CLJAtom &atom) const;
+    CLJAtoms operator+(const QVector<CLJAtom> &atoms) const;
+    
     CLJAtoms& operator+=(const CLJAtoms &other);
+    
+    CLJAtoms& operator+=(const CLJAtom &atom);
+    CLJAtoms& operator+=(const QVector<CLJAtom> &atoms);
     
     void set(int i, const CLJAtom &atom);
     
