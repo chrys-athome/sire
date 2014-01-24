@@ -217,6 +217,10 @@ public:
     
     bool operator==(const CLJBoxes &other) const;
     bool operator!=(const CLJBoxes &other) const;
+
+    static const char* typeName();
+
+    const char* what() const;
     
     QVector<CLJBoxIndex> occupiedBoxIndicies() const;
     

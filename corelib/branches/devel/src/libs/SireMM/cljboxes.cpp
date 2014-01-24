@@ -561,3 +561,13 @@ Length CLJBoxes::length() const
 {
     return Length(box_length);
 }
+
+const char* CLJBoxes::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CLJBoxes>() );
+}
+
+const char* CLJBoxes::what() const
+{
+    return CLJBoxes::typeName();
+}
