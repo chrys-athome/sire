@@ -43,7 +43,7 @@ SireMM::CLJAtoms __copy__(const SireMM::CLJAtoms &other){ return SireMM::CLJAtom
 
 #include "Qt/qdatastream.hpp"
 
-const char* pvt_get_name(const SireMM::CLJAtoms&){ return "SireMM::CLJAtoms";}
+#include "Helpers/str.hpp"
 
 #include "Helpers/len.hpp"
 
@@ -206,6 +206,7 @@ void register_CLJAtoms_class(){
         
         }
         CLJAtoms_exposer.def( bp::self != bp::self );
+        CLJAtoms_exposer.def( bp::self + bp::self );
         { //::SireMM::CLJAtoms::operator=
         
             typedef ::SireMM::CLJAtoms & ( ::SireMM::CLJAtoms::*assign_function_type )( ::SireMM::CLJAtoms const & ) ;
@@ -317,6 +318,16 @@ void register_CLJAtoms_class(){
                 , size_function_value );
         
         }
+        { //::SireMM::CLJAtoms::toString
+        
+            typedef ::QString ( ::SireMM::CLJAtoms::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireMM::CLJAtoms::toString );
+            
+            CLJAtoms_exposer.def( 
+                "toString"
+                , toString_function_value );
+        
+        }
         { //::SireMM::CLJAtoms::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -379,8 +390,8 @@ void register_CLJAtoms_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CLJAtoms_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireMM::CLJAtoms >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-        CLJAtoms_exposer.def( "__str__", &pvt_get_name);
-        CLJAtoms_exposer.def( "__repr__", &pvt_get_name);
+        CLJAtoms_exposer.def( "__str__", &__str__< ::SireMM::CLJAtoms > );
+        CLJAtoms_exposer.def( "__repr__", &__str__< ::SireMM::CLJAtoms > );
         CLJAtoms_exposer.def( "__len__", &__len_size< ::SireMM::CLJAtoms > );
         CLJAtoms_exposer.def( "__getitem__", &::SireMM::CLJAtoms::getitem );
     }

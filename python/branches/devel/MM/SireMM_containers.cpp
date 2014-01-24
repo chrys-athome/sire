@@ -44,6 +44,7 @@
 #include "SireMM/twoatomfunctions.h"
 #include "SireMM/threeatomfunctions.h"
 #include "SireMM/fouratomfunctions.h"
+#include "SireMM/cljatoms.h"
 
 #include "SireBase/packedarray2d.hpp"
 
@@ -60,5 +61,7 @@ void register_SireMM_containers()
     register_list< QVector<TwoAtomFunction> >();
     register_list< QVector<ThreeAtomFunction> >();
     register_list< QVector<FourAtomFunction> >();
+
+    register_list< QVector<CLJAtom> >();
 
 }

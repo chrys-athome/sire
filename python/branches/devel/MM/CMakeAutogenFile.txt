@@ -36,6 +36,7 @@ set ( PYPP_SOURCES
        CoulombScaleFactor.pypp.cpp
        InterCLJFF.pypp.cpp
        LJPotentialInterface_IntraLJPotential_.pypp.cpp
+       CLJAtom.pypp.cpp
        CLJPotentialInterface_IntraSoftCLJPotential_.pypp.cpp
        ThreeAtomFunctions.pypp.cpp
        InternalSymbols.pypp.cpp
