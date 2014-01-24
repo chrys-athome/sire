@@ -143,6 +143,15 @@ bool CLJAtom::operator!=(const CLJAtom &other) const
     return not operator==(other);
 }
 
+QString CLJAtom::toString() const
+{
+    return QObject::tr("CLJAtom( %1, %2, %3, %4 )")
+           .arg(coordinates().toString())
+           .arg(charge().toString())
+           .arg(ljParameter().toString())
+           .arg(ID());
+}
+
 const char* CLJAtom::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<CLJAtom>() );
@@ -154,7 +163,7 @@ const char* CLJAtom::what() const
 }
 
 /** Construct an array of CLJAtom atoms from the passed molecule view */
-QVector<CLJAtom> CLJAtom::from(const MoleculeView &molecule, const PropertyMap &map)
+QVector<CLJAtom> CLJAtom::buildFrom(const MoleculeView &molecule, const PropertyMap &map)
 {
     QElapsedTimer t;
     t.start();
@@ -1090,6 +1099,21 @@ int CLJAtoms::count() const
 int CLJAtoms::size() const
 {
     return count();
+}
+
+QString CLJAtoms::toString() const
+{
+    QStringList lines;
+
+    foreach( CLJAtom atom, this->atoms() )
+    {
+        lines.append( atom.toString() );
+    }
+
+    if (lines.isEmpty())
+        return "CLJAtoms()";
+
+    return QObject::tr("CLJAtoms( %1 )").arg(lines.join("\n"));
 }
 
 /** Return the ith atom in the vector */

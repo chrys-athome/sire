@@ -197,13 +197,13 @@ QVector<MultiUInt> MultiUInt::fromArray(const quint32 *array, int size)
         {
             for (int i=0; i<nvecs; ++i)
             {
-                ma[i] = MultiInt(array+idx, MULTIFLOAT_SIZE);
+                ma[i] = MultiUInt(array+idx, MULTIFLOAT_SIZE);
                 idx += MULTIFLOAT_SIZE;
             }
     
             if (nremain > 0)
             {
-                ma[marray.count()-1] = MultiInt(array+idx, nremain);
+                ma[marray.count()-1] = MultiUInt(array+idx, nremain);
             }
         }
         else
@@ -218,7 +218,7 @@ QVector<MultiUInt> MultiUInt::fromArray(const quint32 *array, int size)
                     ++idx;
                 }
             
-                ma[i] = MultiInt((quint32*)(&tmp), MULTIFLOAT_SIZE);
+                ma[i] = MultiUInt((quint32*)(&tmp), MULTIFLOAT_SIZE);
             }
             
             if (nremain > 0)
@@ -229,7 +229,7 @@ QVector<MultiUInt> MultiUInt::fromArray(const quint32 *array, int size)
                     ++idx;
                 }
                 
-                ma[marray.count()-1] = MultiInt((quint32*)(&tmp), nremain);
+                ma[marray.count()-1] = MultiUInt((quint32*)(&tmp), nremain);
             }
         }
     #else

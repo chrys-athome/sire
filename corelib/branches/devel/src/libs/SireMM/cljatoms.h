@@ -102,8 +102,10 @@ public:
     
     const char* what() const;
     
-    static QVector<CLJAtom> from(const MoleculeView &molecule,
-                                 const PropertyMap &map = PropertyMap());
+    static QVector<CLJAtom> buildFrom(const MoleculeView &molecule,
+                                      const PropertyMap &map = PropertyMap());
+
+    QString toString() const;
     
     Vector coordinates() const;
     Charge charge() const;
@@ -176,6 +178,8 @@ public:
     static const char* typeName();
     const char* what() const;
     
+    QString toString() const;
+
     int count() const;
     int size() const;
     
@@ -300,6 +304,7 @@ inline const QVector<MultiInt>& CLJAtoms::ID() const
 Q_DECLARE_METATYPE(SireMM::CLJAtom);
 Q_DECLARE_METATYPE(SireMM::CLJAtoms);
 
+SIRE_EXPOSE_CLASS( SireMM::CLJAtom )
 SIRE_EXPOSE_CLASS( SireMM::CLJAtoms )
 
 SIRE_END_HEADER
