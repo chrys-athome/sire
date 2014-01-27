@@ -29,7 +29,7 @@ SireMM::CLJBoxes __copy__(const SireMM::CLJBoxes &other){ return SireMM::CLJBoxe
 
 #include "Qt/qdatastream.hpp"
 
-const char* pvt_get_name(const SireMM::CLJBoxes&){ return "SireMM::CLJBoxes";}
+#include "Helpers/str.hpp"
 
 void register_CLJBoxes_class(){
 
@@ -124,6 +124,26 @@ void register_CLJBoxes_class(){
                 , length_function_value );
         
         }
+        { //::SireMM::CLJBoxes::nAtoms
+        
+            typedef int ( ::SireMM::CLJBoxes::*nAtoms_function_type )(  ) const;
+            nAtoms_function_type nAtoms_function_value( &::SireMM::CLJBoxes::nAtoms );
+            
+            CLJBoxes_exposer.def( 
+                "nAtoms"
+                , nAtoms_function_value );
+        
+        }
+        { //::SireMM::CLJBoxes::nOccupiedBoxes
+        
+            typedef int ( ::SireMM::CLJBoxes::*nOccupiedBoxes_function_type )(  ) const;
+            nOccupiedBoxes_function_type nOccupiedBoxes_function_value( &::SireMM::CLJBoxes::nOccupiedBoxes );
+            
+            CLJBoxes_exposer.def( 
+                "nOccupiedBoxes"
+                , nOccupiedBoxes_function_value );
+        
+        }
         { //::SireMM::CLJBoxes::occupiedBoxIndicies
         
             typedef ::QVector< SireMM::CLJBoxIndex > ( ::SireMM::CLJBoxes::*occupiedBoxIndicies_function_type )(  ) const;
@@ -159,6 +179,37 @@ void register_CLJBoxes_class(){
         
         }
         CLJBoxes_exposer.def( bp::self == bp::self );
+        { //::SireMM::CLJBoxes::toString
+        
+            typedef ::QString ( ::SireMM::CLJBoxes::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireMM::CLJBoxes::toString );
+            
+            CLJBoxes_exposer.def( 
+                "toString"
+                , toString_function_value );
+        
+        }
+        { //::SireMM::CLJBoxes::typeName
+        
+            typedef char const * ( *typeName_function_type )(  );
+            typeName_function_type typeName_function_value( &::SireMM::CLJBoxes::typeName );
+            
+            CLJBoxes_exposer.def( 
+                "typeName"
+                , typeName_function_value );
+        
+        }
+        { //::SireMM::CLJBoxes::what
+        
+            typedef char const * ( ::SireMM::CLJBoxes::*what_function_type )(  ) const;
+            what_function_type what_function_value( &::SireMM::CLJBoxes::what );
+            
+            CLJBoxes_exposer.def( 
+                "what"
+                , what_function_value );
+        
+        }
+        CLJBoxes_exposer.staticmethod( "typeName" );
         CLJBoxes_exposer.def( "__copy__", &__copy__);
         CLJBoxes_exposer.def( "__deepcopy__", &__copy__);
         CLJBoxes_exposer.def( "clone", &__copy__);
@@ -166,8 +217,8 @@ void register_CLJBoxes_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CLJBoxes_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireMM::CLJBoxes >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-        CLJBoxes_exposer.def( "__str__", &pvt_get_name);
-        CLJBoxes_exposer.def( "__repr__", &pvt_get_name);
+        CLJBoxes_exposer.def( "__str__", &__str__< ::SireMM::CLJBoxes > );
+        CLJBoxes_exposer.def( "__repr__", &__str__< ::SireMM::CLJBoxes > );
     }
 
 }

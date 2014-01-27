@@ -29,7 +29,7 @@ SireMM::CLJBoxIndex __copy__(const SireMM::CLJBoxIndex &other){ return SireMM::C
 
 #include "Qt/qdatastream.hpp"
 
-const char* pvt_get_name(const SireMM::CLJBoxIndex&){ return "SireMM::CLJBoxIndex";}
+#include "Helpers/str.hpp"
 
 void register_CLJBoxIndex_class(){
 
@@ -162,6 +162,16 @@ void register_CLJBoxIndex_class(){
         CLJBoxIndex_exposer.def( bp::self == bp::self );
         CLJBoxIndex_exposer.def( bp::self > bp::self );
         CLJBoxIndex_exposer.def( bp::self >= bp::self );
+        { //::SireMM::CLJBoxIndex::toString
+        
+            typedef ::QString ( ::SireMM::CLJBoxIndex::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireMM::CLJBoxIndex::toString );
+            
+            CLJBoxIndex_exposer.def( 
+                "toString"
+                , toString_function_value );
+        
+        }
         { //::SireMM::CLJBoxIndex::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -192,8 +202,8 @@ void register_CLJBoxIndex_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CLJBoxIndex_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireMM::CLJBoxIndex >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-        CLJBoxIndex_exposer.def( "__str__", &pvt_get_name);
-        CLJBoxIndex_exposer.def( "__repr__", &pvt_get_name);
+        CLJBoxIndex_exposer.def( "__str__", &__str__< ::SireMM::CLJBoxIndex > );
+        CLJBoxIndex_exposer.def( "__repr__", &__str__< ::SireMM::CLJBoxIndex > );
     }
 
 }

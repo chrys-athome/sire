@@ -29,7 +29,7 @@ SireMM::CLJBox __copy__(const SireMM::CLJBox &other){ return SireMM::CLJBox(othe
 
 #include "Qt/qdatastream.hpp"
 
-const char* pvt_get_name(const SireMM::CLJBox&){ return "SireMM::CLJBox";}
+#include "Helpers/str.hpp"
 
 void register_CLJBox_class(){
 
@@ -49,6 +49,16 @@ void register_CLJBox_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireMM::CLJBox::nAtoms
+        
+            typedef int ( ::SireMM::CLJBox::*nAtoms_function_type )(  ) const;
+            nAtoms_function_type nAtoms_function_value( &::SireMM::CLJBox::nAtoms );
+            
+            CLJBox_exposer.def( 
+                "nAtoms"
+                , nAtoms_function_value );
+        
+        }
         CLJBox_exposer.def( bp::self != bp::self );
         { //::SireMM::CLJBox::operator=
         
@@ -63,6 +73,16 @@ void register_CLJBox_class(){
         
         }
         CLJBox_exposer.def( bp::self == bp::self );
+        { //::SireMM::CLJBox::toString
+        
+            typedef ::QString ( ::SireMM::CLJBox::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireMM::CLJBox::toString );
+            
+            CLJBox_exposer.def( 
+                "toString"
+                , toString_function_value );
+        
+        }
         { //::SireMM::CLJBox::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -91,8 +111,8 @@ void register_CLJBox_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CLJBox_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireMM::CLJBox >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-        CLJBox_exposer.def( "__str__", &pvt_get_name);
-        CLJBox_exposer.def( "__repr__", &pvt_get_name);
+        CLJBox_exposer.def( "__str__", &__str__< ::SireMM::CLJBox > );
+        CLJBox_exposer.def( "__repr__", &__str__< ::SireMM::CLJBox > );
     }
 
 }
