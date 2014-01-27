@@ -149,6 +149,7 @@ friend QDataStream& ::operator>>(QDataStream&, CLJAtoms&);
 public:
     CLJAtoms();
     CLJAtoms(const QVector<CLJAtom> &atoms);
+    CLJAtoms(const QList<CLJAtom> &atoms);
     
     CLJAtoms(const QVector<Vector> &coordinates,
              const QVector<Charge> &charges,

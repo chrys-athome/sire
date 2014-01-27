@@ -32,6 +32,8 @@
 #include "SireMM/cljatoms.h"
 
 #include <QMap>
+#include <QSharedDataPointer>
+#include <QSharedData>
 
 SIRE_BEGIN_HEADER
 
@@ -79,6 +81,7 @@ friend QDataStream& ::operator>>(QDataStream&, CLJBox&);
 
 public:
     CLJBox();
+    CLJBox(const CLJAtoms &atoms);
     CLJBox(const CLJBox &other);
     
     ~CLJBox();

@@ -75,11 +75,15 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJBox &box)
 }
 
 /** Null constructor */
-CLJBox::CLJBox() : QSharedData()
+CLJBox::CLJBox()
+{}
+
+/** Construct a box that holds the passed atoms */
+CLJBox::CLJBox(const CLJAtoms &atoms) : atms(atoms)
 {}
 
 /** Copy constructor */
-CLJBox::CLJBox(const CLJBox &other) : QSharedData(), atms(other.atms)
+CLJBox::CLJBox(const CLJBox &other) : atms(other.atms)
 {}
 
 /** Destructor */
@@ -144,17 +148,17 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJBoxPtr &ptr)
     return ds;
 }
 
-static const QSharedDataPointer<CLJBox> *null_box = 0;
+static const CLJBoxPtr *null_box = 0;
 
 /** Constructor */
 CLJBoxPtr::CLJBoxPtr()
 {
     if (null_box == 0)
     {
-        null_box = new QSharedDataPointer<CLJBox>(new CLJBox());
+        null_box = new CLJBoxPtr( new CLJBox() );
     }
     
-    d = *null_box;
+    this->operator=(*null_box);
 }
 
 /** Construct from the passed box. This takes over ownership of the pointer,
@@ -165,14 +169,14 @@ CLJBoxPtr::CLJBoxPtr(CLJBox *box)
     {
         if (null_box == 0)
         {
-            null_box = new QSharedDataPointer<CLJBox>(new CLJBox());
+            null_box = new CLJBoxPtr( new CLJBox() );
         }
         
-        d = *null_box;
+        this->operator=(*null_box);
     }
     else
     {
-        d = QSharedDataPointer<CLJBox>(box);
+        d = box;
     }
 }
 
@@ -309,9 +313,9 @@ QString CLJBoxIndex::toString() const
     of length 1 / inv_box_length */
 CLJBoxIndex CLJBoxIndex::createWithInverseBoxLength(float x, float y, float z, float inv_length)
 {
-    int i = (x * inv_length) + 0.5;
-    int j = (y * inv_length) + 0.5;
-    int k = (z * inv_length) + 0.5;
+    int i = std::floor(x * inv_length + 0.5);
+    int j = std::floor(y * inv_length + 0.5);
+    int k = std::floor(z * inv_length + 0.5);
     
     const int min16 = std::numeric_limits<qint16>::min();
     const int max16 = std::numeric_limits<qint16>::max();
@@ -387,7 +391,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJBoxes &boxes)
     return ds;
 }
 
-const double default_box_length = 5;
+const double default_box_length = 10;
 
 /** Null constructor */
 CLJBoxes::CLJBoxes() : box_length(default_box_length)
@@ -399,39 +403,37 @@ void CLJBoxes::constructFrom(const CLJAtoms &atoms)
     QElapsedTimer t;
     t.start();
     
-    const QVector<MultiFloat> &xm = atoms.x();
-    const QVector<MultiFloat> &ym = atoms.y();
-    const QVector<MultiFloat> &zm = atoms.z();
-    const QVector<MultiFloat> &qm = atoms.q();
-    const QVector<MultiFloat> &sigm = atoms.sigma();
-    const QVector<MultiFloat> &epsm = atoms.epsilon();
-    const QVector<MultiInt> &idm = atoms.ID();
+    const float inv_length = 1.0 / box_length;
     
-    const MultiFloat *xa = xm.constData();
-    const MultiFloat *ya = ym.constData();
-    const MultiFloat *za = zm.constData();
-    const MultiFloat *qa = qm.constData();
-    const MultiFloat *siga = sigm.constData();
-    const MultiFloat *epsa = epsm.constData();
-    const MultiInt *ida = idm.constData();
+    QMap< CLJBoxIndex,QList<CLJAtom> > boxed_atoms;
     
-    for (int i=0; i<xm.count(); ++i)
+    for (int i=0; i<atoms.count(); ++i)
     {
-        for (int ii=0; ii<MultiFloat::count(); ++ii)
+        const CLJAtom atom = atoms[i];
+
+        if (atom.ID() != 0)
         {
-            if (ida[i][ii] != 0)
-            {
-                //box up this atom
-                const float x = xa[i][ii];
-                const float y = ya[i][ii];
-                const float z = za[i][ii];
-            }
+            CLJBoxIndex cljindex = CLJBoxIndex::createWithInverseBoxLength(
+                                                        atom.coordinates(), inv_length);
+            
+            boxed_atoms[cljindex].append(atom);
         }
     }
+
+    //now build the CLJAtoms for each box
+    for (QMap< CLJBoxIndex,QList<CLJAtom> >::const_iterator it = boxed_atoms.constBegin();
+         it != boxed_atoms.constEnd();
+         ++it)
+    {
+        //qDebug() << "Box" << it.key().box(Length(box_length)).toString() << it.value().count();
+        bxs.insert( it.key(), new CLJBox(CLJAtoms(it.value())) );
+    }
     
-    quint64 ns = t.elapsed();
+    quint64 ns = t.nsecsElapsed();
     qDebug() << "Boxing up" << atoms.count() << "atoms took"
              << (0.000001*ns) << "ms";
+
+    qDebug() << "number of boxes ==" << boxed_atoms.count();
 }
 
 /** Box up the passed set of atoms into boxes of the default box size

@@ -59,11 +59,13 @@ TestFF& TestFF::operator=(const TestFF &other)
 void TestFF::add(const Molecules &molecules)
 {
     atoms0 = CLJAtoms(molecules);
+    cljboxes0 = CLJBoxes(atoms0);
 }
 
 void TestFF::addFixedAtoms(const Molecules &molecules)
 {
     atoms1 = CLJAtoms(molecules);
+    cljboxes1 = CLJBoxes(atoms1);
 }
 
 void TestFF::setCutoff(Length coul_cutoff, Length lj_cutoff)

@@ -31,6 +31,7 @@
 
 #include "cljfunction.h"
 #include "cljatoms.h"
+#include "cljboxes.h"
 
 #include "SireMol/molecules.h"
 
@@ -66,6 +67,9 @@ public:
 private:
     CLJAtoms atoms0;
     CLJAtoms atoms1;
+
+    CLJBoxes cljboxes0;
+    CLJBoxes cljboxes1;
 
     boost::shared_ptr<CLJFunction> cljfunc;
 };

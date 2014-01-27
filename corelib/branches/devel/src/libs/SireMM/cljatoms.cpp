@@ -365,8 +365,8 @@ CLJAtoms::CLJAtoms(const QVector<CLJAtom> &atoms)
     if (atoms.isEmpty())
         return;
     
-    QElapsedTimer t;
-    t.start();
+    /*QElapsedTimer t;
+    t.start();*/
     
     //vectorise all of the parameters
     QVector<float> xf(atoms.count());
@@ -424,10 +424,79 @@ CLJAtoms::CLJAtoms(const QVector<CLJAtom> &atoms)
         _id = MultiInt::fromArray(idf.constData(), idx);
     }
     
-    quint64 ns = t.elapsed();
+    /*quint64 ns = t.nsecsElapsed();
 
     qDebug() << "Converting" << (_q.count() * MultiFloat::count()) << "atoms took"
-             << (0.000001*ns) << "ms";    
+             << (0.000001*ns) << "ms";*/
+}
+
+/** Construct from the passed list of CLJAtom atoms */
+CLJAtoms::CLJAtoms(const QList<CLJAtom> &atoms)
+{
+    if (atoms.isEmpty())
+        return;
+    
+    /*QElapsedTimer t;
+    t.start();*/
+    
+    //vectorise all of the parameters
+    QVector<float> xf(atoms.count());
+    QVector<float> yf(atoms.count());
+    QVector<float> zf(atoms.count());
+    
+    QVector<float> cf(atoms.count());
+    QVector<float> sf(atoms.count());
+    QVector<float> ef(atoms.count());
+    
+    QVector<qint32> idf(atoms.count());
+    
+    float *xa = xf.data();
+    float *ya = yf.data();
+    float *za = zf.data();
+    
+    float *ca = cf.data();
+    float *sa = sf.data();
+    float *ea = ef.data();
+    
+    qint32 *ida = idf.data();
+    
+    int idx = 0;
+    
+    for (int i=0; i<atoms.count(); ++i)
+    {
+        const CLJAtom &atm = atoms.at(i);
+    
+        if (atm.chg != 0 or atm.eps != 0)
+        {
+            xa[idx] = atm.x;
+            ya[idx] = atm.y;
+            za[idx] = atm.z;
+            ca[idx] = atm.chg;
+            sa[idx] = atm.sig;
+            ea[idx] = atm.eps;
+            ida[idx] = atm.idnum;
+            
+            idx += 1;
+        }
+    }
+    
+    if (idx > 0)
+    {
+        _x = MultiFloat::fromArray(xf.constData(), idx);
+        _y = MultiFloat::fromArray(yf.constData(), idx);
+        _z = MultiFloat::fromArray(zf.constData(), idx);
+        
+        _q = MultiFloat::fromArray(cf.constData(), idx);
+        _sig = MultiFloat::fromArray(sf.constData(), idx);
+        _eps = MultiFloat::fromArray(ef.constData(), idx);
+        
+        _id = MultiInt::fromArray(idf.constData(), idx);
+    }
+    
+    /*quint64 ns = t.nsecsElapsed();
+
+    qDebug() << "Converting" << (_q.count() * MultiFloat::count()) << "atoms took"
+             << (0.000001*ns) << "ms";*/
 }
 
 /** Construct from the passed set of coordinates, partial charges and LJ parameters.
