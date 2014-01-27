@@ -86,6 +86,11 @@ CLJBox::CLJBox(const CLJBox &other) : QSharedData(), atms(other.atms)
 CLJBox::~CLJBox()
 {}
 
+QString CLJBox::toString() const
+{
+    return QObject::tr("CLJBox( nAtoms() == %1 )").arg(nAtoms());
+}
+
 /** Copy assignment operator */
 CLJBox& CLJBox::operator=(const CLJBox &other)
 {
@@ -103,6 +108,12 @@ bool CLJBox::operator==(const CLJBox &other) const
 bool CLJBox::operator!=(const CLJBox &other) const
 {
     return not operator==(other);
+}
+
+/** Return the number of atoms in the box */
+int CLJBox::nAtoms() const
+{
+    return atms.count();
 }
 
 const char* CLJBox::typeName()
@@ -285,6 +296,15 @@ CLJBoxIndex CLJBoxIndex::boxOnly() const
     return CLJBoxIndex( i(), j(), k() );
 }
 
+QString CLJBoxIndex::toString() const
+{
+    return QObject::tr("CLJBoxIndex( %1, %2, %3 : %4 )")
+                .arg(v.index.ii)
+                .arg(v.index.jj)
+                .arg(v.index.kk)
+                .arg(v.index.idx);
+}
+
 /** Create the index for the box that contains the point 'x,y,z' in a set of boxes
     of length 1 / inv_box_length */
 CLJBoxIndex CLJBoxIndex::createWithInverseBoxLength(float x, float y, float z, float inv_length)
@@ -464,6 +484,12 @@ bool CLJBoxes::operator!=(const CLJBoxes &other) const
     return not operator==(other);
 }
 
+QString CLJBoxes::toString() const
+{
+    return QObject::tr("CLJBoxes( nAtoms() == %1, nOccupiedBoxes() == %2 )")
+                .arg(nAtoms()).arg(nOccupiedBoxes());
+}
+
 /** Return the indicies of all occupied boxes */
 QVector<CLJBoxIndex> CLJBoxes::occupiedBoxIndicies() const
 {
@@ -538,6 +564,27 @@ QVector<AABox> CLJBoxes::boxDimensions() const
     }
     
     return b;
+}
+
+/** Return the number of occupied boxes */
+int CLJBoxes::nOccupiedBoxes() const
+{
+    return bxs.count();
+}
+
+/** Return the number of atoms in the boxes */
+int CLJBoxes::nAtoms() const
+{
+    int n = 0;
+    
+    for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = bxs.constBegin();
+         it != bxs.constEnd();
+         ++it)
+    {
+        n += it.value().read().nAtoms();
+    }
+    
+    return n;
 }
 
 /** Return all of the atoms in all of the boxes (these may

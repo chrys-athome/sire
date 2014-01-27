@@ -319,11 +319,22 @@ bool AABox::contains(const AABox &other) const
     else
     {
         const Vector maxdelta = this->maxCoords() - other.maxCoords();
-        
-        if (maxdelta.x() < 0 or maxdelta.y() < 0 or maxdelta.z() < 0)
-            return false;
-        else
-            return true;
+        return (maxdelta.x() > 0 and maxdelta.y() > 0 and maxdelta.z() > 0);
+    }
+}
+
+/** Return whether or not this box contains the point 'point' */
+bool AABox::contains(const Vector &point) const
+{
+    const Vector mindelta = this->minCoords() - point;
+    
+    if (mindelta.x() > 0 or mindelta.y() > 0 or mindelta.z() > 0)
+        return false;
+    
+    else
+    {
+        const Vector maxdelta = this->maxCoords() - point;
+        return (maxdelta.x() > 0 and maxdelta.y() > 0 and maxdelta.z() > 0);
     }
 }
 

@@ -91,7 +91,11 @@ public:
     static const char* typeName();
     const char* what() const;
     
+    QString toString() const;
+    
     const CLJAtoms& atoms() const;
+
+    int nAtoms() const;
 
 private:
     /** The actual atoms in the box */
@@ -155,6 +159,8 @@ public:
     
     static const char* typeName();
     const char* what() const;
+    
+    QString toString() const;
     
     qint16 i() const;
     qint16 j() const;
@@ -222,6 +228,8 @@ public:
 
     const char* what() const;
     
+    QString toString() const;
+    
     QVector<CLJBoxIndex> occupiedBoxIndicies() const;
     
     const QMap<CLJBoxIndex,CLJBoxPtr>& occupiedBoxes() const;
@@ -238,6 +246,10 @@ public:
     CLJAtoms atoms() const;
     
     Length length() const;
+    
+    int nAtoms() const;
+    
+    int nOccupiedBoxes() const;
     
 private:
     void constructFrom(const CLJAtoms &atoms);
