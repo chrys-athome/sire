@@ -2359,7 +2359,9 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             if(Debug){
                 qDebug() << "Particle num = " << system_index;
                 qDebug() << "Particle mass = " << m[j];
-                qDebug() << "X = " << positions_openmm[system_index][0] << " Y = " << positions_openmm[system_index][1] << " Z = " << positions_openmm[system_index][2];
+                qDebug() << "X = " << positions_openmm[system_index][0] * OpenMM::AngstromsPerNm << " A" << 
+                            " Y = " << positions_openmm[system_index][1] * OpenMM::AngstromsPerNm << " A" <<
+                            " Z = " << positions_openmm[system_index][2] * OpenMM::AngstromsPerNm << " A";
                 qDebug() << "Vx = " << velocities_openmm[system_index][0] << " Vy = " << velocities_openmm[system_index][1] << " Vz = " << velocities_openmm[system_index][2] << "\n";
             }
             system_index++;
@@ -2592,6 +2594,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     exit();*/
 
+    bool IsFiniteNumber = true;
 
     while(sample_count <= n_samples){
 
@@ -2649,15 +2652,12 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             //exit(-1);
         }
 
+        IsFiniteNumber = (potential_energy_lambda <= DBL_MAX && potential_energy_lambda >= -DBL_MAX);
 
-        if(potential_energy_lambda > 1000000.0){
-            throw SireError::program_bug(QObject::tr("********************* Energy Too High. Error! *******************"), CODELOC);
+        if(!IsFiniteNumber){
+            qDebug() << "NaN or Inf has been generated along the simulation";
             exit(-1);
         }
-
-
-        //Try to catch NaN apperance*******************************
-
 
         if((Alchemical_value + delta_alchemical)>1.0){
 
@@ -2932,6 +2932,11 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             positions_openmm[j+k][1] * (OpenMM::AngstromsPerNm),
             positions_openmm[j+k][2] * (OpenMM::AngstromsPerNm));
 
+            if(Debug)
+                qDebug() << "X = " << positions_openmm[j+k][0] * OpenMM::AngstromsPerNm << " A" << 
+                            " Y = " << positions_openmm[j+k][1] * OpenMM::AngstromsPerNm << " A" <<
+                            " Z = " << positions_openmm[j+k][2] * OpenMM::AngstromsPerNm << " A";
+
             for (int l=0; l < nframes ; l++){
                 //qDebug() << " i " << i << " j " << j << " k " << k << " l " << l;
                 Vector buffered_atcoord = Vector(  buffered_positions[l][j+k][0] * (OpenMM::AngstromsPerNm), 
@@ -2989,6 +2994,10 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     buffered_workspace.clear();
     buffered_dimensions.clear();
+
+
+    System & ptr_sys = ws.nonConstsystem();
+    ptr_sys.mustNowRecalculateFromScratch();
 
     return;
 
