@@ -420,6 +420,17 @@ void register_CombinedSpace_class(){
         }
         { //::SireVol::CombinedSpace::minimumDistance
         
+            typedef double ( ::SireVol::CombinedSpace::*minimumDistance_function_type )( ::SireVol::AABox const &,::SireVol::AABox const & ) const;
+            minimumDistance_function_type minimumDistance_function_value( &::SireVol::CombinedSpace::minimumDistance );
+            
+            CombinedSpace_exposer.def( 
+                "minimumDistance"
+                , minimumDistance_function_value
+                , ( bp::arg("box0"), bp::arg("box1") ) );
+        
+        }
+        { //::SireVol::CombinedSpace::minimumDistance
+        
             typedef double ( ::SireVol::CombinedSpace::*minimumDistance_function_type )( ::SireVol::CoordGroup const &,::SireVol::CoordGroup const & ) const;
             minimumDistance_function_type minimumDistance_function_value( &::SireVol::CombinedSpace::minimumDistance );
             

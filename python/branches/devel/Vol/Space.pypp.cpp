@@ -437,6 +437,17 @@ void register_Space_class(){
                 , ( bp::arg("group") ) );
         
         }
+        { //::SireVol::Space::minimumDistance
+        
+            typedef double ( ::SireVol::Space::*minimumDistance_function_type )( ::SireVol::AABox const &,::SireVol::AABox const & ) const;
+            minimumDistance_function_type minimumDistance_function_value( &::SireVol::Space::minimumDistance );
+            
+            Space_exposer.def( 
+                "minimumDistance"
+                , minimumDistance_function_value
+                , ( bp::arg("box0"), bp::arg("box1") ) );
+        
+        }
         { //::SireVol::Space::null
         
             typedef ::SireVol::Cartesian const & ( *null_function_type )(  );
