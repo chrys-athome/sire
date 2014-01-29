@@ -537,6 +537,13 @@ double CombinedSpace::minimumDistance(const CoordGroup &group0,
     return spces.at(0).read().minimumDistance(group0, group1);
 }
 
+/** Return the minimum distance between the boxes 'box0' and 'box1'. */
+double CombinedSpace::minimumDistance(const AABox &box0, const AABox &box1) const
+{
+    this->assertSameSpace("Cannot calculate minimum distances", CODELOC);
+    return spces.at(0).read().minimumDistance(box0, box1);
+}
+
 /** Return the minimum distance between points within the group 'group'. */
 double CombinedSpace::minimumDistance(const CoordGroup &group) const
 {

@@ -279,6 +279,9 @@ public:
     /** Return the minimum distance between points within the group 'group'. */
     virtual double minimumDistance(const CoordGroup &group) const=0;
 
+    /** Return the minimum distance between the two AABoxes */
+    virtual double minimumDistance(const AABox &box0, const AABox &box1) const=0;
+
     /** Return whether or not this space is periodic */
     virtual bool isPeriodic() const=0;
     

@@ -160,6 +160,7 @@ public:
 
     bool beyond(double dist, const AABox &aabox0, const AABox &aabox1) const;
 
+    double minimumDistance(const AABox &box0, const AABox &box1) const;
     double minimumDistance(const CoordGroup &group0, const CoordGroup &group1) const;
     double minimumDistance(const CoordGroup &group) const;
 

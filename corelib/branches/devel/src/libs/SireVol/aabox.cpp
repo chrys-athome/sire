@@ -290,9 +290,9 @@ bool AABox::withinDistance(double dist, const AABox &box) const
     double dy = std::abs(cent.y() - box.cent.y()) - halfextents.y() - box.halfextents.y();
     double dz = std::abs(cent.z() - box.cent.z()) - halfextents.z() - box.halfextents.z();
 
-    dx = SIRE_MIN(dx,0.0);
-    dy = SIRE_MIN(dy,0.0);
-    dz = SIRE_MIN(dz,0.0);
+    dx = SIRE_MAX(dx,0.0);
+    dy = SIRE_MAX(dy,0.0);
+    dz = SIRE_MAX(dz,0.0);
 
     return dx*dx + dy*dy + dz*dz <= dist*dist;
 }

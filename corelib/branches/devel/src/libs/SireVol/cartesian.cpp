@@ -961,6 +961,20 @@ double Cartesian::minimumDistance(const CoordGroup &group0,
     return sqrt(mindist2);
 }
 
+/** Return the minimum distance between the two passed boxes */
+double Cartesian::minimumDistance(const AABox &box0, const AABox &box1) const
+{
+    Vector delta = (box0.center() - box1.center());
+    delta = Vector( std::abs(delta.x()), std::abs(delta.y()), std::abs(delta.z()) );
+    
+    delta -= box0.halfExtents();
+    delta -= box1.halfExtents();
+    
+    delta = delta.max( Vector(0) );
+    
+    return delta.length();
+}
+
 /** Return the minimum distance between points within the group 'group'. */
 double Cartesian::minimumDistance(const CoordGroup &group) const
 {

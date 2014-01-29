@@ -980,6 +980,21 @@ bool PeriodicBox::beyond(double dist, const CoordGroup &group0,
     return PeriodicBox::beyond(dist, group0.aaBox(), group1.aaBox());
 }
 
+/** Return the minimum distance between the two boxes */
+double PeriodicBox::minimumDistance(const AABox &box0, const AABox &box1) const
+{
+    //get the distance between the minimum image of the box centers
+    Vector delta = box0.center() - box1.center() - wrapDelta(box0.center(), box1.center());
+    delta = Vector( std::abs(delta.x()), std::abs(delta.y()), std::abs(delta.z()) );
+    
+    delta -= box0.halfExtents();
+    delta -= box1.halfExtents();
+    
+    delta = delta.max( Vector(0) );
+    
+    return delta.length();
+}
+
 /** Return the minimum distance between the points in 'group0' and 'group1'.
     If this is a periodic space then this uses the minimum image convention
     (i.e. the minimum distance between the closest periodic replicas are
