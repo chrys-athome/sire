@@ -29,6 +29,7 @@
 #include "SireMM/cljboxes.h"
 
 #include "SireVol/aabox.h"
+#include "SireVol/space.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -422,13 +423,11 @@ CLJBoxDistance& CLJBoxDistance::operator=(const CLJBoxDistance &other)
 
 /** Comparison operator. Note that this will compare equal only if
     the distances are the same and if either, box0() == other.box() and
-    box1() == other.box1(), or if box0() == other.box1() and 
-    box1() == other.box0() */
+    box1() == other.box1() */
 bool CLJBoxDistance::operator==(const CLJBoxDistance &other) const
 {
     return dist == other.dist and
-            ( (b0 == other.b0 and b1 == other.b1) or
-              (b0 == other.b1 and b1 == other.b0) );
+           b0 == other.b0 and b1 == other.b1;
 }
 
 /** Comparison operator */
@@ -456,6 +455,13 @@ bool CLJBoxDistance::operator>(const CLJBoxDistance &other) const
 const char* CLJBoxDistance::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<CLJBoxDistance>() );
+}
+
+QString CLJBoxDistance::toString() const
+{
+    return QObject::tr("CLJBoxDistance( %1->%2, %3 A )")
+                .arg(b0.toString(), b1.toString())
+                .arg(dist);
 }
 
 const char* CLJBoxDistance::what() const
@@ -724,4 +730,136 @@ const char* CLJBoxes::typeName()
 const char* CLJBoxes::what() const
 {
     return CLJBoxes::typeName();
+}
+
+/** Return the distances between all of the occupied boxes in 'boxes'
+    based on the space 'space' */
+QList<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes)
+{
+    QList<CLJBoxDistance> dists;
+    
+    const Length l(boxes.box_length);
+    
+    for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
+         it != boxes.bxs.constEnd();
+         ++it)
+    {
+        const AABox box0 = it.key().box(l);
+    
+        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
+             it2 != boxes.bxs.constEnd();
+             ++it2)
+        {
+            const AABox box1 = it2.key().box(l);
+            
+            dists.append( CLJBoxDistance(it.key(), it2.key(), space.minimumDistance(box0,box1)) );
+        }
+    }
+    
+    return dists;
+}
+
+/** Return the distances between all of the occupied boxes in 'boxes'
+    based on the space 'space', only returning boxes that are separated
+    by distances of less than 'cutoff' */
+QList<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes,
+                                             Length cutoff)
+{
+    QElapsedTimer t;
+    t.start();
+
+    QList<CLJBoxDistance> dists;
+    
+    const Length l(boxes.box_length);
+    
+    for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
+         it != boxes.bxs.constEnd();
+         ++it)
+    {
+        const AABox box0 = it.key().box(l);
+    
+        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
+             it2 != boxes.bxs.constEnd();
+             ++it2)
+        {
+            const AABox box1 = it2.key().box(l);
+            
+            const float dist = space.minimumDistance(box0,box1);
+            
+            if (dist < cutoff.value())
+                dists.append( CLJBoxDistance(it.key(), it2.key(), dist) );
+        }
+    }
+    
+    quint64 ns = t.nsecsElapsed();
+    qDebug() << "Getting box distances took" << (0.000001*ns) << "ms";
+    
+    return dists;
+}
+
+/** Return the distances between all pairs of occupied boxes between the boxes in 
+    'boxes0' and the boxes in 'boxes1' */
+QList<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes0,
+                                             const CLJBoxes &boxes1)
+{
+    QList<CLJBoxDistance> dists;
+    
+    const Length l0(boxes0.box_length);
+    const Length l1(boxes1.box_length);
+    
+    for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
+         it != boxes0.bxs.constEnd();
+         ++it)
+    {
+        const AABox box0 = it.key().box(l0);
+        
+        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
+             it2 != boxes1.bxs.constEnd();
+             ++it2)
+        {
+            const AABox box1 = it2.key().box(l1);
+            
+            dists.append( CLJBoxDistance(it.key(), it2.key(), space.minimumDistance(box0,box1)) );
+        }
+    }
+    
+    return dists;
+}
+
+/** Return the distances between all pairs of occupied boxes between the boxes in 
+    'boxes0' and the boxes in 'boxes1' */
+QList<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes0,
+                                             const CLJBoxes &boxes1, Length cutoff)
+{
+    QElapsedTimer t;
+    t.start();
+
+    QList<CLJBoxDistance> dists;
+    
+    const Length l0(boxes0.box_length);
+    const Length l1(boxes1.box_length);
+    
+    for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
+         it != boxes0.bxs.constEnd();
+         ++it)
+    {
+        const AABox box0 = it.key().box(l0);
+        
+        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
+             it2 != boxes1.bxs.constEnd();
+             ++it2)
+        {
+            const AABox box1 = it2.key().box(l1);
+            
+            const float dist = space.minimumDistance(box0, box1);
+            
+            if (dist < cutoff.value())
+                dists.append( CLJBoxDistance(it.key(), it2.key(), dist) );
+        }
+    }
+    
+    quint64 ns = t.nsecsElapsed();
+    qDebug() << "Getting box distances took" << (0.000001*ns) << "ms";
+    
+    return dists;
 }

@@ -28,15 +28,20 @@
 
 #include "testff.h"
 
+#include "SireVol/cartesian.h"
+
 #include "SireUnits/units.h"
 
 #include <QDebug>
 #include <QElapsedTimer>
 
+#include "tostring.h"
+
 using namespace SireMM;
 using namespace SireMol;
 using namespace SireMaths;
 using namespace SireUnits;
+using namespace SireVol;
 
 TestFF::TestFF() : cljfunc(new CLJVacShiftAriFunction(15*angstrom, 15*angstrom))
 {}
@@ -66,6 +71,16 @@ void TestFF::addFixedAtoms(const Molecules &molecules)
 {
     atoms1 = CLJAtoms(molecules);
     cljboxes1 = CLJBoxes(atoms1);
+    
+    Cartesian space;
+    
+    QList<CLJBoxDistance> dists = CLJBoxes::getDistances(space, cljboxes1, 15*angstrom);
+    
+    qDebug() << "N-pairs" << dists.count();
+    
+    dists = CLJBoxes::getDistances(space, cljboxes0, cljboxes1, 15*angstrom);
+    
+    qDebug() << "N-pairs" << dists.count();
 }
 
 void TestFF::setCutoff(Length coul_cutoff, Length lj_cutoff)
