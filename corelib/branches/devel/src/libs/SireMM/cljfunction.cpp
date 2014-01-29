@@ -108,6 +108,24 @@ void CLJFunction::setGeometricCombiningRules(bool on)
     use_arithmetic = not on;
 }
 
+/** Return whether or not this function uses a cutoff */
+bool CLJFunction::hasCutoff() const
+{
+    return false;
+}
+
+/** Return the coulomb cutoff if this function uses one */
+Length CLJFunction::coulombCutoff() const
+{
+    return Length( std::numeric_limits<double>::max() );
+}
+
+/** Return the LJ cutoff if this function uses one */
+Length CLJFunction::ljCutoff() const
+{
+    return Length( std::numeric_limits<double>::max() );
+}
+
 /** Return whether or not arithmetic combining rules are used */
 bool CLJFunction::usingArithmeticCombiningRules() const
 {
@@ -275,6 +293,24 @@ const char* CLJVacShiftAriFunction::what() const
 CLJVacShiftAriFunction* CLJVacShiftAriFunction::clone() const
 {
     return new CLJVacShiftAriFunction(*this);
+}
+
+/** Return that this function does indeed use a cutoff */
+bool CLJVacShiftAriFunction::hasCutoff() const
+{
+    return true;
+}
+
+/** Return the coulomb cutoff */
+Length CLJVacShiftAriFunction::coulombCutoff() const
+{
+    return Length(coul_cutoff);
+}
+
+/** Return the LJ cutoff */
+Length CLJVacShiftAriFunction::ljCutoff() const
+{
+    return Length(lj_cutoff);
 }
 
 /** Calculate the coulomb and LJ intermolecular energy of all of the atoms in 'atoms',

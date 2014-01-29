@@ -79,6 +79,11 @@ public:
 
     virtual CLJFunction* clone() const=0;
 
+    virtual bool hasCutoff() const;
+    
+    virtual Length coulombCutoff() const;
+    virtual Length ljCutoff() const;
+
     void setArithmeticCombiningRules(bool on);
     void setGeometricCombiningRules(bool on);
     
@@ -138,6 +143,11 @@ public:
     const char* what() const;
     
     CLJVacShiftAriFunction* clone() const;
+
+    bool hasCutoff() const;
+    
+    Length coulombCutoff() const;
+    Length ljCutoff() const;
 
 protected:
     void calcEnergyAri(const CLJAtoms &atoms,

@@ -71,16 +71,6 @@ void TestFF::addFixedAtoms(const Molecules &molecules)
 {
     atoms1 = CLJAtoms(molecules);
     cljboxes1 = CLJBoxes(atoms1);
-    
-    Cartesian space;
-    
-    QList<CLJBoxDistance> dists = CLJBoxes::getDistances(space, cljboxes1, 15*angstrom);
-    
-    qDebug() << "N-pairs" << dists.count();
-    
-    dists = CLJBoxes::getDistances(space, cljboxes0, cljboxes1, 15*angstrom);
-    
-    qDebug() << "N-pairs" << dists.count();
 }
 
 void TestFF::setCutoff(Length coul_cutoff, Length lj_cutoff)
@@ -114,4 +104,79 @@ void TestFF::calculateEnergy()
     ns = t.nsecsElapsed();
     
     qDebug() << "TestFF" << (cnrg+ljnrg) << cnrg << ljnrg << "took" << (0.000001*ns) << "ms";
+
+    qDebug() << "\nUsing CLJBoxes to accelerate the calculation";
+    
+    Cartesian space;
+    
+    Length coul_cutoff = cljfunc->coulombCutoff();
+    Length lj_cutoff = cljfunc->ljCutoff();
+    
+    QList<CLJBoxDistance> dists;
+
+    const QMap<CLJBoxIndex,CLJBoxPtr> &boxes0 = cljboxes0.occupiedBoxes();
+    const QMap<CLJBoxIndex,CLJBoxPtr> &boxes1 = cljboxes1.occupiedBoxes();
+    
+    qDebug() << "inter energy";
+
+    double icnrg, iljnrg;
+
+    dists = CLJBoxes::getDistances(space, cljboxes0, cljboxes1, coul_cutoff);
+    
+    cnrg = 0;
+    ljnrg = 0;
+    
+    t.start();
+    
+    for (QList<CLJBoxDistance>::const_iterator it = dists.constBegin();
+         it != dists.constEnd();
+         ++it)
+    {
+        const CLJBoxDistance &d = *it;
+        
+        (*cljfunc)(boxes0[d.box0()].read().atoms(), boxes1[d.box1()].read().atoms(),
+                   icnrg, iljnrg);
+        
+        cnrg += icnrg;
+        ljnrg += iljnrg;
+    }
+    
+    ns = t.nsecsElapsed();
+    
+    qDebug() << "Boxed" << (cnrg+ljnrg) << cnrg << ljnrg;
+    qDebug() << "Took" << (0.000001*ns) << "ms";
+
+    qDebug() << "\nintra energy";
+    
+    dists = CLJBoxes::getDistances(space, cljboxes1, coul_cutoff);
+    
+    cnrg = 0;
+    ljnrg = 0;
+    
+    t.start();
+    
+    for (QList<CLJBoxDistance>::const_iterator it = dists.constBegin();
+         it != dists.constEnd();
+         ++it)
+    {
+        const CLJBoxDistance &d = *it;
+        
+        if (d.box0() == d.box1())
+        {
+            (*cljfunc)(boxes1[d.box0()].read().atoms(), icnrg, iljnrg);
+        }
+        else
+        {
+            (*cljfunc)(boxes1[d.box0()].read().atoms(), boxes1[d.box1()].read().atoms(),
+                       icnrg, iljnrg);
+        }
+
+        cnrg += icnrg;
+        ljnrg += iljnrg;
+    }
+    
+    ns = t.nsecsElapsed();
+    
+    qDebug() << "Boxed" << (cnrg+ljnrg) << cnrg << ljnrg;
+    qDebug() << "Took" << (0.000001*ns) << "ms";
 }
