@@ -29,7 +29,7 @@ SireMM::CLJBoxDistance __copy__(const SireMM::CLJBoxDistance &other){ return Sir
 
 #include "Qt/qdatastream.hpp"
 
-const char* pvt_get_name(const SireMM::CLJBoxDistance&){ return "SireMM::CLJBoxDistance";}
+#include "Helpers/str.hpp"
 
 void register_CLJBoxDistance_class(){
 
@@ -87,6 +87,16 @@ void register_CLJBoxDistance_class(){
         }
         CLJBoxDistance_exposer.def( bp::self == bp::self );
         CLJBoxDistance_exposer.def( bp::self > bp::self );
+        { //::SireMM::CLJBoxDistance::toString
+        
+            typedef ::QString ( ::SireMM::CLJBoxDistance::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireMM::CLJBoxDistance::toString );
+            
+            CLJBoxDistance_exposer.def( 
+                "toString"
+                , toString_function_value );
+        
+        }
         { //::SireMM::CLJBoxDistance::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -115,8 +125,8 @@ void register_CLJBoxDistance_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CLJBoxDistance_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireMM::CLJBoxDistance >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-        CLJBoxDistance_exposer.def( "__str__", &pvt_get_name);
-        CLJBoxDistance_exposer.def( "__repr__", &pvt_get_name);
+        CLJBoxDistance_exposer.def( "__str__", &__str__< ::SireMM::CLJBoxDistance > );
+        CLJBoxDistance_exposer.def( "__repr__", &__str__< ::SireMM::CLJBoxDistance > );
     }
 
 }
