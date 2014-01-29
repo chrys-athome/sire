@@ -37,6 +37,7 @@ void register_CLJBox_class(){
         typedef bp::class_< SireMM::CLJBox > CLJBox_exposer_t;
         CLJBox_exposer_t CLJBox_exposer = CLJBox_exposer_t( "CLJBox", bp::init< >() );
         bp::scope CLJBox_scope( CLJBox_exposer );
+        CLJBox_exposer.def( bp::init< SireMM::CLJAtoms const & >(( bp::arg("atoms") )) );
         CLJBox_exposer.def( bp::init< SireMM::CLJBox const & >(( bp::arg("other") )) );
         { //::SireMM::CLJBox::atoms
         

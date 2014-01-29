@@ -59,6 +59,7 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::CLJBox >();
     ObjectRegistry::registerConverterFor< SireMM::CLJBoxIndex >();
     ObjectRegistry::registerConverterFor< SireMM::CLJBoxes >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJBoxDistance >();
     ObjectRegistry::registerConverterFor< SireMM::InterLJFFBase >();
     ObjectRegistry::registerConverterFor< SireMM::InterLJFF >();
     ObjectRegistry::registerConverterFor< SireMM::InterGroupLJFFBase >();

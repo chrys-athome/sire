@@ -47,6 +47,8 @@
 
 #include "CLJBox.pypp.hpp"
 
+#include "CLJBoxDistance.pypp.hpp"
+
 #include "CLJBoxIndex.pypp.hpp"
 
 #include "CLJBoxes.pypp.hpp"
@@ -437,6 +439,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_CLJAtoms_class();
 
     register_CLJBox_class();
+
+    register_CLJBoxDistance_class();
 
     register_CLJBoxIndex_class();
 

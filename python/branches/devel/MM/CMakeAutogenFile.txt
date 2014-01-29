@@ -132,6 +132,7 @@ set ( PYPP_SOURCES
        CLJFunction.pypp.cpp
        InterCLJFFBase.pypp.cpp
        StretchBendTorsionSymbols.pypp.cpp
+       CLJBoxDistance.pypp.cpp
        CLJScaleFactor.pypp.cpp
        ThreeAtomFunction.pypp.cpp
        StretchBendTorsionParameterName.pypp.cpp
