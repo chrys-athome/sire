@@ -360,6 +360,111 @@ CLJBoxIndex CLJBoxIndex::createWithBoxLength(const Vector &coords, Length box_le
 }
 
 ///////////
+/////////// Implementation of CLJBoxDistance
+///////////
+
+static const RegisterMetaType<CLJBoxDistance> r_boxdist(NO_ROOT);
+
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJBoxDistance &boxdist)
+{
+    writeHeader(ds, r_boxdist, 1);
+    
+    ds << boxdist.b0 << boxdist.b1 << boxdist.dist;
+    
+    return ds;
+}
+
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJBoxDistance &boxdist)
+{
+    VersionID v = readHeader(ds, r_boxdist);
+    
+    if (v == 1)
+    {
+        ds >> boxdist.b0 >> boxdist.b1 >> boxdist.dist;
+    }
+    else
+        throw version_error(v, "1", r_boxdist, CODELOC);
+    
+    return ds;
+}
+
+/** Constructor */
+CLJBoxDistance::CLJBoxDistance() : dist(0)
+{}
+
+/** Construct saying that the minimum distance between the box with index 'box0'
+    and the box with index 'box1' is 'distance' */
+CLJBoxDistance::CLJBoxDistance(const CLJBoxIndex &box0, const CLJBoxIndex &box1, float distance)
+               : b0(box0), b1(box1), dist(distance)
+{}
+
+/** Copy constructor */
+CLJBoxDistance::CLJBoxDistance(const CLJBoxDistance &other)
+               : b0(other.b0), b1(other.b1), dist(other.dist)
+{}
+
+/** Destructor */
+CLJBoxDistance::~CLJBoxDistance()
+{}
+
+/** Copy assignment operator */
+CLJBoxDistance& CLJBoxDistance::operator=(const CLJBoxDistance &other)
+{
+    if (this != &other)
+    {
+        b0 = other.b0;
+        b1 = other.b1;
+        dist = other.dist;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator. Note that this will compare equal only if
+    the distances are the same and if either, box0() == other.box() and
+    box1() == other.box1(), or if box0() == other.box1() and 
+    box1() == other.box0() */
+bool CLJBoxDistance::operator==(const CLJBoxDistance &other) const
+{
+    return dist == other.dist and
+            ( (b0 == other.b0 and b1 == other.b1) or
+              (b0 == other.b1 and b1 == other.b0) );
+}
+
+/** Comparison operator */
+bool CLJBoxDistance::operator!=(const CLJBoxDistance &other) const
+{
+    return not operator==(other);
+}
+
+/** Distance comparison operator - compares less if the distance
+    is less than 'other'. This is used to allow CLJBoxDistance objects
+    to be sorted according to their minimum distances */
+bool CLJBoxDistance::operator<(const CLJBoxDistance &other) const
+{
+    return dist < other.dist;
+}
+
+/** Distance comparison operator - compares greater if the distance
+    is greater than 'other'. This is used to allow CLJBoxDistance objects
+    to be sorted according to their minimum distances */
+bool CLJBoxDistance::operator>(const CLJBoxDistance &other) const
+{
+    return dist > other.dist;
+}
+
+const char* CLJBoxDistance::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CLJBoxDistance>() );
+}
+
+const char* CLJBoxDistance::what() const
+{
+    return CLJBoxDistance::typeName();
+}
+
+
+///////////
 /////////// Implementation of CLJBoxes
 ///////////
 

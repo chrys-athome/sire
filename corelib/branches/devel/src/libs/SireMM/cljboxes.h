@@ -43,6 +43,7 @@ class CLJBox;
 class CLJBoxIndex;
 class CLJBoxPtr;
 class CLJBoxes;
+class CLJBoxDistance;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMM::CLJBox&);
@@ -56,6 +57,9 @@ QDataStream& operator>>(QDataStream&, SireMM::CLJBoxPtr&);
 
 QDataStream& operator<<(QDataStream&, const SireMM::CLJBoxes&);
 QDataStream& operator>>(QDataStream&, SireMM::CLJBoxes&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::CLJBoxDistance&);
+QDataStream& operator>>(QDataStream&, SireMM::CLJBoxDistance&);
 
 namespace SireVol
 {
@@ -195,6 +199,48 @@ private:
         } index;
 
     } v;
+};
+
+/** This simple class holds the minimum distance between the two
+    specified CLJBoxes
+    
+    @author Christopher Woods
+*/
+class SIREMM_EXPORT CLJBoxDistance
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const CLJBoxDistance&);
+friend QDataStream& ::operator>>(QDataStream&, CLJBoxDistance&);
+
+public:
+    CLJBoxDistance();
+    CLJBoxDistance(const CLJBoxIndex &box0, const CLJBoxIndex &box1, float distance);
+    
+    CLJBoxDistance(const CLJBoxDistance &other);
+    
+    ~CLJBoxDistance();
+    
+    CLJBoxDistance& operator=(const CLJBoxDistance &other);
+    
+    bool operator==(const CLJBoxDistance &other) const;
+    bool operator!=(const CLJBoxDistance &other) const;
+    
+    bool operator<(const CLJBoxDistance &other) const;
+    bool operator>(const CLJBoxDistance &other) const;
+    
+    static const char* typeName();
+    
+    const char* what() const;
+    
+    const CLJBoxIndex& box0() const;
+    const CLJBoxIndex& box1() const;
+    
+    float distance() const;
+
+private:
+    CLJBoxIndex b0;
+    CLJBoxIndex b1;
+    float dist;
 };
 
 /** The set of CLJBox boxes that contain all of the atoms in the system.
@@ -350,6 +396,24 @@ inline const QMap<CLJBoxIndex,CLJBoxPtr>& CLJBoxes::occupiedBoxes() const
     return bxs;
 }
 
+/** Return the index of the first box */
+inline const CLJBoxIndex& CLJBoxDistance::box0() const
+{
+    return b0;
+}
+
+/** Return the index of the second box */
+inline const CLJBoxIndex& CLJBoxDistance::box1() const
+{
+    return b1;
+}
+
+/** Return the minimum distance between the boxes */
+inline float CLJBoxDistance::distance() const
+{
+    return dist;
+}
+
 #endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
@@ -357,12 +421,15 @@ inline const QMap<CLJBoxIndex,CLJBoxPtr>& CLJBoxes::occupiedBoxes() const
 Q_DECLARE_METATYPE( SireMM::CLJBox )
 Q_DECLARE_METATYPE( SireMM::CLJBoxIndex )
 Q_DECLARE_METATYPE( SireMM::CLJBoxes )
+Q_DECLARE_METATYPE( SireMM::CLJBoxDistance )
 
 Q_DECLARE_TYPEINFO( SireMM::CLJBoxIndex, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireMM::CLJBoxDistance, Q_MOVABLE_TYPE );
 
 SIRE_EXPOSE_CLASS( SireMM::CLJBox )
 SIRE_EXPOSE_CLASS( SireMM::CLJBoxIndex )
 SIRE_EXPOSE_CLASS( SireMM::CLJBoxes )
+SIRE_EXPOSE_CLASS( SireMM::CLJBoxDistance )
 
 SIRE_END_HEADER
 
