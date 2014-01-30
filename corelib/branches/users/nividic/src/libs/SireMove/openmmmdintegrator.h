@@ -154,7 +154,29 @@ public:
     bool getLJDispersion(void);
     
     void setPrecision(QString);
-	QString getPrecision(void);
+    QString getPrecision(void);
+
+    void setReinitializeContext(bool);
+
+    double getIntegration_tollerance(void);
+    void setIntegration_tollerance(double tollerance);
+
+    SireUnits::Dimension::Time getTimetoSkip(void);
+    void setTimetoSkip(SireUnits::Dimension::Time);
+
+    void setMinimization(bool);
+
+    double getMinimizeTol(void);
+    void setMinimizeTol(double);
+
+    int getMinimizeIterations(void);
+    void setMinimizeIterations(int);
+
+    int getEquilib_iterations(void);
+    void setEquilib_iterations(int);
+
+    SireUnits::Dimension::Time getEquilib_time_step(void);
+    void setEquilib_time_step(SireUnits::Dimension::Time);
 
 
 private:
@@ -167,9 +189,12 @@ private:
 
     /**Try instead to...keep a copy of OpenMM::System */
     OpenMM::System* openmm_system;
-    
+
+    OpenMM::Context* openmm_context;
+
     /** Whether the openmm system has been initialised*/
-    bool isInitialised;
+    bool isSystemInitialised;
+    bool isContextInitialised;
 
     QString Integrator_type;
     SireUnits::Dimension::Time friction;
@@ -205,6 +230,20 @@ private:
 
     QString precision;
 
+    bool reinetialize_context;
+
+    double integration_tol;
+
+    SireUnits::Dimension::Time timeskip;
+
+    bool minimize;
+
+    double minimize_tol;
+    int minimize_iterations;
+
+
+    int equilib_iterations;
+    SireUnits::Dimension::Time equilib_time_step;
 
 };
 

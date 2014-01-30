@@ -2243,7 +2243,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 
     // Integrator 
-    
+
     const double dt = convertTo( timestep.value(), picosecond);
     const double converted_Temperature = convertTo(Temperature.value(), kelvin);
     const double converted_friction = convertTo( friction.value(), picosecond);

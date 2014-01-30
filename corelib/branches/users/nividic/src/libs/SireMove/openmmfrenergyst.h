@@ -172,7 +172,6 @@ public:
     void setIntegration_tollerance(double tollerance);
 
     SireUnits::Dimension::Time getTimetoSkip(void);
-
     void setTimetoSkip(SireUnits::Dimension::Time);
 
     void setMinimization(bool);
