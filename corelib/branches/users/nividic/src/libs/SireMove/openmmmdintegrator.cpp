@@ -476,7 +476,7 @@ void OpenMMMDIntegrator::initialise()  {
             qDebug() << "Temperature = " << converted_Temperature << " K\n";
             qDebug() << "Pressure = " << converted_Pressure << " bar\n";
             qDebug() << "Frequency every " << MCBarostat_frequency << " steps\n";
-            qDebug() << "Lennard Jones Dispersion term set to " << LJ_dispersion << "\n";
+            qDebug() << "Lennard Jones Dispersion term is set to " << LJ_dispersion << "\n";
         }
     }
 
@@ -877,10 +877,6 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
 
     bool Debug = false; 
 
-    QTime timer;
-
-    timer.start();
-
       if(Debug)
         qDebug() << "In OpenMMMDIntegrator::integrate()\n\n" ;
 
@@ -903,9 +899,6 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
     const double dt = convertTo( timestep.value(), picosecond);
     const double converted_Temperature = convertTo(Temperature.value(), kelvin);
     const double converted_friction = convertTo( friction.value(), picosecond);
-
-
-    int n_samples = nmoves;
 
     if(!isContextInitialised || (isContextInitialised && reinetialize_context)){
         OpenMM::Integrator * integrator_openmm = NULL;
@@ -1064,11 +1057,6 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
     infoMask = infoMask + OpenMM::State::Velocities; 
     infoMask = infoMask +  OpenMM::State::Energy;
 
-    if (Debug)
-        qDebug() << " Setup dynamics, time elapsed ms " << timer.elapsed() << " ms ";
-
-    /** Now perform some steps of dynamics */
-    timer.restart();
 
     if (Debug)
         qDebug() << " Doing " << nmoves << " steps of dynamics ";
@@ -1176,11 +1164,6 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
         (openmm_context->getIntegrator()).step(nmoves);
     }
 
-    if (Debug)
-        qDebug() << " Done dynamics, time elapsed ms " << timer.elapsed() << " ms ";
-
-    /** Now update the sire coordinates/velocities and box dimensions */
-    timer.restart();
 
     if (Debug){
         double kinetic_energy = state_openmm.getKineticEnergy(); 
@@ -1275,8 +1258,8 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
     buffered_workspace.clear();
     buffered_dimensions.clear();
 
-    if (Debug)
-        qDebug() << " Updating system coordinates, time elapsed ms " << timer.elapsed() << " ms ";
+    System & ptr_sys = ws.nonConstsystem();
+    ptr_sys.mustNowRecalculateFromScratch();
 
     return;
 }
