@@ -35,6 +35,10 @@
 #include <QDebug>
 #include <QElapsedTimer>
 
+#include "tbb/task_scheduler_init.h"
+#include "tbb/blocked_range.h"
+#include "tbb/parallel_for.h"
+
 #include "tostring.h"
 
 using namespace SireMM;
@@ -77,6 +81,54 @@ void TestFF::setCutoff(Length coul_cutoff, Length lj_cutoff)
 {
     cljfunc.reset( new CLJVacShiftAriFunction(coul_cutoff, lj_cutoff) );
 }
+
+class CLJCalculator
+{
+public:
+    CLJCalculator();
+    CLJCalculator(const CLJFunction *function,
+                  const QList<CLJBoxDistance> &distances,
+                  const QMap<CLJBoxIndex,CLJBoxPtr> &cljboxes,
+                  const float coulomb_cutoff, const float lenj_cutoff,
+                  double *coulomb_energy, double *lj_energy)
+        : func(function), dists(&distances), boxes(&cljboxes),
+          coul_nrg(coulomb_energy), lj_nrg(lj_energy),
+          coul_cutoff(coulomb_cutoff), lj_cutoff(lenj_cutoff)
+    {}
+    
+    ~CLJCalculator()
+    {}
+    
+    void operator()(const tbb::blocked_range<int> &range) const
+    {
+        for (int i = range.begin(); i != range.end(); ++i)
+        {
+            const CLJBoxDistance &d = dists->at(i);
+            
+            if (d.box0() == d.box1())
+            {
+                (*func)(boxes->constFind(d.box0()).value().read().atoms(), coul_nrg[i], lj_nrg[i]);
+            }
+            else
+            {
+                (*func)(boxes->constFind(d.box0()).value().read().atoms(),
+                        boxes->constFind(d.box1()).value().read().atoms(),
+                        coul_nrg[i], lj_nrg[i]);
+            }
+        }
+    }
+    
+private:
+    const CLJFunction* const func;
+    const QList<CLJBoxDistance>* const dists;
+    const QMap<CLJBoxIndex,CLJBoxPtr>* boxes;
+    
+    double *coul_nrg;
+    double *lj_nrg;
+    
+    const float coul_cutoff;
+    const float lj_cutoff;
+};
 
 void TestFF::calculateEnergy()
 {
@@ -179,4 +231,30 @@ void TestFF::calculateEnergy()
     
     qDebug() << "Boxed" << (cnrg+ljnrg) << cnrg << ljnrg;
     qDebug() << "Took" << (0.000001*ns) << "ms";
+
+    // parallel implementation
+    tbb::task_scheduler_init init;
+    
+    QVector<double> coul_nrgs(dists.count());
+    QVector<double> lj_nrgs(dists.count());
+    
+    CLJCalculator calc(cljfunc.get(), dists, boxes1, coul_cutoff.value(),
+                       lj_cutoff.value(), coul_nrgs.data(), lj_nrgs.data());
+    
+    t.start();
+    tbb::parallel_for(tbb::blocked_range<int>(0,dists.count()), calc);
+    
+    cnrg = 0;
+    ljnrg = 0;
+    
+    for (int i=0; i<dists.count(); ++i)
+    {
+        cnrg += coul_nrgs.constData()[i];
+        ljnrg += lj_nrgs.constData()[i];
+    }
+    
+    ns = t.nsecsElapsed();
+    
+    qDebug() << "\nParallel" << (cnrg+ljnrg) << cnrg << ljnrg;
+    qDebug() << "Parallel version took" << (0.000001*ns) << "ms";
 }
