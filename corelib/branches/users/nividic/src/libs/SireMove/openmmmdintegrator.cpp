@@ -1165,12 +1165,6 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
     }
 
 
-    if (Debug){
-        double kinetic_energy = state_openmm.getKineticEnergy(); 
-        double potential_energy = state_openmm.getPotentialEnergy(); 
-        qDebug() << " After MD kinetic energy " << kinetic_energy  * OpenMM::KcalPerKJ  << " kcal/mol potential " << potential_energy  * OpenMM::KcalPerKJ << " kcal/mol ";
-    }
-
     //Disable Minimization because of multiple cycles
     if(minimize)
         minimize=false;
@@ -1180,9 +1174,20 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
     }
 
 
+    bool IsFiniteNumber = true;
+
     state_openmm = openmm_context->getState(infoMask);
     positions_openmm = state_openmm.getPositions();
     velocities_openmm = state_openmm.getVelocities();
+    double potential_energy = state_openmm.getPotentialEnergy(); 
+
+    IsFiniteNumber = (potential_energy <= DBL_MAX && potential_energy >= -DBL_MAX);
+
+    if(!IsFiniteNumber){
+        qDebug() << "NaN or Inf has been generated along the simulation";
+        exit(-1);
+    }
+
 
     // Vector of Vector of molecules that are vector of atomic coordinates...
     QVector< QVector< QVector< Vector > > > buffered_workspace(nframes);
