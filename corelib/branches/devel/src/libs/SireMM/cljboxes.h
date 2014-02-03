@@ -296,15 +296,15 @@ public:
     QVector<CLJBox> boxes() const;
     QVector<SireVol::AABox> boxDimensions() const;
     
-    static QList<CLJBoxDistance> getDistances(const Space &space, const CLJBoxes &boxes);
-    static QList<CLJBoxDistance> getDistances(const Space &space,
-                                              const CLJBoxes &boxes, Length cutoff);
+    static QVector<CLJBoxDistance> getDistances(const Space &space, const CLJBoxes &boxes);
+    static QVector<CLJBoxDistance> getDistances(const Space &space,
+                                                const CLJBoxes &boxes, Length cutoff);
     
-    static QList<CLJBoxDistance> getDistances(const Space &space,
-                                              const CLJBoxes &boxes0, const CLJBoxes &boxes1);
-    static QList<CLJBoxDistance> getDistances(const Space &space,
-                                              const CLJBoxes &boxes0, const CLJBoxes &boxes1,
-                                              Length cutoff);
+    static QVector<CLJBoxDistance> getDistances(const Space &space,
+                                                const CLJBoxes &boxes0, const CLJBoxes &boxes1);
+    static QVector<CLJBoxDistance> getDistances(const Space &space,
+                                                const CLJBoxes &boxes0, const CLJBoxes &boxes1,
+                                                Length cutoff);
     
     CLJAtoms atoms() const;
     

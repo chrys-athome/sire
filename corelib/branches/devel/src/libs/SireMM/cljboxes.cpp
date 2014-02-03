@@ -732,27 +732,110 @@ const char* CLJBoxes::what() const
     return CLJBoxes::typeName();
 }
 
+// this is the collection of square roots of integers between 0 and 31
+// This is used as a lookup table for the getBoxDistance function, which
+// we know will always have integer distances
+static const int nsqrts = 32;
+static const float sqrts[] = { 0, 1, 1.41421356237, 1.73205080757,
+                               2.0, 2.2360679775, 2.44948974278,
+                               2.64575131106, 2.82842712475,
+                               3.0, 3.16227766017, 3.31662479036,
+                               3.46410161514, 3.60555127546,
+                               3.74165738677, 3.87298334621,
+                               4.0, 4.12310562562, 4.24264068712,
+                               4.35889894354, 4.472135955, 4.58257569496,
+                               4.69041575982, 4.79583152331, 4.89897948557,
+                               5.0, 5.09901951359, 5.19615242271, 5.29150262213,
+                               5.38516480713, 5.47722557505, 5.56776436283 };
+
+/** Return the distance between boxes, in box length units, if they 
+    are separated by dx, dy and dz box lengths */
+inline float getBoxDistance(const int dx, const int dy, const int dz)
+{
+    //sort the deltas into numerically decreasing value
+    const int sum = dx*dx + dy*dy + dz*dz;
+    
+    if (sum < nsqrts)
+    {
+        return sqrts[sum];
+    }
+    else
+        return std::sqrt( float(sum) );
+}
+
+/** Get the number of box lengths separating boxes 0 and 1 at indicies
+    i0 and i1 */
+inline int getDelta( const int i0, const int i1 )
+{
+    // the below single-line expression is doing
+    // if (i0 == i1)
+    // {
+    //     return 0;
+    // }
+    // else if (i0 < i1)
+    // {
+    //     return i1 - i0 - 1;
+    // }
+    // else
+    // {
+    //     return i0 - i1 - 1;
+    // }
+    //
+    // I found on my mac that the single line compiled to faster code
+    // than the above if statements.
+
+    return (i0 == i1) ? 0 : (i0 < i1) ? (i1-i0-1) : (i0-i1-1);
+}
+
 /** Return the distances between all of the occupied boxes in 'boxes'
     based on the space 'space' */
-QList<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes)
+QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes)
 {
-    QList<CLJBoxDistance> dists;
+    QVector<CLJBoxDistance> dists;
+    dists.reserve(1024);
     
-    const Length l(boxes.box_length);
-    
-    for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
-         it != boxes.bxs.constEnd();
-         ++it)
+    if (space.isCartesian())
     {
-        const AABox box0 = it.key().box(l);
-    
-        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
-             it2 != boxes.bxs.constEnd();
-             ++it2)
+        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
+             it != boxes.bxs.constEnd();
+             ++it)
         {
-            const AABox box1 = it2.key().box(l);
+            const CLJBoxIndex &box0 = it.key();
             
-            dists.append( CLJBoxDistance(it.key(), it2.key(), space.minimumDistance(box0,box1)) );
+            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
+                 it2 != boxes.bxs.constEnd();
+                 ++it2)
+            {
+                const CLJBoxIndex &box1 = it2.key();
+                
+                const int dx = getDelta(box0.i(), box1.i());
+                const int dy = getDelta(box0.j(), box1.j());
+                const int dz = getDelta(box0.k(), box1.k());
+                
+                const float dist = getBoxDistance(dx, dy, dz);
+                dists.append( CLJBoxDistance(box0, box1, dist*boxes.box_length) );
+            }
+        }
+    }
+    else
+    {
+        
+        const Length l(boxes.box_length);
+        
+        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
+             it != boxes.bxs.constEnd();
+             ++it)
+        {
+            const AABox box0 = it.key().box(l);
+        
+            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
+                 it2 != boxes.bxs.constEnd();
+                 ++it2)
+            {
+                const AABox box1 = it2.key().box(l);
+                
+                dists.append( CLJBoxDistance(it.key(), it2.key(), space.minimumDistance(box0,box1)) );
+            }
         }
     }
     
@@ -760,34 +843,70 @@ QList<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes 
 }
 
 /** Return the distances between all of the occupied boxes in 'boxes'
-    based on the space 'space', only returning boxes that are separated
+    based on the space 'space', only returning boxes that are separated    
     by distances of less than 'cutoff' */
-QList<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes,
-                                             Length cutoff)
+QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes,
+                                               Length cutoff)
 {
     QElapsedTimer t;
     t.start();
 
-    QList<CLJBoxDistance> dists;
-    
-    const Length l(boxes.box_length);
-    
-    for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
-         it != boxes.bxs.constEnd();
-         ++it)
+    QVector<CLJBoxDistance> dists;
+    dists.reserve(1024);
+
+    if (space.isCartesian())
     {
-        const AABox box0 = it.key().box(l);
-    
-        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
-             it2 != boxes.bxs.constEnd();
-             ++it2)
+        const float box_cutoff = cutoff.value() / boxes.box_length;
+        const int int_box_cutoff = std::ceil(box_cutoff);
+        
+        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
+             it != boxes.bxs.constEnd();
+             ++it)
         {
-            const AABox box1 = it2.key().box(l);
+            const CLJBoxIndex &box0 = it.key();
             
-            const float dist = space.minimumDistance(box0,box1);
-            
-            if (dist < cutoff.value())
-                dists.append( CLJBoxDistance(it.key(), it2.key(), dist) );
+            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
+                 it2 != boxes.bxs.constEnd();
+                 ++it2)
+            {
+                const CLJBoxIndex &box1 = it2.key();
+                
+                const int dx = getDelta(box0.i(), box1.i());
+                const int dy = getDelta(box0.j(), box1.j());
+                const int dz = getDelta(box0.k(), box1.k());
+                
+                if ((dx+dy+dz) <= int_box_cutoff)
+                {
+                    //the box-pair are within cutoff
+                    const float dist = getBoxDistance(dx, dy, dz);
+                    
+                    if (dist < box_cutoff)
+                        dists.append( CLJBoxDistance(box0, box1, dist*boxes.box_length) );
+                }
+            }
+        }
+    }
+    else
+    {
+        const Length l(boxes.box_length);
+        
+        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
+             it != boxes.bxs.constEnd();
+             ++it)
+        {
+            const AABox box0 = it.key().box(l);
+        
+            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
+                 it2 != boxes.bxs.constEnd();
+                 ++it2)
+            {
+                const AABox box1 = it2.key().box(l);
+                
+                const float dist = space.minimumDistance(box0,box1);
+                
+                if (dist < cutoff.value())
+                    dists.append( CLJBoxDistance(it.key(), it2.key(), dist) );
+            }
         }
     }
     
@@ -799,27 +918,56 @@ QList<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes 
 
 /** Return the distances between all pairs of occupied boxes between the boxes in 
     'boxes0' and the boxes in 'boxes1' */
-QList<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes0,
-                                             const CLJBoxes &boxes1)
+QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes0,
+                                               const CLJBoxes &boxes1)
 {
-    QList<CLJBoxDistance> dists;
+    QVector<CLJBoxDistance> dists;
+    dists.reserve(1024);
     
-    const Length l0(boxes0.box_length);
-    const Length l1(boxes1.box_length);
-    
-    for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
-         it != boxes0.bxs.constEnd();
-         ++it)
+    if (space.isCartesian() and (boxes0.box_length == boxes1.box_length))
     {
-        const AABox box0 = it.key().box(l0);
-        
-        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
-             it2 != boxes1.bxs.constEnd();
-             ++it2)
+        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
+             it != boxes0.bxs.constEnd();
+             ++it)
         {
-            const AABox box1 = it2.key().box(l1);
+            const CLJBoxIndex &box0 = it.key();
             
-            dists.append( CLJBoxDistance(it.key(), it2.key(), space.minimumDistance(box0,box1)) );
+            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
+                 it2 != boxes1.bxs.constEnd();
+                 ++it2)
+            {
+                const CLJBoxIndex &box1 = it2.key();
+                
+                const int dx = getDelta(box0.i(), box1.i());
+                const int dy = getDelta(box0.j(), box1.j());
+                const int dz = getDelta(box0.k(), box1.k());
+                
+                //the box-pair are within cutoff
+                const float dist = getBoxDistance(dx, dy, dz);
+                dists.append( CLJBoxDistance(box0, box1, dist*boxes0.box_length) );
+            }
+        }
+    }
+    else
+    {
+        const Length l0(boxes0.box_length);
+        const Length l1(boxes1.box_length);
+        
+        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
+             it != boxes0.bxs.constEnd();
+             ++it)
+        {
+            const AABox box0 = it.key().box(l0);
+            
+            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
+                 it2 != boxes1.bxs.constEnd();
+                 ++it2)
+            {
+                const AABox box1 = it2.key().box(l1);
+                
+                dists.append( CLJBoxDistance(it.key(), it2.key(),
+                                             space.minimumDistance(box0,box1)) );
+            }
         }
     }
     
@@ -828,33 +976,69 @@ QList<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes 
 
 /** Return the distances between all pairs of occupied boxes between the boxes in 
     'boxes0' and the boxes in 'boxes1' */
-QList<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes0,
-                                             const CLJBoxes &boxes1, Length cutoff)
+QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes0,
+                                               const CLJBoxes &boxes1, Length cutoff)
 {
     QElapsedTimer t;
     t.start();
 
-    QList<CLJBoxDistance> dists;
-    
-    const Length l0(boxes0.box_length);
-    const Length l1(boxes1.box_length);
-    
-    for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
-         it != boxes0.bxs.constEnd();
-         ++it)
+    QVector<CLJBoxDistance> dists;
+    dists.reserve( 1024 );
+
+    if (space.isCartesian() and (boxes0.box_length == boxes1.box_length))
     {
-        const AABox box0 = it.key().box(l0);
+        const float box_cutoff = cutoff.value() / boxes0.box_length;
+        const int int_box_cutoff = std::ceil(box_cutoff);
         
-        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
-             it2 != boxes1.bxs.constEnd();
-             ++it2)
+        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
+             it != boxes0.bxs.constEnd();
+             ++it)
         {
-            const AABox box1 = it2.key().box(l1);
+            const CLJBoxIndex &box0 = it.key();
             
-            const float dist = space.minimumDistance(box0, box1);
+            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
+                 it2 != boxes1.bxs.constEnd();
+                 ++it2)
+            {
+                const CLJBoxIndex &box1 = it2.key();
+                
+                const int dx = getDelta(box0.i(), box1.i());
+                const int dy = getDelta(box0.j(), box1.j());
+                const int dz = getDelta(box0.k(), box1.k());
+                
+                if ((dx+dy+dz) <= int_box_cutoff)
+                {
+                    //the box-pair are within cutoff
+                    const float dist = getBoxDistance(dx, dy, dz);
+                    
+                    if (dist < box_cutoff)
+                        dists.append( CLJBoxDistance(box0, box1, dist*boxes0.box_length) );
+                }
+            }
+        }
+    }
+    else
+    {
+        const Length l0(boxes0.box_length);
+        const Length l1(boxes1.box_length);
+        
+        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
+             it != boxes0.bxs.constEnd();
+             ++it)
+        {
+            const AABox box0 = it.key().box(l0);
             
-            if (dist < cutoff.value())
-                dists.append( CLJBoxDistance(it.key(), it2.key(), dist) );
+            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
+                 it2 != boxes1.bxs.constEnd();
+                 ++it2)
+            {
+                const AABox box1 = it2.key().box(l1);
+                
+                const float dist = space.minimumDistance(box0, box1);
+                
+                if (dist < cutoff.value())
+                    dists.append( CLJBoxDistance(it.key(), it2.key(), dist) );
+            }
         }
     }
     

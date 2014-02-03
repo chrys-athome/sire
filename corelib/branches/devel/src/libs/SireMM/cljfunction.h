@@ -77,6 +77,18 @@ public:
     void operator()(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                     double &cnrg, double &ljnrg) const;
 
+    void total(const CLJAtoms &atoms,
+               double &cnrg, double &ljnrg) const;
+    
+    void total(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+               double &cnrg, double &ljnrg) const;
+    
+    double coulomb(const CLJAtoms &atoms) const;
+    double coulomb(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
+    
+    double lj(const CLJAtoms &atoms) const;
+    double lj(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
+
     virtual CLJFunction* clone() const=0;
 
     virtual bool hasCutoff() const;
@@ -106,6 +118,18 @@ protected:
 
     virtual void calcEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                                double &cnrg, double &ljnrg) const=0;
+
+    virtual double calcCoulombEnergyAri(const CLJAtoms &atoms) const;
+    virtual double calcCoulombEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
+
+    virtual double calcCoulombEnergyGeo(const CLJAtoms &atoms) const;
+    virtual double calcCoulombEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
+    
+    virtual double calcLJEnergyAri(const CLJAtoms &atoms) const;
+    virtual double calcLJEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
+    
+    virtual double calcLJEnergyGeo(const CLJAtoms &atoms) const;
+    virtual double calcLJEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
 
 private:
     /** whether or not to use arithmetic combining rules */

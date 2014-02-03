@@ -138,6 +138,70 @@ bool CLJFunction::usingGeometricCombiningRules() const
     return not use_arithmetic;
 }
 
+/** Calculate the coulomb energy between all atoms in 'atoms' */
+double CLJFunction::calcCoulombEnergyAri(const CLJAtoms &atoms) const
+{
+    double cnrg, ljnrg;
+    calcEnergyAri(atoms, cnrg, ljnrg);
+    return cnrg;
+}
+
+/** Calculate the coulomb energy between the atoms in 'atoms0' and the atoms in 'atoms1' */
+double CLJFunction::calcCoulombEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const
+{
+    double cnrg, ljnrg;
+    calcEnergyAri(atoms0, atoms1, cnrg, ljnrg);
+    return cnrg;
+}
+
+/** Calculate the coulomb energy between all atoms in 'atoms' */
+double CLJFunction::calcCoulombEnergyGeo(const CLJAtoms &atoms) const
+{
+    double cnrg, ljnrg;
+    calcEnergyGeo(atoms, cnrg, ljnrg);
+    return cnrg;
+}
+
+/** Calculate the coulomb energy between the atoms in 'atoms0' and the atoms in 'atoms1' */
+double CLJFunction::calcCoulombEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const
+{
+    double cnrg, ljnrg;
+    calcEnergyGeo(atoms0, atoms1, cnrg, ljnrg);
+    return cnrg;
+}
+
+/** Calculate the LJ energy between all atoms in 'atoms' */
+double CLJFunction::calcLJEnergyAri(const CLJAtoms &atoms) const
+{
+    double cnrg, ljnrg;
+    calcEnergyAri(atoms, cnrg, ljnrg);
+    return ljnrg;
+}
+
+/** Calculate the LJ energy between the atoms in 'atoms0' and the atoms in 'atoms1' */
+double CLJFunction::calcLJEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const
+{
+    double cnrg, ljnrg;
+    calcEnergyAri(atoms0, atoms1, cnrg, ljnrg);
+    return ljnrg;
+}
+
+/** Calculate the LJ energy between all atoms in 'atoms' */
+double CLJFunction::calcLJEnergyGeo(const CLJAtoms &atoms) const
+{
+    double cnrg, ljnrg;
+    calcEnergyGeo(atoms, cnrg, ljnrg);
+    return ljnrg;
+}
+
+/** Calculate the LJ energy between the atoms in 'atoms0' and the atoms in 'atoms1' */
+double CLJFunction::calcLJEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const
+{
+    double cnrg, ljnrg;
+    calcEnergyGeo(atoms0, atoms1, cnrg, ljnrg);
+    return ljnrg;
+}
+
 void CLJFunction::operator()(const CLJAtoms &atoms,
                              double &cnrg, double &ljnrg) const
 {
@@ -177,6 +241,85 @@ void CLJFunction::operator()(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
             this->calcEnergyAri(atoms0, atoms1, cnrg, ljnrg);
         else
             this->calcEnergyGeo(atoms0, atoms1, cnrg, ljnrg);
+    }
+}
+
+/** Return the total energy between 'atoms', returning the coulomb part in 'cnrg'
+    and the LJ part in 'ljnrg' */
+void CLJFunction::total(const CLJAtoms &atoms, double &cnrg, double &ljnrg) const
+{
+    return this->operator()(atoms, cnrg, ljnrg);
+}
+
+/** Return the total energy between 'atoms0' and 'atoms1', returning the coulomb part in 'cnrg'
+    and the LJ part in 'ljnrg' */
+void CLJFunction::total(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                        double &cnrg, double &ljnrg) const
+{
+    return this->operator()(atoms0, atoms1, cnrg, ljnrg);
+}
+
+/** Return the coulomb energy between the atoms in 'atoms' */
+double CLJFunction::coulomb(const CLJAtoms &atoms) const
+{
+    if (atoms.isEmpty())
+    {
+        return 0;
+    }
+    else
+    {
+        if (use_arithmetic)
+            return this->calcCoulombEnergyAri(atoms);
+        else
+            return this->calcCoulombEnergyGeo(atoms);
+    }
+}
+
+/** Return the coulomb energy between the atoms in 'atoms0' and in 'atoms1' */
+double CLJFunction::coulomb(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const
+{
+    if (atoms0.isEmpty() or atoms1.isEmpty())
+    {
+        return 0;
+    }
+    else
+    {
+        if (use_arithmetic)
+            return this->calcCoulombEnergyAri(atoms0, atoms1);
+        else
+            return this->calcCoulombEnergyGeo(atoms0, atoms1);
+    }
+}
+
+/** Return the LJ energy between the atoms in 'atoms' */
+double CLJFunction::lj(const CLJAtoms &atoms) const
+{
+    if (atoms.isEmpty())
+    {
+        return 0;
+    }
+    else
+    {
+        if (use_arithmetic)
+            return this->calcLJEnergyAri(atoms);
+        else
+            return this->calcLJEnergyGeo(atoms);
+    }
+}
+
+/** Return the LJ energy between the atoms in 'atoms0' and in 'atoms1' */
+double CLJFunction::lj(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const
+{
+    if (atoms0.isEmpty() or atoms1.isEmpty())
+    {
+        return 0;
+    }
+    else
+    {
+        if (use_arithmetic)
+            return this->calcLJEnergyAri(atoms0, atoms1);
+        else
+            return this->calcLJEnergyGeo(atoms0, atoms1);
     }
 }
 

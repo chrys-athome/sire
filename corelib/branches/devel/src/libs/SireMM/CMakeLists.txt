@@ -18,6 +18,7 @@ set ( SIREMM_HEADERS
       atompairs.hpp
       cljatoms.h
       cljboxes.h
+      cljcalculator.h
       cljcomponent.h
       cljfunction.h
       cljparam.h
@@ -74,6 +75,7 @@ set ( SIREMM_SOURCES
       atomljs.cpp
       cljatoms.cpp
       cljboxes.cpp
+      cljcalculator.cpp
       cljcomponent.cpp
       cljfunction.cpp
       cljparam.cpp

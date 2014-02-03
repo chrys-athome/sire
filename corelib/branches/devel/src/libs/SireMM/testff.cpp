@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "testff.h"
+#include "cljcalculator.h"
 
 #include "SireVol/cartesian.h"
 
@@ -46,6 +47,8 @@ using namespace SireMol;
 using namespace SireMaths;
 using namespace SireUnits;
 using namespace SireVol;
+
+using boost::tuple;
 
 TestFF::TestFF() : cljfunc(new CLJVacShiftAriFunction(15*angstrom, 15*angstrom))
 {}
@@ -86,12 +89,12 @@ class CLJCalculator
 {
 public:
     CLJCalculator();
-    CLJCalculator(const CLJFunction *function,
-                  const QList<CLJBoxDistance> &distances,
+    CLJCalculator(const CLJFunction* const function,
+                  const CLJBoxDistance* const distances,
                   const QMap<CLJBoxIndex,CLJBoxPtr> &cljboxes,
                   const float coulomb_cutoff, const float lenj_cutoff,
                   double *coulomb_energy, double *lj_energy)
-        : func(function), dists(&distances), boxes(&cljboxes),
+        : func(function), dists(distances), boxes(&cljboxes),
           coul_nrg(coulomb_energy), lj_nrg(lj_energy),
           coul_cutoff(coulomb_cutoff), lj_cutoff(lenj_cutoff)
     {}
@@ -101,26 +104,29 @@ public:
     
     void operator()(const tbb::blocked_range<int> &range) const
     {
+        const CLJBoxDistance* ptr = dists + range.begin();
+    
         for (int i = range.begin(); i != range.end(); ++i)
         {
-            const CLJBoxDistance &d = dists->at(i);
-            
-            if (d.box0() == d.box1())
+            if (ptr->box0() == ptr->box1())
             {
-                (*func)(boxes->constFind(d.box0()).value().read().atoms(), coul_nrg[i], lj_nrg[i]);
+                (*func)(boxes->constFind(ptr->box0()).value().read().atoms(),
+                        coul_nrg[i], lj_nrg[i]);
             }
             else
             {
-                (*func)(boxes->constFind(d.box0()).value().read().atoms(),
-                        boxes->constFind(d.box1()).value().read().atoms(),
+                (*func)(boxes->constFind(ptr->box0()).value().read().atoms(),
+                        boxes->constFind(ptr->box1()).value().read().atoms(),
                         coul_nrg[i], lj_nrg[i]);
             }
+            
+            ptr += 1;
         }
     }
     
 private:
     const CLJFunction* const func;
-    const QList<CLJBoxDistance>* const dists;
+    const CLJBoxDistance* const dists;
     const QMap<CLJBoxIndex,CLJBoxPtr>* boxes;
     
     double *coul_nrg;
@@ -164,7 +170,7 @@ void TestFF::calculateEnergy()
     Length coul_cutoff = cljfunc->coulombCutoff();
     Length lj_cutoff = cljfunc->ljCutoff();
     
-    QList<CLJBoxDistance> dists;
+    QVector<CLJBoxDistance> dists;
 
     const QMap<CLJBoxIndex,CLJBoxPtr> &boxes0 = cljboxes0.occupiedBoxes();
     const QMap<CLJBoxIndex,CLJBoxPtr> &boxes1 = cljboxes1.occupiedBoxes();
@@ -180,17 +186,17 @@ void TestFF::calculateEnergy()
     
     t.start();
     
-    for (QList<CLJBoxDistance>::const_iterator it = dists.constBegin();
-         it != dists.constEnd();
-         ++it)
+    const CLJBoxDistance *ptr = dists.constData();
+    
+    for (int i=0; i<dists.count(); ++i)
     {
-        const CLJBoxDistance &d = *it;
-        
-        (*cljfunc)(boxes0[d.box0()].read().atoms(), boxes1[d.box1()].read().atoms(),
+        (*cljfunc)(boxes0[ptr->box0()].read().atoms(), boxes1[ptr->box1()].read().atoms(),
                    icnrg, iljnrg);
         
         cnrg += icnrg;
         ljnrg += iljnrg;
+        
+        ptr += 1;
     }
     
     ns = t.nsecsElapsed();
@@ -205,26 +211,26 @@ void TestFF::calculateEnergy()
     cnrg = 0;
     ljnrg = 0;
     
+    ptr = dists.constData();
+    
     t.start();
     
-    for (QList<CLJBoxDistance>::const_iterator it = dists.constBegin();
-         it != dists.constEnd();
-         ++it)
+    for (int i=0; i<dists.count(); ++i)
     {
-        const CLJBoxDistance &d = *it;
-        
-        if (d.box0() == d.box1())
+        if (ptr->box0() == ptr->box1())
         {
-            (*cljfunc)(boxes1[d.box0()].read().atoms(), icnrg, iljnrg);
+            (*cljfunc)(boxes1[ptr->box0()].read().atoms(), icnrg, iljnrg);
         }
         else
         {
-            (*cljfunc)(boxes1[d.box0()].read().atoms(), boxes1[d.box1()].read().atoms(),
+            (*cljfunc)(boxes1[ptr->box0()].read().atoms(), boxes1[ptr->box1()].read().atoms(),
                        icnrg, iljnrg);
         }
 
         cnrg += icnrg;
         ljnrg += iljnrg;
+        
+        ptr += 1;
     }
     
     ns = t.nsecsElapsed();
@@ -238,11 +244,11 @@ void TestFF::calculateEnergy()
     QVector<double> coul_nrgs(dists.count());
     QVector<double> lj_nrgs(dists.count());
     
-    CLJCalculator calc(cljfunc.get(), dists, boxes1, coul_cutoff.value(),
-                       lj_cutoff.value(), coul_nrgs.data(), lj_nrgs.data());
+    ::CLJCalculator calc(cljfunc.get(), dists.constData(), boxes1, coul_cutoff.value(),
+                         lj_cutoff.value(), coul_nrgs.data(), lj_nrgs.data());
     
     t.start();
-    tbb::parallel_for(tbb::blocked_range<int>(0,dists.count()), calc);
+    tbb::parallel_for(tbb::blocked_range<int>(0,dists.count(),25), calc);
     
     cnrg = 0;
     ljnrg = 0;
@@ -257,4 +263,16 @@ void TestFF::calculateEnergy()
     
     qDebug() << "\nParallel" << (cnrg+ljnrg) << cnrg << ljnrg;
     qDebug() << "Parallel version took" << (0.000001*ns) << "ms";
+    
+    qDebug() << "\nCLJCalculator version";
+    SireMM::CLJCalculator calculator;
+    t.start();
+    tuple<double,double> nrgs = calculator.calculate(*cljfunc, cljboxes1);
+    ns = t.nsecsElapsed();
+    
+    cnrg = nrgs.get<0>();
+    ljnrg = nrgs.get<1>();
+    
+    qDebug() << "\nCLJCalculator" << (cnrg+ljnrg) << cnrg << ljnrg;
+    qDebug() << "Took" << (0.000001*ns) << "ms";
 }
