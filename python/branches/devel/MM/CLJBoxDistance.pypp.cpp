@@ -17,6 +17,8 @@ namespace bp = boost::python;
 
 #include "SireVol/aabox.h"
 
+#include "SireVol/space.h"
+
 #include "cljboxes.h"
 
 #include <QDebug>

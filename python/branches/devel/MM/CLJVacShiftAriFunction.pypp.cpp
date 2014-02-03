@@ -34,6 +34,36 @@ void register_CLJVacShiftAriFunction_class(){
         CLJVacShiftAriFunction_exposer.def( bp::init< SireUnits::Dimension::Length >(( bp::arg("cutoff") )) );
         CLJVacShiftAriFunction_exposer.def( bp::init< SireUnits::Dimension::Length, SireUnits::Dimension::Length >(( bp::arg("coul_cutoff"), bp::arg("lj_cutoff") )) );
         CLJVacShiftAriFunction_exposer.def( bp::init< SireMM::CLJVacShiftAriFunction const & >(( bp::arg("other") )) );
+        { //::SireMM::CLJVacShiftAriFunction::coulombCutoff
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMM::CLJVacShiftAriFunction::*coulombCutoff_function_type )(  ) const;
+            coulombCutoff_function_type coulombCutoff_function_value( &::SireMM::CLJVacShiftAriFunction::coulombCutoff );
+            
+            CLJVacShiftAriFunction_exposer.def( 
+                "coulombCutoff"
+                , coulombCutoff_function_value );
+        
+        }
+        { //::SireMM::CLJVacShiftAriFunction::hasCutoff
+        
+            typedef bool ( ::SireMM::CLJVacShiftAriFunction::*hasCutoff_function_type )(  ) const;
+            hasCutoff_function_type hasCutoff_function_value( &::SireMM::CLJVacShiftAriFunction::hasCutoff );
+            
+            CLJVacShiftAriFunction_exposer.def( 
+                "hasCutoff"
+                , hasCutoff_function_value );
+        
+        }
+        { //::SireMM::CLJVacShiftAriFunction::ljCutoff
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMM::CLJVacShiftAriFunction::*ljCutoff_function_type )(  ) const;
+            ljCutoff_function_type ljCutoff_function_value( &::SireMM::CLJVacShiftAriFunction::ljCutoff );
+            
+            CLJVacShiftAriFunction_exposer.def( 
+                "ljCutoff"
+                , ljCutoff_function_value );
+        
+        }
         CLJVacShiftAriFunction_exposer.def( bp::self != bp::self );
         { //::SireMM::CLJVacShiftAriFunction::operator=
         

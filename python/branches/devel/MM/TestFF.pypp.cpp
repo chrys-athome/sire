@@ -9,7 +9,19 @@ namespace bp = boost::python;
 
 #include "SireUnits/units.h"
 
+#include "SireVol/cartesian.h"
+
+#include "cljcalculator.h"
+
+#include "tbb/blocked_range.h"
+
+#include "tbb/parallel_for.h"
+
+#include "tbb/task_scheduler_init.h"
+
 #include "testff.h"
+
+#include "tostring.h"
 
 #include <QDebug>
 

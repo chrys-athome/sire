@@ -53,6 +53,8 @@
 
 #include "CLJBoxes.pypp.hpp"
 
+#include "CLJCalculator.pypp.hpp"
+
 #include "CLJComponent.pypp.hpp"
 
 #include "CLJFunction.pypp.hpp"
@@ -445,6 +447,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_CLJBoxIndex_class();
 
     register_CLJBoxes_class();
+
+    register_CLJCalculator_class();
 
     register_CLJComponent_class();
 

@@ -14,6 +14,7 @@ set ( PYPP_SOURCES
        InternalPerturbation.pypp.cpp
        IntraGroupLJFF.pypp.cpp
        DihedralSymbols.pypp.cpp
+       CLJCalculator.pypp.cpp
        InterGroupCoulombFF.pypp.cpp
        LJNBPairs.pypp.cpp
        UreyBradleyParameterName.pypp.cpp

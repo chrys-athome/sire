@@ -24,6 +24,7 @@
 #include "atomljs.h"
 #include "distancerestraint.h"
 #include "fouratomfunctions.h"
+#include "cljcalculator.h"
 #include "intracljff.h"
 #include "internalparameters.h"
 #include "internalcomponent.h"
@@ -95,6 +96,7 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::TripleDistanceRestraint >();
     ObjectRegistry::registerConverterFor< SireMM::HarmonicDistanceForceConstant >();
     ObjectRegistry::registerConverterFor< SireMM::FourAtomFunctions >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJCalculator >();
     ObjectRegistry::registerConverterFor< SireMM::IntraCLJFFBase >();
     ObjectRegistry::registerConverterFor< SireMM::IntraCLJFF >();
     ObjectRegistry::registerConverterFor< SireMM::IntraGroupCLJFFBase >();

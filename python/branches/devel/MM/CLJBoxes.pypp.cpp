@@ -17,6 +17,8 @@ namespace bp = boost::python;
 
 #include "SireVol/aabox.h"
 
+#include "SireVol/space.h"
+
 #include "cljboxes.h"
 
 #include <QDebug>
@@ -116,7 +118,7 @@ void register_CLJBoxes_class(){
         }
         { //::SireMM::CLJBoxes::getDistances
         
-            typedef ::QList< SireMM::CLJBoxDistance > ( *getDistances_function_type )( ::SireVol::Space const &,::SireMM::CLJBoxes const & );
+            typedef ::QVector< SireMM::CLJBoxDistance > ( *getDistances_function_type )( ::SireVol::Space const &,::SireMM::CLJBoxes const & );
             getDistances_function_type getDistances_function_value( &::SireMM::CLJBoxes::getDistances );
             
             CLJBoxes_exposer.def( 
@@ -127,7 +129,7 @@ void register_CLJBoxes_class(){
         }
         { //::SireMM::CLJBoxes::getDistances
         
-            typedef ::QList< SireMM::CLJBoxDistance > ( *getDistances_function_type )( ::SireVol::Space const &,::SireMM::CLJBoxes const &,::SireUnits::Dimension::Length );
+            typedef ::QVector< SireMM::CLJBoxDistance > ( *getDistances_function_type )( ::SireVol::Space const &,::SireMM::CLJBoxes const &,::SireUnits::Dimension::Length );
             getDistances_function_type getDistances_function_value( &::SireMM::CLJBoxes::getDistances );
             
             CLJBoxes_exposer.def( 
@@ -138,7 +140,7 @@ void register_CLJBoxes_class(){
         }
         { //::SireMM::CLJBoxes::getDistances
         
-            typedef ::QList< SireMM::CLJBoxDistance > ( *getDistances_function_type )( ::SireVol::Space const &,::SireMM::CLJBoxes const &,::SireMM::CLJBoxes const & );
+            typedef ::QVector< SireMM::CLJBoxDistance > ( *getDistances_function_type )( ::SireVol::Space const &,::SireMM::CLJBoxes const &,::SireMM::CLJBoxes const & );
             getDistances_function_type getDistances_function_value( &::SireMM::CLJBoxes::getDistances );
             
             CLJBoxes_exposer.def( 
@@ -149,7 +151,7 @@ void register_CLJBoxes_class(){
         }
         { //::SireMM::CLJBoxes::getDistances
         
-            typedef ::QList< SireMM::CLJBoxDistance > ( *getDistances_function_type )( ::SireVol::Space const &,::SireMM::CLJBoxes const &,::SireMM::CLJBoxes const &,::SireUnits::Dimension::Length );
+            typedef ::QVector< SireMM::CLJBoxDistance > ( *getDistances_function_type )( ::SireVol::Space const &,::SireMM::CLJBoxes const &,::SireMM::CLJBoxes const &,::SireUnits::Dimension::Length );
             getDistances_function_type getDistances_function_value( &::SireMM::CLJBoxes::getDistances );
             
             CLJBoxes_exposer.def( 

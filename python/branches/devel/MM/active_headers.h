@@ -8,6 +8,7 @@
 #include "atomljs.h"
 #include "cljatoms.h"
 #include "cljboxes.h"
+#include "cljcalculator.h"
 #include "cljcomponent.h"
 #include "cljfunction.h"
 #include "cljnbpairs.h"

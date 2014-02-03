@@ -3,6 +3,7 @@
 // (C) Christopher Woods, GPL >= 2 License
 
 #include "boost/python.hpp"
+#include "Helpers/clone_const_reference.hpp"
 #include "CLJFunction.pypp.hpp"
 
 namespace bp = boost::python;
@@ -29,6 +30,80 @@ void register_CLJFunction_class(){
         typedef bp::class_< SireMM::CLJFunction, bp::bases< SireBase::Property >, boost::noncopyable > CLJFunction_exposer_t;
         CLJFunction_exposer_t CLJFunction_exposer = CLJFunction_exposer_t( "CLJFunction", bp::no_init );
         bp::scope CLJFunction_scope( CLJFunction_exposer );
+        { //::SireMM::CLJFunction::coulomb
+        
+            typedef double ( ::SireMM::CLJFunction::*coulomb_function_type )( ::SireMM::CLJAtoms const & ) const;
+            coulomb_function_type coulomb_function_value( &::SireMM::CLJFunction::coulomb );
+            
+            CLJFunction_exposer.def( 
+                "coulomb"
+                , coulomb_function_value
+                , ( bp::arg("atoms") ) );
+        
+        }
+        { //::SireMM::CLJFunction::coulomb
+        
+            typedef double ( ::SireMM::CLJFunction::*coulomb_function_type )( ::SireMM::CLJAtoms const &,::SireMM::CLJAtoms const & ) const;
+            coulomb_function_type coulomb_function_value( &::SireMM::CLJFunction::coulomb );
+            
+            CLJFunction_exposer.def( 
+                "coulomb"
+                , coulomb_function_value
+                , ( bp::arg("atoms0"), bp::arg("atoms1") ) );
+        
+        }
+        { //::SireMM::CLJFunction::coulombCutoff
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMM::CLJFunction::*coulombCutoff_function_type )(  ) const;
+            coulombCutoff_function_type coulombCutoff_function_value( &::SireMM::CLJFunction::coulombCutoff );
+            
+            CLJFunction_exposer.def( 
+                "coulombCutoff"
+                , coulombCutoff_function_value );
+        
+        }
+        { //::SireMM::CLJFunction::hasCutoff
+        
+            typedef bool ( ::SireMM::CLJFunction::*hasCutoff_function_type )(  ) const;
+            hasCutoff_function_type hasCutoff_function_value( &::SireMM::CLJFunction::hasCutoff );
+            
+            CLJFunction_exposer.def( 
+                "hasCutoff"
+                , hasCutoff_function_value );
+        
+        }
+        { //::SireMM::CLJFunction::lj
+        
+            typedef double ( ::SireMM::CLJFunction::*lj_function_type )( ::SireMM::CLJAtoms const & ) const;
+            lj_function_type lj_function_value( &::SireMM::CLJFunction::lj );
+            
+            CLJFunction_exposer.def( 
+                "lj"
+                , lj_function_value
+                , ( bp::arg("atoms") ) );
+        
+        }
+        { //::SireMM::CLJFunction::lj
+        
+            typedef double ( ::SireMM::CLJFunction::*lj_function_type )( ::SireMM::CLJAtoms const &,::SireMM::CLJAtoms const & ) const;
+            lj_function_type lj_function_value( &::SireMM::CLJFunction::lj );
+            
+            CLJFunction_exposer.def( 
+                "lj"
+                , lj_function_value
+                , ( bp::arg("atoms0"), bp::arg("atoms1") ) );
+        
+        }
+        { //::SireMM::CLJFunction::ljCutoff
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMM::CLJFunction::*ljCutoff_function_type )(  ) const;
+            ljCutoff_function_type ljCutoff_function_value( &::SireMM::CLJFunction::ljCutoff );
+            
+            CLJFunction_exposer.def( 
+                "ljCutoff"
+                , ljCutoff_function_value );
+        
+        }
         { //::SireMM::CLJFunction::operator()
         
             typedef void ( ::SireMM::CLJFunction::*__call___function_type )( ::SireMM::CLJAtoms const &,double &,double & ) const;
@@ -73,6 +148,39 @@ void register_CLJFunction_class(){
                 , ( bp::arg("on") ) );
         
         }
+        { //::SireMM::CLJFunction::space
+        
+            typedef ::SireVol::Space const & ( ::SireMM::CLJFunction::*space_function_type )(  ) const;
+            space_function_type space_function_value( &::SireMM::CLJFunction::space );
+            
+            CLJFunction_exposer.def( 
+                "space"
+                , space_function_value
+                , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::SireMM::CLJFunction::total
+        
+            typedef void ( ::SireMM::CLJFunction::*total_function_type )( ::SireMM::CLJAtoms const &,double &,double & ) const;
+            total_function_type total_function_value( &::SireMM::CLJFunction::total );
+            
+            CLJFunction_exposer.def( 
+                "total"
+                , total_function_value
+                , ( bp::arg("atoms"), bp::arg("cnrg"), bp::arg("ljnrg") ) );
+        
+        }
+        { //::SireMM::CLJFunction::total
+        
+            typedef void ( ::SireMM::CLJFunction::*total_function_type )( ::SireMM::CLJAtoms const &,::SireMM::CLJAtoms const &,double &,double & ) const;
+            total_function_type total_function_value( &::SireMM::CLJFunction::total );
+            
+            CLJFunction_exposer.def( 
+                "total"
+                , total_function_value
+                , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("cnrg"), bp::arg("ljnrg") ) );
+        
+        }
         { //::SireMM::CLJFunction::usingArithmeticCombiningRules
         
             typedef bool ( ::SireMM::CLJFunction::*usingArithmeticCombiningRules_function_type )(  ) const;
@@ -93,6 +201,11 @@ void register_CLJFunction_class(){
                 , usingGeometricCombiningRules_function_value );
         
         }
+        bp::register_ptr_to_python< boost::shared_ptr< SireMM::CLJFunction > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJFunction >, boost::shared_ptr< SireBase::Property > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJFunction >, boost::shared_ptr< QSharedData > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireBase::ConcreteProperty< SireMM::CLJVacShiftAriFunction, SireMM::CLJFunction > >, boost::shared_ptr< SireMM::CLJFunction > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJVacShiftAriFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
         CLJFunction_exposer.def( "__rlshift__", &__rlshift__QDataStream< ::SireMM::CLJFunction >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CLJFunction_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireMM::CLJFunction >,
