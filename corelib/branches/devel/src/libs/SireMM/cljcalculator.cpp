@@ -185,6 +185,56 @@ namespace SireMM
 
         /** This is a private helper class that is used to calculate the
             coulomb and LJ energy in parallel using Intel TBB */
+        class TotalWithoutCutoff
+        {
+        public:
+            TotalWithoutCutoff() : func(0), dists(0), boxes(0)
+            {}
+        
+            TotalWithoutCutoff(const CLJFunction* const function,
+                               const CLJBoxDistance* const distances,
+                               const QMap<CLJBoxIndex,CLJBoxPtr> &cljboxes,
+                               double *coulomb_energy, double *lj_energy)
+                : func(function), dists(distances), boxes(&cljboxes),
+                  coul_nrg(coulomb_energy), lj_nrg(lj_energy)
+            {}
+            
+            ~TotalWithoutCutoff()
+            {}
+            
+            void operator()(const tbb::blocked_range<int> &range) const
+            {
+                const CLJBoxDistance* ptr = dists + range.begin();
+            
+                for (int i = range.begin(); i != range.end(); ++i)
+                {
+                    if (ptr->box0() == ptr->box1())
+                    {
+                        func->total(boxes->constFind(ptr->box0()).value().read().atoms(),
+                                    coul_nrg[i], lj_nrg[i]);
+                    }
+                    else
+                    {
+                        func->total(boxes->constFind(ptr->box0()).value().read().atoms(),
+                                    boxes->constFind(ptr->box1()).value().read().atoms(),
+                                    coul_nrg[i], lj_nrg[i]);
+                    }
+                    
+                    ptr += 1;
+                }
+            }
+            
+        private:
+            const CLJFunction* const func;
+            const CLJBoxDistance* const dists;
+            const QMap<CLJBoxIndex,CLJBoxPtr>* const boxes;
+            
+            double *coul_nrg;
+            double *lj_nrg;
+        };
+
+        /** This is a private helper class that is used to calculate the
+            coulomb and LJ energy in parallel using Intel TBB */
         class TotalWithCutoff2
         {
         public:
@@ -251,6 +301,50 @@ namespace SireMM
             const float coul_cutoff;
             const float lj_cutoff;
         };
+
+        /** This is a private helper class that is used to calculate the
+            coulomb and LJ energy in parallel using Intel TBB */
+        class TotalWithoutCutoff2
+        {
+        public:
+            TotalWithoutCutoff2() : func(0), dists(0), boxes0(0), boxes1(0)
+            {}
+        
+            TotalWithoutCutoff2(const CLJFunction* const function,
+                                const CLJBoxDistance* const distances,
+                                const QMap<CLJBoxIndex,CLJBoxPtr> &cljboxes0,
+                                const QMap<CLJBoxIndex,CLJBoxPtr> &cljboxes1,
+                                double *coulomb_energy, double *lj_energy)
+                : func(function), dists(distances), boxes0(&cljboxes0),
+                  boxes1(&cljboxes1), coul_nrg(coulomb_energy), lj_nrg(lj_energy)
+            {}
+            
+            ~TotalWithoutCutoff2()
+            {}
+            
+            void operator()(const tbb::blocked_range<int> &range) const
+            {
+                const CLJBoxDistance* ptr = dists + range.begin();
+            
+                for (int i = range.begin(); i != range.end(); ++i)
+                {
+                    func->total(boxes0->constFind(ptr->box0()).value().read().atoms(),
+                                boxes1->constFind(ptr->box1()).value().read().atoms(),
+                                coul_nrg[i], lj_nrg[i]);
+                    
+                    ptr += 1;
+                }
+            }
+            
+        private:
+            const CLJFunction* const func;
+            const CLJBoxDistance* const dists;
+            const QMap<CLJBoxIndex,CLJBoxPtr>* const boxes0;
+            const QMap<CLJBoxIndex,CLJBoxPtr>* const boxes1;
+            
+            double *coul_nrg;
+            double *lj_nrg;
+        };
     
     } // end of namespace detail
 } // end of namespace SireMM
@@ -282,7 +376,7 @@ tuple<double,double> CLJCalculator::calculate(const CLJFunction &func, const CLJ
                                        coul_nrgs.data(), lj_nrgs.data());
 
         //now perform the calculation in parallel
-        tbb::parallel_for(tbb::blocked_range<int>(0,dists.count(),25), helper);
+        tbb::parallel_for(tbb::blocked_range<int>(0,dists.count()), helper);
         
         if (reproducible_sum)
         {
@@ -311,10 +405,45 @@ tuple<double,double> CLJCalculator::calculate(const CLJFunction &func, const CLJ
     }
     else
     {
+        //get the list of box pairs that are within the cutoff distance
         QVector<CLJBoxDistance> dists = CLJBoxes::getDistances(func.space(), boxes);
-    }
 
-    return tuple<double,double>(0,0);
+        //now create the space to hold the calculated energies
+        QVector<double> coul_nrgs( dists.count() );
+        QVector<double> lj_nrgs( dists.count() );
+        
+        //now create the object that will be used by TBB to calculate the energies
+        detail::TotalWithoutCutoff helper(&func, dists.constData(), boxes.occupiedBoxes(),
+                                          coul_nrgs.data(), lj_nrgs.data());
+
+        //now perform the calculation in parallel
+        tbb::parallel_for(tbb::blocked_range<int>(0,dists.count()), helper);
+        
+        if (reproducible_sum)
+        {
+            //do a sorted sum of energies so that we get the same result no matter the order
+            //of calculation
+            qSort(coul_nrgs);
+            qSort(lj_nrgs);
+        }
+        
+        double cnrg = 0;
+        double ljnrg = 0;
+        
+        const double *coul_nrgs_array = coul_nrgs.constData();
+        const double *lj_nrgs_array = lj_nrgs.constData();
+        
+        for (int i=0; i<coul_nrgs.count(); ++i)
+        {
+            cnrg += *coul_nrgs_array;
+            ljnrg += *lj_nrgs_array;
+            
+            ++coul_nrgs_array;
+            ++lj_nrgs_array;
+        }
+        
+        return tuple<double,double>(cnrg, ljnrg);
+    }
 }
 
 /** Calculate the energy between all of the atoms in the passed two CLJBoxes
@@ -348,7 +477,7 @@ tuple<double,double> CLJCalculator::calculate(const CLJFunction &func,
                                         coul_nrgs.data(), lj_nrgs.data());
 
         //now perform the calculation in parallel
-        tbb::parallel_for(tbb::blocked_range<int>(0,dists.count(),25), helper);
+        tbb::parallel_for(tbb::blocked_range<int>(0,dists.count()), helper);
         
         if (reproducible_sum)
         {
@@ -377,10 +506,47 @@ tuple<double,double> CLJCalculator::calculate(const CLJFunction &func,
     }
     else
     {
+        //get the list of box pairs that are within the cutoff distance
         QVector<CLJBoxDistance> dists = CLJBoxes::getDistances(func.space(), boxes0, boxes1);
-    }
 
-    return tuple<double,double>(0,0);
+        //now create the space to hold the calculated energies
+        QVector<double> coul_nrgs( dists.count() );
+        QVector<double> lj_nrgs( dists.count() );
+        
+        //now create the object that will be used by TBB to calculate the energies
+        detail::TotalWithoutCutoff2 helper(&func, dists.constData(),
+                                           boxes0.occupiedBoxes(),
+                                           boxes1.occupiedBoxes(),
+                                           coul_nrgs.data(), lj_nrgs.data());
+
+        //now perform the calculation in parallel
+        tbb::parallel_for(tbb::blocked_range<int>(0,dists.count()), helper);
+        
+        if (reproducible_sum)
+        {
+            //do a sorted sum of energies so that we get the same result no matter the order
+            //of calculation
+            qSort(coul_nrgs);
+            qSort(lj_nrgs);
+        }
+        
+        double cnrg = 0;
+        double ljnrg = 0;
+        
+        const double *coul_nrgs_array = coul_nrgs.constData();
+        const double *lj_nrgs_array = lj_nrgs.constData();
+        
+        for (int i=0; i<coul_nrgs.count(); ++i)
+        {
+            cnrg += *coul_nrgs_array;
+            ljnrg += *lj_nrgs_array;
+            
+            ++coul_nrgs_array;
+            ++lj_nrgs_array;
+        }
+        
+        return tuple<double,double>(cnrg, ljnrg);
+    }
 }
 
 /** Calculate the energy between all of the atoms in the passed CLJBoxes
