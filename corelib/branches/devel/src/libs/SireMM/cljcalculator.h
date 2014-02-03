@@ -60,7 +60,7 @@ friend QDataStream& ::operator<<(QDataStream&, const CLJCalculator&);
 friend QDataStream& ::operator>>(QDataStream&, CLJCalculator&);
 
 public:
-    CLJCalculator();
+    CLJCalculator(bool reproducible_sum = false);
     CLJCalculator(const CLJCalculator &other);
     ~CLJCalculator();
     
@@ -81,6 +81,20 @@ public:
     boost::tuple< QVector<double>, QVector<double> >
             calculate( const QVector< boost::shared_ptr<CLJFunction> > &funcs,
                        const CLJBoxes &boxes);
+
+    boost::tuple<double,double> calculate(const CLJFunction &func,
+                                          const CLJBoxes &boxes0,
+                                          const CLJBoxes &boxes1);
+
+
+    boost::tuple< QVector<double>, QVector<double> >
+            calculate( const QVector< boost::shared_ptr<CLJFunction> > &funcs,
+                       const CLJBoxes &boxes0, const CLJBoxes &boxes1);
+private:
+    /** Whether or not the energy calculation should give the same
+        result regardless of the order of summation (i.e. gives the same
+        result even if different numbers of processors are used) */
+    bool reproducible_sum;
 };
 
 }

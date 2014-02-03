@@ -848,8 +848,8 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
 QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes,
                                                Length cutoff)
 {
-    QElapsedTimer t;
-    t.start();
+    //QElapsedTimer t;
+    //t.start();
 
     QVector<CLJBoxDistance> dists;
     dists.reserve(1024);
@@ -910,8 +910,8 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
         }
     }
     
-    quint64 ns = t.nsecsElapsed();
-    qDebug() << "Getting box distances took" << (0.000001*ns) << "ms";
+    //quint64 ns = t.nsecsElapsed();
+    //qDebug() << "Getting box distances took" << (0.000001*ns) << "ms";
     
     return dists;
 }
@@ -979,8 +979,8 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
 QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes0,
                                                const CLJBoxes &boxes1, Length cutoff)
 {
-    QElapsedTimer t;
-    t.start();
+    //QElapsedTimer t;
+    //t.start();
 
     QVector<CLJBoxDistance> dists;
     dists.reserve( 1024 );
@@ -1042,8 +1042,8 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
         }
     }
     
-    quint64 ns = t.nsecsElapsed();
-    qDebug() << "Getting box distances took" << (0.000001*ns) << "ms";
+    //quint64 ns = t.nsecsElapsed();
+    //qDebug() << "Getting box distances took" << (0.000001*ns) << "ms";
     
     return dists;
 }

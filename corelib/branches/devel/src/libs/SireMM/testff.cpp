@@ -264,10 +264,46 @@ void TestFF::calculateEnergy()
     qDebug() << "\nParallel" << (cnrg+ljnrg) << cnrg << ljnrg;
     qDebug() << "Parallel version took" << (0.000001*ns) << "ms";
     
-    qDebug() << "\nCLJCalculator version";
-    SireMM::CLJCalculator calculator;
+    qDebug() << "\nCLJCalculator (reproducible) version";
+    SireMM::CLJCalculator calculator(true);
     t.start();
     tuple<double,double> nrgs = calculator.calculate(*cljfunc, cljboxes1);
+    ns = t.nsecsElapsed();
+    
+    cnrg = nrgs.get<0>();
+    ljnrg = nrgs.get<1>();
+    
+    qDebug() << "\nCLJCalculator" << (cnrg+ljnrg) << cnrg << ljnrg;
+    qDebug() << "Took" << (0.000001*ns) << "ms";
+
+    qDebug() << "\nCLJCalculator (non-reproducible) version";
+    calculator = SireMM::CLJCalculator(false);
+    t.start();
+    nrgs = calculator.calculate(*cljfunc, cljboxes1);
+    ns = t.nsecsElapsed();
+    
+    cnrg = nrgs.get<0>();
+    ljnrg = nrgs.get<1>();
+    
+    qDebug() << "\nCLJCalculator" << (cnrg+ljnrg) << cnrg << ljnrg;
+    qDebug() << "Took" << (0.000001*ns) << "ms";
+
+    qDebug() << "\nCLJCalculator inter (reproducible) version";
+    calculator = SireMM::CLJCalculator(true);
+    t.start();
+    nrgs = calculator.calculate(*cljfunc, cljboxes0, cljboxes1);
+    ns = t.nsecsElapsed();
+    
+    cnrg = nrgs.get<0>();
+    ljnrg = nrgs.get<1>();
+    
+    qDebug() << "\nCLJCalculator" << (cnrg+ljnrg) << cnrg << ljnrg;
+    qDebug() << "Took" << (0.000001*ns) << "ms";
+
+    qDebug() << "\nCLJCalculator inter (non-reproducible) version";
+    calculator = SireMM::CLJCalculator(false);
+    t.start();
+    nrgs = calculator.calculate(*cljfunc, cljboxes0, cljboxes1);
     ns = t.nsecsElapsed();
     
     cnrg = nrgs.get<0>();

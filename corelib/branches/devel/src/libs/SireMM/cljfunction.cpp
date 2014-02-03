@@ -30,12 +30,15 @@
 
 #include "SireMaths/multidouble.h"
 
+#include "SireVol/cartesian.h"
+
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireMM;
+using namespace SireVol;
 using namespace SireMaths;
 using namespace SireBase;
 using namespace SireStream;
@@ -124,6 +127,13 @@ Length CLJFunction::coulombCutoff() const
 Length CLJFunction::ljCutoff() const
 {
     return Length( std::numeric_limits<double>::max() );
+}
+
+/** Return the space represented by the function */
+const Space& CLJFunction::space() const
+{
+    static const Cartesian cartesian_space;
+    return cartesian_space;
 }
 
 /** Return whether or not arithmetic combining rules are used */

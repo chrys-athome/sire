@@ -49,10 +49,17 @@ QDataStream& operator>>(QDataStream&, SireMM::CLJFunction&);
 QDataStream& operator<<(QDataStream&, const SireMM::CLJVacShiftAriFunction&);
 QDataStream& operator>>(QDataStream&, SireMM::CLJVacShiftAriFunction&);
 
+namespace SireVol
+{
+class Space;
+}
+
 namespace SireMM
 {
 
 using SireUnits::Dimension::Length;
+
+using SireVol::Space;
 
 /** Base class of all CLJFunctions. These are function classes that
     calculate the coulomb and LJ energy of the passed CLJAtoms groups
@@ -95,6 +102,8 @@ public:
     
     virtual Length coulombCutoff() const;
     virtual Length ljCutoff() const;
+
+    virtual const Space& space() const;
 
     void setArithmeticCombiningRules(bool on);
     void setGeometricCombiningRules(bool on);
