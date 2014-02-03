@@ -31,6 +31,8 @@
 
 #include "cljatoms.h"
 
+#include "SireVol/space.h"
+
 #include "SireBase/property.h"
 
 #include "SireUnits/dimensions.h"
@@ -48,11 +50,6 @@ QDataStream& operator>>(QDataStream&, SireMM::CLJFunction&);
 
 QDataStream& operator<<(QDataStream&, const SireMM::CLJVacShiftAriFunction&);
 QDataStream& operator>>(QDataStream&, SireMM::CLJVacShiftAriFunction&);
-
-namespace SireVol
-{
-class Space;
-}
 
 namespace SireMM
 {
