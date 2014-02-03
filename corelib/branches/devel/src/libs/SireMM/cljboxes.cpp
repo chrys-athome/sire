@@ -733,7 +733,7 @@ const char* CLJBoxes::what() const
 }
 
 // this is the collection of square roots of integers between 0 and 31
-// This is used as a lookup table for the getBoxDistance function, which
+// This is used as a lookup table for the square_root function, which
 // we know will always have integer distances
 static const int nsqrts = 32;
 static const float sqrts[] = { 0, 1, 1.41421356237, 1.73205080757,
@@ -748,24 +748,22 @@ static const float sqrts[] = { 0, 1, 1.41421356237, 1.73205080757,
                                5.0, 5.09901951359, 5.19615242271, 5.29150262213,
                                5.38516480713, 5.47722557505, 5.56776436283 };
 
-/** Return the distance between boxes, in box length units, if they 
-    are separated by dx, dy and dz box lengths */
-inline float getBoxDistance(const int dx, const int dy, const int dz)
+/** Calculate the square root of the passed integer */
+inline float square_root(int delta2)
 {
-    //sort the deltas into numerically decreasing value
-    const int sum = dx*dx + dy*dy + dz*dz;
-    
-    if (sum < nsqrts)
+    if (delta2 < nsqrts)
     {
-        return sqrts[sum];
+        return sqrts[delta2];
     }
     else
-        return std::sqrt( float(sum) );
+    {
+        return std::sqrt( float(delta2) );
+    }
 }
 
 /** Get the number of box lengths separating boxes 0 and 1 at indicies
     i0 and i1 */
-inline int getDelta( const int i0, const int i1 )
+inline int getDelta( const qint16 i0, const qint16 i1 )
 {
     // the below single-line expression is doing
     // if (i0 == i1)
@@ -785,6 +783,14 @@ inline int getDelta( const int i0, const int i1 )
     // than the above if statements.
 
     return (i0 == i1) ? 0 : (i0 < i1) ? (i1-i0-1) : (i0-i1-1);
+}
+
+inline int getDelta2(const CLJBoxIndex &box0, const CLJBoxIndex &box1)
+{
+    const int dx = getDelta(box0.i(), box1.i());
+    const int dy = getDelta(box0.j(), box1.j());
+    const int dz = getDelta(box0.k(), box1.k());
+    return dx*dx + dy*dy + dz*dz;
 }
 
 /** Return the distances between all of the occupied boxes in 'boxes'
@@ -808,18 +814,13 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
             {
                 const CLJBoxIndex &box1 = it2.key();
                 
-                const int dx = getDelta(box0.i(), box1.i());
-                const int dy = getDelta(box0.j(), box1.j());
-                const int dz = getDelta(box0.k(), box1.k());
-                
-                const float dist = getBoxDistance(dx, dy, dz);
+                const float dist = square_root( getDelta2(box0,box1) );
                 dists.append( CLJBoxDistance(box0, box1, dist*boxes.box_length) );
             }
         }
     }
     else
     {
-        
         const Length l(boxes.box_length);
         
         for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
@@ -834,7 +835,8 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
             {
                 const AABox box1 = it2.key().box(l);
                 
-                dists.append( CLJBoxDistance(it.key(), it2.key(), space.minimumDistance(box0,box1)) );
+                dists.append( CLJBoxDistance(it.key(), it2.key(),
+                                             space.minimumDistance(box0,box1)) );
             }
         }
     }
@@ -857,7 +859,7 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
     if (space.isCartesian())
     {
         const float box_cutoff = cutoff.value() / boxes.box_length;
-        const int int_box_cutoff = std::ceil(box_cutoff);
+        const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
         
         for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
              it != boxes.bxs.constEnd();
@@ -871,14 +873,12 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
             {
                 const CLJBoxIndex &box1 = it2.key();
                 
-                const int dx = getDelta(box0.i(), box1.i());
-                const int dy = getDelta(box0.j(), box1.j());
-                const int dz = getDelta(box0.k(), box1.k());
+                const int d2 = getDelta2(box0, box1);
                 
-                if ((dx+dy+dz) <= int_box_cutoff)
+                if (d2 <= int_box_cutoff2)
                 {
                     //the box-pair are within cutoff
-                    const float dist = getBoxDistance(dx, dy, dz);
+                    const float dist = square_root(d2);
                     
                     if (dist < box_cutoff)
                         dists.append( CLJBoxDistance(box0, box1, dist*boxes.box_length) );
@@ -938,12 +938,7 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
             {
                 const CLJBoxIndex &box1 = it2.key();
                 
-                const int dx = getDelta(box0.i(), box1.i());
-                const int dy = getDelta(box0.j(), box1.j());
-                const int dz = getDelta(box0.k(), box1.k());
-                
-                //the box-pair are within cutoff
-                const float dist = getBoxDistance(dx, dy, dz);
+                const float dist = square_root( getDelta2(box0,box1) );
                 dists.append( CLJBoxDistance(box0, box1, dist*boxes0.box_length) );
             }
         }
@@ -988,7 +983,7 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
     if (space.isCartesian() and (boxes0.box_length == boxes1.box_length))
     {
         const float box_cutoff = cutoff.value() / boxes0.box_length;
-        const int int_box_cutoff = std::ceil(box_cutoff);
+        const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
         
         for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
              it != boxes0.bxs.constEnd();
@@ -1002,14 +997,12 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
             {
                 const CLJBoxIndex &box1 = it2.key();
                 
-                const int dx = getDelta(box0.i(), box1.i());
-                const int dy = getDelta(box0.j(), box1.j());
-                const int dz = getDelta(box0.k(), box1.k());
+                int d2 = getDelta2(box0,box1);
                 
-                if ((dx+dy+dz) <= int_box_cutoff)
+                if (d2 <= int_box_cutoff2)
                 {
                     //the box-pair are within cutoff
-                    const float dist = getBoxDistance(dx, dy, dz);
+                    const float dist = square_root(d2);
                     
                     if (dist < box_cutoff)
                         dists.append( CLJBoxDistance(box0, box1, dist*boxes0.box_length) );
