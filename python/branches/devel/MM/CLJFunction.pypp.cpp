@@ -24,6 +24,8 @@ namespace bp = boost::python;
 
 #include "cljfunction.h"
 
+#include "SireMM/cljshiftfunction.h"
+
 #include "Qt/qdatastream.hpp"
 
 #include "Helpers/str.hpp"
