@@ -25,6 +25,7 @@ set ( SIREMM_HEADERS
       cljpotential.h
       cljprobe.h
       cljnbpairs.h
+      cljshiftfunction.h
       coulombpotential.h
       dihedralrestraint.h
       distancerestraint.h
@@ -82,6 +83,7 @@ set ( SIREMM_SOURCES
       cljpotential.cpp
       cljprobe.cpp
       cljnbpairs.cpp
+      cljshiftfunction.cpp
       coulombpotential.cpp
       dihedralrestraint.cpp
       distancerestraint.cpp

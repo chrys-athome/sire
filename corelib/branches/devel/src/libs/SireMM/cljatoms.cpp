@@ -782,7 +782,7 @@ void CLJAtoms::constructFrom(const MoleculeView &molecule,
                         else if (id_source == USE_ATOMIDX)
                         {
                             const AtomIdx atomidx = molinfo.atomIdx( CGAtomIdx(CGIdx(i),Index(j)) );
-                            ida[idx] = atomidx.value();
+                            ida[idx] = atomidx.value() + 1;
                         }
                         else
                         {
@@ -877,7 +877,7 @@ void CLJAtoms::constructFrom(const MoleculeView &molecule,
                     else if (id_source == USE_ATOMIDX)
                     {
                         const AtomIdx atomidx = atoms[i].index();
-                        ida[idx] = atomidx.value();
+                        ida[idx] = atomidx.value() + 1;
                     }
                     else
                     {
@@ -1018,7 +1018,7 @@ void CLJAtoms::constructFrom(const Molecules &molecules,
                                 const AtomIdx atomidx
                                                 = molinfo.atomIdx( CGAtomIdx(CGIdx(i),Index(j)) );
                                 
-                                ida[idx] = atomidx.value();
+                                ida[idx] = atomidx.value() + 1;
                             }
                             else
                             {
@@ -1073,7 +1073,7 @@ void CLJAtoms::constructFrom(const Molecules &molecules,
                         }
                         else if (id_source == USE_ATOMIDX)
                         {
-                            ida[idx] = atoms[i].index().value();
+                            ida[idx] = atoms[i].index().value() + 1;
                         }
                         else
                         {

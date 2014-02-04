@@ -42,14 +42,18 @@ SIRE_BEGIN_HEADER
 namespace SireMM
 {
 class CLJFunction;
-class CLJVacShiftAriFunction;
+class CLJCutoffFunction;
+class CLJSoftFunction;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMM::CLJFunction&);
 QDataStream& operator>>(QDataStream&, SireMM::CLJFunction&);
 
-QDataStream& operator<<(QDataStream&, const SireMM::CLJVacShiftAriFunction&);
-QDataStream& operator>>(QDataStream&, SireMM::CLJVacShiftAriFunction&);
+QDataStream& operator<<(QDataStream&, const SireMM::CLJCutoffFunction&);
+QDataStream& operator>>(QDataStream&, SireMM::CLJCutoffFunction&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::CLJSoftFunction&);
+QDataStream& operator>>(QDataStream&, SireMM::CLJSoftFunction&);
 
 namespace SireMM
 {
@@ -70,10 +74,23 @@ friend QDataStream& ::operator<<(QDataStream&, const CLJFunction &func);
 friend QDataStream& ::operator>>(QDataStream&, CLJFunction &func);
 
 public:
+    enum COMBINING_RULES
+    {
+        ARITHMETIC = 1,
+        GEOMETRIC = 2
+    };
+
     CLJFunction();
+    CLJFunction(COMBINING_RULES combining_rules);
+    
+    CLJFunction(const Space &space);
+    CLJFunction(const Space &space, COMBINING_RULES combining_rules);
+        
     CLJFunction(const CLJFunction &other);
     
     virtual ~CLJFunction();
+ 
+    static const char* typeName();
     
     void operator()(const CLJAtoms &atoms,
                     double &cnrg, double &ljnrg) const;
@@ -100,10 +117,24 @@ public:
     virtual Length coulombCutoff() const;
     virtual Length ljCutoff() const;
 
+    virtual void setCutoff(Length distance);
+    virtual void setCutoff(Length coulomb_cutoff, Length lj_cutoff);
+
+    virtual void setCoulombCutoff(Length distance);
+    virtual void setLJCutoff(Length distance);
+
+    bool isPeriodic() const;
     virtual const Space& space() const;
+
+    virtual void setSpace(const Space &space);
+    
+    virtual bool isSoftened() const;
 
     void setArithmeticCombiningRules(bool on);
     void setGeometricCombiningRules(bool on);
+    
+    COMBINING_RULES combiningRules() const;
+    void setCombiningRules(COMBINING_RULES rules);
     
     bool usingArithmeticCombiningRules() const;
     bool usingGeometricCombiningRules() const;
@@ -113,86 +144,130 @@ protected:
     
     bool operator==(const CLJFunction &other) const;
 
-    virtual void calcEnergyAri(const CLJAtoms &atoms,
-                               double &cnrg, double &ljnrg) const=0;
+    virtual void calcVacEnergyAri(const CLJAtoms &atoms,
+                                  double &cnrg, double &ljnrg) const=0;
 
-    virtual void calcEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                               double &cnrg, double &ljnrg) const=0;
+    virtual void calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                  double &cnrg, double &ljnrg) const=0;
 
-    virtual void calcEnergyGeo(const CLJAtoms &atoms,
-                               double &cnrg, double &ljnrg) const=0;
+    virtual void calcVacEnergyGeo(const CLJAtoms &atoms,
+                                  double &cnrg, double &ljnrg) const=0;
 
-    virtual void calcEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                               double &cnrg, double &ljnrg) const=0;
+    virtual void calcVacEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                  double &cnrg, double &ljnrg) const=0;
 
-    virtual double calcCoulombEnergyAri(const CLJAtoms &atoms) const;
-    virtual double calcCoulombEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
+    virtual double calcVacCoulombEnergyAri(const CLJAtoms &atoms) const;
+    virtual double calcVacCoulombEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
 
-    virtual double calcCoulombEnergyGeo(const CLJAtoms &atoms) const;
-    virtual double calcCoulombEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
+    virtual double calcVacCoulombEnergyGeo(const CLJAtoms &atoms) const;
+    virtual double calcVacCoulombEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
     
-    virtual double calcLJEnergyAri(const CLJAtoms &atoms) const;
-    virtual double calcLJEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
+    virtual double calcVacLJEnergyAri(const CLJAtoms &atoms) const;
+    virtual double calcVacLJEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
     
-    virtual double calcLJEnergyGeo(const CLJAtoms &atoms) const;
-    virtual double calcLJEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
+    virtual double calcVacLJEnergyGeo(const CLJAtoms &atoms) const;
+    virtual double calcVacLJEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
+
+    virtual void calcBoxEnergyAri(const CLJAtoms &atoms, const Vector &box,
+                                  double &cnrg, double &ljnrg) const=0;
+
+    virtual void calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                  const Vector &box, double &cnrg, double &ljnrg) const=0;
+
+    virtual void calcBoxEnergyGeo(const CLJAtoms &atoms, const Vector &box,
+                                  double &cnrg, double &ljnrg) const=0;
+
+    virtual void calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                  const Vector &box, double &cnrg, double &ljnrg) const=0;
+
+    virtual double calcBoxCoulombEnergyAri(const CLJAtoms &atoms, const Vector &box) const;
+    virtual double calcBoxCoulombEnergyAri(const CLJAtoms &atoms0,
+                                           const CLJAtoms &atoms1,
+                                           const Vector &box) const;
+
+    virtual double calcBoxCoulombEnergyGeo(const CLJAtoms &atoms, const Vector &box) const;
+    virtual double calcBoxCoulombEnergyGeo(const CLJAtoms &atoms0,
+                                           const CLJAtoms &atoms1,
+                                           const Vector &box) const;
+    
+    virtual double calcBoxLJEnergyAri(const CLJAtoms &atoms, const Vector &box) const;
+    virtual double calcBoxLJEnergyAri(const CLJAtoms &atoms0,
+                                      const CLJAtoms &atoms1,
+                                      const Vector &box) const;
+    
+    virtual double calcBoxLJEnergyGeo(const CLJAtoms &atoms, const Vector &box) const;
+    virtual double calcBoxLJEnergyGeo(const CLJAtoms &atoms0,
+                                      const CLJAtoms &atoms1,
+                                      const Vector &box) const;
 
 private:
+    void extractDetailsFromRules(COMBINING_RULES rules);
+    void extractDetailsFromSpace();
+
+    /** The space used by the function */
+    SireVol::SpacePtr spce;
+
+    /** The dimensions of the periodic box, if used */
+    Vector box_dimensions;
+
     /** whether or not to use arithmetic combining rules */
     bool use_arithmetic;
+    
+    /** Whether or not to use a periodic box */
+    bool use_box;
 };
 
-/** This CLJFunction calculates the coulomb and LJ energy of the passed
-    CLJAtoms using a shift-electrostatics cutoff and an infinite box,
-    with arithmetic combining rules used for the LJ combining rules
-    
+/** This is the base class of all CLJ functions that have a cutoff
+
     @author Christopher Woods
 */
-class SIREMM_EXPORT CLJVacShiftAriFunction
-        : public SireBase::ConcreteProperty<CLJVacShiftAriFunction,CLJFunction>
+class SIREMM_EXPORT CLJCutoffFunction : public CLJFunction
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const CLJVacShiftAriFunction&);
-friend QDataStream& ::operator>>(QDataStream&, CLJVacShiftAriFunction&);
+friend QDataStream& ::operator<<(QDataStream&, const CLJCutoffFunction&);
+friend QDataStream& ::operator>>(QDataStream&, CLJCutoffFunction&);
 
 public:
-    CLJVacShiftAriFunction();
-    CLJVacShiftAriFunction(Length cutoff);
-    CLJVacShiftAriFunction(Length coul_cutoff, Length lj_cutoff);
+    CLJCutoffFunction();
+    CLJCutoffFunction(Length cutoff);
+    CLJCutoffFunction(Length coul_cutoff, Length lj_cutoff);
     
-    CLJVacShiftAriFunction(const CLJVacShiftAriFunction &other);
+    CLJCutoffFunction(const Space &space, Length cutoff);
+    CLJCutoffFunction(const Space &space, Length coul_cutoff, Length lj_cutoff);
     
-    ~CLJVacShiftAriFunction();
+    CLJCutoffFunction(Length cutoff, COMBINING_RULES combining_rules);
+    CLJCutoffFunction(Length coul_cutoff, Length lj_cutoff, COMBINING_RULES combining_rules);
     
-    CLJVacShiftAriFunction& operator=(const CLJVacShiftAriFunction &other);
+    CLJCutoffFunction(const Space &space, COMBINING_RULES combining_rules);
+    CLJCutoffFunction(const Space &space, Length cutoff, COMBINING_RULES combining_rules);
+    CLJCutoffFunction(const Space &space, Length coul_cutoff, Length lj_cutoff,
+                      COMBINING_RULES combining_rules);
     
-    bool operator==(const CLJVacShiftAriFunction &other) const;
-    bool operator!=(const CLJVacShiftAriFunction &other) const;
+    CLJCutoffFunction(const CLJCutoffFunction &other);
+    
+    ~CLJCutoffFunction();
     
     static const char* typeName();
-    const char* what() const;
-    
-    CLJVacShiftAriFunction* clone() const;
 
     bool hasCutoff() const;
     
     Length coulombCutoff() const;
     Length ljCutoff() const;
-
-protected:
-    void calcEnergyAri(const CLJAtoms &atoms,
-                       double &cnrg, double &ljnrg) const;
     
-    void calcEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                       double &cnrg, double &ljnrg) const;
-
-    void calcEnergyGeo(const CLJAtoms &atoms,
-                       double &cnrg, double &ljnrg) const;
+    void setCutoff(Length distance);
+    void setCutoff(Length coulomb_cutoff, Length lj_cutoff);
     
-    void calcEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                       double &cnrg, double &ljnrg) const;
+    void setCoulombCutoff(Length distance);
+    void setLJCutoff(Length distance);
     
 private:
+    void pvt_setCutoff( Length coulomb, Length lj );
+    
+protected:
+    CLJCutoffFunction& operator=(const CLJCutoffFunction &other);
+    
+    bool operator==(const CLJCutoffFunction &other) const;
+    
     /** The coulomb cutoff */
     float coul_cutoff;
     
@@ -200,27 +275,58 @@ private:
     float lj_cutoff;
 };
 
+/** This is the base class of all soft-core CLJ functions that have a cutoff
+
+    @author Christopher Woods
+*/
+class SIREMM_EXPORT CLJSoftFunction : public CLJCutoffFunction
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const CLJSoftFunction&);
+friend QDataStream& ::operator>>(QDataStream&, CLJSoftFunction&);
+
+public:
+    CLJSoftFunction();
+    
+    CLJSoftFunction(const CLJSoftFunction &other);
+    
+    ~CLJSoftFunction();
+
+    static const char* typeName();
+
+    bool isSoftened() const;
+    
+    float alpha() const;
+    float shiftDelta() const;
+    float coulombPower() const;
+    
+    void setAlpha(float alpha);
+    void setShiftDelta(float shift);
+    void setCoulombPower(float power);
+    
+private:
+    void pvt_set(float alpha, float shift, float power);
+    
+protected:
+    CLJSoftFunction& operator=(const CLJSoftFunction &other);
+    
+    bool operator==(const CLJSoftFunction &other) const;
+
+    /** The value of alpha to use */
+    float alpha_value;
+    
+    /** The value of shift-delta */
+    float shift_delta;
+    
+    /** The value of coulomb power */
+    float coulomb_power;
+};
+
 }
 
-Q_DECLARE_METATYPE( SireMM::CLJVacShiftAriFunction )
-
 SIRE_EXPOSE_CLASS( SireMM::CLJFunction )
-
-SIRE_EXPOSE_CLASS( SireMM::CLJVacShiftAriFunction )
-
-/*
-SIRE _EXPOSE_CLASS( SireMM::CLJVacShiftGeoFunction )
-SIRE _EXPOSE_CLASS( SireMM::CLJVacRFAriFunction )
-SIRE _EXPOSE_CLASS( SireMM::CLJVacRFGeoFunction )
-
-SIRE _EXPOSE_CLASS( SireMM::CLJVacAriFunction )
-SIRE _EXPOSE_CLASS( SireMM::CLJVacGeoFunction )
-
-SIRE _EXPOSE_CLASS( SireMM::CLJBoxShiftAriFunction )
-SIRE _EXPOSE_CLASS( SireMM::CLJBoxShiftGeoFunction )
-SIRE _EXPOSE_CLASS( SireMM::CLJBoxRFAriFunction )
-SIRE _EXPOSE_CLASS( SireMM::CLJBoxRFGeoFunction )
-*/
+SIRE_EXPOSE_CLASS( SireMM::CLJCutoffFunction )
+SIRE_EXPOSE_CLASS( SireMM::CLJSoftFunction )
 
 SIRE_END_HEADER
 

@@ -28,6 +28,7 @@
 
 #include "testff.h"
 #include "cljcalculator.h"
+#include "cljshiftfunction.h"
 
 #include "SireVol/cartesian.h"
 
@@ -50,7 +51,7 @@ using namespace SireVol;
 
 using boost::tuple;
 
-TestFF::TestFF() : cljfunc(new CLJVacShiftAriFunction(15*angstrom, 15*angstrom))
+TestFF::TestFF() : cljfunc(new CLJShiftFunction(15*angstrom, 15*angstrom))
 {}
 
 TestFF::TestFF(const TestFF &other)
@@ -82,7 +83,7 @@ void TestFF::addFixedAtoms(const Molecules &molecules)
 
 void TestFF::setCutoff(Length coul_cutoff, Length lj_cutoff)
 {
-    cljfunc.reset( new CLJVacShiftAriFunction(coul_cutoff, lj_cutoff) );
+    cljfunc.reset( new CLJShiftFunction(coul_cutoff, lj_cutoff) );
 }
 
 class CLJCalculator
