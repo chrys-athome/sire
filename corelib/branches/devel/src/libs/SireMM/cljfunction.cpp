@@ -715,6 +715,10 @@ void CLJCutoffFunction::pvt_setCutoff(Length coulomb, Length lj)
     {
         coul_cutoff = std::numeric_limits<float>::max();
     }
+    else
+    {
+        coul_cutoff = coulomb.value();
+    }
 
     if (lj.value() < 0)
     {
@@ -723,6 +727,10 @@ void CLJCutoffFunction::pvt_setCutoff(Length coulomb, Length lj)
     else if (lj.value() > std::numeric_limits<float>::max())
     {
         lj_cutoff = std::numeric_limits<float>::max();
+    }
+    else
+    {
+        lj_cutoff = lj.value();
     }
 }
 

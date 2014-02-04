@@ -34,8 +34,11 @@
 
 #include "SireStream/datastream.h"
 
+#include <QDebug>
+
 using namespace SireMM;
 using namespace SireMaths;
+using namespace SireBase;
 using namespace SireStream;
 
 /////////
