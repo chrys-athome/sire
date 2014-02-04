@@ -702,7 +702,8 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
 }
 
 /** Construct from the passed MoleculeView */
-void CLJAtoms::constructFrom(const MoleculeView &molecule, const PropertyMap &map)
+void CLJAtoms::constructFrom(const MoleculeView &molecule,
+                             const ID_SOURCE id_source, const PropertyMap &map)
 {
     QElapsedTimer t;
     t.start();
@@ -749,8 +750,9 @@ void CLJAtoms::constructFrom(const MoleculeView &molecule, const PropertyMap &ma
             const AtomCharges &chgs = mol.property(chg_property).asA<AtomCharges>();
             const AtomLJs &ljs = mol.property(lj_property).asA<AtomLJs>();
 
-            const quint32 molid = mol.number().value();
-            const qint32 s_molid = *(reinterpret_cast<const qint32*>(&molid));
+            const qint32 s_molid = mol.number().value();
+            
+            const MoleculeInfoData &molinfo = mol.data().info();
             
             for (int i=0; i<coords.nCutGroups(); ++i)
             {
@@ -773,7 +775,21 @@ void CLJAtoms::constructFrom(const MoleculeView &molecule, const PropertyMap &ma
                         siga[idx] = ilj[j].sigma();
                         epsa[idx] = ilj[j].epsilon();
                         
-                        ida[idx] = s_molid;
+                        if (id_source == USE_MOLNUM)
+                        {
+                            ida[idx] = s_molid;
+                        }
+                        else if (id_source == USE_ATOMIDX)
+                        {
+                            const AtomIdx atomidx = molinfo.atomIdx( CGAtomIdx(CGIdx(i),Index(j)) );
+                            ida[idx] = atomidx.value();
+                        }
+                        else
+                        {
+                            throw SireError::program_bug( QObject::tr(
+                                    "Unknown source used for ID (%1)")
+                                        .arg(id_source), CODELOC );
+                        }
                     
                         idx += 1;
                     }
@@ -812,8 +828,7 @@ void CLJAtoms::constructFrom(const MoleculeView &molecule, const PropertyMap &ma
                             .arg(atoms.molecule().toString()), CODELOC );
             }
 
-            const quint32 molid = atoms.data().number().value();
-            const qint32 s_molid = *(reinterpret_cast<const qint32*>(&molid));
+            const qint32 s_molid = atoms.data().number().value();
             
             const int nats = coords.count();
             
@@ -855,7 +870,21 @@ void CLJAtoms::constructFrom(const MoleculeView &molecule, const PropertyMap &ma
                     siga[idx] = ljs[i].sigma();
                     epsa[idx] = ljs[i].epsilon();
 
-                    ida[idx] = s_molid;
+                    if (id_source == USE_MOLNUM)
+                    {
+                        ida[idx] = s_molid;
+                    }
+                    else if (id_source == USE_ATOMIDX)
+                    {
+                        const AtomIdx atomidx = atoms[i].index();
+                        ida[idx] = atomidx.value();
+                    }
+                    else
+                    {
+                        throw SireError::program_bug( QObject::tr(
+                                "Unknown source used for ID (%1)")
+                                    .arg(id_source), CODELOC );
+                    }
                     
                     idx += 1;
                 }
@@ -896,7 +925,8 @@ void CLJAtoms::constructFrom(const MoleculeView &molecule, const PropertyMap &ma
 }
 
 /** Construct from the parameters in the passed set of Molecules */
-void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
+void CLJAtoms::constructFrom(const Molecules &molecules,
+                             ID_SOURCE id_source, const PropertyMap &map)
 {
     if (molecules.isEmpty())
         return;
@@ -955,8 +985,8 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
                 const AtomCharges &chgs = mol.property(chg_property).asA<AtomCharges>();
                 const AtomLJs &ljs = mol.property(lj_property).asA<AtomLJs>();
 
-                const quint32 molid = it.key().value();
-                const qint32 s_molid = *(reinterpret_cast<const qint32*>(&molid));
+                const qint32 s_molid = it.key().value();
+                const MoleculeInfoData &molinfo = mol.data().info();
                 
                 for (int i=0; i<coords.nCutGroups(); ++i)
                 {
@@ -979,7 +1009,23 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
                             siga[idx] = ilj[j].sigma();
                             epsa[idx] = ilj[j].epsilon();
                             
-                            ida[idx] = s_molid;
+                            if (id_source == USE_MOLNUM)
+                            {
+                                ida[idx] = s_molid;
+                            }
+                            else if (id_source == USE_ATOMIDX)
+                            {
+                                const AtomIdx atomidx
+                                                = molinfo.atomIdx( CGAtomIdx(CGIdx(i),Index(j)) );
+                                
+                                ida[idx] = atomidx.value();
+                            }
+                            else
+                            {
+                                throw SireError::program_bug( QObject::tr(
+                                        "Unknown source used for ID (%1)")
+                                            .arg(id_source), CODELOC );
+                            }
                         
                             idx += 1;
                         }
@@ -1007,8 +1053,7 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
                                 .arg(atoms.molecule().toString()), CODELOC );
                 }
 
-                const quint32 molid = it.key().value();
-                const qint32 s_molid = *(reinterpret_cast<const qint32*>(&molid));
+                const qint32 s_molid = it.key().value();
                 
                 for (int i=0; i<coords.count(); ++i)
                 {
@@ -1022,7 +1067,20 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
                         siga[idx] = ljs[i].sigma();
                         epsa[idx] = ljs[i].epsilon();
 
-                        ida[idx] = s_molid;
+                        if (id_source == USE_MOLNUM)
+                        {
+                            ida[idx] = s_molid;
+                        }
+                        else if (id_source == USE_ATOMIDX)
+                        {
+                            ida[idx] = atoms[i].index().value();
+                        }
+                        else
+                        {
+                            throw SireError::program_bug( QObject::tr(
+                                    "Unknown source used for ID (%1)")
+                                        .arg(id_source), CODELOC );
+                        }
                         
                         idx += 1;
                     }
@@ -1066,13 +1124,27 @@ void CLJAtoms::constructFrom(const Molecules &molecules, const PropertyMap &map)
 /** Construct from the parameters in the passed molecule view */
 CLJAtoms::CLJAtoms(const MoleculeView &view, const PropertyMap &map)
 {
-    constructFrom(view, map);
+    constructFrom(view, USE_MOLNUM, map);
 }
 
 /** Construct from the parameters in the passed set of Molecules */
 CLJAtoms::CLJAtoms(const Molecules &molecules, const PropertyMap &map)
 {
-    constructFrom(molecules, map);
+    constructFrom(molecules, USE_MOLNUM, map);
+}
+
+/** Construct from the parameters in the passed molecule view, specifying
+    how the ID number should be obtained for each atom */
+CLJAtoms::CLJAtoms(const MoleculeView &view, ID_SOURCE id_source, const PropertyMap &map)
+{
+    constructFrom(view, id_source, map);
+}
+
+/** Construct from the parameters in the passed molecule view, specifying
+    how the ID number should be obtained for each atom */
+CLJAtoms::CLJAtoms(const Molecules &molecules, ID_SOURCE id_source, const PropertyMap &map)
+{
+    constructFrom(molecules, id_source, map);
 }
 
 /** Copy constructor */

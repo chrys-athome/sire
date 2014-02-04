@@ -147,6 +147,12 @@ friend QDataStream& ::operator<<(QDataStream&, const CLJAtoms&);
 friend QDataStream& ::operator>>(QDataStream&, CLJAtoms&);
 
 public:
+    enum ID_SOURCE
+    {
+        USE_MOLNUM = 0,
+        USE_ATOMIDX = 1
+    };
+
     CLJAtoms();
     CLJAtoms(const QVector<CLJAtom> &atoms);
     CLJAtoms(const QList<CLJAtom> &atoms);
@@ -164,7 +170,15 @@ public:
     CLJAtoms(const MoleculeView &molecule,
              const PropertyMap &map = PropertyMap());
 
+    CLJAtoms(const MoleculeView &molecule,
+             ID_SOURCE id_source,
+             const PropertyMap &map = PropertyMap());
+
     CLJAtoms(const Molecules &molecules,
+             const PropertyMap &map = PropertyMap());
+
+    CLJAtoms(const Molecules &molecules,
+             ID_SOURCE id_source,
              const PropertyMap &map = PropertyMap());
 
     CLJAtoms(const CLJAtoms &other);
@@ -231,8 +245,10 @@ public:
     static MultiInt idOfDummy();
     
 private:
-    void constructFrom(const Molecules &molecules, const PropertyMap &map);
-    void constructFrom(const MoleculeView &molecule, const PropertyMap &map);
+    void constructFrom(const Molecules &molecules,
+                       const ID_SOURCE id_source, const PropertyMap &map);
+    void constructFrom(const MoleculeView &molecule,
+                       const ID_SOURCE id_source, const PropertyMap &map);
 
     /** Vector of the x-coordinates of the atoms */
     QVector<MultiFloat> _x;
