@@ -33,6 +33,7 @@
 #include "SireMaths/multiint.h"
 
 #include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 #include <QDebug>
 
@@ -70,7 +71,6 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJShiftFunction &func)
     return ds;
 }
 
-/** Constructor */
 CLJShiftFunction::CLJShiftFunction()
                  : ConcreteProperty<CLJShiftFunction,CLJCutoffFunction>()
 {}
@@ -624,4 +624,623 @@ void CLJShiftFunction::calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &
 {
     cnrg = 0;
     ljnrg = 0;
+}
+
+/////////
+///////// Implementation of CLJIntraShiftFunction
+/////////
+
+static const RegisterMetaType<CLJIntraShiftFunction> r_intra;
+
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJIntraShiftFunction &intra)
+{
+    writeHeader(ds, r_intra, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << intra.intrascl << static_cast<const CLJCutoffFunction&>(intra);
+    
+    return ds;
+}
+
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJIntraShiftFunction &intra)
+{
+    VersionID v = readHeader(ds, r_intra);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        sds >> intra.intrascl >> static_cast<CLJCutoffFunction&>(intra);
+    }
+    else
+        throw version_error(v, "1", r_intra, CODELOC);
+    
+    return ds;
+}
+
+CLJIntraShiftFunction::CLJIntraShiftFunction()
+                      : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>()
+{}
+
+CLJIntraShiftFunction::CLJIntraShiftFunction(Length cutoff)
+                      : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(cutoff)
+{}
+
+CLJIntraShiftFunction::CLJIntraShiftFunction(Length coul_cutoff, Length lj_cutoff)
+                      : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(
+                            coul_cutoff, lj_cutoff)
+{}
+
+CLJIntraShiftFunction::CLJIntraShiftFunction(const Space &space, Length cutoff)
+                      : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(
+                            space, cutoff)
+{}
+
+CLJIntraShiftFunction::CLJIntraShiftFunction(const Space &space,
+                                             Length coul_cutoff, Length lj_cutoff)
+                      : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(
+                            space, coul_cutoff, lj_cutoff)
+{}
+
+CLJIntraShiftFunction::CLJIntraShiftFunction(Length cutoff, COMBINING_RULES combining_rules)
+                      : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(
+                            cutoff, combining_rules)
+{}
+
+CLJIntraShiftFunction::CLJIntraShiftFunction(Length coul_cutoff, Length lj_cutoff,
+                                             COMBINING_RULES combining_rules)
+                 : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(
+                            coul_cutoff, lj_cutoff, combining_rules)
+{}
+
+CLJIntraShiftFunction::CLJIntraShiftFunction(const Space &space, COMBINING_RULES combining_rules)
+                 : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(
+                            space, combining_rules)
+{}
+
+CLJIntraShiftFunction::CLJIntraShiftFunction(const Space &space, Length cutoff,
+                                             COMBINING_RULES combining_rules)
+                 : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(
+                            space, cutoff, combining_rules)
+{}
+
+CLJIntraShiftFunction::CLJIntraShiftFunction(const Space &space, Length coul_cutoff,
+                                             Length lj_cutoff,
+                                             COMBINING_RULES combining_rules)
+                 : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(
+                            space, coul_cutoff, lj_cutoff, combining_rules)
+{}
+
+/** Copy constructor */
+CLJIntraShiftFunction::CLJIntraShiftFunction(const CLJIntraShiftFunction &other)
+                 : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(other),
+                   intrascl(other.intrascl)
+{}
+
+/** Destructor */
+CLJIntraShiftFunction::~CLJIntraShiftFunction()
+{}
+
+/** Copy assignment operator */
+CLJIntraShiftFunction& CLJIntraShiftFunction::operator=(const CLJIntraShiftFunction &other)
+{
+    intrascl = other.intrascl;
+    CLJCutoffFunction::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool CLJIntraShiftFunction::operator==(const CLJIntraShiftFunction &other) const
+{
+    return intrascl == other.intrascl and CLJCutoffFunction::operator==(other);
+}
+
+/** Comparison operator */
+bool CLJIntraShiftFunction::operator!=(const CLJIntraShiftFunction &other) const
+{
+    return not operator==(other);
+}
+
+const char* CLJIntraShiftFunction::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CLJIntraShiftFunction>() );
+}
+
+const char* CLJIntraShiftFunction::what() const
+{
+    return CLJIntraShiftFunction::typeName();
+}
+
+CLJIntraShiftFunction* CLJIntraShiftFunction::clone() const
+{
+    return new CLJIntraShiftFunction(*this);
+}
+
+/** Calculate the coulomb and LJ intramolecular energy of all of the atoms in 'atoms',
+    returning the results in the arguments 'cnrg' and 'ljnrg'.
+    Note that all of the atoms must be part of the same molecule, and must
+    have their intramolecular non-bonded scale factors loaded into this function */
+void CLJIntraShiftFunction::calcVacEnergyGeo(const CLJAtoms &atoms,
+                                             double &cnrg, double &ljnrg) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+}
+
+/** Calculate the intramolecular energy between all atoms in 'atoms0' and all
+    atoms in 'atoms1', returning the result in the arguments 'cnrg' and 'ljnrg'.
+    Note that all of the atoms must be part of the same molecule, and must
+    have their intramolecular non-bonded scale factors loaded into this function */
+void CLJIntraShiftFunction::calcVacEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                             double &cnrg, double &ljnrg) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+}
+
+/** Calculate the coulomb and LJ intramolecular energy of all of the atoms in 'atoms',
+    assuming periodic boundary conditions in a cubic box of size 'box_dimensions',
+    returning the results in 'cnrg' and 'ljnrg'.
+    Note that all of the atoms must be part of the same molecule, and must
+    have their intramolecular non-bonded scale factors loaded into this function */
+void CLJIntraShiftFunction::calcBoxEnergyGeo(const CLJAtoms &atoms, const Vector &box_dimensions,
+                                             double &cnrg, double &ljnrg) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+}
+
+/** Calculate the intramolecular energy between all atoms in 'atoms0' and all
+    atoms in 'atoms1', assuming periodic boundary conditions in a cubic box
+    of size 'box_dimensions, returning the result in the arguments 'cnrg' and 'ljnrg'.
+    Note that all of the atoms must be part of the same molecule, and must
+    have their intramolecular non-bonded scale factors loaded into this function */
+void CLJIntraShiftFunction::calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                             const Vector &box_dimensions,
+                                             double &cnrg, double &ljnrg) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+}
+
+inline qint64 pack(qint32 i, qint32 j)
+{
+    qint64 val;
+    (reinterpret_cast<qint32*>(&val))[0] = i;
+    (reinterpret_cast<qint32*>(&val))[1] = j;
+    return val;
+}
+
+/** This function is used to make the key from the two ID numbers */
+inline qint64 makeKey(qint32 id0, qint32 id1)
+{
+    return id0 <= id1 ? pack(id0,id1) : pack(id1,id0);
+}
+
+/** This function is used to get the non-bonded scale factors for the atoms
+    whose IDs are in 'id0' and 'id1' */
+inline MultiFloat getNonBondedScale(const MultiInt &id0, const MultiInt &id1,
+                                    const QHash<qint64,float> &intrascl)
+{
+    MultiFloat ret(1);
+    
+    for (int i=0; i<MultiFloat::count(); ++i)
+    {
+        ret.set( i, intrascl.value( makeKey(id0[i],id1[i]), 1.0 ) );
+    }
+    
+    return ret;
+}
+
+/** Calculate the coulomb and LJ intramolecular energy of all of the atoms in 'atoms',
+    returning the results in the arguments 'cnrg' and 'ljnrg'.
+    Note that all of the atoms must be part of the same molecule, and must
+    have their intramolecular non-bonded scale factors loaded into this function */
+void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms,
+                                             double &cnrg, double &ljnrg) const
+{
+    const MultiFloat *xa = atoms.x().constData();
+    const MultiFloat *ya = atoms.y().constData();
+    const MultiFloat *za = atoms.z().constData();
+    const MultiFloat *qa = atoms.q().constData();
+    const MultiFloat *siga = atoms.sigma().constData();
+    const MultiFloat *epsa = atoms.epsilon().constData();
+    const MultiInt *ida = atoms.ID().constData();
+
+    const MultiFloat Rc(coul_cutoff);
+    const MultiFloat Rlj(lj_cutoff);
+
+    const MultiFloat one_over_Rc( 1.0 / coul_cutoff );
+    const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
+    const MultiFloat half(0.5);
+    const MultiInt dummy_id = CLJAtoms::idOfDummy();
+    const qint32 dummy_int = dummy_id[0];
+
+    MultiFloat tmp, r, one_over_r, sig2_over_r2, sig6_over_r6;
+    MultiDouble icnrg(0), iljnrg(0);
+    MultiInt itmp;
+
+    int n = atoms.x().count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        for (int ii=0; ii<MultiFloat::size(); ++ii)
+        {
+            if (ida[i][ii] != dummy_int)
+            {
+                const MultiInt id( ida[i][ii] );
+                const MultiFloat x( xa[i][ii] );
+                const MultiFloat y( ya[i][ii] );
+                const MultiFloat z( za[i][ii] );
+                
+                if (qa[i][ii] != 0)
+                {
+                    const MultiFloat q( qa[i][ii] );
+                    
+                    if (epsa[i][ii] == 0)
+                    {
+                        //coulomb calculation only
+                        for (int j=i; j<n; ++j)
+                        {
+                            // if i == j then we double-calculate the energies, so must
+                            // scale them by 0.5
+                            MultiFloat scale( i == j ? 0.5 : 1.0 );
+                            scale *= getNonBondedScale(id, ida[j], intrascl);
+                        
+                            //calculate the distance between the fixed and mobile atoms
+                            tmp = xa[j] - x;
+                            r = tmp * tmp;
+                            tmp = ya[j] - y;
+                            r.multiplyAdd(tmp, tmp);
+                            tmp = za[j] - z;
+                            r.multiplyAdd(tmp, tmp);
+                            r = r.sqrt();
+
+                            one_over_r = r.reciprocal();
+                    
+                            //calculate the coulomb energy using shift-electrostatics
+                            // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
+                            tmp = r - Rc;
+                            tmp *= one_over_Rc2;
+                            tmp -= one_over_Rc;
+                            tmp += one_over_r;
+                            tmp *= q * qa[j];
+                        
+                            //apply the cutoff - compare r against Rc. This will
+                            //return 1 if r is less than Rc, or 0 otherwise. Logical
+                            //and will then remove all energies where r >= Rc
+                            tmp &= r.compareLess(Rc);
+
+                            //make sure that the ID of atoms1 is not zero
+                            itmp = ida[j].compareEqual(dummy_id);
+
+                            icnrg += scale * tmp.logicalAndNot(itmp);
+                        }
+                    }
+                    else
+                    {
+                        //calculate both coulomb and LJ
+                        const MultiFloat sig( siga[i][ii] * siga[i][ii] );
+                        const MultiFloat eps( epsa[i][ii] );
+
+                        for (int j=i; j<n; ++j)
+                        {
+                            // if i == j then we double-calculate the energies, so must
+                            // scale them by 0.5
+                            MultiFloat scale( i == j ? 0.5 : 1.0 );
+                            scale *= getNonBondedScale(id, ida[j], intrascl);
+                        
+                            //calculate the distance between the fixed and mobile atoms
+                            tmp = xa[j] - x;
+                            r = tmp * tmp;
+                            tmp = ya[j] - y;
+                            r.multiplyAdd(tmp, tmp);
+                            tmp = za[j] - z;
+                            r.multiplyAdd(tmp, tmp);
+                            r = r.sqrt();
+
+                            one_over_r = r.reciprocal();
+                    
+                            //calculate the coulomb energy using shift-electrostatics
+                            // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
+                            tmp = r - Rc;
+                            tmp *= one_over_Rc2;
+                            tmp -= one_over_Rc;
+                            tmp += one_over_r;
+                            tmp *= q * qa[j];
+                        
+                            //apply the cutoff - compare r against Rc. This will
+                            //return 1 if r is less than Rc, or 0 otherwise. Logical
+                            //and will then remove all energies where r >= Rc
+                            tmp &= r.compareLess(Rc);
+
+                            //make sure that the ID of atoms1 is not zero, and is
+                            //also not the same as the atoms0.
+                            itmp = ida[j].compareEqual(dummy_id);
+
+                            icnrg += scale * tmp.logicalAndNot(itmp);
+
+                            //now the LJ energy
+                            tmp = sig + (siga[j]*siga[j]);
+                            tmp *= half;
+                        
+                            sig2_over_r2 = tmp * one_over_r;
+                            sig2_over_r2 = sig2_over_r2*sig2_over_r2;
+                            sig6_over_r6 = sig2_over_r2*sig2_over_r2;
+                            sig6_over_r6 = sig6_over_r6*sig2_over_r2;
+
+                            tmp = sig6_over_r6 * sig6_over_r6;
+                            tmp -= sig6_over_r6;
+                            tmp *= eps;
+                            tmp *= epsa[j];
+                        
+                            //apply the cutoff - compare r against Rlj. This will
+                            //return 1 if r is less than Rlj, or 0 otherwise. Logical
+                            //and will then remove all energies where r >= Rlj
+                            tmp &= r.compareLess(Rlj);
+                            iljnrg += scale * tmp.logicalAndNot(itmp);
+                        }
+                    }
+                }
+                else
+                {
+                    //LJ calculation only
+                    const MultiFloat sig( siga[i][ii] * siga[i][ii] );
+                    const MultiFloat eps( epsa[i][ii] );
+
+                    for (int j=i; j<n; ++j)
+                    {
+                        // if i == j then we double-calculate the energies, so must
+                        // scale them by 0.5
+                        MultiFloat scale( i == j ? 0.5 : 1.0 );
+                        scale *= getNonBondedScale(id, ida[j], intrascl);
+                    
+                        //calculate the distance between the fixed and mobile atoms
+                        tmp = xa[j] - x;
+                        r = tmp * tmp;
+                        tmp = ya[j] - y;
+                        r.multiplyAdd(tmp, tmp);
+                        tmp = za[j] - z;
+                        r.multiplyAdd(tmp, tmp);
+                        r = r.sqrt();
+
+                        one_over_r = r.reciprocal();
+
+                        tmp = sig + (siga[j]*siga[j]);
+                        tmp *= half;
+                    
+                        sig2_over_r2 = tmp * one_over_r;
+                        sig2_over_r2 = sig2_over_r2*sig2_over_r2;
+                        sig6_over_r6 = sig2_over_r2*sig2_over_r2;
+                        sig6_over_r6 = sig6_over_r6*sig2_over_r2;
+
+                        tmp = sig6_over_r6 * sig6_over_r6;
+                        tmp -= sig6_over_r6;
+                        tmp *= eps;
+                        tmp *= epsa[j];
+                    
+                        //apply the cutoff - compare r against Rlj. This will
+                        //return 1 if r is less than Rlj, or 0 otherwise. Logical
+                        //and will then remove all energies where r >= Rlj
+                        tmp &= r.compareLess(Rlj);
+                        iljnrg += scale * tmp.logicalAndNot(itmp);
+                    }
+                }
+            }
+        }
+    }
+    
+    cnrg = icnrg.sum();
+    ljnrg = iljnrg.sum();
+}
+
+/** Calculate the intramolecular energy between all atoms in 'atoms0' and all
+    atoms in 'atoms1', returning the result in the arguments 'cnrg' and 'ljnrg'.
+    Note that all of the atoms must be part of the same molecule, and must
+    have their intramolecular non-bonded scale factors loaded into this function */
+void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                             double &cnrg, double &ljnrg) const
+{
+    const MultiFloat *x0 = atoms0.x().constData();
+    const MultiFloat *y0 = atoms0.y().constData();
+    const MultiFloat *z0 = atoms0.z().constData();
+    const MultiFloat *q0 = atoms0.q().constData();
+    const MultiFloat *sig0 = atoms0.sigma().constData();
+    const MultiFloat *eps0 = atoms0.epsilon().constData();
+    const MultiInt *id0 = atoms0.ID().constData();
+
+    const MultiFloat *x1 = atoms1.x().constData();
+    const MultiFloat *y1 = atoms1.y().constData();
+    const MultiFloat *z1 = atoms1.z().constData();
+    const MultiFloat *q1 = atoms1.q().constData();
+    const MultiFloat *sig1 = atoms1.sigma().constData();
+    const MultiFloat *eps1 = atoms1.epsilon().constData();
+    const MultiInt *id1 = atoms1.ID().constData();
+    
+    const MultiFloat Rc(coul_cutoff);
+    const MultiFloat Rlj(lj_cutoff);
+    const MultiFloat one_over_Rc( 1.0 / coul_cutoff );
+    const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
+    const MultiFloat half(0.5);
+    const MultiInt dummy_id = CLJAtoms::idOfDummy();
+    const qint32 dummy_int = dummy_id[0];
+
+    MultiFloat tmp, r, one_over_r, sig2_over_r2, sig6_over_r6;
+    MultiDouble icnrg(0), iljnrg(0);
+    MultiInt itmp;
+
+    const int n0 = atoms0.x().count();
+    const int n1 = atoms1.x().count();
+
+    for (int i=0; i<n0; ++i)
+    {
+        for (int ii=0; ii<MultiFloat::count(); ++ii)
+        {
+            if (id0[i][ii] != dummy_int)
+            {
+                const MultiInt id(id0[i][ii]);
+            
+                if (q0[i][ii] != 0)
+                {
+                    const MultiFloat x(x0[i][ii]);
+                    const MultiFloat y(y0[i][ii]);
+                    const MultiFloat z(z0[i][ii]);
+                    const MultiFloat q(q0[i][ii]);
+
+                    if (eps0[i][ii] == 0)
+                    {
+                        //coulomb energy only
+                        for (int j=0; j<n1; ++j)
+                        {
+                            //get the non-bonded scale factors
+                            const MultiFloat scale = getNonBondedScale(id, ida[j], intrascl);
+                        
+                            //calculate the distance between the fixed and mobile atoms
+                            tmp = x1[j] - x;
+                            r = tmp * tmp;
+                            tmp = y1[j] - y;
+                            r.multiplyAdd(tmp, tmp);
+                            tmp = z1[j] - z;
+                            r.multiplyAdd(tmp, tmp);
+                            r = r.sqrt();
+
+                            one_over_r = r.reciprocal();
+                    
+                            //calculate the coulomb energy using shift-electrostatics
+                            // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
+                            tmp = r - Rc;
+                            tmp *= one_over_Rc2;
+                            tmp -= one_over_Rc;
+                            tmp += one_over_r;
+                            tmp *= q * q1[j];
+                        
+                            //apply the cutoff - compare r against Rc. This will
+                            //return 1 if r is less than Rc, or 0 otherwise. Logical
+                            //and will then remove all energies where r >= Rc
+                            tmp &= r.compareLess(Rc);
+
+                            //make sure that the ID of atoms1 is not zero, and is
+                            //also not the same as the atoms0.
+                            itmp = id1[j].compareEqual(dummy_id);
+                            
+                            icnrg += scale * tmp.logicalAndNot(itmp);
+                        }
+                    }
+                    else
+                    {
+                        const MultiFloat sig(sig0[i][ii] * sig0[i][ii]);
+                        const MultiFloat eps(eps0[i][ii]);
+
+                        for (int j=0; j<n1; ++j)
+                        {
+                            //get the non-bonded scale factors
+                            const MultiFloat scale = getNonBondedScale(id, ida[j], intrascl);
+
+                            //calculate the distance between the fixed and mobile atoms
+                            tmp = x1[j] - x;
+                            r = tmp * tmp;
+                            tmp = y1[j] - y;
+                            r.multiplyAdd(tmp, tmp);
+                            tmp = z1[j] - z;
+                            r.multiplyAdd(tmp, tmp);
+                            r = r.sqrt();
+
+                            one_over_r = r.reciprocal();
+                    
+                            //calculate the coulomb energy using shift-electrostatics
+                            // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
+                            tmp = r - Rc;
+                            tmp *= one_over_Rc2;
+                            tmp -= one_over_Rc;
+                            tmp += one_over_r;
+                            tmp *= q * q1[j];
+                        
+                            //apply the cutoff - compare r against Rc. This will
+                            //return 1 if r is less than Rc, or 0 otherwise. Logical
+                            //and will then remove all energies where r >= Rc
+                            tmp &= r.compareLess(Rc);
+
+                            //make sure that the ID of atoms1 is not zero
+                            itmp = id1[j].compareEqual(dummy_id);
+
+                            icnrg += scale * tmp.logicalAndNot(itmp);
+                            
+                            //Now do the LJ energy
+
+                            //arithmetic combining rules
+                            tmp = sig + (sig1[j]*sig1[j]);
+                            tmp *= half;
+                        
+                            sig2_over_r2 = tmp * one_over_r;
+                            sig2_over_r2 = sig2_over_r2*sig2_over_r2;
+                            sig6_over_r6 = sig2_over_r2*sig2_over_r2;
+                            sig6_over_r6 = sig6_over_r6*sig2_over_r2;
+
+                            tmp = sig6_over_r6 * sig6_over_r6;
+                            tmp -= sig6_over_r6;
+                            tmp *= eps;
+                            tmp *= eps1[j];
+                        
+                            //apply the cutoff - compare r against Rlj. This will
+                            //return 1 if r is less than Rlj, or 0 otherwise. Logical
+                            //and will then remove all energies where r >= Rlj
+                            tmp &= r.compareLess(Rlj);
+                            iljnrg += scale * tmp.logicalAndNot(itmp);
+                        }
+                    }
+                }
+                else if (eps0[i][ii] != 0)
+                {
+                    //LJ energy only
+                    const MultiFloat x(x0[i][ii]);
+                    const MultiFloat y(y0[i][ii]);
+                    const MultiFloat z(z0[i][ii]);
+                    const MultiFloat sig(sig0[i][ii] * sig0[i][ii]);
+                    const MultiFloat eps(eps0[i][ii]);
+
+                    for (int j=0; j<n1; ++j)
+                    {
+                        //get the non-bonded scale factors
+                        const MultiFloat scale = getNonBondedScale(id, ida[j], intrascl);
+
+                        //calculate the distance between the fixed and mobile atoms
+                        tmp = x1[j] - x;
+                        r = tmp * tmp;
+                        tmp = y1[j] - y;
+                        r.multiplyAdd(tmp, tmp);
+                        tmp = z1[j] - z;
+                        r.multiplyAdd(tmp, tmp);
+                        r = r.sqrt();
+
+                        one_over_r = r.reciprocal();
+                
+                        //arithmetic combining rules
+                        tmp = sig + (sig1[j]*sig1[j]);
+                        tmp *= half;
+                    
+                        sig2_over_r2 = tmp * one_over_r;
+                        sig2_over_r2 = sig2_over_r2*sig2_over_r2;
+                        sig6_over_r6 = sig2_over_r2*sig2_over_r2;
+                        sig6_over_r6 = sig6_over_r6*sig2_over_r2;
+
+                        tmp = sig6_over_r6 * sig6_over_r6;
+                        tmp -= sig6_over_r6;
+                        tmp *= eps;
+                        tmp *= eps1[j];
+                    
+                        //apply the cutoff - compare r against Rlj. This will
+                        //return 1 if r is less than Rlj, or 0 otherwise. Logical
+                        //and will then remove all energies where r >= Rlj
+                        tmp &= r.compareLess(Rlj);
+                        itmp = id1[j].compareEqual(dummy_id);
+
+                        iljnrg += scale * tmp.logicalAndNot(itmp);
+                    }
+                }
+            }
+        }
+    }
+    
+    cnrg = icnrg.sum();
+    ljnrg = iljnrg.sum();
 }

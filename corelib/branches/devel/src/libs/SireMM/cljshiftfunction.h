@@ -31,6 +31,8 @@
 
 #include "cljfunction.h"
 
+#include <QHash>
+
 namespace SireMM
 {
 class CLJShiftFunction;
@@ -41,6 +43,9 @@ class CLJSoftIntraShiftFunction;
 
 QDataStream& operator<<(QDataStream&, const SireMM::CLJShiftFunction&);
 QDataStream& operator>>(QDataStream&, SireMM::CLJShiftFunction&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::CLJIntraShiftFunction&);
+QDataStream& operator>>(QDataStream&, SireMM::CLJIntraShiftFunction&);
 
 namespace SireMM
 {
@@ -113,10 +118,84 @@ protected:
                           const Vector &box_dimensions, double &cnrg, double &ljnrg) const;
 };
 
+/** This CLJFunction calculates the intramolecular coulomb and LJ energy of the passed
+    CLJAtoms using a force shifted electrostatics cutoff
+    
+    @author Christopher Woods
+*/
+class SIREMM_EXPORT CLJIntraShiftFunction
+        : public SireBase::ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const CLJIntraShiftFunction&);
+friend QDataStream& ::operator>>(QDataStream&, CLJIntraShiftFunction&);
+
+public:
+    CLJIntraShiftFunction();
+    CLJIntraShiftFunction(Length cutoff);
+    CLJIntraShiftFunction(Length coul_cutoff, Length lj_cutoff);
+    
+    CLJIntraShiftFunction(const Space &space, Length cutoff);
+    CLJIntraShiftFunction(const Space &space, Length coul_cutoff, Length lj_cutoff);
+    
+    CLJIntraShiftFunction(Length cutoff, COMBINING_RULES combining_rules);
+    CLJIntraShiftFunction(Length coul_cutoff, Length lj_cutoff, COMBINING_RULES combining_rules);
+    
+    CLJIntraShiftFunction(const Space &space, COMBINING_RULES combining_rules);
+    CLJIntraShiftFunction(const Space &space, Length cutoff, COMBINING_RULES combining_rules);
+    CLJIntraShiftFunction(const Space &space, Length coul_cutoff, Length lj_cutoff,
+                          COMBINING_RULES combining_rules);
+    
+    CLJIntraShiftFunction(const CLJIntraShiftFunction &other);
+    
+    ~CLJIntraShiftFunction();
+    
+    CLJIntraShiftFunction& operator=(const CLJIntraShiftFunction &other);
+    
+    bool operator==(const CLJIntraShiftFunction &other) const;
+    bool operator!=(const CLJIntraShiftFunction &other) const;
+    
+    static const char* typeName();
+    const char* what() const;
+    
+    CLJIntraShiftFunction* clone() const;
+
+protected:
+    void calcVacEnergyAri(const CLJAtoms &atoms,
+                          double &cnrg, double &ljnrg) const;
+    
+    void calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                          double &cnrg, double &ljnrg) const;
+
+    void calcVacEnergyGeo(const CLJAtoms &atoms,
+                          double &cnrg, double &ljnrg) const;
+    
+    void calcVacEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                          double &cnrg, double &ljnrg) const;
+
+    void calcBoxEnergyAri(const CLJAtoms &atoms, const Vector &box_dimensions,
+                          double &cnrg, double &ljnrg) const;
+    
+    void calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                          const Vector &box_dimensions, double &cnrg, double &ljnrg) const;
+
+    void calcBoxEnergyGeo(const CLJAtoms &atoms, const Vector &box_dimensions,
+                          double &cnrg, double &ljnrg) const;
+    
+    void calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                          const Vector &box_dimensions, double &cnrg, double &ljnrg) const;
+
+private:
+    /** The intramolecular interatomic scale factors */
+    QHash<qint64,float> intrascl;
+};
+
 }
 
 Q_DECLARE_METATYPE( SireMM::CLJShiftFunction )
+Q_DECLARE_METATYPE( SireMM::CLJIntraShiftFunction )
 
 SIRE_EXPOSE_CLASS( SireMM::CLJShiftFunction )
+SIRE_EXPOSE_CLASS( SireMM::CLJIntraShiftFunction )
 
 #endif
