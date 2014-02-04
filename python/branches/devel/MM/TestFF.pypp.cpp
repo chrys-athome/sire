@@ -13,6 +13,8 @@ namespace bp = boost::python;
 
 #include "cljcalculator.h"
 
+#include "cljshiftfunction.h"
+
 #include "tbb/blocked_range.h"
 
 #include "tbb/parallel_for.h"

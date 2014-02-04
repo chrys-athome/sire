@@ -57,6 +57,8 @@
 
 #include "CLJComponent.pypp.hpp"
 
+#include "CLJCutoffFunction.pypp.hpp"
+
 #include "CLJFunction.pypp.hpp"
 
 #include "CLJNBPairs.pypp.hpp"
@@ -77,7 +79,9 @@
 
 #include "CLJScaleFactor.pypp.hpp"
 
-#include "CLJVacShiftAriFunction.pypp.hpp"
+#include "CLJShiftFunction.pypp.hpp"
+
+#include "CLJSoftFunction.pypp.hpp"
 
 #include "ChargeParameterName.pypp.hpp"
 
@@ -454,6 +458,8 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_CLJFunction_class();
 
+    register_CLJCutoffFunction_class();
+
     register_CLJNBPairs_class();
 
     register_ChargeParameterName_class();
@@ -466,7 +472,9 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_CLJProbe_class();
 
-    register_CLJVacShiftAriFunction_class();
+    register_CLJShiftFunction_class();
+
+    register_CLJSoftFunction_class();
 
     register_ChargeParameterName3D_class();
 

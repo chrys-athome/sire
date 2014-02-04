@@ -16,6 +16,10 @@ namespace bp = boost::python;
 
 #include "SireStream/shareddatastream.h"
 
+#include "SireVol/cartesian.h"
+
+#include "SireVol/periodicbox.h"
+
 #include "cljfunction.h"
 
 #include "cljfunction.h"
@@ -30,6 +34,21 @@ void register_CLJFunction_class(){
         typedef bp::class_< SireMM::CLJFunction, bp::bases< SireBase::Property >, boost::noncopyable > CLJFunction_exposer_t;
         CLJFunction_exposer_t CLJFunction_exposer = CLJFunction_exposer_t( "CLJFunction", bp::no_init );
         bp::scope CLJFunction_scope( CLJFunction_exposer );
+        bp::enum_< SireMM::CLJFunction::COMBINING_RULES>("COMBINING_RULES")
+            .value("ARITHMETIC", SireMM::CLJFunction::ARITHMETIC)
+            .value("GEOMETRIC", SireMM::CLJFunction::GEOMETRIC)
+            .export_values()
+            ;
+        { //::SireMM::CLJFunction::combiningRules
+        
+            typedef ::SireMM::CLJFunction::COMBINING_RULES ( ::SireMM::CLJFunction::*combiningRules_function_type )(  ) const;
+            combiningRules_function_type combiningRules_function_value( &::SireMM::CLJFunction::combiningRules );
+            
+            CLJFunction_exposer.def( 
+                "combiningRules"
+                , combiningRules_function_value );
+        
+        }
         { //::SireMM::CLJFunction::coulomb
         
             typedef double ( ::SireMM::CLJFunction::*coulomb_function_type )( ::SireMM::CLJAtoms const & ) const;
@@ -70,6 +89,26 @@ void register_CLJFunction_class(){
             CLJFunction_exposer.def( 
                 "hasCutoff"
                 , hasCutoff_function_value );
+        
+        }
+        { //::SireMM::CLJFunction::isPeriodic
+        
+            typedef bool ( ::SireMM::CLJFunction::*isPeriodic_function_type )(  ) const;
+            isPeriodic_function_type isPeriodic_function_value( &::SireMM::CLJFunction::isPeriodic );
+            
+            CLJFunction_exposer.def( 
+                "isPeriodic"
+                , isPeriodic_function_value );
+        
+        }
+        { //::SireMM::CLJFunction::isSoftened
+        
+            typedef bool ( ::SireMM::CLJFunction::*isSoftened_function_type )(  ) const;
+            isSoftened_function_type isSoftened_function_value( &::SireMM::CLJFunction::isSoftened );
+            
+            CLJFunction_exposer.def( 
+                "isSoftened"
+                , isSoftened_function_value );
         
         }
         { //::SireMM::CLJFunction::lj
@@ -137,6 +176,50 @@ void register_CLJFunction_class(){
                 , ( bp::arg("on") ) );
         
         }
+        { //::SireMM::CLJFunction::setCombiningRules
+        
+            typedef void ( ::SireMM::CLJFunction::*setCombiningRules_function_type )( ::SireMM::CLJFunction::COMBINING_RULES ) ;
+            setCombiningRules_function_type setCombiningRules_function_value( &::SireMM::CLJFunction::setCombiningRules );
+            
+            CLJFunction_exposer.def( 
+                "setCombiningRules"
+                , setCombiningRules_function_value
+                , ( bp::arg("rules") ) );
+        
+        }
+        { //::SireMM::CLJFunction::setCoulombCutoff
+        
+            typedef void ( ::SireMM::CLJFunction::*setCoulombCutoff_function_type )( ::SireUnits::Dimension::Length ) ;
+            setCoulombCutoff_function_type setCoulombCutoff_function_value( &::SireMM::CLJFunction::setCoulombCutoff );
+            
+            CLJFunction_exposer.def( 
+                "setCoulombCutoff"
+                , setCoulombCutoff_function_value
+                , ( bp::arg("distance") ) );
+        
+        }
+        { //::SireMM::CLJFunction::setCutoff
+        
+            typedef void ( ::SireMM::CLJFunction::*setCutoff_function_type )( ::SireUnits::Dimension::Length ) ;
+            setCutoff_function_type setCutoff_function_value( &::SireMM::CLJFunction::setCutoff );
+            
+            CLJFunction_exposer.def( 
+                "setCutoff"
+                , setCutoff_function_value
+                , ( bp::arg("distance") ) );
+        
+        }
+        { //::SireMM::CLJFunction::setCutoff
+        
+            typedef void ( ::SireMM::CLJFunction::*setCutoff_function_type )( ::SireUnits::Dimension::Length,::SireUnits::Dimension::Length ) ;
+            setCutoff_function_type setCutoff_function_value( &::SireMM::CLJFunction::setCutoff );
+            
+            CLJFunction_exposer.def( 
+                "setCutoff"
+                , setCutoff_function_value
+                , ( bp::arg("coulomb_cutoff"), bp::arg("lj_cutoff") ) );
+        
+        }
         { //::SireMM::CLJFunction::setGeometricCombiningRules
         
             typedef void ( ::SireMM::CLJFunction::*setGeometricCombiningRules_function_type )( bool ) ;
@@ -146,6 +229,28 @@ void register_CLJFunction_class(){
                 "setGeometricCombiningRules"
                 , setGeometricCombiningRules_function_value
                 , ( bp::arg("on") ) );
+        
+        }
+        { //::SireMM::CLJFunction::setLJCutoff
+        
+            typedef void ( ::SireMM::CLJFunction::*setLJCutoff_function_type )( ::SireUnits::Dimension::Length ) ;
+            setLJCutoff_function_type setLJCutoff_function_value( &::SireMM::CLJFunction::setLJCutoff );
+            
+            CLJFunction_exposer.def( 
+                "setLJCutoff"
+                , setLJCutoff_function_value
+                , ( bp::arg("distance") ) );
+        
+        }
+        { //::SireMM::CLJFunction::setSpace
+        
+            typedef void ( ::SireMM::CLJFunction::*setSpace_function_type )( ::SireVol::Space const & ) ;
+            setSpace_function_type setSpace_function_value( &::SireMM::CLJFunction::setSpace );
+            
+            CLJFunction_exposer.def( 
+                "setSpace"
+                , setSpace_function_value
+                , ( bp::arg("space") ) );
         
         }
         { //::SireMM::CLJFunction::space
@@ -181,6 +286,16 @@ void register_CLJFunction_class(){
                 , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("cnrg"), bp::arg("ljnrg") ) );
         
         }
+        { //::SireMM::CLJFunction::typeName
+        
+            typedef char const * ( *typeName_function_type )(  );
+            typeName_function_type typeName_function_value( &::SireMM::CLJFunction::typeName );
+            
+            CLJFunction_exposer.def( 
+                "typeName"
+                , typeName_function_value );
+        
+        }
         { //::SireMM::CLJFunction::usingArithmeticCombiningRules
         
             typedef bool ( ::SireMM::CLJFunction::*usingArithmeticCombiningRules_function_type )(  ) const;
@@ -201,11 +316,14 @@ void register_CLJFunction_class(){
                 , usingGeometricCombiningRules_function_value );
         
         }
+        CLJFunction_exposer.staticmethod( "typeName" );
         bp::register_ptr_to_python< boost::shared_ptr< SireMM::CLJFunction > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJFunction >, boost::shared_ptr< SireBase::Property > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJFunction >, boost::shared_ptr< QSharedData > >();
-        bp::implicitly_convertible< boost::shared_ptr< SireBase::ConcreteProperty< SireMM::CLJVacShiftAriFunction, SireMM::CLJFunction > >, boost::shared_ptr< SireMM::CLJFunction > >();
-        bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJVacShiftAriFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJCutoffFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJSoftFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireBase::ConcreteProperty< SireMM::CLJShiftFunction, SireMM::CLJCutoffFunction > >, boost::shared_ptr< SireMM::CLJFunction > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJShiftFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
         CLJFunction_exposer.def( "__rlshift__", &__rlshift__QDataStream< ::SireMM::CLJFunction >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CLJFunction_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireMM::CLJFunction >,

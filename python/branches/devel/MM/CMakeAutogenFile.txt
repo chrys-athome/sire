@@ -5,6 +5,7 @@ set ( PYPP_SOURCES
        TwoAtomPerturbation.pypp.cpp
        NoCutoff.pypp.cpp
        TwoAtomFunctions.pypp.cpp
+       CLJShiftFunction.pypp.cpp
        InterLJFFBase.pypp.cpp
        CLJAtoms.pypp.cpp
        IntraCoulombFFBase.pypp.cpp
@@ -77,6 +78,7 @@ set ( PYPP_SOURCES
        CoulombComponent.pypp.cpp
        Restraint3D.pypp.cpp
        TripleDistanceRestraint.pypp.cpp
+       CLJCutoffFunction.pypp.cpp
        InterSoftCLJFF.pypp.cpp
        LJParameterName.pypp.cpp
        RestraintFF.pypp.cpp
@@ -103,6 +105,7 @@ set ( PYPP_SOURCES
        LJPotentialInterface_InterLJPotential_.pypp.cpp
        CLJBoxIndex.pypp.cpp
        FourAtomFunction.pypp.cpp
+       CLJSoftFunction.pypp.cpp
        IntraSoftCLJFF.pypp.cpp
        ScaledChargeParameterNames3D.pypp.cpp
        AngleParameterName.pypp.cpp
@@ -110,7 +113,6 @@ set ( PYPP_SOURCES
        AtomFunctions.pypp.cpp
        ScaledLJParameterNames3D.pypp.cpp
        CLJPotentialInterface_InterSoftCLJPotential_.pypp.cpp
-       CLJVacShiftAriFunction.pypp.cpp
        StretchBendParameterName.pypp.cpp
        CLJPotentialInterface_InterCLJPotential_.pypp.cpp
        IntraSoftCLJFFBase.pypp.cpp

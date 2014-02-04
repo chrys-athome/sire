@@ -15,6 +15,7 @@
 #include "cljparam.h"
 #include "cljpotential.h"
 #include "cljprobe.h"
+#include "cljshiftfunction.h"
 #include "coulombpotential.h"
 #include "dihedralrestraint.h"
 #include "distancerestraint.h"
