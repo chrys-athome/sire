@@ -44,6 +44,7 @@ using namespace SireMM;
 using namespace SireVol;
 using namespace SireMaths;
 using namespace SireBase;
+using namespace SireID;
 using namespace SireStream;
 
 /////////
@@ -1003,34 +1004,117 @@ void CLJIntraFunction::setNBPairs(const CLJNBPairs &pairs)
         sclfacs.clear();
     
         //extract all of the non-bonded pairs by AtomIdx that are not equal to 1
-        const int nats = pairs.info().nAtoms();
+        const MoleculeInfoData &molinfo = pairs.info();
+        const int nats = molinfo.nAtoms();
 
         if (nats <= 1)
             return;
         
         sclfacs.reserve(nats);
         
-        for (int i=0; i<nats-1; ++i)
-        {
-            const AtomIdx atm0(i);
+        // The below code is horrible as the AtomPairs data is optimised to hold
+        // the data by CutGroup/Index, rather than AtomIdx, and it is an incredibly
+        // slow data structure to navigate by AtomIdx! I should probably rewrite
+        // CLJNBPairs as it is really painful to read the data from disk, and now
+        // to use the data in a forcefield!
         
-            for (int j=i+1; j<nats; ++j)
+        for (CGIdx i(0); i<molinfo.nCutGroups(); ++i)
+        {
+            for (CGIdx j(i); j<molinfo.nCutGroups(); ++j)
             {
-                const AtomIdx atm1(j);
+                const CLJNBPairs::CGPairs cgpairs = pairs(i,j);
                 
-                CLJScaleFactor scl = pairs(atm0, atm1);
-                
-                if (scl.coulomb() != 1 or scl.lj() != 1)
+                if (cgpairs.isEmpty())
                 {
-                    sclfacs.insert( getIndex(atm0,atm1), QPair<float,float>(scl.coulomb(),
-                                                                            scl.lj()) );
+                    //all of the atoms pairs between these cutgroups are equal to the
+                    //default value
+                    const CLJScaleFactor default_scl = cgpairs.defaultValue();
+                    
+                    if (default_scl.coulomb() != 1 or default_scl.lj() != 1)
+                    {
+                        if (i != j)
+                        {
+                            for (Index iat(0); iat<molinfo.nAtoms(i); ++iat)
+                            {
+                                const AtomIdx i_idx = molinfo.atomIdx( CGAtomIdx(i,iat) );
+                            
+                                for (Index jat(0); jat<molinfo.nAtoms(j); ++jat)
+                                {
+                                    const AtomIdx j_idx = molinfo.atomIdx( CGAtomIdx(j,jat) );
+                                    sclfacs.insert( getIndex(i_idx,j_idx),
+                                                    QPair<float,float>(default_scl.coulomb(),
+                                                                       default_scl.lj()) );
+                                }
+                            }
+                        }
+                        else
+                        {
+                            for (Index iat(0); iat<molinfo.nAtoms(i); ++iat)
+                            {
+                                const AtomIdx i_idx = molinfo.atomIdx( CGAtomIdx(i,iat) );
+                            
+                                for (Index jat(iat); jat<molinfo.nAtoms(j); ++jat)
+                                {
+                                    const AtomIdx j_idx = molinfo.atomIdx( CGAtomIdx(j,jat) );
+                                    sclfacs.insert( getIndex(i_idx,j_idx),
+                                                    QPair<float,float>(default_scl.coulomb(),
+                                                                       default_scl.lj()) );
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    //cgpairs is not empty, so there are some non-bonded scale factors
+                    //between these cutgroups
+                    if (i != j)
+                    {
+                        for (quint32 iat=0; iat<molinfo.nAtoms(i); ++iat)
+                        {
+                            for (quint32 jat=0; jat<molinfo.nAtoms(j); ++jat)
+                            {
+                                const CLJScaleFactor scl = cgpairs(iat,jat);
+                                
+                                if (scl.coulomb() != 1 or scl.lj() != 1)
+                                {
+                                    qint64 id = getIndex(molinfo.atomIdx(CGAtomIdx(i,Index(iat))),
+                                                         molinfo.atomIdx(CGAtomIdx(j,Index(jat))) );
+                                
+                                    sclfacs.insert( id, QPair<float,float>(scl.coulomb(),
+                                                                           scl.lj()) );
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        const int ncgatoms = molinfo.nAtoms(i);
+                    
+                        for (quint32 iat=0; iat<ncgatoms; ++iat)
+                        {
+                            for (quint32 jat=iat; jat<ncgatoms; ++jat)
+                            {
+                                const CLJScaleFactor scl = cgpairs(iat,jat);
+                                
+                                if (scl.coulomb() != 1 or scl.lj() != 1)
+                                {
+                                    qint64 id = getIndex(molinfo.atomIdx(CGAtomIdx(i,Index(iat))),
+                                                         molinfo.atomIdx(CGAtomIdx(j,Index(jat))) );
+                                
+                                    sclfacs.insert( id, QPair<float,float>(scl.coulomb(),
+                                                                           scl.lj()) );
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
 
         sclfacs.squeeze();
         
-        qint64 ns = t.elapsed();
+        qint64 ns = t.nsecsElapsed();
         
         qDebug() << "Getting NB pairs for" << nats << "atoms took"
                  << (0.000001*ns) << "ms";

@@ -887,6 +887,14 @@ static void setNonBondedPairs(MolEditor &editmol, int pointer,
 
     // --> if 1,5 or more CLJScaleFactor ( 1, 1 )
 
+    // if the number of atoms is less than or equal to 3, then everything is bonded
+    if (editmol.nAtoms() <= 3)
+    {
+        nbpairs = CLJNBPairs(editmol.data().info(), CLJScaleFactor(0,0));
+        editmol.setProperty( nb_property, nbpairs );
+        return;
+    }
+
     // this is the default situation
     nbpairs = CLJNBPairs(editmol.data().info(), CLJScaleFactor(1.0,1.0));
     int natoms = editmol.nAtoms();
