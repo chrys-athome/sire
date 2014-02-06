@@ -1093,7 +1093,7 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
                         for (int j=0; j<n1; ++j)
                         {
                             //get the non-bonded scale factors
-                            const MultiFloat scale = getNonBondedScale(id, ida[j], intrascl);
+                            const MultiFloat scale = getNonBondedScale(id, id1[j], intrascl);
                         
                             //calculate the distance between the fixed and mobile atoms
                             tmp = x1[j] - x;
@@ -1134,7 +1134,7 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
                         for (int j=0; j<n1; ++j)
                         {
                             //get the non-bonded scale factors
-                            const MultiFloat scale = getNonBondedScale(id, ida[j], intrascl);
+                            const MultiFloat scale = getNonBondedScale(id, id1[j], intrascl);
 
                             //calculate the distance between the fixed and mobile atoms
                             tmp = x1[j] - x;
@@ -1201,7 +1201,7 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
                     for (int j=0; j<n1; ++j)
                     {
                         //get the non-bonded scale factors
-                        const MultiFloat scale = getNonBondedScale(id, ida[j], intrascl);
+                        const MultiFloat scale = getNonBondedScale(id, id1[j], intrascl);
 
                         //calculate the distance between the fixed and mobile atoms
                         tmp = x1[j] - x;
@@ -1243,4 +1243,29 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
     
     cnrg = icnrg.sum();
     ljnrg = iljnrg.sum();
+}
+
+/** Calculate the coulomb and LJ intramolecular energy of all of the atoms in 'atoms',
+    assuming periodic boundary conditions in a cubic box of size 'box_dimensions',
+    returning the results in 'cnrg' and 'ljnrg'.
+    Note that all of the atoms must be part of the same molecule, and must
+    have their intramolecular non-bonded scale factors loaded into this function */
+void CLJIntraShiftFunction::calcBoxEnergyAri(const CLJAtoms &atoms, const Vector &box_dimensions,
+                                             double &cnrg, double &ljnrg) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+}
+
+/** Calculate the intramolecular energy between all atoms in 'atoms0' and all
+    atoms in 'atoms1', assuming periodic boundary conditions in a cubic box
+    of size 'box_dimensions, returning the result in the arguments 'cnrg' and 'ljnrg'.
+    Note that all of the atoms must be part of the same molecule, and must
+    have their intramolecular non-bonded scale factors loaded into this function */
+void CLJIntraShiftFunction::calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                             const Vector &box_dimensions,
+                                             double &cnrg, double &ljnrg) const
+{
+    cnrg = 0;
+    ljnrg = 0;
 }
