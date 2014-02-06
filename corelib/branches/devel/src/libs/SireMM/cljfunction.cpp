@@ -1127,6 +1127,56 @@ void CLJIntraFunction::setNBPairs(const MoleculeView &molecule, const PropertyMa
     setNBPairs( molecule.data().property( map["intrascale"] ).asA<CLJNBPairs>() );
 }
 
+/** Return whether or not there are no bonded pairs between the atoms in 'ids0' and 'ids1' */
+bool CLJIntraFunction::areNonBonded(const QVector<MultiInt> &ids0,
+                                    const QVector<MultiInt> &ids1) const
+{
+    QElapsedTimer t;
+    t.start();
+
+    const int nats0 = ids0.count();
+    const int nats1 = ids1.count();
+    
+    const MultiInt *aid0 = ids0.constData();
+    const MultiInt *aid1 = ids1.constData();
+    
+    for (int i=0; i<nats0; ++i)
+    {
+        const MultiInt &id0 = aid0[i];
+    
+        for (int j=0; j<nats1; ++j)
+        {
+            const MultiInt &id1 = aid1[j];
+            
+            for (int ii=0; ii<MultiInt::count(); ++ii)
+            {
+                for (int jj=0; jj<MultiInt::count(); ++jj)
+                {
+                    const qint64 idx = getIndex(id0[ii], id1[jj]);
+                    
+                    QHash< qint64,QPair<float,float> >::const_iterator it = sclfacs.constFind(idx);
+                    
+                    if (it != sclfacs.constEnd())
+                    {
+                        if (it.value().first != 1 or it.value().second != 1)
+                        {
+                            qint64 ns = t.nsecsElapsed();
+                            qDebug() << "Took" << (0.000001*ns) << "ms";
+                        
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    qint64 ns = t.nsecsElapsed();
+    qDebug() << "Took" << (0.000001*ns) << "ms";
+    
+    return true;
+}
+
 /////////
 ///////// Implementation of CLJSoftFunction
 /////////

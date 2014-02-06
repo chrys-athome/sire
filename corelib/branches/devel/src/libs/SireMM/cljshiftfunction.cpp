@@ -854,7 +854,7 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms,
                             // scale them by 0.5
                             MultiFloat scale( i == j ? 0.5 : 1.0 );
                             scale *= getScaleFactors(id, ida[j], not_bonded).first;
-                        
+
                             //calculate the distance between the fixed and mobile atoms
                             tmp = xa[j] - x;
                             r = tmp * tmp;
@@ -879,8 +879,10 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms,
                             //and will then remove all energies where r >= Rc
                             tmp &= r.compareLess(Rc);
 
-                            //make sure that the ID of atoms1 is not zero
+                            //make sure that the ID of atoms1 is not zero, and that we
+                            //are not including the energy of the atom with itself
                             itmp = ida[j].compareEqual(dummy_id);
+                            itmp |= ida[j].compareEqual(id);
 
                             icnrg += scale * tmp.logicalAndNot(itmp);
                         }
@@ -927,8 +929,10 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms,
                             tmp &= r.compareLess(Rc);
 
                             //make sure that the ID of atoms1 is not zero, and is
-                            //also not the same as the atoms0.
+                            //also not the same as the atoms0 and that we are not
+                            //including the energy of the atom with itself
                             itmp = ida[j].compareEqual(dummy_id);
+                            itmp |= ida[j].compareEqual(id);
 
                             icnrg += scale * tmp.logicalAndNot(itmp);
 
@@ -993,6 +997,12 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms,
                         tmp -= sig6_over_r6;
                         tmp *= eps;
                         tmp *= epsa[j];
+
+                        //make sure that the ID of atoms1 is not zero, and is
+                        //also not the same as the atoms0 and that we are not
+                        //including the energy of the atom with itself
+                        itmp = ida[j].compareEqual(dummy_id);
+                        itmp |= ida[j].compareEqual(id);
                     
                         //apply the cutoff - compare r against Rlj. This will
                         //return 1 if r is less than Rlj, or 0 otherwise. Logical
@@ -1047,8 +1057,8 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
     const int n0 = atoms0.x().count();
     const int n1 = atoms1.x().count();
 
-    const bool not_bonded = false;
-
+    const bool not_bonded = false; //areNonBonded(atoms0.ID(), atoms1.ID());
+    
     for (int i=0; i<n0; ++i)
     {
         for (int ii=0; ii<MultiFloat::count(); ++ii)

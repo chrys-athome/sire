@@ -239,9 +239,6 @@ void TestFF::calculateEnergy()
     qDebug() << "Boxed" << (cnrg+ljnrg) << cnrg << ljnrg;
     qDebug() << "Took" << (0.000001*ns) << "ms";
 
-    // parallel implementation
-    tbb::task_scheduler_init init;
-    
     QVector<double> coul_nrgs(dists.count());
     QVector<double> lj_nrgs(dists.count());
     

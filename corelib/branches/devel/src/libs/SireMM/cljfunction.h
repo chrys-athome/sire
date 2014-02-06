@@ -328,6 +328,8 @@ protected:
                                                  const MultiInt &id1,
                                                  bool not_bonded) const;
 
+    bool areNonBonded(const QVector<MultiInt> &ids0, const QVector<MultiInt> &ids1) const;
+
 private:
     static qint64 getIndex(const SireMol::AtomIdx &atom0, const SireMol::AtomIdx &atom1);
     static qint64 getIndex(qint32 id0, qint32 id1);
@@ -435,7 +437,7 @@ inline QPair<MultiFloat,MultiFloat> CLJIntraFunction::getScaleFactors(
         
         for (int i=0; i<MultiFloat::count(); ++i)
         {
-            const qint64 idx = getIndex(id0[0], id1[0]);
+            const qint64 idx = getIndex(id0[i], id1[i]);
             QHash< qint64,QPair<float,float> >::const_iterator it = sclfacs.constFind(idx);
             
             if (it != sclfacs.constEnd())
