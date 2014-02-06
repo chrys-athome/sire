@@ -79,6 +79,7 @@ void register_SireQt_containers()
 
     register_list< QList<QUuid> >();
 
+    register_tuple< boost::tuple<double,double> >();
     register_tuple< boost::tuple<double,double,double> >();
 
     #if QT_VERSION >= 0x402000
