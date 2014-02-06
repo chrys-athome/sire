@@ -61,6 +61,10 @@
 
 #include "CLJFunction.pypp.hpp"
 
+#include "CLJIntraFunction.pypp.hpp"
+
+#include "CLJIntraShiftFunction.pypp.hpp"
+
 #include "CLJNBPairs.pypp.hpp"
 
 #include "CLJParameterNames.pypp.hpp"
@@ -459,6 +463,10 @@ BOOST_PYTHON_MODULE(_MM){
     register_CLJFunction_class();
 
     register_CLJCutoffFunction_class();
+
+    register_CLJIntraFunction_class();
+
+    register_CLJIntraShiftFunction_class();
 
     register_CLJNBPairs_class();
 

@@ -22,6 +22,8 @@ namespace bp = boost::python;
 
 #include "cljfunction.h"
 
+#include <QElapsedTimer>
+
 #include "cljfunction.h"
 
 #include "SireMM/cljshiftfunction.h"
@@ -324,6 +326,9 @@ void register_CLJFunction_class(){
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJFunction >, boost::shared_ptr< QSharedData > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJCutoffFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJSoftFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJIntraFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireBase::ConcreteProperty< SireMM::CLJIntraShiftFunction, SireMM::CLJIntraFunction > >, boost::shared_ptr< SireMM::CLJFunction > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJIntraShiftFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
         bp::implicitly_convertible< boost::shared_ptr< SireBase::ConcreteProperty< SireMM::CLJShiftFunction, SireMM::CLJCutoffFunction > >, boost::shared_ptr< SireMM::CLJFunction > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJShiftFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
         CLJFunction_exposer.def( "__rlshift__", &__rlshift__QDataStream< ::SireMM::CLJFunction >,

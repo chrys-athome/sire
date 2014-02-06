@@ -14,6 +14,7 @@ set ( PYPP_SOURCES
        LJProbe.pypp.cpp
        InternalPerturbation.pypp.cpp
        IntraGroupLJFF.pypp.cpp
+       CLJIntraFunction.pypp.cpp
        DihedralSymbols.pypp.cpp
        CLJCalculator.pypp.cpp
        InterGroupCoulombFF.pypp.cpp
@@ -52,6 +53,7 @@ set ( PYPP_SOURCES
        AngleSymbols.pypp.cpp
        IntraLJFFBase.pypp.cpp
        SwitchingFunction.pypp.cpp
+       CLJIntraShiftFunction.pypp.cpp
        ImproperParameterName.pypp.cpp
        GroupInternalParameters.pypp.cpp
        InternalParameterNames.pypp.cpp

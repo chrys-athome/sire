@@ -21,6 +21,8 @@ namespace bp = boost::python;
 
 #include "cljfunction.h"
 
+#include <QElapsedTimer>
+
 #include "cljfunction.h"
 
 #include "Qt/qdatastream.hpp"

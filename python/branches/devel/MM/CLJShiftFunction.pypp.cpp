@@ -15,7 +15,11 @@ namespace bp = boost::python;
 
 #include "SireStream/datastream.h"
 
+#include "SireStream/shareddatastream.h"
+
 #include "cljshiftfunction.h"
+
+#include <QDebug>
 
 #include "cljshiftfunction.h"
 
