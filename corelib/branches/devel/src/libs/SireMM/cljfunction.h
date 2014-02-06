@@ -30,6 +30,9 @@
 #define SIREMM_CLJFUNCTION_H
 
 #include "cljatoms.h"
+#include "cljnbpairs.h"
+
+#include "SireMol/atomidx.h"
 
 #include "SireVol/space.h"
 
@@ -43,6 +46,7 @@ namespace SireMM
 {
 class CLJFunction;
 class CLJCutoffFunction;
+class CLJIntraFunction;
 class CLJSoftFunction;
 }
 
@@ -51,6 +55,9 @@ QDataStream& operator>>(QDataStream&, SireMM::CLJFunction&);
 
 QDataStream& operator<<(QDataStream&, const SireMM::CLJCutoffFunction&);
 QDataStream& operator>>(QDataStream&, SireMM::CLJCutoffFunction&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::CLJIntraFunction&);
+QDataStream& operator>>(QDataStream&, SireMM::CLJIntraFunction&);
 
 QDataStream& operator<<(QDataStream&, const SireMM::CLJSoftFunction&);
 QDataStream& operator>>(QDataStream&, SireMM::CLJSoftFunction&);
@@ -275,6 +282,65 @@ protected:
     float lj_cutoff;
 };
 
+/** This is the base class of all intramolecular CLJ functions
+
+    @author Christopher Woods
+*/
+class SIREMM_EXPORT CLJIntraFunction : public CLJCutoffFunction
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const CLJIntraFunction&);
+friend QDataStream& ::operator>>(QDataStream&, CLJIntraFunction&);
+
+public:
+    CLJIntraFunction();
+    CLJIntraFunction(Length cutoff);
+    CLJIntraFunction(Length coul_cutoff, Length lj_cutoff);
+    
+    CLJIntraFunction(const Space &space, Length cutoff);
+    CLJIntraFunction(const Space &space, Length coul_cutoff, Length lj_cutoff);
+    
+    CLJIntraFunction(Length cutoff, COMBINING_RULES combining_rules);
+    CLJIntraFunction(Length coul_cutoff, Length lj_cutoff, COMBINING_RULES combining_rules);
+    
+    CLJIntraFunction(const Space &space, COMBINING_RULES combining_rules);
+    CLJIntraFunction(const Space &space, Length cutoff, COMBINING_RULES combining_rules);
+    CLJIntraFunction(const Space &space, Length coul_cutoff, Length lj_cutoff,
+                     COMBINING_RULES combining_rules);
+
+    CLJIntraFunction(const CLJIntraFunction &other);
+    
+    ~CLJIntraFunction();
+    
+    static const char* typeName();
+
+    void setNBPairs(const CLJNBPairs &cljnb);
+    void setNBPairs(const MoleculeView &molecule, const PropertyMap &map = PropertyMap());
+
+    const CLJNBPairs& nbPairs() const;
+    
+protected:
+    CLJIntraFunction& operator=(const CLJIntraFunction &other);
+    
+    bool operator==(const CLJIntraFunction &other) const;
+
+    QPair<MultiFloat,MultiFloat> getScaleFactors(const MultiInt &id0,
+                                                 const MultiInt &id1,
+                                                 bool not_bonded) const;
+
+private:
+    static qint64 getIndex(const SireMol::AtomIdx &atom0, const SireMol::AtomIdx &atom1);
+    static qint64 getIndex(qint32 id0, qint32 id1);
+    static qint64 pack(qint32 a, qint32 b);
+
+    /** The CLJNBPairs from which the below scale factors are extracted */
+    CLJNBPairs nbpairs;
+
+    /** The set of 1-4 scale factors for the interatomic pairs
+        in the molecule that can be evaluated by this function */
+    QHash< qint64, QPair<float,float> > sclfacs;
+};
+
 /** This is the base class of all soft-core CLJ functions that have a cutoff
 
     @author Christopher Woods
@@ -322,11 +388,75 @@ protected:
     float coulomb_power;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+/** Private internal function that takes the passed two AtomIdx 32bit integers
+    and packs them into a single 64bit integer. */
+inline qint64 CLJIntraFunction::pack(qint32 a, qint32 b)
+{
+    qint64 ret;
+    (reinterpret_cast<qint32*>(&ret))[0] = a;
+    (reinterpret_cast<qint32*>(&ret))[1] = b;
+    return ret;
+}
+
+/** Internal function that gets the 64bit index from the two 32bit ID numbers */
+inline qint64 CLJIntraFunction::getIndex(qint32 id0, qint32 id1)
+{
+    return id0 <= id1 ? pack(id0,id1) : pack(id1,id0);
+}
+
+/** Internal function used to get the 64bit index into the nonbonded scale factor
+    hash for the pair of atoms with AtomIdx values 'atom0' and 'atom1' */
+inline qint64 CLJIntraFunction::getIndex(const SireMol::AtomIdx &atom0,
+                                         const SireMol::AtomIdx &atom1)
+{
+    return atom0.value() <= atom1.value() ? pack(atom0.value() + 1,atom1.value() + 1) :
+                                            pack(atom1.value() + 1,atom0.value() + 1);
+}
+
+/** Return the coulomb and LJ scale factors for the ID pairs in 'id0' and 'id1'.
+    If 'not_bonded' is 'true', then this returns { MultiFloat(1), MultiFloat(1) } */
+inline QPair<MultiFloat,MultiFloat> CLJIntraFunction::getScaleFactors(
+                                                const SireMaths::MultiInt &id0,
+                                                const SireMaths::MultiInt &id1,
+                                                bool not_bonded) const
+{
+    if (not_bonded)
+    {
+        static const QPair<MultiFloat,MultiFloat> one =
+                        QPair<MultiFloat,MultiFloat>( MultiFloat(1), MultiFloat(1) );
+    
+        return one;
+    }
+    else
+    {
+        MultiFloat coul(1), lj(1);
+        
+        for (int i=0; i<MultiFloat::count(); ++i)
+        {
+            const qint64 idx = getIndex(id0[0], id1[0]);
+            QHash< qint64,QPair<float,float> >::const_iterator it = sclfacs.constFind(idx);
+            
+            if (it != sclfacs.constEnd())
+            {
+                coul.set(i, it.value().first);
+                lj.set(i, it.value().second);
+            }
+        }
+        
+        return QPair<MultiFloat,MultiFloat>(coul,lj);
+    }
+}
+
+#endif
+
 }
 
 SIRE_EXPOSE_CLASS( SireMM::CLJFunction )
 SIRE_EXPOSE_CLASS( SireMM::CLJCutoffFunction )
 SIRE_EXPOSE_CLASS( SireMM::CLJSoftFunction )
+SIRE_EXPOSE_CLASS( SireMM::CLJIntraFunction )
 
 SIRE_END_HEADER
 

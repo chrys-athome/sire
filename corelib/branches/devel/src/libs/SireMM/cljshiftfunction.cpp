@@ -636,9 +636,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJIntraShiftFuncti
 {
     writeHeader(ds, r_intra, 1);
     
-    SharedDataStream sds(ds);
-    
-    sds << intra.intrascl << static_cast<const CLJCutoffFunction&>(intra);
+    ds << static_cast<const CLJIntraFunction&>(intra);
     
     return ds;
 }
@@ -649,8 +647,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJIntraShiftFunction &in
     
     if (v == 1)
     {
-        SharedDataStream sds(ds);
-        sds >> intra.intrascl >> static_cast<CLJCutoffFunction&>(intra);
+        ds >> static_cast<CLJIntraFunction&>(intra);
     }
     else
         throw version_error(v, "1", r_intra, CODELOC);
@@ -659,62 +656,61 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJIntraShiftFunction &in
 }
 
 CLJIntraShiftFunction::CLJIntraShiftFunction()
-                      : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>()
+                      : ConcreteProperty<CLJIntraShiftFunction,CLJIntraFunction>()
 {}
 
 CLJIntraShiftFunction::CLJIntraShiftFunction(Length cutoff)
-                      : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(cutoff)
+                      : ConcreteProperty<CLJIntraShiftFunction,CLJIntraFunction>(cutoff)
 {}
 
 CLJIntraShiftFunction::CLJIntraShiftFunction(Length coul_cutoff, Length lj_cutoff)
-                      : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(
+                      : ConcreteProperty<CLJIntraShiftFunction,CLJIntraFunction>(
                             coul_cutoff, lj_cutoff)
 {}
 
 CLJIntraShiftFunction::CLJIntraShiftFunction(const Space &space, Length cutoff)
-                      : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(
+                      : ConcreteProperty<CLJIntraShiftFunction,CLJIntraFunction>(
                             space, cutoff)
 {}
 
 CLJIntraShiftFunction::CLJIntraShiftFunction(const Space &space,
                                              Length coul_cutoff, Length lj_cutoff)
-                      : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(
+                      : ConcreteProperty<CLJIntraShiftFunction,CLJIntraFunction>(
                             space, coul_cutoff, lj_cutoff)
 {}
 
 CLJIntraShiftFunction::CLJIntraShiftFunction(Length cutoff, COMBINING_RULES combining_rules)
-                      : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(
+                      : ConcreteProperty<CLJIntraShiftFunction,CLJIntraFunction>(
                             cutoff, combining_rules)
 {}
 
 CLJIntraShiftFunction::CLJIntraShiftFunction(Length coul_cutoff, Length lj_cutoff,
                                              COMBINING_RULES combining_rules)
-                 : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(
+                 : ConcreteProperty<CLJIntraShiftFunction,CLJIntraFunction>(
                             coul_cutoff, lj_cutoff, combining_rules)
 {}
 
 CLJIntraShiftFunction::CLJIntraShiftFunction(const Space &space, COMBINING_RULES combining_rules)
-                 : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(
+                 : ConcreteProperty<CLJIntraShiftFunction,CLJIntraFunction>(
                             space, combining_rules)
 {}
 
 CLJIntraShiftFunction::CLJIntraShiftFunction(const Space &space, Length cutoff,
                                              COMBINING_RULES combining_rules)
-                 : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(
+                 : ConcreteProperty<CLJIntraShiftFunction,CLJIntraFunction>(
                             space, cutoff, combining_rules)
 {}
 
 CLJIntraShiftFunction::CLJIntraShiftFunction(const Space &space, Length coul_cutoff,
                                              Length lj_cutoff,
                                              COMBINING_RULES combining_rules)
-                 : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(
+                 : ConcreteProperty<CLJIntraShiftFunction,CLJIntraFunction>(
                             space, coul_cutoff, lj_cutoff, combining_rules)
 {}
 
 /** Copy constructor */
 CLJIntraShiftFunction::CLJIntraShiftFunction(const CLJIntraShiftFunction &other)
-                 : ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>(other),
-                   intrascl(other.intrascl)
+                 : ConcreteProperty<CLJIntraShiftFunction,CLJIntraFunction>(other)
 {}
 
 /** Destructor */
@@ -724,15 +720,14 @@ CLJIntraShiftFunction::~CLJIntraShiftFunction()
 /** Copy assignment operator */
 CLJIntraShiftFunction& CLJIntraShiftFunction::operator=(const CLJIntraShiftFunction &other)
 {
-    intrascl = other.intrascl;
-    CLJCutoffFunction::operator=(other);
+    CLJIntraFunction::operator=(other);
     return *this;
 }
 
 /** Comparison operator */
 bool CLJIntraShiftFunction::operator==(const CLJIntraShiftFunction &other) const
 {
-    return intrascl == other.intrascl and CLJCutoffFunction::operator==(other);
+    return CLJIntraFunction::operator==(other);
 }
 
 /** Comparison operator */
@@ -803,35 +798,6 @@ void CLJIntraShiftFunction::calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJAt
     ljnrg = 0;
 }
 
-inline qint64 pack(qint32 i, qint32 j)
-{
-    qint64 val;
-    (reinterpret_cast<qint32*>(&val))[0] = i;
-    (reinterpret_cast<qint32*>(&val))[1] = j;
-    return val;
-}
-
-/** This function is used to make the key from the two ID numbers */
-inline qint64 makeKey(qint32 id0, qint32 id1)
-{
-    return id0 <= id1 ? pack(id0,id1) : pack(id1,id0);
-}
-
-/** This function is used to get the non-bonded scale factors for the atoms
-    whose IDs are in 'id0' and 'id1' */
-inline MultiFloat getNonBondedScale(const MultiInt &id0, const MultiInt &id1,
-                                    const QHash<qint64,float> &intrascl)
-{
-    MultiFloat ret(1);
-    
-    for (int i=0; i<MultiFloat::count(); ++i)
-    {
-        ret.set( i, intrascl.value( makeKey(id0[i],id1[i]), 1.0 ) );
-    }
-    
-    return ret;
-}
-
 /** Calculate the coulomb and LJ intramolecular energy of all of the atoms in 'atoms',
     returning the results in the arguments 'cnrg' and 'ljnrg'.
     Note that all of the atoms must be part of the same molecule, and must
@@ -860,6 +826,8 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms,
     MultiDouble icnrg(0), iljnrg(0);
     MultiInt itmp;
 
+    const bool not_bonded = false;
+
     int n = atoms.x().count();
     
     for (int i=0; i<n; ++i)
@@ -885,7 +853,7 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms,
                             // if i == j then we double-calculate the energies, so must
                             // scale them by 0.5
                             MultiFloat scale( i == j ? 0.5 : 1.0 );
-                            scale *= getNonBondedScale(id, ida[j], intrascl);
+                            scale *= getScaleFactors(id, ida[j], not_bonded).first;
                         
                             //calculate the distance between the fixed and mobile atoms
                             tmp = xa[j] - x;
@@ -928,7 +896,8 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms,
                             // if i == j then we double-calculate the energies, so must
                             // scale them by 0.5
                             MultiFloat scale( i == j ? 0.5 : 1.0 );
-                            scale *= getNonBondedScale(id, ida[j], intrascl);
+                            const QPair<MultiFloat,MultiFloat> scl14
+                                                = getScaleFactors(id, ida[j], not_bonded);
                         
                             //calculate the distance between the fixed and mobile atoms
                             tmp = xa[j] - x;
@@ -948,6 +917,9 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms,
                             tmp -= one_over_Rc;
                             tmp += one_over_r;
                             tmp *= q * qa[j];
+                        
+                            //apply the non-bonded scale factors
+                            tmp *= scl14.first;
                         
                             //apply the cutoff - compare r against Rc. This will
                             //return 1 if r is less than Rc, or 0 otherwise. Logical
@@ -974,6 +946,9 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms,
                             tmp *= eps;
                             tmp *= epsa[j];
                         
+                            //apply the scale factor
+                            tmp *= scl14.second;
+                        
                             //apply the cutoff - compare r against Rlj. This will
                             //return 1 if r is less than Rlj, or 0 otherwise. Logical
                             //and will then remove all energies where r >= Rlj
@@ -993,7 +968,7 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms,
                         // if i == j then we double-calculate the energies, so must
                         // scale them by 0.5
                         MultiFloat scale( i == j ? 0.5 : 1.0 );
-                        scale *= getNonBondedScale(id, ida[j], intrascl);
+                        scale *= getScaleFactors(id, ida[j], not_bonded).second;
                     
                         //calculate the distance between the fixed and mobile atoms
                         tmp = xa[j] - x;
@@ -1072,6 +1047,8 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
     const int n0 = atoms0.x().count();
     const int n1 = atoms1.x().count();
 
+    const bool not_bonded = false;
+
     for (int i=0; i<n0; ++i)
     {
         for (int ii=0; ii<MultiFloat::count(); ++ii)
@@ -1093,7 +1070,7 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
                         for (int j=0; j<n1; ++j)
                         {
                             //get the non-bonded scale factors
-                            const MultiFloat scale = getNonBondedScale(id, id1[j], intrascl);
+                            const MultiFloat nbscl = getScaleFactors(id, id1[j], not_bonded).first;
                         
                             //calculate the distance between the fixed and mobile atoms
                             tmp = x1[j] - x;
@@ -1123,7 +1100,7 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
                             //also not the same as the atoms0.
                             itmp = id1[j].compareEqual(dummy_id);
                             
-                            icnrg += scale * tmp.logicalAndNot(itmp);
+                            icnrg += nbscl * tmp.logicalAndNot(itmp);
                         }
                     }
                     else
@@ -1134,7 +1111,8 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
                         for (int j=0; j<n1; ++j)
                         {
                             //get the non-bonded scale factors
-                            const MultiFloat scale = getNonBondedScale(id, id1[j], intrascl);
+                            const QPair<MultiFloat,MultiFloat> nbscl
+                                                = getScaleFactors(id, id1[j], not_bonded);
 
                             //calculate the distance between the fixed and mobile atoms
                             tmp = x1[j] - x;
@@ -1154,6 +1132,7 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
                             tmp -= one_over_Rc;
                             tmp += one_over_r;
                             tmp *= q * q1[j];
+                            tmp *= nbscl.first;
                         
                             //apply the cutoff - compare r against Rc. This will
                             //return 1 if r is less than Rc, or 0 otherwise. Logical
@@ -1163,7 +1142,7 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
                             //make sure that the ID of atoms1 is not zero
                             itmp = id1[j].compareEqual(dummy_id);
 
-                            icnrg += scale * tmp.logicalAndNot(itmp);
+                            icnrg += tmp.logicalAndNot(itmp);
                             
                             //Now do the LJ energy
 
@@ -1180,12 +1159,13 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
                             tmp -= sig6_over_r6;
                             tmp *= eps;
                             tmp *= eps1[j];
+                            tmp *= nbscl.second;
                         
                             //apply the cutoff - compare r against Rlj. This will
                             //return 1 if r is less than Rlj, or 0 otherwise. Logical
                             //and will then remove all energies where r >= Rlj
                             tmp &= r.compareLess(Rlj);
-                            iljnrg += scale * tmp.logicalAndNot(itmp);
+                            iljnrg += tmp.logicalAndNot(itmp);
                         }
                     }
                 }
@@ -1201,7 +1181,7 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
                     for (int j=0; j<n1; ++j)
                     {
                         //get the non-bonded scale factors
-                        const MultiFloat scale = getNonBondedScale(id, id1[j], intrascl);
+                        const MultiFloat nbscl = getScaleFactors(id, id1[j], not_bonded).second;
 
                         //calculate the distance between the fixed and mobile atoms
                         tmp = x1[j] - x;
@@ -1234,7 +1214,7 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
                         tmp &= r.compareLess(Rlj);
                         itmp = id1[j].compareEqual(dummy_id);
 
-                        iljnrg += scale * tmp.logicalAndNot(itmp);
+                        iljnrg += nbscl * tmp.logicalAndNot(itmp);
                     }
                 }
             }

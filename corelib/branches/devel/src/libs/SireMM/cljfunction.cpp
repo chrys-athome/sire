@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QElapsedTimer>
+
 #include "cljfunction.h"
 
 #include "SireMaths/multidouble.h"
@@ -864,6 +866,181 @@ void CLJCutoffFunction::setCoulombCutoff(Length distance)
 void CLJCutoffFunction::setLJCutoff(Length distance)
 {
     pvt_setCutoff(coulombCutoff(), distance);
+}
+
+/////////
+///////// Implementation of CLJIntraFunction
+/////////
+
+static const RegisterMetaType<CLJIntraFunction> r_intra(MAGIC_ONLY, CLJIntraFunction::typeName());
+
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJIntraFunction &func)
+{
+    writeHeader(ds, r_intra, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << func.nbpairs
+        << static_cast<const CLJCutoffFunction&>(func);
+    
+    return ds;
+}
+
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJIntraFunction &func)
+{
+    VersionID v = readHeader(ds, r_intra);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        func.sclfacs.clear();
+        func.nbpairs = CLJNBPairs();
+        
+        CLJNBPairs pairs;
+        
+        sds >> pairs
+            >> static_cast<CLJCutoffFunction&>(func);
+        
+        func.setNBPairs(pairs);
+    }
+    else
+        throw version_error(v, "1", r_intra, CODELOC);
+    
+    return ds;
+}
+
+
+CLJIntraFunction::CLJIntraFunction() : CLJCutoffFunction()
+{}
+
+CLJIntraFunction::CLJIntraFunction(Length cutoff) : CLJCutoffFunction(cutoff)
+{}
+
+CLJIntraFunction::CLJIntraFunction(Length coul_cutoff, Length lj_cutoff)
+                 : CLJCutoffFunction(coul_cutoff, lj_cutoff)
+{}
+
+CLJIntraFunction::CLJIntraFunction(const Space &space, Length cutoff)
+                 : CLJCutoffFunction(space, cutoff)
+{}
+
+CLJIntraFunction::CLJIntraFunction(const Space &space,
+                                   Length coul_cutoff, Length lj_cutoff)
+                 : CLJCutoffFunction(space, coul_cutoff, lj_cutoff)
+{}
+
+CLJIntraFunction::CLJIntraFunction(Length cutoff, COMBINING_RULES combining_rules)
+                 : CLJCutoffFunction(cutoff, combining_rules)
+{}
+
+CLJIntraFunction::CLJIntraFunction(Length coul_cutoff, Length lj_cutoff,
+                                   COMBINING_RULES combining_rules)
+                 : CLJCutoffFunction(coul_cutoff, lj_cutoff, combining_rules)
+{}
+
+CLJIntraFunction::CLJIntraFunction(const Space &space, COMBINING_RULES combining_rules)
+                 : CLJCutoffFunction(space, combining_rules)
+{}
+
+CLJIntraFunction::CLJIntraFunction(const Space &space, Length cutoff,
+                                   COMBINING_RULES combining_rules)
+                 : CLJCutoffFunction(space, cutoff, combining_rules)
+{}
+
+CLJIntraFunction::CLJIntraFunction(const Space &space, Length coul_cutoff,
+                                   Length lj_cutoff,
+                                   COMBINING_RULES combining_rules)
+                 : CLJCutoffFunction(space, coul_cutoff, lj_cutoff, combining_rules)
+{}
+
+/** Copy constructor */
+CLJIntraFunction::CLJIntraFunction(const CLJIntraFunction &other)
+                 : CLJCutoffFunction(other), nbpairs(other.nbpairs), sclfacs(other.sclfacs)
+{}
+
+/** Destructor */
+CLJIntraFunction::~CLJIntraFunction()
+{}
+
+const char* CLJIntraFunction::typeName()
+{
+    return "SireMM::CLJIntraFunction";
+}
+
+/** Copy assignment operator */
+CLJIntraFunction& CLJIntraFunction::operator=(const CLJIntraFunction &other)
+{
+    if (this != &other)
+    {
+        sclfacs = other.sclfacs;
+        nbpairs = other.nbpairs;
+        CLJCutoffFunction::operator=(other);
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool CLJIntraFunction::operator==(const CLJIntraFunction &other) const
+{
+    return nbpairs == other.nbpairs and CLJCutoffFunction::operator==(other);
+}
+
+/** Return the CLJNBPairs that describe all of the non-bonded scale factors */
+const CLJNBPairs& CLJIntraFunction::nbPairs() const
+{
+    return nbpairs;
+}
+
+/** Set the CLJNBPairs that describe all of the non-bonded scale factors */
+void CLJIntraFunction::setNBPairs(const CLJNBPairs &pairs)
+{
+    if (nbpairs != pairs)
+    {
+        QElapsedTimer t;
+        t.start();
+    
+        sclfacs.clear();
+    
+        //extract all of the non-bonded pairs by AtomIdx that are not equal to 1
+        const int nats = pairs.info().nAtoms();
+
+        if (nats <= 1)
+            return;
+        
+        sclfacs.reserve(nats);
+        
+        for (int i=0; i<nats-1; ++i)
+        {
+            const AtomIdx atm0(i);
+        
+            for (int j=i+1; j<nats; ++j)
+            {
+                const AtomIdx atm1(j);
+                
+                CLJScaleFactor scl = pairs(atm0, atm1);
+                
+                if (scl.coulomb() != 1 or scl.lj() != 1)
+                {
+                    sclfacs.insert( getIndex(atm0,atm1), QPair<float,float>(scl.coulomb(),
+                                                                            scl.lj()) );
+                }
+            }
+        }
+
+        sclfacs.squeeze();
+        
+        qint64 ns = t.elapsed();
+        
+        qDebug() << "Getting NB pairs for" << nats << "atoms took"
+                 << (0.000001*ns) << "ms";
+    }
+}
+
+/** Set the non-bonded pairs by copying the specified property from the passed molecule */
+void CLJIntraFunction::setNBPairs(const MoleculeView &molecule, const PropertyMap &map)
+{
+    setNBPairs( molecule.data().property( map["intrascale"] ).asA<CLJNBPairs>() );
 }
 
 /////////

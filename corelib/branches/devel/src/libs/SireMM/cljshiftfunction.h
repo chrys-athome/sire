@@ -124,7 +124,7 @@ protected:
     @author Christopher Woods
 */
 class SIREMM_EXPORT CLJIntraShiftFunction
-        : public SireBase::ConcreteProperty<CLJIntraShiftFunction,CLJCutoffFunction>
+        : public SireBase::ConcreteProperty<CLJIntraShiftFunction,CLJIntraFunction>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const CLJIntraShiftFunction&);
@@ -184,10 +184,6 @@ protected:
     
     void calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                           const Vector &box_dimensions, double &cnrg, double &ljnrg) const;
-
-private:
-    /** The intramolecular interatomic scale factors */
-    QHash<qint64,float> intrascl;
 };
 
 }
