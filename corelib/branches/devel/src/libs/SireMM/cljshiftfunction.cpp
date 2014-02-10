@@ -959,7 +959,7 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
     
     const bool not_bonded = isNotBonded(atoms0.ID(), atoms1.ID());
     
-    if (not_bonded)
+    if ( Q_LIKELY(not_bonded) )
     {
         for (int i=0; i<n0; ++i)
         {

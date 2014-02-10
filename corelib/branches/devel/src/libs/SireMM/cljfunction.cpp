@@ -1050,7 +1050,23 @@ bool CLJIntraFunction::isNotBonded(const QVector<MultiInt> &ids0,
     {
         const MultiInt &id0 = aid0[i];
     
-        for (int j=0; j<nats1; ++j)
+        for (int ii=0; ii<MultiInt::count(); ++ii)
+        {
+            const bool *row = bond_matrix.constData()[ id0[ii] ].constData();
+            
+            for (int j=0; j<nats1; ++j)
+            {
+                const MultiInt &id1 = aid1[j];
+                
+                for (int jj=0; jj<MultiInt::count(); ++jj)
+                {
+                    if (row[id1[jj]])
+                        return false;
+                }
+            }
+        }
+    
+        /*for (int j=0; j<nats1; ++j)
         {
             const MultiInt &id1 = aid1[j];
             
@@ -1066,7 +1082,7 @@ bool CLJIntraFunction::isNotBonded(const QVector<MultiInt> &ids0,
                     }
                 }
             }
-        }
+        }*/
     }
     
     return true;
