@@ -65,6 +65,10 @@ use_fixed_points = Parameter("fixed points", False,
                              """Whether or not to use fixed identity points based on looking at
                                 the overlap with the atoms""")
 
+use_overlap_waters = Parameter("overlap waters", False,
+                               """Whether or not to generate the identity points based on looking
+                                  at which water molecules overlap with the ligand""")
+
 alpha_scale = Parameter("alpha_scale", 1.0,
                         """Amount by which to scale the alpha parameter. The lower the value,
                            the less softening with lambda, while the higher the value, the
@@ -164,6 +168,46 @@ restart_frequency = Parameter("restart frequency", 10,
                               """The frequency (number of iterations between) saving the restart file for the simulation.""")
 
 ####################################################
+
+def getOverlapWaters(ligand, waters):
+
+    overlaps = []
+
+    space = Cartesian()
+
+    # get the coordinates of all heavy atoms
+    coords = []
+
+    for atom in ligand.atoms():
+        try:
+            if atom.property("element").nProtons() >= 6:
+                coords.append( atom.property("coordinates") )
+        except:
+            if atom.property("mass").value() >= 12:
+                coords.append( atom.property("coordinates") )
+
+    coords = CoordGroup(coords)
+
+    for molnum in waters.molNums():
+        water = waters[molnum].molecule()
+
+        oxygen = None
+
+        for atom in water.atoms():
+            if atom.property("element").nProtons() == 8:
+                oxygen = atom
+                break
+
+        if oxygen is None:
+            oxygen = water.atoms()[0]
+
+        mindist = space.minimumDistance( CoordGroup([oxygen.property("coordinates")]), coords)
+
+        if mindist < 2:
+            overlaps.append(oxygen)
+
+    return overlaps
+
 
 def getIdentityPoints(ligand):
     
