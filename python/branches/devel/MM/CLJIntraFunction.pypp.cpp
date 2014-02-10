@@ -35,36 +35,36 @@ void register_CLJIntraFunction_class(){
         typedef bp::class_< SireMM::CLJIntraFunction, bp::bases< SireMM::CLJCutoffFunction, SireMM::CLJFunction, SireBase::Property >, boost::noncopyable > CLJIntraFunction_exposer_t;
         CLJIntraFunction_exposer_t CLJIntraFunction_exposer = CLJIntraFunction_exposer_t( "CLJIntraFunction", bp::no_init );
         bp::scope CLJIntraFunction_scope( CLJIntraFunction_exposer );
-        { //::SireMM::CLJIntraFunction::nbPairs
+        { //::SireMM::CLJIntraFunction::connectivity
         
-            typedef ::SireMM::CLJNBPairs const & ( ::SireMM::CLJIntraFunction::*nbPairs_function_type )(  ) const;
-            nbPairs_function_type nbPairs_function_value( &::SireMM::CLJIntraFunction::nbPairs );
+            typedef ::SireMol::Connectivity const & ( ::SireMM::CLJIntraFunction::*connectivity_function_type )(  ) const;
+            connectivity_function_type connectivity_function_value( &::SireMM::CLJIntraFunction::connectivity );
             
             CLJIntraFunction_exposer.def( 
-                "nbPairs"
-                , nbPairs_function_value
+                "connectivity"
+                , connectivity_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        { //::SireMM::CLJIntraFunction::setNBPairs
+        { //::SireMM::CLJIntraFunction::setConnectivity
         
-            typedef void ( ::SireMM::CLJIntraFunction::*setNBPairs_function_type )( ::SireMM::CLJNBPairs const & ) ;
-            setNBPairs_function_type setNBPairs_function_value( &::SireMM::CLJIntraFunction::setNBPairs );
+            typedef void ( ::SireMM::CLJIntraFunction::*setConnectivity_function_type )( ::SireMol::Connectivity const & ) ;
+            setConnectivity_function_type setConnectivity_function_value( &::SireMM::CLJIntraFunction::setConnectivity );
             
             CLJIntraFunction_exposer.def( 
-                "setNBPairs"
-                , setNBPairs_function_value
-                , ( bp::arg("cljnb") ) );
+                "setConnectivity"
+                , setConnectivity_function_value
+                , ( bp::arg("connectivity") ) );
         
         }
-        { //::SireMM::CLJIntraFunction::setNBPairs
+        { //::SireMM::CLJIntraFunction::setConnectivity
         
-            typedef void ( ::SireMM::CLJIntraFunction::*setNBPairs_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) ;
-            setNBPairs_function_type setNBPairs_function_value( &::SireMM::CLJIntraFunction::setNBPairs );
+            typedef void ( ::SireMM::CLJIntraFunction::*setConnectivity_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) ;
+            setConnectivity_function_type setConnectivity_function_value( &::SireMM::CLJIntraFunction::setConnectivity );
             
             CLJIntraFunction_exposer.def( 
-                "setNBPairs"
-                , setNBPairs_function_value
+                "setConnectivity"
+                , setConnectivity_function_value
                 , ( bp::arg("molecule"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
