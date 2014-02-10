@@ -8,16 +8,19 @@ from Sire.Qt import *
 from Sire.Units import *
 from Sire.IO import *
 
-amber = Amber();
-amber.set14Factors(0, 0)
+realcompare = False
 
-(molecules, space) = amber.readCrdTop("../io/proteinbox.crd", "../io/proteinbox.top")
+if realcompare:
+    amber = Amber();
+    amber.set14Factors(0, 0)
 
-protein = molecules[ MolNum(1) ].molecule()
+    (molecules, space) = amber.readCrdTop("../io/proteinbox.crd", "../io/proteinbox.top")
 
-print("Protein has %d atoms" % protein.nAtoms())
+    protein = molecules[ MolNum(1) ].molecule()
 
-#protein = Sire.Stream.load("../io/protein.s3")
+    print("Protein has %d atoms" % protein.nAtoms())
+else:
+    protein = Sire.Stream.load("../io/protein.s3")
 
 coul_cutoff = 15 * angstrom
 lj_cutoff = 15 * angstrom
