@@ -221,6 +221,28 @@ void register_ConnectivityBase_class(){
                 , ( bp::arg("atom0"), bp::arg("atom1") ) );
         
         }
+        { //::SireMol::ConnectivityBase::getBondMatrix
+        
+            typedef ::QVector< QVector< bool > > ( ::SireMol::ConnectivityBase::*getBondMatrix_function_type )( int ) const;
+            getBondMatrix_function_type getBondMatrix_function_value( &::SireMol::ConnectivityBase::getBondMatrix );
+            
+            ConnectivityBase_exposer.def( 
+                "getBondMatrix"
+                , getBondMatrix_function_value
+                , ( bp::arg("order") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::getBondMatrix
+        
+            typedef ::QVector< QVector< bool > > ( ::SireMol::ConnectivityBase::*getBondMatrix_function_type )( int,int ) const;
+            getBondMatrix_function_type getBondMatrix_function_value( &::SireMol::ConnectivityBase::getBondMatrix );
+            
+            ConnectivityBase_exposer.def( 
+                "getBondMatrix"
+                , getBondMatrix_function_value
+                , ( bp::arg("start"), bp::arg("end") ) );
+        
+        }
         { //::SireMol::ConnectivityBase::getBonds
         
             typedef ::QList< SireMol::BondID > ( ::SireMol::ConnectivityBase::*getBonds_function_type )(  ) const;
