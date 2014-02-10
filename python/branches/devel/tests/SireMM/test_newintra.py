@@ -6,7 +6,7 @@ from Sire.Vol import *
 from Sire.Qt import *
 from Sire.Units import *
 
-protein = Sire.Stream.load("../io/protein.s3")
+protein = Sire.Stream.load("../io/ligand.s3")
 
 coul_cutoff = 15 * angstrom
 lj_cutoff = 15 * angstrom
@@ -54,7 +54,7 @@ def test_compare(verbose = False):
         print("\nOLD: %s  %s  %s (took %s|%s ms)" % (cnrg+ljnrg,cnrg,ljnrg,old_ms1,old_ms2))
         print("NEW: %s  %s  %s (took %s|%s ms)" % (new_cnrg+new_ljnrg,new_cnrg,new_ljnrg,new_ms1,new_ms2))
 
-    cljboxes = CLJBoxes(cljatoms)
+    cljboxes = CLJBoxes(cljatoms, 7.5*angstrom)
     cljcalc = CLJCalculator()
 
     t.start()
