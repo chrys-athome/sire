@@ -53,6 +53,50 @@ void register_ConnectivityBase_class(){
         typedef bp::class_< SireMol::ConnectivityBase, bp::bases< SireMol::MolViewProperty, SireBase::Property >, boost::noncopyable > ConnectivityBase_exposer_t;
         ConnectivityBase_exposer_t ConnectivityBase_exposer = ConnectivityBase_exposer_t( "ConnectivityBase", bp::no_init );
         bp::scope ConnectivityBase_scope( ConnectivityBase_exposer );
+        { //::SireMol::ConnectivityBase::areAngled
+        
+            typedef bool ( ::SireMol::ConnectivityBase::*areAngled_function_type )( ::SireMol::AtomIdx,::SireMol::AtomIdx ) const;
+            areAngled_function_type areAngled_function_value( &::SireMol::ConnectivityBase::areAngled );
+            
+            ConnectivityBase_exposer.def( 
+                "areAngled"
+                , areAngled_function_value
+                , ( bp::arg("atom0"), bp::arg("atom2") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::areAngled
+        
+            typedef bool ( ::SireMol::ConnectivityBase::*areAngled_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const & ) const;
+            areAngled_function_type areAngled_function_value( &::SireMol::ConnectivityBase::areAngled );
+            
+            ConnectivityBase_exposer.def( 
+                "areAngled"
+                , areAngled_function_value
+                , ( bp::arg("atom0"), bp::arg("atom2") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::areBonded
+        
+            typedef bool ( ::SireMol::ConnectivityBase::*areBonded_function_type )( ::SireMol::AtomIdx,::SireMol::AtomIdx ) const;
+            areBonded_function_type areBonded_function_value( &::SireMol::ConnectivityBase::areBonded );
+            
+            ConnectivityBase_exposer.def( 
+                "areBonded"
+                , areBonded_function_value
+                , ( bp::arg("atom0"), bp::arg("atom1") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::areBonded
+        
+            typedef bool ( ::SireMol::ConnectivityBase::*areBonded_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const & ) const;
+            areBonded_function_type areBonded_function_value( &::SireMol::ConnectivityBase::areBonded );
+            
+            ConnectivityBase_exposer.def( 
+                "areBonded"
+                , areBonded_function_value
+                , ( bp::arg("atom0"), bp::arg("atom1") ) );
+        
+        }
         { //::SireMol::ConnectivityBase::areConnected
         
             typedef bool ( ::SireMol::ConnectivityBase::*areConnected_function_type )( ::SireMol::AtomIdx,::SireMol::AtomIdx ) const;
@@ -95,6 +139,28 @@ void register_ConnectivityBase_class(){
                 "areConnected"
                 , areConnected_function_value
                 , ( bp::arg("res0"), bp::arg("res1") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::areDihedraled
+        
+            typedef bool ( ::SireMol::ConnectivityBase::*areDihedraled_function_type )( ::SireMol::AtomIdx,::SireMol::AtomIdx ) const;
+            areDihedraled_function_type areDihedraled_function_value( &::SireMol::ConnectivityBase::areDihedraled );
+            
+            ConnectivityBase_exposer.def( 
+                "areDihedraled"
+                , areDihedraled_function_value
+                , ( bp::arg("atom0"), bp::arg("atom3") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::areDihedraled
+        
+            typedef bool ( ::SireMol::ConnectivityBase::*areDihedraled_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const & ) const;
+            areDihedraled_function_type areDihedraled_function_value( &::SireMol::ConnectivityBase::areDihedraled );
+            
+            ConnectivityBase_exposer.def( 
+                "areDihedraled"
+                , areDihedraled_function_value
+                , ( bp::arg("atom0"), bp::arg("atom3") ) );
         
         }
         { //::SireMol::ConnectivityBase::connectionsTo
