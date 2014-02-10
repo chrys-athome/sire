@@ -499,9 +499,12 @@ bool ConnectivityBase::areAngled(AtomIdx atom0, AtomIdx atom2) const
     atom0 = d.read().atomIdx(atom0);
     atom2 = d.read().atomIdx(atom2);
 
+    if (atom0 == atom2)
+        return false;
+
     foreach (const AtomIdx &atom1, connected_atoms[atom0.value()])
     {
-        if (connected_atoms[atom2].contains(atom1))
+        if (connected_atoms[atom2.value()].contains(atom1))
             return true;
     }
     
@@ -513,6 +516,9 @@ bool ConnectivityBase::areDihedraled(AtomIdx atom0, AtomIdx atom3) const
 {
     atom0 = d.read().atomIdx(atom0);
     atom3 = d.read().atomIdx(atom3);
+    
+    if (atom0 == atom3)
+        return false;
     
     foreach (const AtomIdx &atom1, connected_atoms[atom0.value()])
     {
@@ -541,13 +547,13 @@ bool ConnectivityBase::areBonded(const AtomID &atom0, const AtomID &atom1) const
 /** Return whether or not the two atoms are angled together */
 bool ConnectivityBase::areAngled(const AtomID &atom0, const AtomID &atom2) const
 {
-    return areBonded(d.read().atomIdx(atom0), d.read().atomIdx(atom2));
+    return areAngled(d.read().atomIdx(atom0), d.read().atomIdx(atom2));
 }
 
 /** Return whether or not the two atoms are bonded together */
 bool ConnectivityBase::areDihedraled(const AtomID &atom0, const AtomID &atom3) const
 {
-    return areBonded(d.read().atomIdx(atom0), d.read().atomIdx(atom3));
+    return areDihedraled(d.read().atomIdx(atom0), d.read().atomIdx(atom3));
 }
 
 /** Return whether or not the residues at indicies 'res0' and 'res1' 
@@ -2289,25 +2295,64 @@ QVector< QVector<bool> > ConnectivityBase::getBondMatrix(int start, int end) con
         
         if (order == 3)
         {
-            foreach (AngleID angle, this->getAngles())
+            for (int atm0=0; atm0<nats; ++atm0)
             {
-                AtomIdx atm0 = d.read().atomIdx( angle.atom0() );
-                AtomIdx atm2 = d.read().atomIdx( angle.atom2() );
-            
-                ret[atm0.value()][atm2.value()] = true;
-                ret[atm2.value()][atm0.value()] = true;
+                QVector<bool> &row = ret.data()[atm0];
+                
+                for (QSet<AtomIdx>::const_iterator it = connected_atoms[atm0].constBegin();
+                     it != connected_atoms[atm0].constEnd();
+                     ++it)
+                {
+                    const int atm1 = it->value();
+                
+                    for (QSet<AtomIdx>::const_iterator it2 = connected_atoms[atm1].constBegin();
+                         it2 != connected_atoms[atm1].constEnd();
+                         ++it2)
+                    {
+                        const int atm2 = it2->value();
+                        
+                        if (atm2 != atm0)
+                            row[atm2] = true;
+                    }
+                }
             }
         }
         
         if (order == 4)
         {
-            foreach (DihedralID dihedral, this->getDihedrals())
+            for (int atm0=0; atm0<nats; ++atm0)
             {
-                AtomIdx atm0 = d.read().atomIdx( dihedral.atom0() );
-                AtomIdx atm3 = d.read().atomIdx( dihedral.atom3() );
+                QVector<bool> &row = ret.data()[atm0];
                 
-                ret[atm0.value()][atm3.value()] = true;
-                ret[atm3.value()][atm0.value()] = true;
+                for (QSet<AtomIdx>::const_iterator it = connected_atoms[atm0].constBegin();
+                     it != connected_atoms[atm0].constEnd();
+                     ++it)
+                {
+                    const int atm1 = it->value();
+                
+                    for (QSet<AtomIdx>::const_iterator it2 = connected_atoms[atm1].constBegin();
+                         it2 != connected_atoms[atm1].constEnd();
+                         ++it2)
+                    {
+                        const int atm2 = it2->value();
+                        
+                        if (atm2 != atm0)
+                        {
+                            for (QSet<AtomIdx>::const_iterator
+                                                it3 = connected_atoms[atm2].constBegin();
+                                 it3 != connected_atoms[atm2].constEnd();
+                                 ++it3)
+                            {
+                                const int atm3 = it3->value();
+                                
+                                if (atm3 != atm0 and atm3 != atm1 and atm3 != atm2)
+                                {
+                                    row[atm3] = true;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
         
