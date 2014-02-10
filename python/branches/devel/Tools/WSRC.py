@@ -61,6 +61,10 @@ identity_atoms = Parameter("identity atoms", None,
                               identity points. If this is not set, then the identity atoms 
                               will be generated automatically.""")
 
+use_fixed_points = Parameter("fixed points", False,
+                             """Whether or not to use fixed identity points based on looking at
+                                the overlap with the atoms""")
+
 alpha_scale = Parameter("alpha_scale", 1.0,
                         """Amount by which to scale the alpha parameter. The lower the value,
                            the less softening with lambda, while the higher the value, the
@@ -654,6 +658,15 @@ def mergeSystems(protein_system, water_system, ligand_mol):
 
     print("Using identity points:")
     print(identity_points)
+
+    if use_fixed_points.val:
+        print("\nUsing fixed identity points...")
+        fixed_points = []
+        for point in identity_points:
+            fixed_points.append( point.property("coordinates") )
+        
+        identity_points = fixed_points
+        print(identity_points) 
 
     print("\nIdentifying the swap-water cluster...")
     swap_water_group = MoleculeGroup("swap water")
