@@ -30,9 +30,10 @@
 #define SIREMM_CLJFUNCTION_H
 
 #include "cljatoms.h"
-#include "cljnbpairs.h"
 
 #include "SireMol/atomidx.h"
+#include "SireMol/moleculeview.h"
+#include "SireMol/connectivity.h"
 
 #include "SireVol/space.h"
 
@@ -66,6 +67,8 @@ namespace SireMM
 {
 
 using SireUnits::Dimension::Length;
+
+using SireMol::Connectivity;
 
 using SireVol::Space;
 
@@ -314,38 +317,31 @@ public:
     
     static const char* typeName();
 
-    void setNBPairs(const CLJNBPairs &cljnb);
-    void setNBPairs(const MoleculeView &molecule, const PropertyMap &map = PropertyMap());
+    void setConnectivity(const Connectivity &connectivity);
+    void setConnectivity(const MoleculeView &molecule, const PropertyMap &map = PropertyMap());
 
-    const CLJNBPairs& nbPairs() const;
+    const Connectivity& connectivity() const;
     
 protected:
     CLJIntraFunction& operator=(const CLJIntraFunction &other);
     
     bool operator==(const CLJIntraFunction &other) const;
 
-    QPair<MultiFloat,MultiFloat> getScaleFactors(const MultiInt &id0,
-                                                 const MultiInt &id1,
-                                                 bool not_bonded) const;
-
-    bool areNonBonded(const QVector<MultiInt> &ids0, const QVector<MultiInt> &ids1) const;
-
     bool isNotBonded(qint32 id0, const MultiInt &id1) const;
-    bool isBonded(const MultiInt &id0, const MultiInt &id1) const;
+    bool isNotBonded(const MultiInt &id0, const MultiInt &id1) const;
+    bool isNotBonded(const QVector<MultiInt> &ids0, const QVector<MultiInt> &ids1) const;
 
 private:
     static qint64 getIndex(const SireMol::AtomIdx &atom0, const SireMol::AtomIdx &atom1);
     static qint64 getIndex(qint32 id0, qint32 id1);
     static qint64 pack(qint32 a, qint32 b);
 
-    /** The CLJNBPairs from which the below scale factors are extracted */
-    CLJNBPairs nbpairs;
+    /** The connectivity used to obtain the bonded matrix */
+    Connectivity cty;
 
-    /** The set of 1-4 scale factors for the interatomic pairs
-        in the molecule that can be evaluated by this function */
-    QHash< qint64, QPair<float,float> > sclfacs;
-    
-    QVector< QVector<bool> > check_facs;
+    /** The matrix of which atoms are bonded, angled or dihedraled together
+        (and so should be excluded from the non-bonded calculation) */
+    QVector< QVector<bool> > bond_matrix;
 };
 
 /** This is the base class of all soft-core CLJ functions that have a cutoff
@@ -422,67 +418,35 @@ inline qint64 CLJIntraFunction::getIndex(const SireMol::AtomIdx &atom0,
                                             pack(atom1.value() + 1,atom0.value() + 1);
 }
 
-inline bool CLJIntraFunction::isBonded(const MultiInt &id0, const MultiInt &id1) const
+/** Return whether or not all atom pairs with passed IDs are not bonded */
+inline bool CLJIntraFunction::isNotBonded(const MultiInt &id0, const MultiInt &id1) const
 {
     for (int i=0; i<MultiInt::count(); ++i)
     {
-        const bool *row = check_facs.constData()[id0[i]].constData();
+        const bool *row = bond_matrix.constData()[id0[i]-1].constData();
         
         for (int j=0; j<MultiInt::count(); ++j)
         {
-            if (row[id1[j]])
-                return true;
+            if (row[id1[j]-1])
+                return false;
         }
     }
     
-    return false;
+    return true;
 }
 
+/** Return whether or not all atom pairs with passed IDs are not bonded */
 inline bool CLJIntraFunction::isNotBonded(qint32 id0, const MultiInt &id1) const
 {
-    const bool *row = check_facs.constData()[id0].constData();
+    const bool *row = bond_matrix.constData()[id0-1].constData();
 
     for (int i=0; i<MultiInt::count(); ++i)
     {
-        if (row[id1[i]])
+        if (row[id1[i]-1])
             return false;
     }
 
     return true;
-}
-
-/** Return the coulomb and LJ scale factors for the ID pairs in 'id0' and 'id1'.
-    If 'not_bonded' is 'true', then this returns { MultiFloat(1), MultiFloat(1) } */
-inline QPair<MultiFloat,MultiFloat> CLJIntraFunction::getScaleFactors(
-                                                const SireMaths::MultiInt &id0,
-                                                const SireMaths::MultiInt &id1,
-                                                bool not_bonded) const
-{
-    if (not_bonded)
-    {
-        static const QPair<MultiFloat,MultiFloat> one =
-                        QPair<MultiFloat,MultiFloat>( MultiFloat(1), MultiFloat(1) );
-    
-        return one;
-    }
-    else
-    {
-        MultiFloat coul(1), lj(1);
-        
-        for (int i=0; i<MultiFloat::count(); ++i)
-        {
-            const qint64 idx = getIndex(id0[i], id1[i]);
-            QHash< qint64,QPair<float,float> >::const_iterator it = sclfacs.constFind(idx);
-            
-            if (it != sclfacs.constEnd())
-            {
-                coul.set(i, it.value().first);
-                lj.set(i, it.value().second);
-            }
-        }
-        
-        return QPair<MultiFloat,MultiFloat>(coul,lj);
-    }
 }
 
 #endif

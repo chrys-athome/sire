@@ -881,7 +881,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJIntraFunction &f
     
     SharedDataStream sds(ds);
     
-    sds << func.nbpairs
+    sds << func.cty
         << static_cast<const CLJCutoffFunction&>(func);
     
     return ds;
@@ -894,15 +894,15 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJIntraFunction &func)
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        func.sclfacs.clear();
-        func.nbpairs = CLJNBPairs();
+        func.bond_matrix.clear();
+        func.cty = Connectivity();
         
-        CLJNBPairs pairs;
+        Connectivity connectivity;
         
-        sds >> pairs
+        sds >> connectivity
             >> static_cast<CLJCutoffFunction&>(func);
         
-        func.setNBPairs(pairs);
+        func.setConnectivity(connectivity);
     }
     else
         throw version_error(v, "1", r_intra, CODELOC);
@@ -956,7 +956,7 @@ CLJIntraFunction::CLJIntraFunction(const Space &space, Length coul_cutoff,
 
 /** Copy constructor */
 CLJIntraFunction::CLJIntraFunction(const CLJIntraFunction &other)
-                 : CLJCutoffFunction(other), nbpairs(other.nbpairs), sclfacs(other.sclfacs)
+                 : CLJCutoffFunction(other), cty(other.cty), bond_matrix(other.bond_matrix)
 {}
 
 /** Destructor */
@@ -973,8 +973,8 @@ CLJIntraFunction& CLJIntraFunction::operator=(const CLJIntraFunction &other)
 {
     if (this != &other)
     {
-        sclfacs = other.sclfacs;
-        nbpairs = other.nbpairs;
+        cty = other.cty;
+        bond_matrix = other.bond_matrix;
         CLJCutoffFunction::operator=(other);
     }
     
@@ -984,203 +984,34 @@ CLJIntraFunction& CLJIntraFunction::operator=(const CLJIntraFunction &other)
 /** Comparison operator */
 bool CLJIntraFunction::operator==(const CLJIntraFunction &other) const
 {
-    return nbpairs == other.nbpairs and CLJCutoffFunction::operator==(other);
+    return cty == other.cty and CLJCutoffFunction::operator==(other);
 }
 
-/** Return the CLJNBPairs that describe all of the non-bonded scale factors */
-const CLJNBPairs& CLJIntraFunction::nbPairs() const
+/** Return the connectivity used to find the non-bonded pairs */
+const Connectivity& CLJIntraFunction::connectivity() const
 {
-    return nbpairs;
+    return cty;
 }
 
-/** Set the CLJNBPairs that describe all of the non-bonded scale factors */
-void CLJIntraFunction::setNBPairs(const CLJNBPairs &pairs)
+/** Set the connectivity used to find the non-bonded pairs */
+void CLJIntraFunction::setConnectivity(const Connectivity &c)
 {
-    if (nbpairs != pairs)
+    if (cty != c)
     {
-        QElapsedTimer t;
-        t.start();
-    
-        sclfacs.clear();
-    
-        //extract all of the non-bonded pairs by AtomIdx that are not equal to 1
-        const MoleculeInfoData &molinfo = pairs.info();
-        const int nats = molinfo.nAtoms();
-
-        if (nats <= 1)
-            return;
-        
-        QVector<bool> null_facs(nats+1, false);
-        check_facs = QVector< QVector<bool> >(nats+1);
-        
-        for (int i=0; i<nats+1; ++i)
-        {
-            check_facs[i] = null_facs;
-        }
-
-        for (int i=0; i<check_facs.count(); ++i)
-        {
-            int count = 0;
-            for (int j=0; j<check_facs.count(); ++j)
-            {
-                if (check_facs[i][j])
-                    count += 1;
-            }
-            
-            if (count != 0)
-                qDebug() << "WARNING" << i << count;
-        }
-        
-        sclfacs.reserve(nats);
-        
-        // The below code is horrible as the AtomPairs data is optimised to hold
-        // the data by CutGroup/Index, rather than AtomIdx, and it is an incredibly
-        // slow data structure to navigate by AtomIdx! I should probably rewrite
-        // CLJNBPairs as it is really painful to read the data from disk, and now
-        // to use the data in a forcefield!
-        
-        for (CGIdx i(0); i<molinfo.nCutGroups(); ++i)
-        {
-            for (CGIdx j(i); j<molinfo.nCutGroups(); ++j)
-            {
-                const CLJNBPairs::CGPairs cgpairs = pairs(i,j);
-                
-                if (cgpairs.isEmpty())
-                {
-                    //all of the atoms pairs between these cutgroups are equal to the
-                    //default value
-                    const CLJScaleFactor default_scl = cgpairs.defaultValue();
-                    
-                    if (default_scl.coulomb() != 1 or default_scl.lj() != 1)
-                    {
-                        if (i != j)
-                        {
-                            for (Index iat(0); iat<molinfo.nAtoms(i); ++iat)
-                            {
-                                const AtomIdx i_idx = molinfo.atomIdx( CGAtomIdx(i,iat) );
-                            
-                                for (Index jat(0); jat<molinfo.nAtoms(j); ++jat)
-                                {
-                                    const AtomIdx j_idx = molinfo.atomIdx( CGAtomIdx(j,jat) );
-                                    sclfacs.insert( getIndex(i_idx,j_idx),
-                                                    QPair<float,float>(default_scl.coulomb(),
-                                                                       default_scl.lj()) );
-                                }
-                            }
-                        }
-                        else
-                        {
-                            for (Index iat(0); iat<molinfo.nAtoms(i); ++iat)
-                            {
-                                const AtomIdx i_idx = molinfo.atomIdx( CGAtomIdx(i,iat) );
-                            
-                                for (Index jat(iat); jat<molinfo.nAtoms(j); ++jat)
-                                {
-                                    const AtomIdx j_idx = molinfo.atomIdx( CGAtomIdx(j,jat) );
-                                    sclfacs.insert( getIndex(i_idx,j_idx),
-                                                    QPair<float,float>(default_scl.coulomb(),
-                                                                       default_scl.lj()) );
-                                }
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    //cgpairs is not empty, so there are some non-bonded scale factors
-                    //between these cutgroups
-                    if (i != j)
-                    {
-                        for (quint32 iat=0; iat<molinfo.nAtoms(i); ++iat)
-                        {
-                            for (quint32 jat=0; jat<molinfo.nAtoms(j); ++jat)
-                            {
-                                const CLJScaleFactor scl = cgpairs(iat,jat);
-                                
-                                if (scl.coulomb() != 1 or scl.lj() != 1)
-                                {
-                                    qint64 id = getIndex(molinfo.atomIdx(CGAtomIdx(i,Index(iat))),
-                                                         molinfo.atomIdx(CGAtomIdx(j,Index(jat))) );
-                                
-                                    sclfacs.insert( id, QPair<float,float>(scl.coulomb(),
-                                                                           scl.lj()) );
-                                    
-                                    AtomIdx atm0 = molinfo.atomIdx(CGAtomIdx(i,Index(iat)));
-                                    AtomIdx atm1 = molinfo.atomIdx(CGAtomIdx(j,Index(jat)));
-                                    
-                                    qDebug() << "bonded" << atm0.value() << atm1.value()
-                                             << scl.coulomb() << scl.lj();
-                                    
-                                    check_facs[atm0.value()+1][atm1.value()+1] = 1;
-                                    check_facs[atm1.value()+1][atm0.value()+1] = 1;
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        const int ncgatoms = molinfo.nAtoms(i);
-                    
-                        for (quint32 iat=0; iat<ncgatoms; ++iat)
-                        {
-                            for (quint32 jat=iat; jat<ncgatoms; ++jat)
-                            {
-                                const CLJScaleFactor scl = cgpairs(iat,jat);
-                                
-                                if (scl.coulomb() != 1 or scl.lj() != 1)
-                                {
-                                    qint64 id = getIndex(molinfo.atomIdx(CGAtomIdx(i,Index(iat))),
-                                                         molinfo.atomIdx(CGAtomIdx(j,Index(jat))) );
-                                
-                                    sclfacs.insert( id, QPair<float,float>(scl.coulomb(),
-                                                                           scl.lj()) );
-
-                                    AtomIdx atm0 = molinfo.atomIdx(CGAtomIdx(i,Index(iat)));
-                                    AtomIdx atm1 = molinfo.atomIdx(CGAtomIdx(j,Index(jat)));
-                                    
-                                    qDebug() << "bonded" << atm0.value() << atm1.value()
-                                             << scl.coulomb() << scl.lj();
-
-                                    check_facs[atm0.value()+1][atm1.value()+1] = 1;
-                                    check_facs[atm1.value()+1][atm0.value()+1] = 1;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        sclfacs.squeeze();
-        
-        for (int i=0; i<check_facs.count(); ++i)
-        {
-            int count = 0;
-            for (int j=0; j<check_facs.count(); ++j)
-            {
-                if (check_facs[i][j])
-                    count += 1;
-            }
-            
-            qDebug() << i << count;
-        }
-        
-        qint64 ns = t.nsecsElapsed();
-        
-        qDebug() << "Getting NB pairs for" << nats << "atoms took"
-                 << (0.000001*ns) << "ms";
+        cty = c;
+        bond_matrix = cty.getBondMatrix(1,4);
     }
 }
 
-/** Set the non-bonded pairs by copying the specified property from the passed molecule */
-void CLJIntraFunction::setNBPairs(const MoleculeView &molecule, const PropertyMap &map)
+/** Set the connectivity by copying the specified property from the passed molecule */
+void CLJIntraFunction::setConnectivity(const MoleculeView &molecule, const PropertyMap &map)
 {
-    setNBPairs( molecule.data().property( map["intrascale"] ).asA<CLJNBPairs>() );
+    setConnectivity( molecule.data().property( map["connectivity"] ).asA<Connectivity>() );
 }
 
 /** Return whether or not there are no bonded pairs between the atoms in 'ids0' and 'ids1' */
-bool CLJIntraFunction::areNonBonded(const QVector<MultiInt> &ids0,
-                                    const QVector<MultiInt> &ids1) const
+bool CLJIntraFunction::isNotBonded(const QVector<MultiInt> &ids0,
+                                   const QVector<MultiInt> &ids1) const
 {
     QElapsedTimer t;
     t.start();
@@ -1201,21 +1032,15 @@ bool CLJIntraFunction::areNonBonded(const QVector<MultiInt> &ids0,
             
             for (int ii=0; ii<MultiInt::count(); ++ii)
             {
+                const QVector<bool> &row = bond_matrix.constData()[ id0[ii] - 1 ];
+            
                 for (int jj=0; jj<MultiInt::count(); ++jj)
                 {
-                    const qint64 idx = getIndex(id0[ii], id1[jj]);
-                    
-                    QHash< qint64,QPair<float,float> >::const_iterator it = sclfacs.constFind(idx);
-                    
-                    if (it != sclfacs.constEnd())
+                    if (row.constData()[id1[jj] - 1])
                     {
-                        if (it.value().first != 1 or it.value().second != 1)
-                        {
-                            qint64 ns = t.nsecsElapsed();
-                            qDebug() << "Took" << (0.000001*ns) << "ms";
-                        
-                            return false;
-                        }
+                        qint64 ns = t.nsecsElapsed();
+                        qDebug() << "Took" << (0.000001*ns) << "ms";
+                        return false;
                     }
                 }
             }
