@@ -959,7 +959,7 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
     
     bool not_bonded = true;
     
-    if (min_distance < 5.0)
+    if (min_distance < 7.5)
     {
         not_bonded = isNotBonded(atoms0.ID(), atoms1.ID());
     }
