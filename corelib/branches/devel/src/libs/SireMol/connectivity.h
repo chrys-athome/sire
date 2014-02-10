@@ -220,6 +220,9 @@ public:
     QList<DihedralID> getDihedrals(const AtomID &atom0, const AtomID &atom1) const;
     QList<DihedralID> getDihedrals(const AtomID &atom0, const AtomID &atom1, const AtomID &atom2) const;
 
+    QVector< QVector<bool> > getBondMatrix(int order) const;
+    QVector< QVector<bool> > getBondMatrix(int start, int end) const;
+
 protected:
     ConnectivityBase();
     ConnectivityBase(const MoleculeData &moldata);

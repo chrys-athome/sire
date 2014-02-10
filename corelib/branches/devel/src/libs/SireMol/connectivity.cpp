@@ -27,6 +27,8 @@
 \*********************************************/
 
 #include <QDataStream>
+#include <QElapsedTimer>
+
 #include <boost/assert.hpp>
 
 #include "atomselection.h"
@@ -2147,6 +2149,124 @@ QList<DihedralID> ConnectivityBase::getDihedrals(const AtomID &atom0) const
     }
   return dihedrals;
 }
+
+/** Return a matrix (organised by AtomIdx) that says which atoms are bonded between
+    order 'start' and order 'end' (e.g. if order is two, it returns true for each atom pair that
+    are bonded together, if order is three, then true for each atom pair that are
+    bonded or angled together, if order is four, then true for each atom pair
+    that are bonded, angled or dihedraled) */
+QVector< QVector<bool> > ConnectivityBase::getBondMatrix(int start, int end) const
+{
+    QElapsedTimer t;
+    t.start();
+    
+    if (start < 0)
+        start = 0;
+    
+    if (end < 0)
+        end = 0;
+    
+    if (start > end)
+        qSwap(start, end);
+    
+    QVector< QVector<bool> > ret;
+    
+    const int nats = d.read().nAtoms();
+    
+    if (nats == 0)
+        return ret;
+    
+    else
+    {
+        ret = QVector< QVector<bool> >(nats);
+        ret.squeeze();
+     
+        QVector<bool> row;
+        
+        if (start == 1)
+            row = QVector<bool>(nats, true);
+        else
+            row = QVector<bool>(nats, false);
+        
+        row.squeeze();
+        
+        for (int i=0; i<nats; ++i)
+        {
+            ret.data()[i] = row;
+        }
+    }
+    
+    if (start <= 1)
+        return ret;
+    
+    for (int order = start; order <= end; ++order)
+    {
+        if (order == 2)
+        {
+            for (int i=0; i<nats; ++i)
+            {
+                QVector<bool> &row = ret.data()[i];
+            
+                for (QSet<AtomIdx>::const_iterator it = connected_atoms[i].constBegin();
+                     it != connected_atoms[i].constEnd();
+                     ++it)
+                {
+                    row[it->value()] = true;
+                }
+            }
+        }
+        
+        if (order == 3)
+        {
+            foreach (AngleID angle, this->getAngles())
+            {
+                AtomIdx atm0 = d.read().atomIdx( angle.atom0() );
+                AtomIdx atm2 = d.read().atomIdx( angle.atom2() );
+            
+                ret[atm0.value()][atm2.value()] = true;
+                ret[atm2.value()][atm0.value()] = true;
+            }
+        }
+        
+        if (order == 4)
+        {
+            foreach (DihedralID dihedral, this->getDihedrals())
+            {
+                AtomIdx atm0 = d.read().atomIdx( dihedral.atom0() );
+                AtomIdx atm3 = d.read().atomIdx( dihedral.atom3() );
+                
+                ret[atm0.value()][atm3.value()] = true;
+                ret[atm3.value()][atm0.value()] = true;
+            }
+        }
+        
+        if (order > 4)
+        {
+            qDebug() << "Cannot build a bond matrix for values greater than 4";
+            break;
+        }
+    }
+    
+    quint64 ns = t.nsecsElapsed();
+    
+    qDebug() << "getBondMatrix(" << start << "," << end << ") took" << (0.000001*ns) << "ms";
+    
+    return ret;
+}
+
+/** Return a matrix (organised by AtomIdx) that says which atoms are bonded up to 
+    order 'order' (e.g. if order is two, it returns true for each atom pair that
+    are bonded together, if order is three, then true for each atom pair that are
+    bonded or angled together, if order is four, then true for each atom pair
+    that are bonded, angled or dihedraled) */
+QVector< QVector<bool> > ConnectivityBase::getBondMatrix(int order) const
+{
+    if (order < 0)
+        return getBondMatrix(0,0);
+    else
+        return getBondMatrix(1,order);
+}
+
 /////////
 ///////// Implementation of Connectivity
 /////////

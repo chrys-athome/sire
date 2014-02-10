@@ -1010,6 +1010,27 @@ void CLJIntraFunction::setNBPairs(const CLJNBPairs &pairs)
         if (nats <= 1)
             return;
         
+        QVector<bool> null_facs(nats+1, false);
+        check_facs = QVector< QVector<bool> >(nats+1);
+        
+        for (int i=0; i<nats+1; ++i)
+        {
+            check_facs[i] = null_facs;
+        }
+
+        for (int i=0; i<check_facs.count(); ++i)
+        {
+            int count = 0;
+            for (int j=0; j<check_facs.count(); ++j)
+            {
+                if (check_facs[i][j])
+                    count += 1;
+            }
+            
+            if (count != 0)
+                qDebug() << "WARNING" << i << count;
+        }
+        
         sclfacs.reserve(nats);
         
         // The below code is horrible as the AtomPairs data is optimised to hold
@@ -1083,6 +1104,15 @@ void CLJIntraFunction::setNBPairs(const CLJNBPairs &pairs)
                                 
                                     sclfacs.insert( id, QPair<float,float>(scl.coulomb(),
                                                                            scl.lj()) );
+                                    
+                                    AtomIdx atm0 = molinfo.atomIdx(CGAtomIdx(i,Index(iat)));
+                                    AtomIdx atm1 = molinfo.atomIdx(CGAtomIdx(j,Index(jat)));
+                                    
+                                    qDebug() << "bonded" << atm0.value() << atm1.value()
+                                             << scl.coulomb() << scl.lj();
+                                    
+                                    check_facs[atm0.value()+1][atm1.value()+1] = 1;
+                                    check_facs[atm1.value()+1][atm0.value()+1] = 1;
                                 }
                             }
                         }
@@ -1104,6 +1134,15 @@ void CLJIntraFunction::setNBPairs(const CLJNBPairs &pairs)
                                 
                                     sclfacs.insert( id, QPair<float,float>(scl.coulomb(),
                                                                            scl.lj()) );
+
+                                    AtomIdx atm0 = molinfo.atomIdx(CGAtomIdx(i,Index(iat)));
+                                    AtomIdx atm1 = molinfo.atomIdx(CGAtomIdx(j,Index(jat)));
+                                    
+                                    qDebug() << "bonded" << atm0.value() << atm1.value()
+                                             << scl.coulomb() << scl.lj();
+
+                                    check_facs[atm0.value()+1][atm1.value()+1] = 1;
+                                    check_facs[atm1.value()+1][atm0.value()+1] = 1;
                                 }
                             }
                         }
@@ -1113,6 +1152,18 @@ void CLJIntraFunction::setNBPairs(const CLJNBPairs &pairs)
         }
 
         sclfacs.squeeze();
+        
+        for (int i=0; i<check_facs.count(); ++i)
+        {
+            int count = 0;
+            for (int j=0; j<check_facs.count(); ++j)
+            {
+                if (check_facs[i][j])
+                    count += 1;
+            }
+            
+            qDebug() << i << count;
+        }
         
         qint64 ns = t.nsecsElapsed();
         
