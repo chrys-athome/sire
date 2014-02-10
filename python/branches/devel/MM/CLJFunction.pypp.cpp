@@ -66,13 +66,13 @@ void register_CLJFunction_class(){
         }
         { //::SireMM::CLJFunction::coulomb
         
-            typedef double ( ::SireMM::CLJFunction::*coulomb_function_type )( ::SireMM::CLJAtoms const &,::SireMM::CLJAtoms const & ) const;
+            typedef double ( ::SireMM::CLJFunction::*coulomb_function_type )( ::SireMM::CLJAtoms const &,::SireMM::CLJAtoms const &,float ) const;
             coulomb_function_type coulomb_function_value( &::SireMM::CLJFunction::coulomb );
             
             CLJFunction_exposer.def( 
                 "coulomb"
                 , coulomb_function_value
-                , ( bp::arg("atoms0"), bp::arg("atoms1") ) );
+                , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("min_distance")=0 ) );
         
         }
         { //::SireMM::CLJFunction::coulombCutoff
@@ -128,13 +128,13 @@ void register_CLJFunction_class(){
         }
         { //::SireMM::CLJFunction::lj
         
-            typedef double ( ::SireMM::CLJFunction::*lj_function_type )( ::SireMM::CLJAtoms const &,::SireMM::CLJAtoms const & ) const;
+            typedef double ( ::SireMM::CLJFunction::*lj_function_type )( ::SireMM::CLJAtoms const &,::SireMM::CLJAtoms const &,float ) const;
             lj_function_type lj_function_value( &::SireMM::CLJFunction::lj );
             
             CLJFunction_exposer.def( 
                 "lj"
                 , lj_function_value
-                , ( bp::arg("atoms0"), bp::arg("atoms1") ) );
+                , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("min_distance")=0 ) );
         
         }
         { //::SireMM::CLJFunction::ljCutoff
@@ -160,13 +160,13 @@ void register_CLJFunction_class(){
         }
         { //::SireMM::CLJFunction::operator()
         
-            typedef void ( ::SireMM::CLJFunction::*__call___function_type )( ::SireMM::CLJAtoms const &,::SireMM::CLJAtoms const &,double &,double & ) const;
+            typedef void ( ::SireMM::CLJFunction::*__call___function_type )( ::SireMM::CLJAtoms const &,::SireMM::CLJAtoms const &,double &,double &,float ) const;
             __call___function_type __call___function_value( &::SireMM::CLJFunction::operator() );
             
             CLJFunction_exposer.def( 
                 "__call__"
                 , __call___function_value
-                , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("cnrg"), bp::arg("ljnrg") ) );
+                , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("cnrg"), bp::arg("ljnrg"), bp::arg("min_distance")=0 ) );
         
         }
         { //::SireMM::CLJFunction::setArithmeticCombiningRules
@@ -281,13 +281,13 @@ void register_CLJFunction_class(){
         }
         { //::SireMM::CLJFunction::total
         
-            typedef void ( ::SireMM::CLJFunction::*total_function_type )( ::SireMM::CLJAtoms const &,::SireMM::CLJAtoms const &,double &,double & ) const;
+            typedef void ( ::SireMM::CLJFunction::*total_function_type )( ::SireMM::CLJAtoms const &,::SireMM::CLJAtoms const &,double &,double &,float ) const;
             total_function_type total_function_value( &::SireMM::CLJFunction::total );
             
             CLJFunction_exposer.def( 
                 "total"
                 , total_function_value
-                , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("cnrg"), bp::arg("ljnrg") ) );
+                , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("cnrg"), bp::arg("ljnrg"), bp::arg("min_distance")=0 ) );
         
         }
         { //::SireMM::CLJFunction::typeName
