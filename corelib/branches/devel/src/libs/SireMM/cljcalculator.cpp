@@ -148,13 +148,14 @@ namespace SireMM
                     {
                         func->total(boxes->constFind(ptr->box0()).value().read().atoms(),
                                     boxes->constFind(ptr->box1()).value().read().atoms(),
-                                    coul_nrg[i], lj_nrg[i]);
+                                    coul_nrg[i], lj_nrg[i], ptr->distance());
                     }
                     else if (ptr->distance() < coul_cutoff)
                     {
                         coul_nrg[i]
                             = func->coulomb(boxes->constFind(ptr->box0()).value().read().atoms(),
-                                            boxes->constFind(ptr->box1()).value().read().atoms());
+                                            boxes->constFind(ptr->box1()).value().read().atoms(),
+                                            ptr->distance());
                         
                         lj_nrg[i] = 0;
                     }
@@ -162,7 +163,8 @@ namespace SireMM
                     {
                         lj_nrg[i]
                             = func->lj(boxes->constFind(ptr->box0()).value().read().atoms(),
-                                       boxes->constFind(ptr->box1()).value().read().atoms());
+                                       boxes->constFind(ptr->box1()).value().read().atoms(),
+                                       ptr->distance());
                         
                         coul_nrg[i] = 0;
                     }
@@ -217,7 +219,7 @@ namespace SireMM
                     {
                         func->total(boxes->constFind(ptr->box0()).value().read().atoms(),
                                     boxes->constFind(ptr->box1()).value().read().atoms(),
-                                    coul_nrg[i], lj_nrg[i]);
+                                    coul_nrg[i], lj_nrg[i], ptr->distance());
                     }
                     
                     ptr += 1;
@@ -266,13 +268,14 @@ namespace SireMM
                     {
                         func->total(boxes0->constFind(ptr->box0()).value().read().atoms(),
                                     boxes1->constFind(ptr->box1()).value().read().atoms(),
-                                    coul_nrg[i], lj_nrg[i]);
+                                    coul_nrg[i], lj_nrg[i], ptr->distance());
                     }
                     else if (ptr->distance() < coul_cutoff)
                     {
                         coul_nrg[i]
                             = func->coulomb(boxes0->constFind(ptr->box0()).value().read().atoms(),
-                                            boxes1->constFind(ptr->box1()).value().read().atoms());
+                                            boxes1->constFind(ptr->box1()).value().read().atoms(),
+                                            ptr->distance());
                         
                         lj_nrg[i] = 0;
                     }
@@ -280,7 +283,8 @@ namespace SireMM
                     {
                         lj_nrg[i]
                             = func->lj(boxes0->constFind(ptr->box0()).value().read().atoms(),
-                                       boxes1->constFind(ptr->box1()).value().read().atoms());
+                                       boxes1->constFind(ptr->box1()).value().read().atoms(),
+                                       ptr->distance());
                         
                         coul_nrg[i] = 0;
                     }
@@ -330,7 +334,7 @@ namespace SireMM
                 {
                     func->total(boxes0->constFind(ptr->box0()).value().read().atoms(),
                                 boxes1->constFind(ptr->box1()).value().read().atoms(),
-                                coul_nrg[i], lj_nrg[i]);
+                                coul_nrg[i], lj_nrg[i], ptr->distance());
                     
                     ptr += 1;
                 }

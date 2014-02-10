@@ -106,19 +106,23 @@ public:
                     double &cnrg, double &ljnrg) const;
     
     void operator()(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                    double &cnrg, double &ljnrg) const;
+                    double &cnrg, double &ljnrg,
+                    float min_distance=0) const;
 
     void total(const CLJAtoms &atoms,
                double &cnrg, double &ljnrg) const;
     
     void total(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-               double &cnrg, double &ljnrg) const;
+               double &cnrg, double &ljnrg,
+               float min_distance=0) const;
     
     double coulomb(const CLJAtoms &atoms) const;
-    double coulomb(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
+    double coulomb(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                   float min_distance=0) const;
     
     double lj(const CLJAtoms &atoms) const;
-    double lj(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
+    double lj(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+              float min_distance=0) const;
 
     virtual CLJFunction* clone() const=0;
 
@@ -158,57 +162,67 @@ protected:
                                   double &cnrg, double &ljnrg) const=0;
 
     virtual void calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                                  double &cnrg, double &ljnrg) const=0;
+                                  double &cnrg, double &ljnrg, float min_distance) const=0;
 
     virtual void calcVacEnergyGeo(const CLJAtoms &atoms,
                                   double &cnrg, double &ljnrg) const=0;
 
     virtual void calcVacEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                                  double &cnrg, double &ljnrg) const=0;
+                                  double &cnrg, double &ljnrg, float min_distance) const=0;
 
     virtual double calcVacCoulombEnergyAri(const CLJAtoms &atoms) const;
-    virtual double calcVacCoulombEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
+    virtual double calcVacCoulombEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                           float min_distance) const;
 
     virtual double calcVacCoulombEnergyGeo(const CLJAtoms &atoms) const;
-    virtual double calcVacCoulombEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
+    virtual double calcVacCoulombEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                           float min_distance) const;
     
     virtual double calcVacLJEnergyAri(const CLJAtoms &atoms) const;
-    virtual double calcVacLJEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
+    virtual double calcVacLJEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                      float min_distance) const;
     
     virtual double calcVacLJEnergyGeo(const CLJAtoms &atoms) const;
-    virtual double calcVacLJEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const;
+    virtual double calcVacLJEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                      float min_distance) const;
 
     virtual void calcBoxEnergyAri(const CLJAtoms &atoms, const Vector &box,
                                   double &cnrg, double &ljnrg) const=0;
 
     virtual void calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                                  const Vector &box, double &cnrg, double &ljnrg) const=0;
+                                  const Vector &box, double &cnrg, double &ljnrg,
+                                  float min_distance) const=0;
 
     virtual void calcBoxEnergyGeo(const CLJAtoms &atoms, const Vector &box,
                                   double &cnrg, double &ljnrg) const=0;
 
     virtual void calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                                  const Vector &box, double &cnrg, double &ljnrg) const=0;
+                                  const Vector &box, double &cnrg, double &ljnrg,
+                                  float min_distance) const=0;
 
     virtual double calcBoxCoulombEnergyAri(const CLJAtoms &atoms, const Vector &box) const;
     virtual double calcBoxCoulombEnergyAri(const CLJAtoms &atoms0,
                                            const CLJAtoms &atoms1,
-                                           const Vector &box) const;
+                                           const Vector &box,
+                                           float min_distance) const;
 
     virtual double calcBoxCoulombEnergyGeo(const CLJAtoms &atoms, const Vector &box) const;
     virtual double calcBoxCoulombEnergyGeo(const CLJAtoms &atoms0,
                                            const CLJAtoms &atoms1,
-                                           const Vector &box) const;
+                                           const Vector &box,
+                                           float min_distance) const;
     
     virtual double calcBoxLJEnergyAri(const CLJAtoms &atoms, const Vector &box) const;
     virtual double calcBoxLJEnergyAri(const CLJAtoms &atoms0,
                                       const CLJAtoms &atoms1,
-                                      const Vector &box) const;
+                                      const Vector &box,
+                                      float min_distance) const;
     
     virtual double calcBoxLJEnergyGeo(const CLJAtoms &atoms, const Vector &box) const;
     virtual double calcBoxLJEnergyGeo(const CLJAtoms &atoms0,
                                       const CLJAtoms &atoms1,
-                                      const Vector &box) const;
+                                      const Vector &box,
+                                      float min_distance) const;
 
 private:
     void extractDetailsFromRules(COMBINING_RULES rules);

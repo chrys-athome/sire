@@ -319,10 +319,11 @@ double CLJFunction::calcVacCoulombEnergyAri(const CLJAtoms &atoms) const
 }
 
 /** Calculate the coulomb energy between the atoms in 'atoms0' and the atoms in 'atoms1' */
-double CLJFunction::calcVacCoulombEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const
+double CLJFunction::calcVacCoulombEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                            float min_distance) const
 {
     double cnrg, ljnrg;
-    calcVacEnergyAri(atoms0, atoms1, cnrg, ljnrg);
+    calcVacEnergyAri(atoms0, atoms1, cnrg, ljnrg, min_distance);
     return cnrg;
 }
 
@@ -335,10 +336,11 @@ double CLJFunction::calcVacCoulombEnergyGeo(const CLJAtoms &atoms) const
 }
 
 /** Calculate the coulomb energy between the atoms in 'atoms0' and the atoms in 'atoms1' */
-double CLJFunction::calcVacCoulombEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const
+double CLJFunction::calcVacCoulombEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                            float min_distance) const
 {
     double cnrg, ljnrg;
-    calcVacEnergyGeo(atoms0, atoms1, cnrg, ljnrg);
+    calcVacEnergyGeo(atoms0, atoms1, cnrg, ljnrg, min_distance);
     return cnrg;
 }
 
@@ -351,10 +353,11 @@ double CLJFunction::calcVacLJEnergyAri(const CLJAtoms &atoms) const
 }
 
 /** Calculate the LJ energy between the atoms in 'atoms0' and the atoms in 'atoms1' */
-double CLJFunction::calcVacLJEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const
+double CLJFunction::calcVacLJEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                       float min_distance) const
 {
     double cnrg, ljnrg;
-    calcVacEnergyAri(atoms0, atoms1, cnrg, ljnrg);
+    calcVacEnergyAri(atoms0, atoms1, cnrg, ljnrg, min_distance);
     return ljnrg;
 }
 
@@ -367,10 +370,11 @@ double CLJFunction::calcVacLJEnergyGeo(const CLJAtoms &atoms) const
 }
 
 /** Calculate the LJ energy between the atoms in 'atoms0' and the atoms in 'atoms1' */
-double CLJFunction::calcVacLJEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const
+double CLJFunction::calcVacLJEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                       float min_distance) const
 {
     double cnrg, ljnrg;
-    calcVacEnergyGeo(atoms0, atoms1, cnrg, ljnrg);
+    calcVacEnergyGeo(atoms0, atoms1, cnrg, ljnrg, min_distance);
     return ljnrg;
 }
 
@@ -385,10 +389,11 @@ double CLJFunction::calcBoxCoulombEnergyAri(const CLJAtoms &atoms,
 
 /** Calculate the coulomb energy between the atoms in 'atoms0' and the atoms in 'atoms1' */
 double CLJFunction::calcBoxCoulombEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                                            const Vector &box_dimensions) const
+                                            const Vector &box_dimensions,
+                                            float min_distance) const
 {
     double cnrg, ljnrg;
-    calcBoxEnergyAri(atoms0, atoms1, box_dimensions, cnrg, ljnrg);
+    calcBoxEnergyAri(atoms0, atoms1, box_dimensions, cnrg, ljnrg, min_distance);
     return cnrg;
 }
 
@@ -403,10 +408,11 @@ double CLJFunction::calcBoxCoulombEnergyGeo(const CLJAtoms &atoms,
 
 /** Calculate the coulomb energy between the atoms in 'atoms0' and the atoms in 'atoms1' */
 double CLJFunction::calcBoxCoulombEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                                            const Vector &box_dimensions) const
+                                            const Vector &box_dimensions,
+                                            float min_distance) const
 {
     double cnrg, ljnrg;
-    calcBoxEnergyGeo(atoms0, atoms1, box_dimensions, cnrg, ljnrg);
+    calcBoxEnergyGeo(atoms0, atoms1, box_dimensions, cnrg, ljnrg, min_distance);
     return cnrg;
 }
 
@@ -421,10 +427,10 @@ double CLJFunction::calcBoxLJEnergyAri(const CLJAtoms &atoms,
 
 /** Calculate the LJ energy between the atoms in 'atoms0' and the atoms in 'atoms1' */
 double CLJFunction::calcBoxLJEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                                       const Vector &box_dimensions) const
+                                       const Vector &box_dimensions, float min_distance) const
 {
     double cnrg, ljnrg;
-    calcBoxEnergyAri(atoms0, atoms1, box_dimensions, cnrg, ljnrg);
+    calcBoxEnergyAri(atoms0, atoms1, box_dimensions, cnrg, ljnrg, min_distance);
     return ljnrg;
 }
 
@@ -439,10 +445,11 @@ double CLJFunction::calcBoxLJEnergyGeo(const CLJAtoms &atoms,
 
 /** Calculate the LJ energy between the atoms in 'atoms0' and the atoms in 'atoms1' */
 double CLJFunction::calcBoxLJEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                                       const Vector &box_dimensions) const
+                                       const Vector &box_dimensions,
+                                       float min_distance) const
 {
     double cnrg, ljnrg;
-    calcBoxEnergyGeo(atoms0, atoms1, box_dimensions, cnrg, ljnrg);
+    calcBoxEnergyGeo(atoms0, atoms1, box_dimensions, cnrg, ljnrg, min_distance);
     return ljnrg;
 }
 
@@ -474,7 +481,7 @@ void CLJFunction::operator()(const CLJAtoms &atoms,
 }
 
 void CLJFunction::operator()(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                             double &cnrg, double &ljnrg) const
+                             double &cnrg, double &ljnrg, float min_distance) const
 {
     if (atoms0.isEmpty() or atoms1.isEmpty())
     {
@@ -487,16 +494,16 @@ void CLJFunction::operator()(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
         if (use_arithmetic)
         {
             if (use_box)
-                this->calcBoxEnergyAri(atoms1, atoms0, box_dimensions, cnrg, ljnrg);
+                this->calcBoxEnergyAri(atoms1, atoms0, box_dimensions, cnrg, ljnrg, min_distance);
             else
-                this->calcVacEnergyAri(atoms1, atoms0, cnrg, ljnrg);
+                this->calcVacEnergyAri(atoms1, atoms0, cnrg, ljnrg, min_distance);
         }
         else
         {
             if (use_box)
-                this->calcBoxEnergyGeo(atoms1, atoms0, box_dimensions, cnrg, ljnrg);
+                this->calcBoxEnergyGeo(atoms1, atoms0, box_dimensions, cnrg, ljnrg, min_distance);
             else
-                this->calcVacEnergyGeo(atoms1, atoms0, cnrg, ljnrg);
+                this->calcVacEnergyGeo(atoms1, atoms0, cnrg, ljnrg, min_distance);
         }
     }
     else
@@ -504,16 +511,16 @@ void CLJFunction::operator()(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
         if (use_arithmetic)
         {
             if (use_box)
-                this->calcBoxEnergyAri(atoms0, atoms1, box_dimensions, cnrg, ljnrg);
+                this->calcBoxEnergyAri(atoms0, atoms1, box_dimensions, cnrg, ljnrg, min_distance);
             else
-                this->calcVacEnergyAri(atoms0, atoms1, cnrg, ljnrg);
+                this->calcVacEnergyAri(atoms0, atoms1, cnrg, ljnrg, min_distance);
         }
         else
         {
             if (use_box)
-                this->calcBoxEnergyGeo(atoms0, atoms1, box_dimensions, cnrg, ljnrg);
+                this->calcBoxEnergyGeo(atoms0, atoms1, box_dimensions, cnrg, ljnrg, min_distance);
             else
-                this->calcVacEnergyGeo(atoms0, atoms1, cnrg, ljnrg);
+                this->calcVacEnergyGeo(atoms0, atoms1, cnrg, ljnrg, min_distance);
         }
     }
 }
@@ -528,9 +535,9 @@ void CLJFunction::total(const CLJAtoms &atoms, double &cnrg, double &ljnrg) cons
 /** Return the total energy between 'atoms0' and 'atoms1', returning the coulomb part in 'cnrg'
     and the LJ part in 'ljnrg' */
 void CLJFunction::total(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                        double &cnrg, double &ljnrg) const
+                        double &cnrg, double &ljnrg, float min_distance) const
 {
-    return this->operator()(atoms0, atoms1, cnrg, ljnrg);
+    return this->operator()(atoms0, atoms1, cnrg, ljnrg, min_distance);
 }
 
 /** Return the coulomb energy between the atoms in 'atoms' */
@@ -560,7 +567,8 @@ double CLJFunction::coulomb(const CLJAtoms &atoms) const
 }
 
 /** Return the coulomb energy between the atoms in 'atoms0' and in 'atoms1' */
-double CLJFunction::coulomb(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const
+double CLJFunction::coulomb(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                            float min_distance) const
 {
     if (atoms0.isEmpty() or atoms1.isEmpty())
     {
@@ -571,16 +579,16 @@ double CLJFunction::coulomb(const CLJAtoms &atoms0, const CLJAtoms &atoms1) cons
         if (use_arithmetic)
         {
             if (use_box)
-                return this->calcBoxCoulombEnergyAri(atoms1, atoms0, box_dimensions);
+                return this->calcBoxCoulombEnergyAri(atoms1, atoms0, box_dimensions, min_distance);
             else
-                return this->calcVacCoulombEnergyAri(atoms1, atoms0);
+                return this->calcVacCoulombEnergyAri(atoms1, atoms0, min_distance);
         }
         else
         {
             if (use_box)
-                return this->calcBoxCoulombEnergyGeo(atoms1, atoms0, box_dimensions);
+                return this->calcBoxCoulombEnergyGeo(atoms1, atoms0, box_dimensions, min_distance);
             else
-                return this->calcVacCoulombEnergyGeo(atoms1, atoms0);
+                return this->calcVacCoulombEnergyGeo(atoms1, atoms0, min_distance);
         }
     }
     else
@@ -588,16 +596,16 @@ double CLJFunction::coulomb(const CLJAtoms &atoms0, const CLJAtoms &atoms1) cons
         if (use_arithmetic)
         {
             if (use_box)
-                return this->calcBoxCoulombEnergyAri(atoms0, atoms1, box_dimensions);
+                return this->calcBoxCoulombEnergyAri(atoms0, atoms1, box_dimensions, min_distance);
             else
-                return this->calcVacCoulombEnergyAri(atoms0, atoms1);
+                return this->calcVacCoulombEnergyAri(atoms0, atoms1, min_distance);
         }
         else
         {
             if (use_box)
-                return this->calcBoxCoulombEnergyGeo(atoms0, atoms1, box_dimensions);
+                return this->calcBoxCoulombEnergyGeo(atoms0, atoms1, box_dimensions, min_distance);
             else
-                return this->calcVacCoulombEnergyGeo(atoms0, atoms1);
+                return this->calcVacCoulombEnergyGeo(atoms0, atoms1, min_distance);
         }
     }
 }
@@ -629,7 +637,8 @@ double CLJFunction::lj(const CLJAtoms &atoms) const
 }
 
 /** Return the LJ energy between the atoms in 'atoms0' and in 'atoms1' */
-double CLJFunction::lj(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const
+double CLJFunction::lj(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                       float min_distance) const
 {
     if (atoms0.isEmpty() or atoms1.isEmpty())
     {
@@ -640,16 +649,16 @@ double CLJFunction::lj(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const
         if (use_arithmetic)
         {
             if (use_box)
-                return this->calcBoxLJEnergyAri(atoms1, atoms0, box_dimensions);
+                return this->calcBoxLJEnergyAri(atoms1, atoms0, box_dimensions, min_distance);
             else
-                return this->calcVacLJEnergyAri(atoms1, atoms0);
+                return this->calcVacLJEnergyAri(atoms1, atoms0, min_distance);
         }
         else
         {
             if (use_box)
-                return this->calcBoxLJEnergyGeo(atoms1, atoms0, box_dimensions);
+                return this->calcBoxLJEnergyGeo(atoms1, atoms0, box_dimensions, min_distance);
             else
-                return this->calcVacLJEnergyGeo(atoms1, atoms0);
+                return this->calcVacLJEnergyGeo(atoms1, atoms0, min_distance);
         }
     }
     else
@@ -657,16 +666,16 @@ double CLJFunction::lj(const CLJAtoms &atoms0, const CLJAtoms &atoms1) const
         if (use_arithmetic)
         {
             if (use_box)
-                return this->calcBoxLJEnergyAri(atoms0, atoms1, box_dimensions);
+                return this->calcBoxLJEnergyAri(atoms0, atoms1, box_dimensions, min_distance);
             else
-                return this->calcVacLJEnergyAri(atoms0, atoms1);
+                return this->calcVacLJEnergyAri(atoms0, atoms1, min_distance);
         }
         else
         {
             if (use_box)
-                return this->calcBoxLJEnergyGeo(atoms0, atoms1, box_dimensions);
+                return this->calcBoxLJEnergyGeo(atoms0, atoms1, box_dimensions, min_distance);
             else
-                return this->calcVacLJEnergyGeo(atoms0, atoms1);
+                return this->calcVacLJEnergyGeo(atoms0, atoms1, min_distance);
         }
     }
 }

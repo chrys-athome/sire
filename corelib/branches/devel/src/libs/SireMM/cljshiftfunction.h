@@ -97,25 +97,27 @@ protected:
                           double &cnrg, double &ljnrg) const;
     
     void calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                          double &cnrg, double &ljnrg) const;
+                          double &cnrg, double &ljnrg, float min_distance) const;
 
     void calcVacEnergyGeo(const CLJAtoms &atoms,
                           double &cnrg, double &ljnrg) const;
     
     void calcVacEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                          double &cnrg, double &ljnrg) const;
+                          double &cnrg, double &ljnrg, float min_distance) const;
 
     void calcBoxEnergyAri(const CLJAtoms &atoms, const Vector &box_dimensions,
                           double &cnrg, double &ljnrg) const;
     
     void calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                          const Vector &box_dimensions, double &cnrg, double &ljnrg) const;
+                          const Vector &box_dimensions, double &cnrg, double &ljnrg,
+                          float min_distance) const;
 
     void calcBoxEnergyGeo(const CLJAtoms &atoms, const Vector &box_dimensions,
                           double &cnrg, double &ljnrg) const;
     
     void calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                          const Vector &box_dimensions, double &cnrg, double &ljnrg) const;
+                          const Vector &box_dimensions, double &cnrg, double &ljnrg,
+                          float min_distance) const;
 };
 
 /** This CLJFunction calculates the intramolecular coulomb and LJ energy of the passed
@@ -165,25 +167,27 @@ protected:
                           double &cnrg, double &ljnrg) const;
     
     void calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                          double &cnrg, double &ljnrg) const;
+                          double &cnrg, double &ljnrg, float min_distance) const;
 
     void calcVacEnergyGeo(const CLJAtoms &atoms,
                           double &cnrg, double &ljnrg) const;
     
     void calcVacEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                          double &cnrg, double &ljnrg) const;
+                          double &cnrg, double &ljnrg, float min_distance) const;
 
     void calcBoxEnergyAri(const CLJAtoms &atoms, const Vector &box_dimensions,
                           double &cnrg, double &ljnrg) const;
     
     void calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                          const Vector &box_dimensions, double &cnrg, double &ljnrg) const;
+                          const Vector &box_dimensions, double &cnrg, double &ljnrg
+                          , float min_distance) const;
 
     void calcBoxEnergyGeo(const CLJAtoms &atoms, const Vector &box_dimensions,
                           double &cnrg, double &ljnrg) const;
     
     void calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                          const Vector &box_dimensions, double &cnrg, double &ljnrg) const;
+                          const Vector &box_dimensions, double &cnrg, double &ljnrg,
+                          float min_distance) const;
 };
 
 }

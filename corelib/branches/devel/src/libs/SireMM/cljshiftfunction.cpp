@@ -173,7 +173,7 @@ void CLJShiftFunction::calcVacEnergyGeo(const CLJAtoms &atoms,
 /** Calculate the intermolecular energy between all atoms in 'atoms0' and all
     atoms in 'atoms1', returning the result in the arguments 'cnrg' and 'ljnrg' */
 void CLJShiftFunction::calcVacEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                                        double &cnrg, double &ljnrg) const
+                                        double &cnrg, double &ljnrg, float min_distance) const
 {
     cnrg = 0;
     ljnrg = 0;
@@ -194,7 +194,7 @@ void CLJShiftFunction::calcBoxEnergyGeo(const CLJAtoms &atoms, const Vector &box
     of size 'box_dimensions, returning the result in the arguments 'cnrg' and 'ljnrg' */
 void CLJShiftFunction::calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                                         const Vector &box_dimensions,
-                                        double &cnrg, double &ljnrg) const
+                                        double &cnrg, double &ljnrg, float min_distance) const
 {
     cnrg = 0;
     ljnrg = 0;
@@ -403,7 +403,7 @@ void CLJShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms,
 /** Calculate the intermolecular energy between all atoms in 'atoms0' and all
     atoms in 'atoms1', returning the result in the arguments 'cnrg' and 'ljnrg' */
 void CLJShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                                        double &cnrg, double &ljnrg) const
+                                        double &cnrg, double &ljnrg, float min_distance) const
 {
     const MultiFloat *x0 = atoms0.x().constData();
     const MultiFloat *y0 = atoms0.y().constData();
@@ -620,7 +620,7 @@ void CLJShiftFunction::calcBoxEnergyAri(const CLJAtoms &atoms, const Vector &box
     of size 'box_dimensions, returning the result in the arguments 'cnrg' and 'ljnrg' */
 void CLJShiftFunction::calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                                         const Vector &box_dimensions,
-                                        double &cnrg, double &ljnrg) const
+                                        double &cnrg, double &ljnrg, float min_distance) const
 {
     cnrg = 0;
     ljnrg = 0;
@@ -767,7 +767,7 @@ void CLJIntraShiftFunction::calcVacEnergyGeo(const CLJAtoms &atoms,
     Note that all of the atoms must be part of the same molecule, and must
     have their intramolecular non-bonded scale factors loaded into this function */
 void CLJIntraShiftFunction::calcVacEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                                             double &cnrg, double &ljnrg) const
+                                             double &cnrg, double &ljnrg, float min_distance) const
 {
     cnrg = 0;
     ljnrg = 0;
@@ -792,7 +792,7 @@ void CLJIntraShiftFunction::calcBoxEnergyGeo(const CLJAtoms &atoms, const Vector
     have their intramolecular non-bonded scale factors loaded into this function */
 void CLJIntraShiftFunction::calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                                              const Vector &box_dimensions,
-                                             double &cnrg, double &ljnrg) const
+                                             double &cnrg, double &ljnrg, float min_distance) const
 {
     cnrg = 0;
     ljnrg = 0;
@@ -924,7 +924,7 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms,
     Note that all of the atoms must be part of the same molecule, and must
     have their intramolecular non-bonded scale factors loaded into this function */
 void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
-                                             double &cnrg, double &ljnrg) const
+                                             double &cnrg, double &ljnrg, float min_distance) const
 {
     const MultiFloat *x0 = atoms0.x().constData();
     const MultiFloat *y0 = atoms0.y().constData();
@@ -957,7 +957,12 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
     const int n0 = atoms0.x().count();
     const int n1 = atoms1.x().count();
     
-    const bool not_bonded = isNotBonded(atoms0.ID(), atoms1.ID());
+    bool not_bonded = true;
+    
+    if (min_distance < 5.0)
+    {
+        not_bonded = isNotBonded(atoms0.ID(), atoms1.ID());
+    }
     
     if ( Q_LIKELY(not_bonded) )
     {
@@ -1141,7 +1146,7 @@ void CLJIntraShiftFunction::calcBoxEnergyAri(const CLJAtoms &atoms, const Vector
     have their intramolecular non-bonded scale factors loaded into this function */
 void CLJIntraShiftFunction::calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                                              const Vector &box_dimensions,
-                                             double &cnrg, double &ljnrg) const
+                                             double &cnrg, double &ljnrg, float min_distance) const
 {
     cnrg = 0;
     ljnrg = 0;
