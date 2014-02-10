@@ -486,7 +486,70 @@ bool ConnectivityBase::areConnected(const AtomID &atom0, const AtomID &atom1) co
 {
     return this->connectionsTo(atom0).contains( info().atomIdx(atom1) );
 }
+
+/** Return whether or not the two atoms are bonded together */
+bool ConnectivityBase::areBonded(AtomIdx atom0, AtomIdx atom1) const
+{
+    return areConnected(atom0, atom1);
+}
+
+/** Return whether or not the two atoms are angled together */
+bool ConnectivityBase::areAngled(AtomIdx atom0, AtomIdx atom2) const
+{
+    atom0 = d.read().atomIdx(atom0);
+    atom2 = d.read().atomIdx(atom2);
+
+    foreach (const AtomIdx &atom1, connected_atoms[atom0.value()])
+    {
+        if (connected_atoms[atom2].contains(atom1))
+            return true;
+    }
     
+    return false;
+}
+
+/** Return whether or not the two atoms are dihedraled together */
+bool ConnectivityBase::areDihedraled(AtomIdx atom0, AtomIdx atom3) const
+{
+    atom0 = d.read().atomIdx(atom0);
+    atom3 = d.read().atomIdx(atom3);
+    
+    foreach (const AtomIdx &atom1, connected_atoms[atom0.value()])
+    {
+        if (atom1.value() != atom3.value())
+        {
+            foreach (const AtomIdx &atom2, connected_atoms[atom3.value()])
+            {
+                if (atom2.value() != atom0.value())
+                {
+                    if (connected_atoms[atom1.value()].contains(atom2))
+                        return true;
+                }
+            }
+        }
+    }
+    
+    return false;
+}
+
+/** Return whether or not the two atoms are bonded together */
+bool ConnectivityBase::areBonded(const AtomID &atom0, const AtomID &atom1) const
+{
+    return areBonded(d.read().atomIdx(atom0), d.read().atomIdx(atom1));
+}
+
+/** Return whether or not the two atoms are angled together */
+bool ConnectivityBase::areAngled(const AtomID &atom0, const AtomID &atom2) const
+{
+    return areBonded(d.read().atomIdx(atom0), d.read().atomIdx(atom2));
+}
+
+/** Return whether or not the two atoms are bonded together */
+bool ConnectivityBase::areDihedraled(const AtomID &atom0, const AtomID &atom3) const
+{
+    return areBonded(d.read().atomIdx(atom0), d.read().atomIdx(atom3));
+}
+
 /** Return whether or not the residues at indicies 'res0' and 'res1' 
     are connected
     
@@ -2183,7 +2246,7 @@ QVector< QVector<bool> > ConnectivityBase::getBondMatrix(int start, int end) con
      
         QVector<bool> row;
         
-        if (start == 1)
+        if (start == 0)
             row = QVector<bool>(nats, true);
         else
             row = QVector<bool>(nats, false);
@@ -2196,11 +2259,19 @@ QVector< QVector<bool> > ConnectivityBase::getBondMatrix(int start, int end) con
         }
     }
     
-    if (start <= 1)
+    if (start <= 0)
         return ret;
     
     for (int order = start; order <= end; ++order)
     {
+        if (order == 1)
+        {
+            for (int i=0; i<nats; ++i)
+            {
+                ret[i][i] = true;
+            }
+        }
+    
         if (order == 2)
         {
             for (int i=0; i<nats; ++i)
@@ -2261,7 +2332,7 @@ QVector< QVector<bool> > ConnectivityBase::getBondMatrix(int start, int end) con
     that are bonded, angled or dihedraled) */
 QVector< QVector<bool> > ConnectivityBase::getBondMatrix(int order) const
 {
-    if (order < 0)
+    if (order <= 0)
         return getBondMatrix(0,0);
     else
         return getBondMatrix(1,order);
