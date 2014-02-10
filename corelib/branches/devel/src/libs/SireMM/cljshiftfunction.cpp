@@ -823,6 +823,7 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms,
     const qint32 dummy_int = dummy_id[0];
 
     MultiFloat tmp, r, one_over_r, sig2_over_r2, sig6_over_r6;
+    MultiFloat bond_mask;
     MultiDouble icnrg(0), iljnrg(0);
     MultiInt itmp;
 
@@ -842,13 +843,21 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms,
                 const MultiFloat sig( siga[i][ii] * siga[i][ii] );
                 const MultiFloat eps( epsa[i][ii] );
 
+                const bool *row = bondMatrix().constData()[id[0]].constData();
+
                 for (int j=i; j<n; ++j)
                 {
                     // if i == j then we double-calculate the energies, so must
                     // scale them by 0.5
                     MultiFloat scale( i == j ? 0.5 : 1.0 );
-                    //const QPair<MultiFloat,MultiFloat> scl14
-                    //                    = getScaleFactors(id, ida[j], not_bonded);
+                
+                    //get the bond mask to screen out bonded interactions
+                    for (int k=0; k<MultiFloat::count(); ++k)
+                    {
+                        bond_mask.quickSet(k, row[ida[j][k]] ? 0.0 : 1.0);
+                    }
+                
+                    scale *= bond_mask;
                 
                     //calculate the distance between the fixed and mobile atoms
                     tmp = xa[j] - x;
@@ -868,9 +877,6 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms,
                     tmp -= one_over_Rc;
                     tmp += one_over_r;
                     tmp *= q * qa[j];
-                
-                    //apply the non-bonded scale factors
-                    //tmp *= scl14.first;
                 
                     //apply the cutoff - compare r against Rc. This will
                     //return 1 if r is less than Rc, or 0 otherwise. Logical
@@ -898,9 +904,6 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms,
                     tmp -= sig6_over_r6;
                     tmp *= eps;
                     tmp *= epsa[j];
-                
-                    //apply the scale factor
-                    //tmp *= scl14.second;
                 
                     //apply the cutoff - compare r against Rlj. This will
                     //return 1 if r is less than Rlj, or 0 otherwise. Logical
@@ -975,10 +978,6 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
 
                     for (int j=0; j<n1; ++j)
                     {
-                        //get the non-bonded scale factors
-                        //const QPair<MultiFloat,MultiFloat> nbscl
-                        //                    = getScaleFactors(id, id1[j], not_bonded);
-
                         //calculate the distance between the fixed and mobile atoms
                         tmp = x1[j] - x;
                         r = tmp * tmp;
@@ -997,7 +996,6 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
                         tmp -= one_over_Rc;
                         tmp += one_over_r;
                         tmp *= q * q1[j];
-                        //tmp *= nbscl.first;
                     
                         //apply the cutoff - compare r against Rc. This will
                         //return 1 if r is less than Rc, or 0 otherwise. Logical
@@ -1024,13 +1022,96 @@ void CLJIntraShiftFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAt
                         tmp -= sig6_over_r6;
                         tmp *= eps;
                         tmp *= eps1[j];
-                        //tmp *= nbscl.second;
                     
                         //apply the cutoff - compare r against Rlj. This will
                         //return 1 if r is less than Rlj, or 0 otherwise. Logical
                         //and will then remove all energies where r >= Rlj
                         tmp &= r.compareLess(Rlj);
                         iljnrg += tmp.logicalAndNot(itmp);
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        MultiFloat bonded_mask(0);
+    
+        for (int i=0; i<n0; ++i)
+        {
+            for (int ii=0; ii<MultiFloat::count(); ++ii)
+            {
+                if (id0[i][ii] != dummy_int)
+                {
+                    const MultiInt id(id0[i][ii]);
+                    const MultiFloat x(x0[i][ii]);
+                    const MultiFloat y(y0[i][ii]);
+                    const MultiFloat z(z0[i][ii]);
+                    const MultiFloat q(q0[i][ii]);
+
+                    const MultiFloat sig(sig0[i][ii] * sig0[i][ii]);
+                    const MultiFloat eps(eps0[i][ii]);
+
+                    const bool *row = bondMatrix().constData()[id[0]].constData();
+
+                    for (int j=0; j<n1; ++j)
+                    {
+                        //create a mask to cancel out calculations of bonded pairs
+                        for (int k=0; k<MultiInt::count(); ++k)
+                        {
+                            bonded_mask.quickSet(k, row[id1[j][k]] ? 0.0 : 1.0);
+                        }
+
+                        //calculate the distance between the fixed and mobile atoms
+                        tmp = x1[j] - x;
+                        r = tmp * tmp;
+                        tmp = y1[j] - y;
+                        r.multiplyAdd(tmp, tmp);
+                        tmp = z1[j] - z;
+                        r.multiplyAdd(tmp, tmp);
+                        r = r.sqrt();
+
+                        one_over_r = r.reciprocal();
+                
+                        //calculate the coulomb energy using shift-electrostatics
+                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
+                        tmp = r - Rc;
+                        tmp *= one_over_Rc2;
+                        tmp -= one_over_Rc;
+                        tmp += one_over_r;
+                        tmp *= q * q1[j];
+                    
+                        //apply the cutoff - compare r against Rc. This will
+                        //return 1 if r is less than Rc, or 0 otherwise. Logical
+                        //and will then remove all energies where r >= Rc
+                        tmp &= r.compareLess(Rc);
+
+                        //make sure that the ID of atoms1 is not zero
+                        itmp = id1[j].compareEqual(dummy_id);
+
+                        icnrg += bonded_mask * tmp.logicalAndNot(itmp);
+                        
+                        //Now do the LJ energy
+
+                        //arithmetic combining rules
+                        tmp = sig + (sig1[j]*sig1[j]);
+                        tmp *= half;
+                    
+                        sig2_over_r2 = tmp * one_over_r;
+                        sig2_over_r2 = sig2_over_r2*sig2_over_r2;
+                        sig6_over_r6 = sig2_over_r2*sig2_over_r2;
+                        sig6_over_r6 = sig6_over_r6*sig2_over_r2;
+
+                        tmp = sig6_over_r6 * sig6_over_r6;
+                        tmp -= sig6_over_r6;
+                        tmp *= eps;
+                        tmp *= eps1[j];
+                    
+                        //apply the cutoff - compare r against Rlj. This will
+                        //return 1 if r is less than Rlj, or 0 otherwise. Logical
+                        //and will then remove all energies where r >= Rlj
+                        tmp &= r.compareLess(Rlj);
+                        iljnrg += bonded_mask * tmp.logicalAndNot(itmp);
                     }
                 }
             }

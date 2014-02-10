@@ -998,8 +998,35 @@ void CLJIntraFunction::setConnectivity(const Connectivity &c)
 {
     if (cty != c)
     {
+        QElapsedTimer t;
+        t.start();
+    
         cty = c;
         bond_matrix = cty.getBondMatrix(1,4);
+
+        quint64 ns1 = t.nsecsElapsed();
+        t.start();
+
+        if (bond_matrix.count() > 0)
+        {
+            //we now need to pad this with zeroes, as we use AtomIdx(0) to mean a dummy atom
+            bond_matrix.prepend( QVector<bool>(bond_matrix.count() + 1, false) );
+
+            bond_matrix[0].squeeze();
+            
+            for (int i=1; i<bond_matrix.count(); ++i)
+            {
+                bond_matrix[i].prepend(false);
+                bond_matrix[i].squeeze();
+            }
+            
+            bond_matrix.squeeze();
+        }
+        
+        quint64 ns2 = t.nsecsElapsed();
+        
+        qDebug() << "GETTING MATRIX TOOK" << (0.000001*(ns1+ns2)) << "ms, "
+                 << (0.000001*ns1) << "," << (0.000001*ns2);
     }
 }
 
@@ -1013,9 +1040,6 @@ void CLJIntraFunction::setConnectivity(const MoleculeView &molecule, const Prope
 bool CLJIntraFunction::isNotBonded(const QVector<MultiInt> &ids0,
                                    const QVector<MultiInt> &ids1) const
 {
-    QElapsedTimer t;
-    t.start();
-
     const int nats0 = ids0.count();
     const int nats1 = ids1.count();
     
@@ -1032,23 +1056,18 @@ bool CLJIntraFunction::isNotBonded(const QVector<MultiInt> &ids0,
             
             for (int ii=0; ii<MultiInt::count(); ++ii)
             {
-                const QVector<bool> &row = bond_matrix.constData()[ id0[ii] - 1 ];
+                const QVector<bool> &row = bond_matrix.constData()[ id0[ii] ];
             
                 for (int jj=0; jj<MultiInt::count(); ++jj)
                 {
-                    if (row.constData()[id1[jj] - 1])
+                    if (row.constData()[ id1[jj] ])
                     {
-                        qint64 ns = t.nsecsElapsed();
-                        qDebug() << "Took" << (0.000001*ns) << "ms";
                         return false;
                     }
                 }
             }
         }
     }
-    
-    qint64 ns = t.nsecsElapsed();
-    qDebug() << "Took" << (0.000001*ns) << "ms";
     
     return true;
 }

@@ -874,7 +874,8 @@ static void setNonBondedPairs(MolEditor &editmol, int pointer,
                               const QList<int> &exc_atom_list,
                               CLJNBPairs &nbpairs,
                               const PropertyName &nb_property,
-                              const QHash<AtomNum, QList<AtomNum> > &atoms14)
+                              const QHash<AtomNum, QList<AtomNum> > &atoms14,
+                              double coul_14scl, double lj_14scl)
 {
     // For each pair of atoms within a molecule
     // --> if 1,2 or 1,3 CLJScaleFactor(0,0)
@@ -955,8 +956,8 @@ static void setNonBondedPairs(MolEditor &editmol, int pointer,
             {
                 //qDebug() << " ATOMS " << atom0.number() << " and "
                 //          << atom1.number() << " are 14";
-                cscl = AMBER14COUL;
-                ljscl = AMBER14LJ;
+                cscl = coul_14scl;
+                ljscl = lj_14scl;
             }
             else
             {
@@ -1083,8 +1084,10 @@ static const RegisterMetaType<Amber> r_amber(NO_ROOT);
 QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds, const Amber &amber)
 {
     //empty class so nothing to stream
-
-    writeHeader(ds, r_amber, 0);
+    writeHeader(ds, r_amber, 1);
+    
+    ds << amber.coul_14scl << amber.lj_14scl;
+    
     return ds;
 }
 
@@ -1095,22 +1098,56 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, Amber &amber)
 
     VersionID v = readHeader(ds, r_amber);
 
-    if (v != 0)
-        throw version_error( v, "0", r_amber, CODELOC );
+    if (v == 1)
+    {
+        ds >> amber.coul_14scl >> amber.lj_14scl;
+    }
+    else if (v == 0)
+    {
+        amber.coul_14scl = AMBER14COUL;
+        amber.lj_14scl = AMBER14LJ;
+    }
+    else
+        throw version_error( v, "1,0", r_amber, CODELOC );
 
     return ds;
 }
 
 /** Constructor */
-Amber::Amber()
+Amber::Amber() : coul_14scl(AMBER14COUL), lj_14scl(AMBER14LJ)
+{}
+
+/** Copy constructor */
+Amber::Amber(const Amber &other)
+      : coul_14scl(other.coul_14scl), lj_14scl(other.lj_14scl)
 {}
 
 /** Destructor */
 Amber::~Amber()
 {}
 
+/** Copy assignment operator */
+Amber& Amber::operator=(const Amber &other)
+{
+    coul_14scl = other.coul_14scl;
+    lj_14scl = other.lj_14scl;
+    return *this;
+}
+
+/** Comparison operator */
+bool Amber::operator==(const Amber &other) const
+{
+    return coul_14scl == other.coul_14scl and lj_14scl == other.lj_14scl;
+}
+
+/** Comparison operator */
+bool Amber::operator!=(const Amber &other) const
+{
+    return not operator==(other);
+}
+
 /** Reads the contents of a topfile and associated crdfile and returns a molecule group */
-tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
+tuple<MoleculeGroup,SpacePtr> Amber::readCrdTop(const QString &crdfile,
         const QString &topfile, QString flag_cutting) const
 {
     /**
@@ -1751,7 +1788,7 @@ tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
 
     PropertyName amberparameters_property = PropertyName("amberparameters");
 
-    Molecules molecules;
+    MoleculeGroup molecules( QString("%1:%2").arg(crdfile,topfile) );
 
     int molnum = 1;
     int resnum = 1;
@@ -1954,7 +1991,7 @@ tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
             setNonBondedPairs(editmol, pointers[NEXT],
                               num_excluded_atoms, exc_atom_list,
                               nbpairs, nb_property,
-                              atoms14);
+                              atoms14, coul_14scl, lj_14scl);
         }
 
         molecule = editmol.commit();
@@ -2001,12 +2038,28 @@ tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
 
     qDebug() << "...complete";
 
-    return tuple<Molecules, SpacePtr>(molecules, spce);
+    return tuple<MoleculeGroup, SpacePtr>(molecules, spce);
 }
 
 const char* Amber::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Amber>() );
+}
+
+void Amber::set14Factors(double coul_14, double lj_14)
+{
+    coul_14scl = coul_14;
+    lj_14scl = lj_14;
+}
+
+double Amber::coulomb14Factor() const
+{
+    return coul_14scl;
+}
+
+double Amber::lj14Factor() const
+{
+    return lj_14scl;
 }
 
 const char* Amber::what() const

@@ -178,6 +178,8 @@ public:
     void set(int i, float value);
     float get(int i) const;
     
+    void quickSet(int i, float value);
+    
     MultiFloat operator-() const;
     
     MultiFloat operator+(const MultiFloat &other) const;
@@ -1338,6 +1340,12 @@ double MultiFloat::doubleSum() const
         return sum;
     #endif
     #endif
+}
+
+/** Quick function to set the value of the ith element */
+inline void MultiFloat::quickSet(int i, float value)
+{
+    v.a[i] = value;
 }
 
 #endif // #ifndef SIRE_SKIP_INLINE_FUNCTIONS

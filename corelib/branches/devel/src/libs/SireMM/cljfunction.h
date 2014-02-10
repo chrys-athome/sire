@@ -331,6 +331,8 @@ protected:
     bool isNotBonded(const MultiInt &id0, const MultiInt &id1) const;
     bool isNotBonded(const QVector<MultiInt> &ids0, const QVector<MultiInt> &ids1) const;
 
+    const QVector< QVector<bool> >& bondMatrix() const;
+
 private:
     static qint64 getIndex(const SireMol::AtomIdx &atom0, const SireMol::AtomIdx &atom1);
     static qint64 getIndex(qint32 id0, qint32 id1);
@@ -423,11 +425,11 @@ inline bool CLJIntraFunction::isNotBonded(const MultiInt &id0, const MultiInt &i
 {
     for (int i=0; i<MultiInt::count(); ++i)
     {
-        const bool *row = bond_matrix.constData()[id0[i]-1].constData();
+        const bool *row = bond_matrix.constData()[id0[i]].constData();
         
         for (int j=0; j<MultiInt::count(); ++j)
         {
-            if (row[id1[j]-1])
+            if (row[id1[j]])
                 return false;
         }
     }
@@ -438,15 +440,21 @@ inline bool CLJIntraFunction::isNotBonded(const MultiInt &id0, const MultiInt &i
 /** Return whether or not all atom pairs with passed IDs are not bonded */
 inline bool CLJIntraFunction::isNotBonded(qint32 id0, const MultiInt &id1) const
 {
-    const bool *row = bond_matrix.constData()[id0-1].constData();
+    const bool *row = bond_matrix.constData()[id0].constData();
 
     for (int i=0; i<MultiInt::count(); ++i)
     {
-        if (row[id1[i]-1])
+        if (row[id1[i]])
             return false;
     }
 
     return true;
+}
+
+/** Return the bond matrix */
+inline const QVector< QVector<bool> >& CLJIntraFunction::bondMatrix() const
+{
+    return bond_matrix;
 }
 
 #endif
