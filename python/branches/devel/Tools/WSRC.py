@@ -191,7 +191,10 @@ def getIdentityPoints(ligand):
     else:
         connectivity = Connectivity(ligand)
 
-    for key in list(have_point.keys()):
+    have_point_keys = list(have_point.keys())
+    have_point_keys.sort()
+
+    for key in list(have_point_keys):
         if have_point[key]:
             # if this is bonded to 3+ atoms that also have 
             # identity points, then get rid of this point
@@ -216,7 +219,10 @@ def getIdentityPoints(ligand):
     # skip every 8th point
     iskip = 0
 
-    for key in list(have_point.keys()):
+    have_point_keys = list(have_point.keys())
+    have_point_keys.sort()
+
+    for key in list(have_point_keys):
         if have_point[key]:
             iskip += 1
 

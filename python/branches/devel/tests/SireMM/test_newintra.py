@@ -2,11 +2,22 @@
 import Sire.Stream
 
 from Sire.MM import *
+from Sire.Mol import *
 from Sire.Vol import *
 from Sire.Qt import *
 from Sire.Units import *
+from Sire.IO import *
 
-protein = Sire.Stream.load("../io/ligand.s3")
+amber = Amber();
+amber.set14Factors(0, 0)
+
+(molecules, space) = amber.readCrdTop("../io/proteinbox.crd", "../io/proteinbox.top")
+
+protein = molecules[ MolNum(1) ].molecule()
+
+print("Protein has %d atoms" % protein.nAtoms())
+
+#protein = Sire.Stream.load("../io/protein.s3")
 
 coul_cutoff = 15 * angstrom
 lj_cutoff = 15 * angstrom
@@ -34,7 +45,7 @@ def test_compare(verbose = False):
         print("Loading protein into CLJIntraShiftFunction...")
 
     intrafunc = CLJIntraShiftFunction()
-    intrafunc.setNBPairs(protein)
+    intrafunc.setConnectivity(protein)
     intrafunc.setSpace( Cartesian() )
     intrafunc.setCutoff(coul_cutoff, lj_cutoff)
 

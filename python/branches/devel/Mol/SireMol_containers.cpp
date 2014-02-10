@@ -126,6 +126,7 @@ void register_SireMol_containers()
     register_tuple< boost::tuple<AtomIdx,AtomIdx,AtomIdx,AtomIdx> >();
     
     register_tuple< boost::tuple<Molecules,SireVol::SpacePtr> >();
+    register_tuple< boost::tuple<MoleculeGroup,SireVol::SpacePtr> >();
     
     register_tuple< boost::tuple<AtomIdentifier,AtomIdentifier> >();
 
