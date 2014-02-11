@@ -52,7 +52,7 @@
 //#define SIRE_USE_SSE 1
 //#undef SIRE_USE_SSE
 
-#define MULTIFLOAT_CHECK_ALIGNMENT 1
+//#define MULTIFLOAT_CHECK_ALIGNMENT 1
 //#undef MULTIFLOAT_CHECK_ALIGNMENT
 
 #ifdef SIRE_USE_AVX
@@ -236,6 +236,8 @@ public:
     MultiFloat rsqrt_approx_nr() const;
     
     MultiFloat rotate() const;
+    
+    MultiFloat abs() const;
     
     bool isBinaryZero() const;
     bool isNotBinaryZero() const;
@@ -1338,6 +1340,33 @@ double MultiFloat::doubleSum() const
             sum += double(v.a[i]);
         }
         return sum;
+    #endif
+    #endif
+}
+
+/** Return the absolute (positive) value of the floats */
+inline MultiFloat MultiFloat::abs() const
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        static const __m256 pos_mask = _mm256_castsi256_ps(_mm256_set1_epi32(0x7fffffff));
+        MultiFloat ret;
+        ret.v.x = _mm256_and_ps(v.x, pos_mask);
+        return ret;
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        static const __m128 pos_mask = _mm128_castsi128_ps(_mm128_set1_epi32(0x7fffffff));
+        MultiFloat ret;
+        ret.v.x = _mm_and_ps(v.x, pos_mask);
+        return ret;
+    #else
+        MultiFloat ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i] = (v.a[i] < 0 ? -v.a[i] : v.a[i]);
+        }
+    
+        return ret;
     #endif
     #endif
 }

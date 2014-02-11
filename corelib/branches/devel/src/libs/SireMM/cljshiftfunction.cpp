@@ -942,8 +942,116 @@ double CLJShiftFunction::calcVacLJEnergyAri(const CLJAtoms &atoms0, const CLJAto
 void CLJShiftFunction::calcBoxEnergyAri(const CLJAtoms &atoms, const Vector &box_dimensions,
                                         double &cnrg, double &ljnrg) const
 {
-    cnrg = 0;
-    ljnrg = 0;
+    const MultiFloat *xa = atoms.x().constData();
+    const MultiFloat *ya = atoms.y().constData();
+    const MultiFloat *za = atoms.z().constData();
+    const MultiFloat *qa = atoms.q().constData();
+    const MultiFloat *siga = atoms.sigma().constData();
+    const MultiFloat *epsa = atoms.epsilon().constData();
+    const MultiInt *ida = atoms.ID().constData();
+
+    const MultiFloat Rc(coul_cutoff);
+    const MultiFloat Rlj(lj_cutoff);
+
+    const MultiFloat one_over_Rc( 1.0 / coul_cutoff );
+    const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
+    const MultiFloat half(0.5);
+    const MultiInt dummy_id = CLJAtoms::idOfDummy();
+    const qint32 dummy_int = dummy_id[0];
+
+    MultiFloat tmp, r, one_over_r, sig2_over_r2, sig6_over_r6;
+    MultiDouble icnrg(0), iljnrg(0);
+    MultiInt itmp;
+
+    int n = atoms.x().count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        for (int ii=0; ii<MultiFloat::size(); ++ii)
+        {
+            if (ida[i][ii] != dummy_int)
+            {
+                const MultiInt id( ida[i][ii] );
+                const MultiFloat x( xa[i][ii] );
+                const MultiFloat y( ya[i][ii] );
+                const MultiFloat z( za[i][ii] );
+                const MultiFloat q( qa[i][ii] );
+                const MultiFloat sig( siga[i][ii] * siga[i][ii] );
+                const MultiFloat eps( epsa[i][ii] );
+
+                for (int j=i; j<n; ++j)
+                {
+                    // if i == j then we double-calculate the energies, so must
+                    // scale them by 0.5
+                    const MultiFloat scale( i == j ? 0.5 : 1.0 );
+                
+                    //calculate the distance between the fixed and mobile atoms
+                    tmp = xa[j] - x;
+                    
+                    //wrap this into the periodic box
+                    
+                    
+                    r = tmp * tmp;
+                    tmp = ya[j] - y;
+                    
+                    //wrap this into the periodic box
+                    
+                    r.multiplyAdd(tmp, tmp);
+                    tmp = za[j] - z;
+                    
+                    //wrap this into the periodic box
+                    
+                    r.multiplyAdd(tmp, tmp);
+                    r = r.sqrt();
+
+                    one_over_r = r.reciprocal();
+            
+                    //calculate the coulomb energy using shift-electrostatics
+                    // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
+                    tmp = r - Rc;
+                    tmp *= one_over_Rc2;
+                    tmp -= one_over_Rc;
+                    tmp += one_over_r;
+                    tmp *= q * qa[j];
+                
+                    //apply the cutoff - compare r against Rc. This will
+                    //return 1 if r is less than Rc, or 0 otherwise. Logical
+                    //and will then remove all energies where r >= Rc
+                    tmp &= r.compareLess(Rc);
+
+                    //make sure that the ID of atoms1 is not zero, and is
+                    //also not the same as the atoms0.
+                    itmp = ida[j].compareEqual(dummy_id);
+                    itmp |= ida[j].compareEqual(id);
+                    
+                    icnrg += scale * tmp.logicalAndNot(itmp);
+
+                    //now the LJ energy
+                    tmp = sig + (siga[j]*siga[j]);
+                    tmp *= half;
+                
+                    sig2_over_r2 = tmp * one_over_r;
+                    sig2_over_r2 = sig2_over_r2*sig2_over_r2;
+                    sig6_over_r6 = sig2_over_r2*sig2_over_r2;
+                    sig6_over_r6 = sig6_over_r6*sig2_over_r2;
+
+                    tmp = sig6_over_r6 * sig6_over_r6;
+                    tmp -= sig6_over_r6;
+                    tmp *= eps;
+                    tmp *= epsa[j];
+                
+                    //apply the cutoff - compare r against Rlj. This will
+                    //return 1 if r is less than Rlj, or 0 otherwise. Logical
+                    //and will then remove all energies where r >= Rlj
+                    tmp &= r.compareLess(Rlj);
+                    iljnrg += scale * tmp.logicalAndNot(itmp);
+                }
+            }
+        }
+    }
+    
+    cnrg = icnrg.sum();
+    ljnrg = iljnrg.sum();
 }
 
 /** Calculate the intermolecular energy between all atoms in 'atoms0' and all
