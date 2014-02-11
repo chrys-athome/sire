@@ -345,13 +345,9 @@ private:
 
 static const MultiFloat MULTIFLOAT_ONE(1);
 
-#ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-static const __m256 MULTIFLOAT_POS_MASK = _mm256_castsi256_ps(_mm256_set1_epi32(0x7fffffff));
-#else
-#ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-static const __m128 MULTIFLOAT_POS_MASK = _mm_castsi128_ps(_mm_set1_epi32(0x7fffffff));
-#endif
-#endif
+static quint32 MULTIFLOAT_POS_MASK_INT = 0x7FFFFFFF;
+static const MultiFloat MULTIFLOAT_POS_MASK(
+                            *(reinterpret_cast<const float*>(&MULTIFLOAT_POS_MASK_INT)) );
 
 /** Constructor. This creates a MultiFloat with an undefined initial state */
 inline
@@ -1357,12 +1353,12 @@ inline MultiFloat MultiFloat::abs() const
 {
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
         MultiFloat ret;
-        ret.v.x = _mm256_and_ps(v.x, MULTIFLOAT_POS_MASK);
+        ret.v.x = _mm256_and_ps(v.x, MULTIFLOAT_POS_MASK.v.x);
         return ret;
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         MultiFloat ret;
-        ret.v.x = _mm_and_ps(v.x, MULTIFLOAT_POS_MASK);
+        ret.v.x = _mm_and_ps(v.x, MULTIFLOAT_POS_MASK.v.x);
         return ret;
     #else
         MultiFloat ret;

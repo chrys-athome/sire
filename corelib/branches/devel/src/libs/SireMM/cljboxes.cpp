@@ -30,6 +30,7 @@
 
 #include "SireVol/aabox.h"
 #include "SireVol/space.h"
+#include "SireVol/periodicbox.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -800,7 +801,7 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
     QVector<CLJBoxDistance> dists;
     dists.reserve(1024);
     
-    if (space.isCartesian())
+    if (space.isCartesian() and not space.isPeriodic())
     {
         for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
              it != boxes.bxs.constEnd();
@@ -858,30 +859,104 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
 
     if (space.isCartesian())
     {
-        const float box_cutoff = cutoff.value() / boxes.box_length;
-        const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
-        
-        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
-             it != boxes.bxs.constEnd();
-             ++it)
+        if (space.isPeriodic())
         {
-            const CLJBoxIndex &box0 = it.key();
+            Vector dimensions = space.asA<PeriodicBox>().dimensions();
             
-            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
-                 it2 != boxes.bxs.constEnd();
-                 ++it2)
+            const float box_x = dimensions.x() / boxes.box_length;
+            const float box_y = dimensions.y() / boxes.box_length;
+            const float box_z = dimensions.z() / boxes.box_length;
+            
+            const float half_box_x = 0.5 * box_x;
+            const float half_box_y = 0.5 * box_y;
+            const float half_box_z = 0.5 * box_z;
+
+            const float box_cutoff = cutoff.value() / boxes.box_length;
+            const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
+            
+            qDebug() << "Getting boxes..." << space.toString();
+            
+            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
+                 it != boxes.bxs.constEnd();
+                 ++it)
             {
-                const CLJBoxIndex &box1 = it2.key();
+                const CLJBoxIndex &box0 = it.key();
                 
-                const int d2 = getDelta2(box0, box1);
-                
-                if (d2 <= int_box_cutoff2)
+                for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
+                     it2 != boxes.bxs.constEnd();
+                     ++it2)
                 {
-                    //the box-pair are within cutoff
-                    const float dist = square_root(d2);
+                    const CLJBoxIndex &box1 = it2.key();
+
+                    dists.append( CLJBoxDistance(box0, box1, 0.0) );
+
+                    /*const int idx = getDelta(box0.i(), box1.i());
+                    const int idy = getDelta(box0.j(), box1.j());
+                    const int idz = getDelta(box0.k(), box1.k());
                     
-                    if (dist < box_cutoff)
-                        dists.append( CLJBoxDistance(box0, box1, dist*boxes.box_length) );
+                    if (idx > half_box_x or idy > half_box_y or idz > half_box_z)
+                    {
+                        float dx = idx;
+                        float dy = idy;
+                        float dz = idz;
+                        
+                        if (idx > half_box_x)
+                            dx -= box_x;
+                        
+                        if (idy > half_box_y)
+                            dy -= box_y;
+                        
+                        if (idz > half_box_z)
+                            dz -= box_z;
+                        
+                        const float dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+                        
+                        if (dist < box_cutoff)
+                            dists.append( CLJBoxDistance(box0, box1, dist*boxes.box_length) );
+                    }
+                    else
+                    {
+                        const int d2 = idx*idx + idy*idy + idz*idz;
+                    
+                        if (d2 <= int_box_cutoff2)
+                        {
+                            //the box-pair are within cutoff
+                            const float dist = square_root(d2);
+                            
+                            if (dist < box_cutoff)
+                                dists.append( CLJBoxDistance(box0, box1, dist*boxes.box_length) );
+                        }
+                    }*/
+                }
+            }
+        }
+        else
+        {
+            const float box_cutoff = cutoff.value() / boxes.box_length;
+            const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
+            
+            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
+                 it != boxes.bxs.constEnd();
+                 ++it)
+            {
+                const CLJBoxIndex &box0 = it.key();
+                
+                for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
+                     it2 != boxes.bxs.constEnd();
+                     ++it2)
+                {
+                    const CLJBoxIndex &box1 = it2.key();
+                    
+                    const int d2 = getDelta2(box0, box1);
+                    
+                    if (d2 <= int_box_cutoff2)
+                    {
+                        //the box-pair are within cutoff
+                        const float dist = square_root(d2);
+                        
+                        if (dist < box_cutoff)
+                            dists.append( CLJBoxDistance(box0, box1, dist*boxes.box_length) );
+                    }
                 }
             }
         }
@@ -924,7 +999,8 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
     QVector<CLJBoxDistance> dists;
     dists.reserve(1024);
     
-    if (space.isCartesian() and (boxes0.box_length == boxes1.box_length))
+    if (space.isCartesian() and (boxes0.box_length == boxes1.box_length)
+        and not space.isPeriodic())
     {
         for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
              it != boxes0.bxs.constEnd();
@@ -982,30 +1058,104 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
 
     if (space.isCartesian() and (boxes0.box_length == boxes1.box_length))
     {
-        const float box_cutoff = cutoff.value() / boxes0.box_length;
-        const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
-        
-        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
-             it != boxes0.bxs.constEnd();
-             ++it)
+        if (space.isPeriodic())
         {
-            const CLJBoxIndex &box0 = it.key();
+            const float box_cutoff = cutoff.value() / boxes0.box_length;
+            const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
             
-            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
-                 it2 != boxes1.bxs.constEnd();
-                 ++it2)
+            Vector dimensions = space.asA<PeriodicBox>().dimensions();
+            
+            const float box_x = dimensions.x() / boxes0.box_length;
+            const float box_y = dimensions.y() / boxes0.box_length;
+            const float box_z = dimensions.z() / boxes0.box_length;
+            
+            const float half_box_x = 0.5 * box_x;
+            const float half_box_y = 0.5 * box_y;
+            const float half_box_z = 0.5 * box_z;
+            
+            qDebug() << "Getting boxes...";
+            
+            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
+                 it != boxes0.bxs.constEnd();
+                 ++it)
             {
-                const CLJBoxIndex &box1 = it2.key();
+                const CLJBoxIndex &box0 = it.key();
                 
-                int d2 = getDelta2(box0,box1);
-                
-                if (d2 <= int_box_cutoff2)
+                for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
+                     it2 != boxes1.bxs.constEnd();
+                     ++it2)
                 {
-                    //the box-pair are within cutoff
-                    const float dist = square_root(d2);
+                    const CLJBoxIndex &box1 = it2.key();
+
+                    dists.append( CLJBoxDistance(box0, box1, 0.0) );
+
+                    /*const int idx = getDelta(box0.i(), box1.i());
+                    const int idy = getDelta(box0.j(), box1.j());
+                    const int idz = getDelta(box0.k(), box1.k());
                     
-                    if (dist < box_cutoff)
-                        dists.append( CLJBoxDistance(box0, box1, dist*boxes0.box_length) );
+                    if (idx > half_box_x or idy > half_box_y or idz > half_box_z)
+                    {
+                        float dx = idx;
+                        float dy = idy;
+                        float dz = idz;
+                        
+                        if (idx > half_box_x)
+                            dx -= box_x;
+                        
+                        if (idy > half_box_y)
+                            dy -= box_y;
+                        
+                        if (idz > half_box_z)
+                            dz -= box_z;
+                        
+                        const float dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+                        
+                        if (dist < box_cutoff)
+                            dists.append( CLJBoxDistance(box0, box1, dist*boxes0.box_length) );
+                    }
+                    else
+                    {
+                        const int d2 = idx*idx + idy*idy + idz*idz;
+                    
+                        if (d2 <= int_box_cutoff2)
+                        {
+                            //the box-pair are within cutoff
+                            const float dist = square_root(d2);
+                            
+                            if (dist < box_cutoff)
+                                dists.append( CLJBoxDistance(box0, box1, dist*boxes0.box_length) );
+                        }
+                    }*/
+                }
+            }
+        }
+        else
+        {
+            const float box_cutoff = cutoff.value() / boxes0.box_length;
+            const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
+            
+            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
+                 it != boxes0.bxs.constEnd();
+                 ++it)
+            {
+                const CLJBoxIndex &box0 = it.key();
+                
+                for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
+                     it2 != boxes1.bxs.constEnd();
+                     ++it2)
+                {
+                    const CLJBoxIndex &box1 = it2.key();
+                    
+                    int d2 = getDelta2(box0,box1);
+                    
+                    if (d2 <= int_box_cutoff2)
+                    {
+                        //the box-pair are within cutoff
+                        const float dist = square_root(d2);
+                        
+                        if (dist < box_cutoff)
+                            dists.append( CLJBoxDistance(box0, box1, dist*boxes0.box_length) );
+                    }
                 }
             }
         }

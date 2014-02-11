@@ -144,7 +144,7 @@ namespace SireMM
                         func->total(boxes->constFind(ptr->box0()).value().read().atoms(),
                                     coul_nrg[i], lj_nrg[i]);
                     }
-                    else if (ptr->distance() < coul_cutoff and ptr->distance() < lj_cutoff)
+                    else if (true)//ptr->distance() < coul_cutoff and ptr->distance() < lj_cutoff)
                     {
                         func->total(boxes->constFind(ptr->box0()).value().read().atoms(),
                                     boxes->constFind(ptr->box1()).value().read().atoms(),
