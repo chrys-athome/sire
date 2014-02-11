@@ -12,7 +12,7 @@ from Sire.Qt import *
 
 import os
 
-coul_cutoff = 15 * angstrom
+coul_cutoff = 20 * angstrom
 lj_cutoff = 10 * angstrom
 
 amber = Amber()

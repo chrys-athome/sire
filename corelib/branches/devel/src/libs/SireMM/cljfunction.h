@@ -109,6 +109,10 @@ public:
                     double &cnrg, double &ljnrg,
                     float min_distance=0) const;
 
+    boost::tuple<double,double> calculate(const CLJAtoms &atoms) const;
+    boost::tuple<double,double> calculate(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                          float min_distance=0) const;
+
     void total(const CLJAtoms &atoms,
                double &cnrg, double &ljnrg) const;
     

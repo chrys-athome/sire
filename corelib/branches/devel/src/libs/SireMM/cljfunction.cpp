@@ -117,15 +117,15 @@ void CLJFunction::extractDetailsFromSpace()
         use_box = false;
         box_dimensions = Vector(0);
     }
-    else if (spce.read().isA<Cartesian>())
-    {
-        use_box = false;
-        box_dimensions = Vector(0);
-    }
     else if (spce.read().isA<PeriodicBox>())
     {
         use_box = true;
         box_dimensions = spce.read().asA<PeriodicBox>().dimensions();
+    }
+    else if (spce.read().isA<Cartesian>())
+    {
+        use_box = false;
+        box_dimensions = Vector(0);
     }
     else
         throw SireError::unsupported( QObject::tr(
@@ -538,6 +538,21 @@ void CLJFunction::total(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                         double &cnrg, double &ljnrg, float min_distance) const
 {
     return this->operator()(atoms0, atoms1, cnrg, ljnrg, min_distance);
+}
+
+boost::tuple<double,double> CLJFunction::calculate(const CLJAtoms &atoms) const
+{
+    double cnrg, ljnrg;
+    this->operator()(atoms, cnrg, ljnrg);
+    return boost::tuple<double,double>(cnrg, ljnrg);
+}
+
+boost::tuple<double,double> CLJFunction::calculate(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                                   float min_distance) const
+{
+    double cnrg, ljnrg;
+    this->operator()(atoms0, atoms1, cnrg, ljnrg, min_distance);
+    return boost::tuple<double,double>(cnrg, ljnrg);
 }
 
 /** Return the coulomb energy between the atoms in 'atoms' */

@@ -118,6 +118,14 @@ protected:
     void calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                           const Vector &box_dimensions, double &cnrg, double &ljnrg,
                           float min_distance) const;
+
+    double calcVacCoulombEnergyAri(const CLJAtoms &atoms) const;
+    double calcVacCoulombEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                   float min_distance) const;
+    
+    double calcVacLJEnergyAri(const CLJAtoms &atoms) const;
+    double calcVacLJEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                              float min_distance) const;
 };
 
 /** This CLJFunction calculates the intramolecular coulomb and LJ energy of the passed
@@ -188,6 +196,14 @@ protected:
     void calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                           const Vector &box_dimensions, double &cnrg, double &ljnrg,
                           float min_distance) const;
+
+    double calcVacCoulombEnergyAri(const CLJAtoms &atoms) const;
+    double calcVacCoulombEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                   float min_distance) const;
+    
+    double calcVacLJEnergyAri(const CLJAtoms &atoms) const;
+    double calcVacLJEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                              float min_distance) const;
 };
 
 }
