@@ -43,6 +43,28 @@ void register_CLJFunction_class(){
             .value("GEOMETRIC", SireMM::CLJFunction::GEOMETRIC)
             .export_values()
             ;
+        { //::SireMM::CLJFunction::calculate
+        
+            typedef ::boost::tuples::tuple< double, double, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJFunction::*calculate_function_type )( ::SireMM::CLJAtoms const & ) const;
+            calculate_function_type calculate_function_value( &::SireMM::CLJFunction::calculate );
+            
+            CLJFunction_exposer.def( 
+                "calculate"
+                , calculate_function_value
+                , ( bp::arg("atoms") ) );
+        
+        }
+        { //::SireMM::CLJFunction::calculate
+        
+            typedef ::boost::tuples::tuple< double, double, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJFunction::*calculate_function_type )( ::SireMM::CLJAtoms const &,::SireMM::CLJAtoms const &,float ) const;
+            calculate_function_type calculate_function_value( &::SireMM::CLJFunction::calculate );
+            
+            CLJFunction_exposer.def( 
+                "calculate"
+                , calculate_function_value
+                , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("min_distance")=0 ) );
+        
+        }
         { //::SireMM::CLJFunction::combiningRules
         
             typedef ::SireMM::CLJFunction::COMBINING_RULES ( ::SireMM::CLJFunction::*combiningRules_function_type )(  ) const;
