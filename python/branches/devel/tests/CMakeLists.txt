@@ -11,6 +11,7 @@ set( SIRE_TEST_DIR "${CMAKE_INSTALL_PREFIX}/test" )
 set (TEST_DIRS "SireBase"
                "SireMM"
                "SireMol"
+               "SireQt"
                "SireSystem"
                "SireVol"
                "io"
