@@ -152,6 +152,25 @@ int main(int argc, const char **argv)
     qDebug() << a.compareNotEqual(a).toBinaryString();
     qDebug() << a.compareNotEqual(b).toBinaryString();
 
+    qDebug() << "\nAbs tests";
+
+    for (int i=0; i<MultiFloat::size(); ++i)
+    {
+        vals[i] = 0.1 * i;
+    }
+
+    a = MultiFloat(vals.constData(), MultiFloat::size());
+
+    for (int i=0; i<MultiFloat::size(); ++i)
+    {
+        vals[i] = -0.1 * i;
+    }
+
+    b = MultiFloat(vals.constData(), MultiFloat::size());
+
+    qDebug() << a.toString() << a.abs().toString();
+    qDebug() << b.toString() << b.abs().toString();
+
     /*
     qDebug() << "\nMultiInt tests";
     intTests();
