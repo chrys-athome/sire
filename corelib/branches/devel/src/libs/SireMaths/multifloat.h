@@ -1354,7 +1354,7 @@ inline MultiFloat MultiFloat::abs() const
         return ret;
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        static const __m128 pos_mask = _mm128_castsi128_ps(_mm128_set1_epi32(0x7fffffff));
+        static const __m128 pos_mask = _mm_castsi128_ps(_mm_set1_epi32(0x7fffffff));
         MultiFloat ret;
         ret.v.x = _mm_and_ps(v.x, pos_mask);
         return ret;

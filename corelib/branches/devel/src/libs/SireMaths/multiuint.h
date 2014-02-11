@@ -231,7 +231,7 @@ private:
             {
                 quint32 a[MULTIFLOAT_SIZE];
             } v;
-            #define MULTIINT_BINONE getBinaryOne()
+            #define MULTIUINT_BINONE getBinaryOne()
 
             static quint32 getBinaryOne()
             {
@@ -1286,7 +1286,7 @@ quint64 MultiUInt::doubleSum() const
 
 }
 
-SIRE_EXPOSE_CLASS( SireMaths::MultiInt )
+SIRE_EXPOSE_CLASS( SireMaths::MultiUInt )
 
 SIRE_END_HEADER
 
