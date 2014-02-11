@@ -6,10 +6,15 @@ from Sire.Units import *
 from Sire.Vol import *
 from Sire.Qt import *
 
-coul_cutoff = 20 * angstrom
-lj_cutoff = 10 * angstrom
+coul_cutoff = 1.75 * angstrom
+lj_cutoff = 1.75 * angstrom
 
-(waters, space) = Amber().readCrdTop("../io/waterbox.crd", "../io/waterbox.top")
+compare_energies = False
+
+if compare_energies:
+    (waters, space) = Amber().readCrdTop("../io/waterbox.crd", "../io/waterbox.top", "peratom")
+else:
+    (waters, space) = Amber().readCrdTop("../io/waterbox.crd", "../io/waterbox.top")
 
 group0 = MoleculeGroup("group0")
 group1 = MoleculeGroup("group1")
@@ -24,7 +29,7 @@ cljatoms = CLJAtoms(waters.molecules())
 cljatoms0 = CLJAtoms(group0.molecules())
 cljatoms1 = CLJAtoms(group1.molecules())
 
-boxes = CLJBoxes(cljatoms)
+boxes = CLJBoxes(cljatoms, 20*angstrom)
 boxes0 = CLJBoxes(cljatoms0)
 boxes1 = CLJBoxes(cljatoms1)
 
@@ -55,7 +60,7 @@ def test_compare(verbose):
     t.start()
     new_cnrg = 1.0
     new_ljnrg = 1.0
-    #(new_cnrg, new_ljnrg) = cljfunc.total(cljatoms)
+    (new_cnrg, new_ljnrg) = cljfunc.calculate(cljatoms)
     new_ns = t.nsecsElapsed()
 
     t.start()
@@ -80,5 +85,11 @@ def test_compare_box(verbose = True):
     test_compare(verbose)
     
 if __name__ == "__main__":
+    print("nCutGroups() = %s" % waters[MolIdx(0)].molecule().nCutGroups())
+    print("space = %s" % space)
+
+    print("\nVacuum boundary conditions")
     test_compare_vacuum(True)
+
+    print("\nPeriodic box boundary conditions")
     test_compare_box(True)
