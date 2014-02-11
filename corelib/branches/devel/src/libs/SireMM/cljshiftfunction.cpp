@@ -986,18 +986,18 @@ void CLJShiftFunction::calcBoxEnergyAri(const CLJAtoms &atoms, const Vector &box
                     const MultiFloat scale( i == j ? 0.5 : 1.0 );
                 
                     //calculate the distance between the fixed and mobile atoms
-                    tmp = xa[j] - x;
+                    tmp = (xa[j] - x).abs();
                     
                     //wrap this into the periodic box
                     
                     
                     r = tmp * tmp;
-                    tmp = ya[j] - y;
+                    tmp = (ya[j] - y).abs();
                     
                     //wrap this into the periodic box
                     
                     r.multiplyAdd(tmp, tmp);
-                    tmp = za[j] - z;
+                    tmp = (za[j] - z).abs();
                     
                     //wrap this into the periodic box
                     
