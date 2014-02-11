@@ -8,7 +8,14 @@ from Sire.Qt import *
 from Sire.Units import *
 from Sire.IO import *
 
+import sys
+
 realcompare = False
+
+try:
+    realcompare = int(sys.argv[1])
+except:
+    pass
 
 if realcompare:
     amber = Amber();
@@ -22,8 +29,8 @@ if realcompare:
 else:
     protein = Sire.Stream.load("../io/protein.s3")
 
-coul_cutoff = 15 * angstrom
-lj_cutoff = 15 * angstrom
+coul_cutoff = 20 * angstrom
+lj_cutoff = 10 * angstrom
 
 def test_compare(verbose = False):
     old_intraff = IntraCLJFF("old")
