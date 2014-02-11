@@ -43,6 +43,16 @@ void register_MultiFloat_class(){
         MultiFloat_exposer.def( bp::init< QVector< double > const & >(( bp::arg("array") )) );
         MultiFloat_exposer.def( bp::init< SireMaths::MultiDouble const & >(( bp::arg("other") )) );
         MultiFloat_exposer.def( bp::init< SireMaths::MultiFloat const & >(( bp::arg("other") )) );
+        { //::SireMaths::MultiFloat::abs
+        
+            typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*abs_function_type )(  ) const;
+            abs_function_type abs_function_value( &::SireMaths::MultiFloat::abs );
+            
+            MultiFloat_exposer.def( 
+                "abs"
+                , abs_function_value );
+        
+        }
         { //::SireMaths::MultiFloat::at
         
             typedef float ( ::SireMaths::MultiFloat::*at_function_type )( int ) const;
@@ -470,6 +480,17 @@ void register_MultiFloat_class(){
         }
         MultiFloat_exposer.def( bp::self ^ bp::self );
         MultiFloat_exposer.def( bp::self | bp::self );
+        { //::SireMaths::MultiFloat::quickSet
+        
+            typedef void ( ::SireMaths::MultiFloat::*quickSet_function_type )( int,float ) ;
+            quickSet_function_type quickSet_function_value( &::SireMaths::MultiFloat::quickSet );
+            
+            MultiFloat_exposer.def( 
+                "quickSet"
+                , quickSet_function_value
+                , ( bp::arg("i"), bp::arg("value") ) );
+        
+        }
         { //::SireMaths::MultiFloat::reciprocal
         
             typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*reciprocal_function_type )(  ) const;
