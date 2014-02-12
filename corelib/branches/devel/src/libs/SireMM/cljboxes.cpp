@@ -1145,12 +1145,6 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
                         dz = qMax(0.0f, dz);
                         
                         const float dist = std::sqrt(dx*dx + dy*dy + dz*dz);
-                        
-                        //const float dist2 = space.minimumDistance(it.key().box(Length(boxes0.box_length)),
-                        //                                         it2.key().box(Length(boxes1.box_length)));
-
-                        //if (dist*boxes0.box_length > dist2)
-                        //    qDebug() << "WARNING" << (dist*boxes0.box_length) << dist2;
 
                         if (dist < box_cutoff)
                             dists.append( CLJBoxDistance(box0, box1, dist*boxes0.box_length) );
