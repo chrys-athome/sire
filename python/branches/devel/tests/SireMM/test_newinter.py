@@ -117,30 +117,79 @@ def test_compare_vacuum(verbose = True):
     cljff.setSpace(Cartesian())
     cljff01.setSpace(Cartesian())
     cljfunc.setSpace(Cartesian())
+    cljff.setCombiningRules("arithmetic")
+    cljff01.setCombiningRules("arithmetic")
+    cljfunc.setCombiningRules( CLJFunction.ARITHMETIC )
+    pvt_compare(verbose)
+
+def test_compare_vacuum_geo(verbose = True):
+    cljff.setSpace(Cartesian())
+    cljff01.setSpace(Cartesian())
+    cljfunc.setSpace(Cartesian())
+    cljff.setCombiningRules("geometric")
+    cljff01.setCombiningRules("geometric")
+    cljfunc.setCombiningRules( CLJFunction.GEOMETRIC )
     pvt_compare(verbose)
 
 def test_compare_box(verbose = True):
     cljff.setSpace(space)
     cljff01.setSpace(space)
     cljfunc.setSpace(space)
+    cljff.setCombiningRules("arithmetic")
+    cljff01.setCombiningRules("arithmetic")
+    cljfunc.setCombiningRules( CLJFunction.ARITHMETIC )
+    pvt_compare(verbose)
+
+def test_compare_box_geo(verbose = True):
+    cljff.setSpace(space)
+    cljff01.setSpace(space)
+    cljfunc.setSpace(space)
+    cljff.setCombiningRules("geometric")
+    cljff01.setCombiningRules("geometric")
+    cljfunc.setCombiningRules( CLJFunction.GEOMETRIC )
     pvt_compare(verbose)
     
 def test_compare_vacuum_group(verbose = True):
     cljff.setSpace(Cartesian())
     cljff01.setSpace(Cartesian())
     cljfunc.setSpace(Cartesian())
+    cljff.setCombiningRules("arithmetic")
+    cljff01.setCombiningRules("arithmetic")
+    cljfunc.setCombiningRules( CLJFunction.ARITHMETIC )
+    pvt_compare_group(verbose)
+
+def test_compare_vacuum_group_geo(verbose = True):
+    cljff.setSpace(Cartesian())
+    cljff01.setSpace(Cartesian())
+    cljfunc.setSpace(Cartesian())
+    cljff.setCombiningRules("geometric")
+    cljff01.setCombiningRules("geometric")
+    cljfunc.setCombiningRules( CLJFunction.GEOMETRIC )
     pvt_compare_group(verbose)
 
 def test_compare_box_group(verbose = True):
     cljff.setSpace(space)
     cljff01.setSpace(space)
     cljfunc.setSpace(space)
+    cljff.setCombiningRules("arithmetic")
+    cljff01.setCombiningRules("arithmetic")
+    cljfunc.setCombiningRules( CLJFunction.ARITHMETIC )
+    pvt_compare_group(verbose)
+    
+def test_compare_box_group_geo(verbose = True):
+    cljff.setSpace(space)
+    cljff01.setSpace(space)
+    cljfunc.setSpace(space)
+    cljff.setCombiningRules("geometric")
+    cljff01.setCombiningRules("geometric")
+    cljfunc.setCombiningRules( CLJFunction.GEOMETRIC )
     pvt_compare_group(verbose)
 
 if __name__ == "__main__":
     print("nCutGroups() = %s" % waters[MolIdx(0)].molecule().nCutGroups())
     print("space = %s" % space)
 
+    print("\nArithmetic combining rules")
     print("\nVacuum boundary conditions")
     test_compare_vacuum(True)
 
@@ -152,3 +201,18 @@ if __name__ == "__main__":
 
     print("\nGroup Periodic box boundary conditions")
     test_compare_box_group(True)
+
+    print("\nGeometric combining rules")
+
+    print("\nVacuum boundary conditions")
+    test_compare_vacuum_geo(True)
+
+    print("\nPeriodic box boundary conditions")
+    test_compare_box_geo(True)
+
+    print("\nGroup Vacuum boundary conditions")
+    test_compare_vacuum_group_geo(True)
+    
+    print("\nGroup Periodic box boundary conditions")
+    test_compare_box_group_geo(True)
+
