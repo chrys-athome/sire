@@ -1137,6 +1137,8 @@ void CLJShiftFunction::calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &
                     tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                     tmp -= box_z.logicalAnd( half_box_z.compareLess(tmp) );
                     r.multiplyAdd(tmp, tmp);
+                    
+                    r = r.sqrt();
 
                     one_over_r = r.reciprocal();
             
@@ -1147,7 +1149,7 @@ void CLJShiftFunction::calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &
                     tmp -= one_over_Rc;
                     tmp += one_over_r;
                     tmp *= q * q1[j];
-                
+                    
                     //apply the cutoff - compare r against Rc. This will
                     //return 1 if r is less than Rc, or 0 otherwise. Logical
                     //and will then remove all energies where r >= Rc

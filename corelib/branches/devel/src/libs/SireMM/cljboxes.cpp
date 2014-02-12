@@ -794,6 +794,30 @@ inline int getDelta2(const CLJBoxIndex &box0, const CLJBoxIndex &box1)
     return dx*dx + dy*dy + dz*dz;
 }
 
+/** Get the number of box lengths separating boxes 0 and 1 at indicies
+    i0 and i1 */
+inline int getBoxDelta( const qint16 i0, const qint16 i1 )
+{
+    // the below single-line expression is doing
+    // if (i0 == i1)
+    // {
+    //     return 0;
+    // }
+    // else if (i0 < i1)
+    // {
+    //     return i1 - i0;
+    // }
+    // else
+    // {
+    //     return i0 - i1;
+    // }
+    //
+    // I found on my mac that the single line compiled to faster code
+    // than the above if statements.
+
+    return (i0 == i1) ? 0 : (i0 < i1) ? (i1-i0) : (i0-i1);
+}
+
 /** Return the distances between all of the occupied boxes in 'boxes'
     based on the space 'space' */
 QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes)
@@ -874,8 +898,6 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
             const float box_cutoff = cutoff.value() / boxes.box_length;
             const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
             
-            qDebug() << "Getting boxes..." << space.toString();
-            
             for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
                  it != boxes.bxs.constEnd();
                  ++it)
@@ -888,11 +910,9 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
                 {
                     const CLJBoxIndex &box1 = it2.key();
 
-                    dists.append( CLJBoxDistance(box0, box1, 0.0) );
-
-                    /*const int idx = getDelta(box0.i(), box1.i());
-                    const int idy = getDelta(box0.j(), box1.j());
-                    const int idz = getDelta(box0.k(), box1.k());
+                    int idx = getBoxDelta(box0.i(), box1.i());
+                    int idy = getBoxDelta(box0.j(), box1.j());
+                    int idz = getBoxDelta(box0.k(), box1.k());
                     
                     if (idx > half_box_x or idy > half_box_y or idz > half_box_z)
                     {
@@ -900,14 +920,22 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
                         float dy = idy;
                         float dz = idz;
                         
-                        if (idx > half_box_x)
+                        while (dx > half_box_x)
                             dx -= box_x;
                         
-                        if (idy > half_box_y)
+                        while (dy > half_box_y)
                             dy -= box_y;
                         
-                        if (idz > half_box_z)
+                        while (dz > half_box_z)
                             dz -= box_z;
+                        
+                        dx -= 1;
+                        dy -= 1;
+                        dz -= 1;
+                        
+                        dx = qMax(0.0f, dx);
+                        dy = qMax(0.0f, dy);
+                        dz = qMax(0.0f, dz);
                         
                         const float dist = std::sqrt(dx*dx + dy*dy + dz*dz);
                         
@@ -916,6 +944,10 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
                     }
                     else
                     {
+                        idx = qMax(0, idx-1);
+                        idy = qMax(0, idy-1);
+                        idz = qMax(0, idz-1);
+                    
                         const int d2 = idx*idx + idy*idy + idz*idz;
                     
                         if (d2 <= int_box_cutoff2)
@@ -926,7 +958,7 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
                             if (dist < box_cutoff)
                                 dists.append( CLJBoxDistance(box0, box1, dist*boxes.box_length) );
                         }
-                    }*/
+                    }
                 }
             }
         }
@@ -1073,8 +1105,6 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
             const float half_box_y = 0.5 * box_y;
             const float half_box_z = 0.5 * box_z;
             
-            qDebug() << "Getting boxes...";
-            
             for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
                  it != boxes0.bxs.constEnd();
                  ++it)
@@ -1087,11 +1117,9 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
                 {
                     const CLJBoxIndex &box1 = it2.key();
 
-                    dists.append( CLJBoxDistance(box0, box1, 0.0) );
-
-                    /*const int idx = getDelta(box0.i(), box1.i());
-                    const int idy = getDelta(box0.j(), box1.j());
-                    const int idz = getDelta(box0.k(), box1.k());
+                    int idx = getBoxDelta(box0.i(), box1.i());
+                    int idy = getBoxDelta(box0.j(), box1.j());
+                    int idz = getBoxDelta(box0.k(), box1.k());
                     
                     if (idx > half_box_x or idy > half_box_y or idz > half_box_z)
                     {
@@ -1099,22 +1127,40 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
                         float dy = idy;
                         float dz = idz;
                         
-                        if (idx > half_box_x)
+                        while (dx > half_box_x)
                             dx -= box_x;
                         
-                        if (idy > half_box_y)
+                        while (dy > half_box_y)
                             dy -= box_y;
                         
-                        if (idz > half_box_z)
+                        while (dz > half_box_z)
                             dz -= box_z;
+                        
+                        dx -= 1;
+                        dy -= 1;
+                        dz -= 1;
+                        
+                        dx = qMax(0.0f, dx);
+                        dy = qMax(0.0f, dy);
+                        dz = qMax(0.0f, dz);
                         
                         const float dist = std::sqrt(dx*dx + dy*dy + dz*dz);
                         
+                        //const float dist2 = space.minimumDistance(it.key().box(Length(boxes0.box_length)),
+                        //                                         it2.key().box(Length(boxes1.box_length)));
+
+                        //if (dist*boxes0.box_length > dist2)
+                        //    qDebug() << "WARNING" << (dist*boxes0.box_length) << dist2;
+
                         if (dist < box_cutoff)
                             dists.append( CLJBoxDistance(box0, box1, dist*boxes0.box_length) );
                     }
                     else
                     {
+                        idx = qMax( 0, idx-1 );
+                        idy = qMax( 0, idy-1 );
+                        idz = qMax( 0, idz-1 );
+                    
                         const int d2 = idx*idx + idy*idy + idz*idz;
                     
                         if (d2 <= int_box_cutoff2)
@@ -1125,7 +1171,7 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
                             if (dist < box_cutoff)
                                 dists.append( CLJBoxDistance(box0, box1, dist*boxes0.box_length) );
                         }
-                    }*/
+                    }
                 }
             }
         }

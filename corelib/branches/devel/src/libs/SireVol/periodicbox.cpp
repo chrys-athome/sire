@@ -984,7 +984,24 @@ bool PeriodicBox::beyond(double dist, const CoordGroup &group0,
 double PeriodicBox::minimumDistance(const AABox &box0, const AABox &box1) const
 {
     //get the distance between the minimum image of the box centers
-    Vector delta = box0.center() - box1.center() - wrapDelta(box0.center(), box1.center());
+    Vector delta = box0.center() - box1.center();
+    delta = Vector( std::abs(delta.x()), std::abs(delta.y()), std::abs(delta.z()) );
+
+    while (delta.x() > halflength.x())
+    {
+        delta.setX( delta.x() - boxlength.x() );
+    }
+
+    while (delta.y() > halflength.y())
+    {
+        delta.setY( delta.y() - boxlength.z() );
+    }
+
+    while (delta.z() > halflength.z())
+    {
+        delta.setZ( delta.z() - boxlength.z() );
+    }
+
     delta = Vector( std::abs(delta.x()), std::abs(delta.y()), std::abs(delta.z()) );
     
     delta -= box0.halfExtents();
