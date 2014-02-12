@@ -36,15 +36,19 @@ else:
 
     cnrg_vacuum = -16406.191630892663  
     ljnrg_vacuum = -3171.065732415715
+    ljnrg_vacuum_geo = -3182.4573192579305
 
     cnrg_box = -16395.045120818653  
     ljnrg_box = -3142.701735153256
+    ljnrg_box_geo = -3154.5987213176636
 
     cnrg_group = -81.68430463380852  
     ljnrg_group = -5.71092316497434
+    ljnrg_group_geo = -5.576781489836948
 
     cnrg_group_box = -113.79643732412087
     ljnrg_group_box = -6.793124009768353
+    ljnrg_group_box_geo = -6.63391491344806
 
     cnrg_space = cnrg_vacuum
     ljnrg_space = ljnrg_vacuum
@@ -179,8 +183,25 @@ def test_compare_vacuum(verbose = False):
         globals()["cnrg_space"] = cnrg_vacuum
         globals()["ljnrg_space"] = ljnrg_vacuum
 
+    intraff.setCombiningRules("arithmetic")
+    intraff01.setCombiningRules("arithmetic")
+    intrafunc.setCombiningRules( CLJFunction.ARITHMETIC )
+
     pvt_compare(verbose)
 
+def test_compare_vacuum_geo(verbose = False):
+    intraff.setSpace( Cartesian() )
+    intrafunc.setSpace( Cartesian() )
+    
+    if not realcompare:
+        globals()["cnrg_space"] = cnrg_vacuum
+        globals()["ljnrg_space"] = ljnrg_vacuum_geo
+    
+    intraff.setCombiningRules("geometric")
+    intraff01.setCombiningRules("geometric")
+    intrafunc.setCombiningRules( CLJFunction.GEOMETRIC )
+    
+    pvt_compare(verbose)
 
 def test_compare_box(verbose = False):
     intraff.setSpace( space )
@@ -189,6 +210,24 @@ def test_compare_box(verbose = False):
     if not realcompare:
         globals()["cnrg_space"] = cnrg_box
         globals()["ljnrg_space"] = ljnrg_box
+
+    intraff.setCombiningRules("arithmetic")
+    intraff01.setCombiningRules("arithmetic")
+    intrafunc.setCombiningRules( CLJFunction.ARITHMETIC )
+
+    pvt_compare(verbose)
+
+def test_compare_box_geo(verbose = False):
+    intraff.setSpace( space )
+    intrafunc.setSpace( space )
+
+    if not realcompare:
+        globals()["cnrg_space"] = cnrg_box
+        globals()["ljnrg_space"] = ljnrg_box_geo
+
+    intraff.setCombiningRules("geometric")
+    intraff01.setCombiningRules("geometric")
+    intrafunc.setCombiningRules( CLJFunction.GEOMETRIC )
 
     pvt_compare(verbose)
 
@@ -200,6 +239,24 @@ def test_compare_group(verbose = False):
         globals()["cnrg_space"] = cnrg_group
         globals()["ljnrg_space"] = ljnrg_group
 
+    intraff.setCombiningRules("arithmetic")
+    intraff01.setCombiningRules("arithmetic")
+    intrafunc.setCombiningRules( CLJFunction.ARITHMETIC )
+
+    pvt_compare_group(verbose)
+
+def test_compare_group_geo(verbose = False):
+    intraff01.setSpace( Cartesian() )
+    intrafunc.setSpace( Cartesian() )
+
+    if not realcompare:
+        globals()["cnrg_space"] = cnrg_group
+        globals()["ljnrg_space"] = ljnrg_group_geo
+
+    intraff.setCombiningRules("geometric")
+    intraff01.setCombiningRules("geometric")
+    intrafunc.setCombiningRules( CLJFunction.GEOMETRIC )
+
     pvt_compare_group(verbose)
 
 def test_compare_group_box(verbose = False):
@@ -210,10 +267,29 @@ def test_compare_group_box(verbose = False):
         globals()["cnrg_space"] = cnrg_group_box
         globals()["ljnrg_space"] = ljnrg_group_box
 
+    intraff.setCombiningRules("arithmetic")
+    intraff01.setCombiningRules("arithmetic")
+    intrafunc.setCombiningRules( CLJFunction.ARITHMETIC )
+
     pvt_compare_group(verbose)
 
+def test_compare_group_box_geo(verbose = False):
+    intraff01.setSpace( group_space )
+    intrafunc.setSpace( group_space )
+        
+    if not realcompare:
+        globals()["cnrg_space"] = cnrg_group_box
+        globals()["ljnrg_space"] = ljnrg_group_box_geo
+    
+    intraff.setCombiningRules("geometric")
+    intraff01.setCombiningRules("geometric")
+    intrafunc.setCombiningRules( CLJFunction.GEOMETRIC )
+
+    pvt_compare_group(verbose)
 
 if __name__ == "__main__":
+    print("\nArithmetic combining rules")
+
     print("\nIntramolecular vacuum energy")
     test_compare_vacuum(True)
 
@@ -225,3 +301,18 @@ if __name__ == "__main__":
 
     print("\nGroup intramolecular periodic boundaries energy")
     test_compare_group_box(True)
+
+    print("\nGeometric combining rules")
+
+    print("\nIntramolecular vacuum energy")
+    test_compare_vacuum_geo(True)
+
+    print("\nIntramolecular periodic boundaries energy")
+    test_compare_box_geo(True)
+        
+    print("\nGroup intramolecular vacuum energy")
+    test_compare_group_geo(True)
+    
+    print("\nGroup intramolecular periodic boundaries energy")
+    test_compare_group_box_geo(True)
+
