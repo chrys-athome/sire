@@ -7,8 +7,10 @@ from Sire.Vol import *
 from Sire.Maths import *
 from Sire.Qt import *
 
+from nose.tools import assert_almost_equal
+
 coul_cutoff = 15 * angstrom
-lj_cutoff = 15 * angstrom
+lj_cutoff = 10 * angstrom
 
 compare_energies = False
 
@@ -20,7 +22,7 @@ else:
 group0 = MoleculeGroup("group0")
 group1 = MoleculeGroup("group1")
 
-nwaters = 10
+nwaters = 1
 
 for i in range(0,nwaters):
     group0.add( waters[MolIdx(i)] )
@@ -74,6 +76,11 @@ def pvt_compare_group(verbose):
         print("NEW: %s  %s  %s  %s ms" % (new_cnrg+new_ljnrg, new_cnrg, new_ljnrg, 0.000001*new_ns))
         print("BOX: %s  %s  %s  %s ms" % (box_cnrg+box_ljnrg, box_cnrg, box_ljnrg, 0.000001*box_ns))
 
+    assert_almost_equal( new_cnrg, old_cnrg, 2 )
+    assert_almost_equal( new_ljnrg, old_ljnrg, 2 )
+    assert_almost_equal( box_cnrg, old_cnrg, 2 )
+    assert_almost_equal( box_ljnrg, old_ljnrg, 2 )
+
 
 def pvt_compare(verbose):
 
@@ -99,6 +106,12 @@ def pvt_compare(verbose):
         print("OLD: %s  %s  %s  %s ms" % (old_cnrg+old_ljnrg, old_cnrg, old_ljnrg, 0.000001*old_ns))
         print("NEW: %s  %s  %s  %s ms" % (new_cnrg+new_ljnrg, new_cnrg, new_ljnrg, 0.000001*new_ns))
         print("BOX: %s  %s  %s  %s ms" % (box_cnrg+box_ljnrg, box_cnrg, box_ljnrg, 0.000001*box_ns))
+
+    assert_almost_equal( new_cnrg, old_cnrg, 2 )
+    assert_almost_equal( new_ljnrg, old_ljnrg, 2 )
+    assert_almost_equal( box_cnrg, old_cnrg, 2 )
+    assert_almost_equal( box_ljnrg, old_ljnrg, 2 )
+
 
 def test_compare_vacuum(verbose = True):
     cljff.setSpace(Cartesian())
