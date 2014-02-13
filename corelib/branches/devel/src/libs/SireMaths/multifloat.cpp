@@ -635,6 +635,32 @@ const char* MultiFloat::typeName()
     return "SireMaths::MultiFloat";
 }
 
+/** Return the maximum value in the vector */
+float MultiFloat::max() const
+{
+    float m = v.a[0];
+    
+    for (int i=1; i<MultiFloat::count(); ++i)
+    {
+        m = qMax(m, v.a[i]);
+    }
+    
+    return m;
+}
+
+/** Return the minimum value in the vector */
+float MultiFloat::min() const
+{
+    float m = v.a[0];
+    
+    for (int i=1; i<MultiFloat::count(); ++i)
+    {
+        m = qMin(m, v.a[i]);
+    }
+    
+    return m;
+}
+
 QString MultiFloat::toString() const
 {
     QStringList vals;

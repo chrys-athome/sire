@@ -97,6 +97,21 @@ QString CLJBox::toString() const
     return QObject::tr("CLJBox( nAtoms() == %1 )").arg(nAtoms());
 }
 
+/** Combine the atoms of the two passed boxes */
+CLJBox CLJBox::operator+(const CLJBox &other) const
+{
+    if (this->isEmpty())
+        return other;
+    else if (other.isEmpty())
+        return *this;
+    else
+    {
+        CLJBox ret(*this);
+        ret.atms += other.atms;
+        return ret;
+    }
+}
+
 /** Copy assignment operator */
 CLJBox& CLJBox::operator=(const CLJBox &other)
 {
@@ -546,6 +561,41 @@ void CLJBoxes::constructFrom(const CLJAtoms &atoms)
              << (0.000001*ns) << "ms";
 
     qDebug() << "number of boxes ==" << boxed_atoms.count();
+}
+
+/** Add together two boxes - both boxes must have the same box length */
+CLJBoxes CLJBoxes::operator+(const CLJBoxes &other) const
+{
+    if (box_length != other.box_length)
+    {
+        throw SireError::incompatible_error( QObject::tr(
+                "You cannot add together two CLJBoxes objects that have different "
+                "box lengths (%1 A vs. %2 A)")
+                    .arg(box_length).arg(other.box_length), CODELOC );
+    }
+    
+    if (this->isEmpty())
+        return other;
+    else if (other.isEmpty())
+        return *this;
+    
+    CLJBoxes ret(*this);
+    
+    for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = other.bxs.constBegin();
+         it != other.bxs.constEnd();
+         ++it)
+    {
+        if (ret.bxs.contains(it.key()))
+        {
+            ret.bxs[it.key()] = new CLJBox(bxs[it.key()].read() + it.value().read());
+        }
+        else
+        {
+            ret.bxs.insert( it.key(), it.value() );
+        }
+    }
+    
+    return ret;
 }
 
 /** Box up the passed set of atoms into boxes of the default box size

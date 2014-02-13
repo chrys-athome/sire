@@ -66,6 +66,8 @@ QDataStream& operator>>(QDataStream&, SireMM::CLJSoftFunction&);
 namespace SireMM
 {
 
+class GridInfo;
+
 using SireUnits::Dimension::Length;
 
 using SireMol::Connectivity;
@@ -113,6 +115,8 @@ public:
     boost::tuple<double,double> calculate(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                                           float min_distance=0) const;
 
+    QVector<float> calculate(const CLJAtoms &atoms, const GridInfo &gridinfo) const;
+
     void total(const CLJAtoms &atoms,
                double &cnrg, double &ljnrg) const;
     
@@ -129,6 +133,8 @@ public:
               float min_distance=0) const;
 
     virtual CLJFunction* clone() const=0;
+
+    virtual bool supportsGridCalculation() const;
 
     virtual bool hasCutoff() const;
     
@@ -161,6 +167,12 @@ protected:
     CLJFunction& operator=(const CLJFunction &other);
     
     bool operator==(const CLJFunction &other) const;
+
+    virtual void calcVacGrid(const CLJAtoms &atoms, const GridInfo &gridinfo,
+                             QVector<double> &potential) const;
+    
+    virtual void calcBoxGrid(const CLJAtoms &atoms, const GridInfo &gridinfo,
+                             QVector<double> &potential) const;
 
     virtual void calcVacEnergyAri(const CLJAtoms &atoms,
                                   double &cnrg, double &ljnrg) const=0;

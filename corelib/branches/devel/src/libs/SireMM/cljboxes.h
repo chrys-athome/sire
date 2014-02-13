@@ -97,8 +97,12 @@ public:
     bool operator==(const CLJBox &other) const;
     bool operator!=(const CLJBox &other) const;
     
+    CLJBox operator+(const CLJBox &other) const;
+    
     static const char* typeName();
     const char* what() const;
+    
+    bool isEmpty() const;
     
     QString toString() const;
     
@@ -277,11 +281,15 @@ public:
     bool operator==(const CLJBoxes &other) const;
     bool operator!=(const CLJBoxes &other) const;
 
+    CLJBoxes operator+(const CLJBoxes &other) const;
+
     static const char* typeName();
 
     const char* what() const;
     
     QString toString() const;
+    
+    bool isEmpty() const;
     
     QVector<CLJBoxIndex> occupiedBoxIndicies() const;
     
@@ -426,6 +434,18 @@ inline const CLJBoxIndex& CLJBoxDistance::box1() const
 inline float CLJBoxDistance::distance() const
 {
     return dist;
+}
+
+/** Return whether or not this is empty (contains no atoms) */
+inline bool CLJBoxes::isEmpty() const
+{
+    return bxs.isEmpty();
+}
+
+/** Return whether or not the passed box is empty */
+inline bool CLJBox::isEmpty() const
+{
+    return atms.isEmpty();
 }
 
 #endif // SIRE_SKIP_INLINE_FUNCTIONS

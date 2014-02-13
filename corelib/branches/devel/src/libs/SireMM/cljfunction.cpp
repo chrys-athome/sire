@@ -29,6 +29,7 @@
 #include <QElapsedTimer>
 
 #include "cljfunction.h"
+#include "gridinfo.h"
 
 #include "SireMaths/multidouble.h"
 
@@ -308,6 +309,61 @@ bool CLJFunction::usingArithmeticCombiningRules() const
 bool CLJFunction::usingGeometricCombiningRules() const
 {
     return not use_arithmetic;
+}
+
+/** Return whether or not this function supports calculating potentials on grids */
+bool CLJFunction::supportsGridCalculation() const
+{
+    return false;
+}
+
+/** Dummy function that needs to be overridden to support grid calculations */
+void CLJFunction::calcBoxGrid(const CLJAtoms &atoms, const GridInfo &gridinfo,
+                              QVector<double> &gridpot) const
+{
+    return;
+}
+
+/** Dummy function that needs to be overridden to support grid calculations */
+void CLJFunction::calcVacGrid(const CLJAtoms &atoms, const GridInfo &gridinfo,
+                              QVector<double> &gridpot) const
+{
+    return;
+}
+
+/** Return the potential on the described grid of the passed atoms using
+    this function. This returns an empty grid if this function doesn't support
+    grid calculations */
+QVector<float> CLJFunction::calculate(const CLJAtoms &atoms, const GridInfo &gridinfo) const
+{
+    QVector<float> gridpot;
+    
+    if (this->supportsGridCalculation() and not gridinfo.isEmpty())
+    {
+        QVector<double> dgridpot( gridinfo.nPoints(), 0.0 );
+        
+        if (this->isPeriodic())
+        {
+            this->calcBoxGrid(atoms, gridinfo, dgridpot);
+        }
+        else
+        {
+            this->calcVacGrid(atoms, gridinfo, dgridpot);
+        }
+        
+        gridpot = QVector<float>(dgridpot.count());
+        gridpot.squeeze();
+        
+        float *g = gridpot.data();
+        const double *dg = dgridpot.constData();
+        
+        for (int i=0; i<gridpot.count(); ++i)
+        {
+            g[i] = dg[i];
+        }
+    }
+    
+    return gridpot;
 }
 
 /** Calculate the coulomb energy between all atoms in 'atoms' */

@@ -134,6 +134,8 @@ public:
 
     double minimumDistance(const AABox &box0, const AABox &box1) const;
 
+    double minimumDistance(const Vector &p, const AABox &box) const;
+
     Vector getRandomPoint(const Vector &center, const RanGenerator &generator) const;
 
 	Vector getBoxCenter(const Vector &p) const;

@@ -223,6 +223,9 @@ public:
     MultiFloat max(const MultiFloat &other) const;
     MultiFloat min(const MultiFloat &other) const;
     
+    float max() const;
+    float min() const;
+    
     MultiFloat reciprocal() const;
     MultiFloat reciprocal_approx() const;
     MultiFloat reciprocal_approx_nr() const;
