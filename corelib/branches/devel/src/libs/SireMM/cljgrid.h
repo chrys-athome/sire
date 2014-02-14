@@ -33,9 +33,13 @@
 #include "cljatoms.h"
 #include "cljboxes.h"
 
+#include "gridinfo.h"
+
 #include "SireVol/aabox.h"
 
 #include <boost/shared_ptr.hpp>
+
+SIRE_BEGIN_HEADER
 
 namespace SireMM
 {
@@ -66,8 +70,10 @@ public:
     CLJGrid();
     CLJGrid(const AABox &grid_dimensions);
     CLJGrid(const AABox &grid_dimensions, Length grid_spacing);
+    CLJGrid(const GridInfo &grid);
     CLJGrid(const CLJFunction &cljfunc, const AABox &grid_dimensions);
     CLJGrid(const CLJFunction &cljfunc, const AABox &grid_dimensions, Length grid_spacing);
+    CLJGrid(const CLJFunction &cljfunc, const GridInfo &grid);
     
     CLJGrid(const CLJGrid &other);
     
@@ -111,8 +117,12 @@ public:
     void setGridDimensions(const CLJAtoms &atoms);
     void setGridDimensions(const CLJAtoms &atoms, Length grid_spacing);
     void setGridDimensions(const CLJAtoms &atoms, Length grid_spacing, Length buffer);
-    
+
     AABox gridDimensions() const;
+    
+    void setGrid(const GridInfo &grid);
+
+    GridInfo grid() const;
     
     void total(const CLJAtoms &atoms, double &cnrg, double &ljnrg) const;
     
@@ -125,11 +135,8 @@ private:
     void clearGrid();
     void calculateGrid();
 
-    /** The dimensions of the grid */
-    AABox grid_box;
-    
-    /** The grid spacing */
-    float grid_spacing;
+    /** Description of the grid */
+    GridInfo grid_info;
     
     /** The buffer used when building the grid */
     float grid_buffer;
@@ -138,7 +145,7 @@ private:
     QVector<float> grid_pots;
     
     /** The CLJFunction used to calculate the potential */
-    boost::shared_ptr<CLJFunction> cljfunc;
+    SireBase::PropPtr<CLJFunction> cljfunc;
     
     /** The atoms whose potentials are contained in the grid */
     CLJBoxes cljboxes;
@@ -146,9 +153,6 @@ private:
     /** The atoms from cljboxes that are within the LJ cutoff of any
         of the grid points */
     CLJBoxes close_atoms;
-    
-    /** The number of grid points along x, y and z */
-    quint32 dimx, dimy, dimz;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -166,5 +170,7 @@ inline bool CLJGrid::isEmpty() const
 Q_DECLARE_METATYPE( SireMM::CLJGrid )
 
 SIRE_EXPOSE_CLASS( SireMM::CLJGrid )
+
+SIRE_END_HEADER
 
 #endif
