@@ -124,16 +124,30 @@ public:
 
     GridInfo grid() const;
     
+    void setUseGrid(bool on);
+    
+    void enableGrid();
+    void disableGrid();
+    
+    bool usesGrid() const;
+    bool functionSupportsGrid() const;
+    
     void total(const CLJAtoms &atoms, double &cnrg, double &ljnrg) const;
+    void total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const;
     
     boost::tuple<double,double> calculate(const CLJAtoms &atoms) const;
+    boost::tuple<double,double> calculate(const CLJBoxes &atoms) const;
     
     double coulomb(const CLJAtoms &atoms) const;
+    double coulomb(const CLJBoxes &atoms) const;
+    
     double lj(const CLJAtoms &atoms) const;
+    double lj(const CLJBoxes &atoms) const;
     
 private:
     void clearGrid();
     void calculateGrid();
+    void checkIfGridSupported();
 
     /** Description of the grid */
     GridInfo grid_info;
@@ -153,6 +167,12 @@ private:
     /** The atoms from cljboxes that are within the LJ cutoff of any
         of the grid points */
     CLJBoxes close_atoms;
+    
+    /** Whether or not to use a grid */
+    bool use_grid;
+    
+    /** Whether or not the CLJFunction supports use of a grid */
+    bool cljfunc_supports_grid;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS

@@ -262,7 +262,7 @@ inline int GridInfo::size() const
 }
 
 /** Return whether or not this grid is empty */
-bool GridInfo::isEmpty() const
+inline bool GridInfo::isEmpty() const
 {
     return dimx == 0;
 }

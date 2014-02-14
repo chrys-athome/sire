@@ -38,6 +38,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QMutex>
+
 using namespace SireMM;
 using namespace SireVol;
 using namespace SireMaths;
@@ -54,7 +56,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJGrid &grid)
     
     sds << grid.grid_info << grid.grid_buffer
         << grid.cljfunc << grid.grid_pots << grid.cljboxes
-        << grid.close_atoms;
+        << grid.close_atoms << grid.use_grid;
     
     return ds;
 }
@@ -69,7 +71,9 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJGrid &grid)
         
         sds >> grid.grid_info >> grid.grid_buffer
             >> grid.cljfunc >> grid.grid_pots >> grid.cljboxes
-            >> grid.close_atoms;
+            >> grid.close_atoms >> grid.use_grid;
+        
+        grid.checkIfGridSupported();
         
         if (grid.grid_info.nPoints() != grid.grid_pots.count())
         {
@@ -93,59 +97,78 @@ static SireBase::PropPtr<CLJFunction> global_func( new CLJShiftFunction() );
 static const Length global_grid_buffer = 2 * angstrom;
 static const Length global_grid_spacing = 1 * angstrom;
 
+/** Internal function used to check and then cache whether or
+    not the CLJFunction supports a grid */
+void CLJGrid::checkIfGridSupported()
+{
+    cljfunc_supports_grid = cljfunc.read().supportsGridCalculation() and
+                            (not cljfunc.read().isPeriodic()) and
+                            cljfunc.read().hasCutoff() and
+       cljfunc.read().coulombCutoff().value() > (cljfunc.read().ljCutoff().value() + 5);
+}
+
 /** Constructor */
-CLJGrid::CLJGrid() : grid_buffer(global_grid_buffer), cljfunc(global_func)
-{}
+CLJGrid::CLJGrid() : grid_buffer(global_grid_buffer), cljfunc(global_func), use_grid(true)
+{
+    checkIfGridSupported();
+}
 
 /** Construct, specifying the dimensions of the grid */
 CLJGrid::CLJGrid(const AABox &grid_dimensions)
-        : grid_buffer(global_grid_buffer), cljfunc(global_func)
+        : grid_buffer(global_grid_buffer), cljfunc(global_func), use_grid(true)
 {
     setGrid( GridInfo(grid_dimensions, global_grid_spacing) );
+    checkIfGridSupported();
 }
 
 /** Construct, specifying the dimensions and spacing for the grid */
 CLJGrid::CLJGrid(const AABox &grid_dimensions, Length spacing)
-        : grid_buffer(global_grid_buffer), cljfunc(global_func)
+        : grid_buffer(global_grid_buffer), cljfunc(global_func), use_grid(true)
 {
     setGrid( GridInfo(grid_dimensions,spacing) );
+    checkIfGridSupported();
 }
 
 /** Construct, specifying the grid */
 CLJGrid::CLJGrid(const GridInfo &grid)
-        : grid_buffer(global_grid_buffer), cljfunc(global_func)
+        : grid_buffer(global_grid_buffer), cljfunc(global_func), use_grid(true)
 {
     setGrid(grid);
+    checkIfGridSupported();
 }
 
 /** Construct, specifying the function to use to calculate the energy and 
     the grid dimensions */
 CLJGrid::CLJGrid(const CLJFunction &func, const AABox &grid_dimensions)
-        : grid_buffer(global_grid_buffer), cljfunc(func)
+        : grid_buffer(global_grid_buffer), cljfunc(func), use_grid(true)
 {
     setGrid( GridInfo(grid_dimensions,global_grid_spacing) );
+    checkIfGridSupported();
 }
 
 /** Construct, specifying the function to use to calculate the energy and
     the grid dimensions and grid spacing */
 CLJGrid::CLJGrid(const CLJFunction &func, const AABox &grid_dimensions, Length spacing)
-        : grid_buffer(global_grid_buffer), cljfunc(func)
+        : grid_buffer(global_grid_buffer), cljfunc(func), use_grid(true)
 {
     setGrid( GridInfo(grid_dimensions,spacing) );
+    checkIfGridSupported();
 }
 
 /** Construct, specifying the grid and the energy function */
 CLJGrid::CLJGrid(const CLJFunction &func, const GridInfo &grid)
-        : grid_buffer(global_grid_buffer), cljfunc(func)
+        : grid_buffer(global_grid_buffer), cljfunc(func), use_grid(true)
 {
     setGrid(grid);
+    checkIfGridSupported();
 }
 
 /** Copy constructor */
 CLJGrid::CLJGrid(const CLJGrid &other)
         : grid_info(other.grid_info),
           grid_buffer(other.grid_buffer), grid_pots(other.grid_pots),
-          cljfunc(other.cljfunc), cljboxes(other.cljboxes), close_atoms(other.close_atoms)
+          cljfunc(other.cljfunc), cljboxes(other.cljboxes), close_atoms(other.close_atoms),
+          use_grid(other.use_grid), cljfunc_supports_grid(other.cljfunc_supports_grid)
 {}
 
 /** Destructor */
@@ -163,6 +186,8 @@ CLJGrid& CLJGrid::operator=(const CLJGrid &other)
         cljfunc = other.cljfunc;
         cljboxes = other.cljboxes;
         close_atoms = other.close_atoms;
+        use_grid = other.use_grid;
+        cljfunc_supports_grid = other.cljfunc_supports_grid;
     }
     
     return *this;
@@ -249,6 +274,7 @@ CLJAtoms CLJGrid::fixedAtoms() const
 void CLJGrid::setCLJFunction(const CLJFunction &function)
 {
     cljfunc = function;
+    checkIfGridSupported();
     clearGrid();
 }
 
@@ -380,6 +406,48 @@ GridInfo CLJGrid::grid() const
     return grid_info;
 }
 
+/** Switch on or off the use of a grid - note that the grid may
+    still be disabled if the CLJFunction is not compatible with
+    use of a grid */
+void CLJGrid::setUseGrid(bool on)
+{
+    use_grid = on;
+    
+    if (not use_grid)
+        clearGrid();
+}
+
+/** Enable used of the grid - note that the grid may
+    still be disabled if the CLJFunction is not compatible with
+    use of a grid */
+void CLJGrid::enableGrid()
+{
+    use_grid = true;
+}
+
+/** Disable use of the grid */
+void CLJGrid::disableGrid()
+{
+    use_grid = false;
+    clearGrid();
+}
+
+/** Return whether or not the grid will be used in the calculation */
+bool CLJGrid::usesGrid() const
+{
+    return use_grid and cljfunc_supports_grid;
+}
+
+/** Return whether or not the CLJFunction supports use of the grid.
+    To support a grid, the function must intrinsically support the grid,
+    and the coulomb cutoff must be much greater than the LJ cutoff */
+bool CLJGrid::functionSupportsGrid() const
+{
+    return cljfunc_supports_grid;
+}
+
+static QMutex const_update_mutex;
+
 /** Function called to calculate the potential grid. Note that this is called by 
     a const function, so we must be thread-safe when we update the potential */
 void CLJGrid::calculateGrid()
@@ -428,32 +496,33 @@ void CLJGrid::calculateGrid()
     }
     
     //now, go through any far atoms and add their potentials to the grid
-    //QVector<float> pot = cljfunc->calculate(far_atoms,
+    QVector<float> pot = cljfunc.read().calculate(far_atoms, grid_info);
+    
+    //update the object - note that because this is called from a const function
+    //we have to be doubly sure that this has not been called twice from two
+    //different threads.
+    QMutexLocker lkr(&const_update_mutex);
+    
+    if (grid_pots.isEmpty())
+    {
+        grid_pots = pot;
+        close_atoms = CLJBoxes(near_atoms);
+    }
 }
 
 /** Calculate the total energy of interaction between the passed atoms and
     all of the atoms added to the grid */
-void CLJGrid::total(const CLJAtoms &atms, double &cnrg, double &ljnrg) const
+void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
 {
     cnrg = 0;
     ljnrg = 0;
     
-    if (cljboxes.isEmpty() or atms.isEmpty())
+    if (cljboxes.isEmpty() or atoms.isEmpty())
         return;
     
     CLJCalculator cljcalc;
-    CLJBoxes atoms(atms);
     
-    if (not cljfunc->hasCutoff() or cljfunc->isPeriodic() or
-        (cljfunc->coulombCutoff().value() < cljfunc->ljCutoff().value() + 5))
-    {
-        //do not use a grid
-        tuple<double,double> nrgs = cljcalc.calculate(cljfunc.read(), atoms, cljboxes);
-        
-        cnrg = nrgs.get<0>();
-        ljnrg = nrgs.get<1>();
-    }
-    else
+    if (use_grid and cljfunc_supports_grid)
     {
         //there is a big enough difference between the coulomb and LJ cutoffs that
         //a grid is worthwhile
@@ -471,105 +540,115 @@ void CLJGrid::total(const CLJAtoms &atms, double &cnrg, double &ljnrg) const
 
         double grid_nrg = 0;
 
-        const MultiFloat *x = atms.x().constData();
-        const MultiFloat *y = atms.y().constData();
-        const MultiFloat *z = atms.z().constData();
-        const MultiFloat *q = atms.q().constData();
-        
-        const int nats = atms.x().count();
-
-        const float grid_spacing = grid_info.spacing().value();
-        const MultiFloat inv_grid_spacing( 1.0 / grid_spacing );
-        const MultiFloat grid_ox( grid_info.dimensions().minCoords().x() );
-        const MultiFloat grid_oy( grid_info.dimensions().minCoords().y() );
-        const MultiFloat grid_oz( grid_info.dimensions().minCoords().z() );
-
-        const qint32 dimx_minus_1 = grid_info.dimX() - 1;
-        const qint32 dimy_minus_1 = grid_info.dimY() - 1;
-        const qint32 dimz_minus_1 = grid_info.dimZ() - 1;
-
-        MultiFloat gx, gy, gz;
-
         bool all_within_grid = true;
 
-        for (int i=0; i<nats; ++i)
+        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = atoms.occupiedBoxes().constBegin();
+             it != atoms.occupiedBoxes().constEnd();
+             ++it)
         {
-            gx = grid_ox - x[i];
-            gy = grid_oy - y[i];
-            gz = grid_oz - z[i];
-            
-            gx *= inv_grid_spacing;
-            gy *= inv_grid_spacing;
-            gz *= inv_grid_spacing;
+            const CLJAtoms &atms = it.value().read().atoms();
         
-            for (int ii=0; ii<MultiFloat::count(); ++ii)
-            {
-                int i_0 = int(gx[ii]);
-                int j_0 = int(gy[ii]);
-                int k_0 = int(gz[ii]);
+            const MultiFloat *x = atms.x().constData();
+            const MultiFloat *y = atms.y().constData();
+            const MultiFloat *z = atms.z().constData();
+            const MultiFloat *q = atms.q().constData();
             
-                if (i_0 < 0 or i_0 >= dimx_minus_1 or
-                    j_0 < 0 or j_0 >= dimy_minus_1 or
-                    k_0 < 0 or k_0 >= dimz_minus_1)
-                {
-                    Vector p( x[i][ii], y[i][ii], z[i][ii] );
-                
-                    qDebug() << "POINT" << p.toString() << "LIES OUTSIDE OF "
-                             << "THE GRID?" << grid_info.toString();
-                    
-                    all_within_grid = false;
-                    break;
-                }
-                else
-                {
-                    //use tri-linear interpolation to get the potential at the atom
-                    //
-                    // This is described in 
-                    //
-                    // Davis, Madura and McCammon, Comp. Phys. Comm., 62, 187-197, 1991
-                    //
-                    // phi(x,y,z) = phi(i  ,j  ,k  )*(1-R)(1-S)(1-T) +
-                    //              phi(i+1,j  ,k  )*(  R)(1-S)(1-T) +
-                    //              phi(i  ,j+1,k  )*(1-R)(  S)(1-T) +
-                    //              phi(i  ,j  ,k+1)*(1-R)(1-S)(  T) +
-                    //              phi(i+1,j+1,k  )*(  R)(  S)(1-T) +
-                    //              phi(i+1,j  ,k+1)*(  R)(1-S)(  T) +
-                    //              phi(i  ,j+1,k+1)*(1-R)(  S)(  T) +
-                    //              phi(i+1,j+1,k+1)*(  R)(  S)(  T) +
-                    //
-                    // where R, S and T are the coordinates of the atom in 
-                    // fractional grid coordinates from the point (i,j,k), e.g.
-                    // (0,0,0) is (i,j,k) and (1,1,1) is (i+1,j+1,k+1)
-                    //
-                    const Vector c000 = grid_info.dimensions().minCoords() +
-                                            Vector( i_0 * grid_spacing,
-                                                    j_0 * grid_spacing,
-                                                    k_0 * grid_spacing );
+            const int nats = atms.x().count();
 
-                    const double R = (x[i][ii] - c000.x()) / grid_spacing;
-                    const double S = (y[i][ii] - c000.y()) / grid_spacing;
-                    const double T = (z[i][ii] - c000.z()) / grid_spacing;
+            const float grid_spacing = grid_info.spacing().value();
+            const MultiFloat inv_grid_spacing( 1.0 / grid_spacing );
+            const MultiFloat grid_ox( grid_info.dimensions().minCoords().x() );
+            const MultiFloat grid_oy( grid_info.dimensions().minCoords().y() );
+            const MultiFloat grid_oz( grid_info.dimensions().minCoords().z() );
+
+            const qint32 dimx_minus_1 = grid_info.dimX() - 1;
+            const qint32 dimy_minus_1 = grid_info.dimY() - 1;
+            const qint32 dimz_minus_1 = grid_info.dimZ() - 1;
+
+            MultiFloat gx, gy, gz;
+
+            for (int i=0; i<nats; ++i)
+            {
+                gx = grid_ox - x[i];
+                gy = grid_oy - y[i];
+                gz = grid_oz - z[i];
+                
+                gx *= inv_grid_spacing;
+                gy *= inv_grid_spacing;
+                gz *= inv_grid_spacing;
+            
+                for (int ii=0; ii<MultiFloat::count(); ++ii)
+                {
+                    int i_0 = int(gx[ii]);
+                    int j_0 = int(gy[ii]);
+                    int k_0 = int(gz[ii]);
+                
+                    if (i_0 < 0 or i_0 >= dimx_minus_1 or
+                        j_0 < 0 or j_0 >= dimy_minus_1 or
+                        k_0 < 0 or k_0 >= dimz_minus_1)
+                    {
+                        Vector p( x[i][ii], y[i][ii], z[i][ii] );
                     
-                    int i000 = grid_info.gridToArrayIndex(i_0  , j_0  , k_0  );
-                    int i001 = grid_info.gridToArrayIndex(i_0  , j_0  , k_0+1);
-                    int i010 = grid_info.gridToArrayIndex(i_0  , j_0+1, k_0  );
-                    int i100 = grid_info.gridToArrayIndex(i_0+1, j_0  , k_0  );
-                    int i011 = grid_info.gridToArrayIndex(i_0  , j_0+1, k_0+1);
-                    int i101 = grid_info.gridToArrayIndex(i_0+1, j_0  , k_0+1);
-                    int i110 = grid_info.gridToArrayIndex(i_0+1, j_0+1, k_0  );
-                    int i111 = grid_info.gridToArrayIndex(i_0+1, j_0+1, k_0+1);
-                    
-                    double phi = (gridpot_array[i000] * (1-R)*(1-S)*(1-T)) + 
-                                 (gridpot_array[i001] * (1-R)*(1-S)*(  T)) +
-                                 (gridpot_array[i010] * (1-R)*(  S)*(1-T)) +
-                                 (gridpot_array[i100] * (  R)*(1-S)*(1-T)) +
-                                 (gridpot_array[i011] * (1-R)*(  S)*(  T)) +
-                                 (gridpot_array[i101] * (  R)*(1-S)*(  T)) +
-                                 (gridpot_array[i110] * (  R)*(  S)*(1-T)) +
-                                 (gridpot_array[i111] * (  R)*(  S)*(  T));                         
-                                      
-                    grid_nrg += phi * q[i][ii];
+                        qDebug() << "POINT" << p.toString() << "LIES OUTSIDE OF "
+                                 << "THE GRID?" << grid_info.toString();
+                        
+                        all_within_grid = false;
+                        break;
+                    }
+                    else
+                    {
+                        //use tri-linear interpolation to get the potential at the atom
+                        //
+                        // This is described in 
+                        //
+                        // Davis, Madura and McCammon, Comp. Phys. Comm., 62, 187-197, 1991
+                        //
+                        // phi(x,y,z) = phi(i  ,j  ,k  )*(1-R)(1-S)(1-T) +
+                        //              phi(i+1,j  ,k  )*(  R)(1-S)(1-T) +
+                        //              phi(i  ,j+1,k  )*(1-R)(  S)(1-T) +
+                        //              phi(i  ,j  ,k+1)*(1-R)(1-S)(  T) +
+                        //              phi(i+1,j+1,k  )*(  R)(  S)(1-T) +
+                        //              phi(i+1,j  ,k+1)*(  R)(1-S)(  T) +
+                        //              phi(i  ,j+1,k+1)*(1-R)(  S)(  T) +
+                        //              phi(i+1,j+1,k+1)*(  R)(  S)(  T) +
+                        //
+                        // where R, S and T are the coordinates of the atom in 
+                        // fractional grid coordinates from the point (i,j,k), e.g.
+                        // (0,0,0) is (i,j,k) and (1,1,1) is (i+1,j+1,k+1)
+                        //
+                        const Vector c000 = grid_info.dimensions().minCoords() +
+                                                Vector( i_0 * grid_spacing,
+                                                        j_0 * grid_spacing,
+                                                        k_0 * grid_spacing );
+
+                        const double R = (x[i][ii] - c000.x()) / grid_spacing;
+                        const double S = (y[i][ii] - c000.y()) / grid_spacing;
+                        const double T = (z[i][ii] - c000.z()) / grid_spacing;
+                        
+                        int i000 = grid_info.gridToArrayIndex(i_0  , j_0  , k_0  );
+                        int i001 = grid_info.gridToArrayIndex(i_0  , j_0  , k_0+1);
+                        int i010 = grid_info.gridToArrayIndex(i_0  , j_0+1, k_0  );
+                        int i100 = grid_info.gridToArrayIndex(i_0+1, j_0  , k_0  );
+                        int i011 = grid_info.gridToArrayIndex(i_0  , j_0+1, k_0+1);
+                        int i101 = grid_info.gridToArrayIndex(i_0+1, j_0  , k_0+1);
+                        int i110 = grid_info.gridToArrayIndex(i_0+1, j_0+1, k_0  );
+                        int i111 = grid_info.gridToArrayIndex(i_0+1, j_0+1, k_0+1);
+                        
+                        double phi = (gridpot_array[i000] * (1-R)*(1-S)*(1-T)) + 
+                                     (gridpot_array[i001] * (1-R)*(1-S)*(  T)) +
+                                     (gridpot_array[i010] * (1-R)*(  S)*(1-T)) +
+                                     (gridpot_array[i100] * (  R)*(1-S)*(1-T)) +
+                                     (gridpot_array[i011] * (1-R)*(  S)*(  T)) +
+                                     (gridpot_array[i101] * (  R)*(1-S)*(  T)) +
+                                     (gridpot_array[i110] * (  R)*(  S)*(1-T)) +
+                                     (gridpot_array[i111] * (  R)*(  S)*(  T));                         
+                                          
+                        grid_nrg += phi * q[i][ii];
+                    }
                 }
+                
+                if (not all_within_grid)
+                    break;
             }
             
             if (not all_within_grid)
@@ -580,21 +659,38 @@ void CLJGrid::total(const CLJAtoms &atms, double &cnrg, double &ljnrg) const
         {
             cnrg = nrgs.get<0>() + grid_nrg;
             ljnrg = nrgs.get<1>();
-        }
-        else
-        {
-            //some atoms were outside the grid. It is easier to just recalculate everything
-            //from scratch then to try and recalculate the grid
-            nrgs = cljcalc.calculate(cljfunc.read(), atoms, cljboxes);
-            cnrg = nrgs.get<0>();
-            ljnrg = nrgs.get<1>();
+            return;
         }
     }
+    
+    //either the grid is not used or something went wrong with the grid calculation
+    //do not use a grid
+    tuple<double,double> nrgs = cljcalc.calculate(cljfunc.read(), atoms, cljboxes);
+        
+    cnrg = nrgs.get<0>();
+    ljnrg = nrgs.get<1>();
+}
+
+/** Calculate the total energy of interaction between the passed atoms and
+    all of the atoms added to the grid */
+void CLJGrid::total(const CLJAtoms &atoms, double &cnrg, double &ljnrg) const
+{
+    CLJBoxes boxes(atoms);
+    this->total(boxes, cnrg, ljnrg);
 }
 
 /** Return the coulomb and LJ energies of the passed atoms with the fixed
     atoms added to this grid */
 boost::tuple<double,double> CLJGrid::calculate(const CLJAtoms &atoms) const
+{
+    double cnrg, ljnrg;
+    this->total(atoms, cnrg, ljnrg);
+    return boost::tuple<double,double>(cnrg,ljnrg);
+}
+
+/** Return the coulomb and LJ energies of the passed atoms with the fixed
+    atoms added to this grid */
+boost::tuple<double,double> CLJGrid::calculate(const CLJBoxes &atoms) const
 {
     double cnrg, ljnrg;
     this->total(atoms, cnrg, ljnrg);
@@ -610,9 +706,27 @@ double CLJGrid::coulomb(const CLJAtoms &atoms) const
     return cnrg;
 }
 
+/** Return the coulomb energy of the passed atoms interacting with 
+    the fixed atoms on this grid */
+double CLJGrid::coulomb(const CLJBoxes &atoms) const
+{
+    double cnrg, ljnrg;
+    this->total(atoms, cnrg, ljnrg);
+    return cnrg;
+}
+
 /** Return the LJ energy of the passed atoms interacting with
     the fixed atoms on this grid */
 double CLJGrid::lj(const CLJAtoms &atoms) const
+{
+    double cnrg, ljnrg;
+    this->total(atoms, cnrg, ljnrg);
+    return ljnrg;
+}
+
+/** Return the LJ energy of the passed atoms interacting with
+    the fixed atoms on this grid */
+double CLJGrid::lj(const CLJBoxes &atoms) const
 {
     double cnrg, ljnrg;
     this->total(atoms, cnrg, ljnrg);
