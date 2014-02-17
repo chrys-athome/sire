@@ -17,6 +17,8 @@ namespace bp = boost::python;
 
 #include "SireVol/aabox.h"
 
+#include "SireVol/periodicbox.h"
+
 #include "SireVol/space.h"
 
 #include "cljboxes.h"
@@ -160,6 +162,16 @@ void register_CLJBoxes_class(){
                 , ( bp::arg("space"), bp::arg("boxes0"), bp::arg("boxes1"), bp::arg("cutoff") ) );
         
         }
+        { //::SireMM::CLJBoxes::isEmpty
+        
+            typedef bool ( ::SireMM::CLJBoxes::*isEmpty_function_type )(  ) const;
+            isEmpty_function_type isEmpty_function_value( &::SireMM::CLJBoxes::isEmpty );
+            
+            CLJBoxes_exposer.def( 
+                "isEmpty"
+                , isEmpty_function_value );
+        
+        }
         { //::SireMM::CLJBoxes::length
         
             typedef ::SireUnits::Dimension::Length ( ::SireMM::CLJBoxes::*length_function_type )(  ) const;
@@ -212,6 +224,7 @@ void register_CLJBoxes_class(){
         
         }
         CLJBoxes_exposer.def( bp::self != bp::self );
+        CLJBoxes_exposer.def( bp::self + bp::self );
         { //::SireMM::CLJBoxes::operator=
         
             typedef ::SireMM::CLJBoxes & ( ::SireMM::CLJBoxes::*assign_function_type )( ::SireMM::CLJBoxes const & ) ;

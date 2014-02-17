@@ -61,6 +61,8 @@
 
 #include "CLJFunction.pypp.hpp"
 
+#include "CLJGrid.pypp.hpp"
+
 #include "CLJIntraFunction.pypp.hpp"
 
 #include "CLJIntraShiftFunction.pypp.hpp"
@@ -124,6 +126,10 @@
 #include "GridFF.pypp.hpp"
 
 #include "GridFF2.pypp.hpp"
+
+#include "GridIndex.pypp.hpp"
+
+#include "GridInfo.pypp.hpp"
 
 #include "GroupInternalParameters.pypp.hpp"
 
@@ -464,6 +470,8 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_CLJCutoffFunction_class();
 
+    register_CLJGrid_class();
+
     register_CLJIntraFunction_class();
 
     register_CLJIntraShiftFunction_class();
@@ -515,6 +523,10 @@ BOOST_PYTHON_MODULE(_MM){
     register_GridFF_class();
 
     register_GridFF2_class();
+
+    register_GridIndex_class();
+
+    register_GridInfo_class();
 
     register_GroupInternalParameters_class();
 

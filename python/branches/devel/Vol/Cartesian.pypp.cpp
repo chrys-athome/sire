@@ -414,6 +414,17 @@ void register_Cartesian_class(){
                 , ( bp::arg("box0"), bp::arg("box1") ) );
         
         }
+        { //::SireVol::Cartesian::minimumDistance
+        
+            typedef double ( ::SireVol::Cartesian::*minimumDistance_function_type )( ::SireMaths::Vector const &,::SireVol::AABox const & ) const;
+            minimumDistance_function_type minimumDistance_function_value( &::SireVol::Cartesian::minimumDistance );
+            
+            Cartesian_exposer.def( 
+                "minimumDistance"
+                , minimumDistance_function_value
+                , ( bp::arg("p"), bp::arg("box") ) );
+        
+        }
         Cartesian_exposer.def( bp::self != bp::self );
         { //::SireVol::Cartesian::operator=
         

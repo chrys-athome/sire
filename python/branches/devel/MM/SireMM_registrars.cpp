@@ -19,11 +19,13 @@
 #include "intrasoftcljff.h"
 #include "switchingfunction.h"
 #include "threeatomfunctions.h"
+#include "cljparam.h"
 #include "cljcomponent.h"
 #include "atomljs.h"
 #include "distancerestraint.h"
 #include "fouratomfunctions.h"
 #include "cljcalculator.h"
+#include "cljgrid.h"
 #include "intracljff.h"
 #include "internalparameters.h"
 #include "internalcomponent.h"
@@ -37,7 +39,7 @@
 #include "twoatomfunctions.h"
 #include "intracoulombff.h"
 #include "internalff.h"
-#include "cljparam.h"
+#include "gridinfo.h"
 #include "restraint.h"
 #include "gridff2.h"
 
@@ -84,6 +86,8 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::HarmonicSwitchingFunction >();
     ObjectRegistry::registerConverterFor< SireMM::CHARMMSwitchingFunction >();
     ObjectRegistry::registerConverterFor< SireMM::ThreeAtomFunctions >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJParams >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJParamsArray >();
     ObjectRegistry::registerConverterFor< SireMM::CoulombComponent >();
     ObjectRegistry::registerConverterFor< SireMM::LJComponent >();
     ObjectRegistry::registerConverterFor< SireMM::CLJComponent >();
@@ -94,6 +98,7 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::HarmonicDistanceForceConstant >();
     ObjectRegistry::registerConverterFor< SireMM::FourAtomFunctions >();
     ObjectRegistry::registerConverterFor< SireMM::CLJCalculator >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJGrid >();
     ObjectRegistry::registerConverterFor< SireMM::IntraCLJFFBase >();
     ObjectRegistry::registerConverterFor< SireMM::IntraCLJFF >();
     ObjectRegistry::registerConverterFor< SireMM::IntraGroupCLJFFBase >();
@@ -135,8 +140,8 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::IntraGroupCoulombFFBase >();
     ObjectRegistry::registerConverterFor< SireMM::IntraGroupCoulombFF >();
     ObjectRegistry::registerConverterFor< SireMM::InternalFF >();
-    ObjectRegistry::registerConverterFor< SireMM::CLJParams >();
-    ObjectRegistry::registerConverterFor< SireMM::CLJParamsArray >();
+    ObjectRegistry::registerConverterFor< SireMM::GridIndex >();
+    ObjectRegistry::registerConverterFor< SireMM::GridInfo >();
     ObjectRegistry::registerConverterFor< SireMM::NullRestraint >();
     ObjectRegistry::registerConverterFor< SireMM::GridFF2 >();
 

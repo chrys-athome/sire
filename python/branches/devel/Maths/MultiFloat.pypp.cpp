@@ -395,6 +395,16 @@ void register_MultiFloat_class(){
                 , ( bp::arg("other") ) );
         
         }
+        { //::SireMaths::MultiFloat::max
+        
+            typedef float ( ::SireMaths::MultiFloat::*max_function_type )(  ) const;
+            max_function_type max_function_value( &::SireMaths::MultiFloat::max );
+            
+            MultiFloat_exposer.def( 
+                "max"
+                , max_function_value );
+        
+        }
         { //::SireMaths::MultiFloat::min
         
             typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*min_function_type )( ::SireMaths::MultiFloat const & ) const;
@@ -404,6 +414,16 @@ void register_MultiFloat_class(){
                 "min"
                 , min_function_value
                 , ( bp::arg("other") ) );
+        
+        }
+        { //::SireMaths::MultiFloat::min
+        
+            typedef float ( ::SireMaths::MultiFloat::*min_function_type )(  ) const;
+            min_function_type min_function_value( &::SireMaths::MultiFloat::min );
+            
+            MultiFloat_exposer.def( 
+                "min"
+                , min_function_value );
         
         }
         { //::SireMaths::MultiFloat::multiplyAdd

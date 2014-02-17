@@ -22,6 +22,8 @@ namespace bp = boost::python;
 
 #include "cljfunction.h"
 
+#include "gridinfo.h"
+
 #include <QElapsedTimer>
 
 #include "cljfunction.h"
@@ -63,6 +65,17 @@ void register_CLJFunction_class(){
                 "calculate"
                 , calculate_function_value
                 , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("min_distance")=0 ) );
+        
+        }
+        { //::SireMM::CLJFunction::calculate
+        
+            typedef ::QVector< float > ( ::SireMM::CLJFunction::*calculate_function_type )( ::SireMM::CLJAtoms const &,::SireMM::GridInfo const & ) const;
+            calculate_function_type calculate_function_value( &::SireMM::CLJFunction::calculate );
+            
+            CLJFunction_exposer.def( 
+                "calculate"
+                , calculate_function_value
+                , ( bp::arg("atoms"), bp::arg("gridinfo") ) );
         
         }
         { //::SireMM::CLJFunction::combiningRules
@@ -290,6 +303,16 @@ void register_CLJFunction_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireMM::CLJFunction::supportsGridCalculation
+        
+            typedef bool ( ::SireMM::CLJFunction::*supportsGridCalculation_function_type )(  ) const;
+            supportsGridCalculation_function_type supportsGridCalculation_function_value( &::SireMM::CLJFunction::supportsGridCalculation );
+            
+            CLJFunction_exposer.def( 
+                "supportsGridCalculation"
+                , supportsGridCalculation_function_value );
+        
+        }
         { //::SireMM::CLJFunction::total
         
             typedef void ( ::SireMM::CLJFunction::*total_function_type )( ::SireMM::CLJAtoms const &,double &,double & ) const;
@@ -348,11 +371,11 @@ void register_CLJFunction_class(){
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJFunction >, boost::shared_ptr< QSharedData > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJCutoffFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJSoftFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireBase::ConcreteProperty< SireMM::CLJShiftFunction, SireMM::CLJCutoffFunction > >, boost::shared_ptr< SireMM::CLJFunction > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJShiftFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJIntraFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
         bp::implicitly_convertible< boost::shared_ptr< SireBase::ConcreteProperty< SireMM::CLJIntraShiftFunction, SireMM::CLJIntraFunction > >, boost::shared_ptr< SireMM::CLJFunction > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJIntraShiftFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
-        bp::implicitly_convertible< boost::shared_ptr< SireBase::ConcreteProperty< SireMM::CLJShiftFunction, SireMM::CLJCutoffFunction > >, boost::shared_ptr< SireMM::CLJFunction > >();
-        bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJShiftFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
         CLJFunction_exposer.def( "__rlshift__", &__rlshift__QDataStream< ::SireMM::CLJFunction >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CLJFunction_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireMM::CLJFunction >,
