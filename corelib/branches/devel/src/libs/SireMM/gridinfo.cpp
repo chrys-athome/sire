@@ -79,8 +79,11 @@ const char* GridIndex::what() const
 
 QString GridIndex::toString() const
 {
-    return QObject::tr("GridIndex( %1, %2, %3 )")
-                    .arg(_i).arg(_j).arg(_k);
+    if (isNull())
+        return QObject::tr("GridIndex::null");
+    else
+        return QObject::tr("GridIndex( %1, %2, %3 )")
+                        .arg(_i).arg(_j).arg(_k);
 }
 
 /////////
@@ -93,7 +96,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const GridInfo &info)
 {
     writeHeader(ds, r_info, 1);
     
-    ds << info.grid_dimensions << info.grid_spacing
+    ds << info.grid_origin << info.grid_spacing
        << info.dimx << info.dimy << info.dimz;
 
     return ds;
@@ -105,8 +108,10 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridInfo &info)
     
     if (v == 1)
     {
-        ds >> info.grid_dimensions >> info.grid_spacing
+        ds >> info.grid_origin >> info.grid_spacing
            >> info.dimx >> info.dimy >> info.dimz;
+        
+        info.inv_grid_spacing = 1.0f / info.grid_spacing;
     }
     else
         throw version_error(v, "1", r_info, CODELOC);
@@ -115,7 +120,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridInfo &info)
 }
 
 /** Constructor */
-GridInfo::GridInfo() : grid_spacing(1.0), dimx(0), dimy(0), dimz(0)
+GridInfo::GridInfo()
+         : grid_origin(-0.5), grid_spacing(1.0), inv_grid_spacing(1.0), dimx(0), dimy(0), dimz(0)
 {}
 
 /** Construct a grid of specified dimensions and spacing */
@@ -139,12 +145,14 @@ GridInfo::GridInfo(const AABox &dimensions, Length spacing)
                                                         dimy*grid_spacing,
                                                         dimz*grid_spacing );
     
-    grid_dimensions = AABox::from( dimensions.minCoords(), maxcoords );
+    grid_origin = dimensions.minCoords();
+    inv_grid_spacing = 1.0f / grid_spacing;
 }
 
 /** Copy constructor */
 GridInfo::GridInfo(const GridInfo &other)
-         : grid_dimensions(other.grid_dimensions), grid_spacing(other.grid_spacing),
+         : grid_origin(other.grid_origin), grid_spacing(other.grid_spacing),
+           inv_grid_spacing(other.inv_grid_spacing),
            dimx(other.dimx), dimy(other.dimy), dimz(other.dimz)
 {}
 
@@ -157,8 +165,9 @@ GridInfo& GridInfo::operator=(const GridInfo &other)
 {
     if (this != &other)
     {
-        grid_dimensions = other.grid_dimensions;
+        grid_origin = other.grid_origin;
         grid_spacing = other.grid_spacing;
+        inv_grid_spacing = other.inv_grid_spacing;
         dimx = other.dimx;
         dimy = other.dimy;
         dimz = other.dimz;
@@ -170,7 +179,7 @@ GridInfo& GridInfo::operator=(const GridInfo &other)
 /** Comparison operator */
 bool GridInfo::operator==(const GridInfo &other) const
 {
-    return grid_dimensions == other.grid_dimensions and grid_spacing == other.grid_spacing and
+    return grid_origin == other.grid_origin and grid_spacing == other.grid_spacing and
            dimx == other.dimx and dimy == other.dimy and dimz == other.dimz;
 }
 
@@ -192,13 +201,100 @@ const char* GridInfo::what() const
 
 QString GridInfo::toString() const
 {
-    return QObject::tr("GridInfo( dimensions() = %1, spacing = %2 A, [%1, %2, %3] )")
+    return QObject::tr("GridInfo{ dimensions() = %1, spacing = %2 A, [%3, %4, %5] }")
                 .arg(dimensions().toString())
                 .arg(grid_spacing)
                 .arg(dimx).arg(dimy).arg(dimz);
 }
 
-Vector GridInfo::getitem(int i) const
+GridIndex GridInfo::getitem(int i) const
 {
     return this->at(i);
+}
+
+/** Return the index of the grid box that contains the point 'point'. Note
+    that this returns a null index if the point is not in the grid */
+GridIndex GridInfo::pointToGridIndex(const Vector &point) const
+{
+    const qint32 i = qint32( (point.x() - grid_origin.x()) * inv_grid_spacing );
+    const qint32 j = qint32( (point.y() - grid_origin.y()) * inv_grid_spacing );
+    const qint32 k = qint32( (point.z() - grid_origin.z()) * inv_grid_spacing );
+    
+    if (i < 0 or i >= dimx or
+        j < 0 or j >= dimy or
+        k < 0 or k >= dimz)
+    {
+        //the point is outside of the grid
+        return GridIndex::null();
+    }
+    else
+    {
+        return GridIndex(i,j,k);
+    }
+}
+
+/** Return array indicies of the eight grid points that are on the corners of the 
+    box that contains the point 'point'. This returns eight '-1' values if the 
+    point does not lie in the grid */
+void GridInfo::pointToGridCorners(const Vector &point, QVector<int> &indicies) const
+{
+    indicies.resize(8);
+    
+    int *ia = indicies.data();
+    
+    const qint32 r = qint32( (point.x() - grid_origin.x()) * inv_grid_spacing );
+    const qint32 s = qint32( (point.y() - grid_origin.y()) * inv_grid_spacing );
+    const qint32 t = qint32( (point.z() - grid_origin.z()) * inv_grid_spacing );
+    
+    if (r < 0 or r >= dimx or
+        s < 0 or s >= dimy or
+        t < 0 or t >= dimz)
+    {
+        for (int i=0; i<8; ++i)
+        {
+            ia[i] = -1;
+        }
+    }
+    else
+    {
+        NEED TO DO THIS
+    }
+}
+
+/** Return the array index of the grid box that contains the point 'point'. 
+    Note that this returns -1 if the point is not in the grid */
+int GridInfo::pointToArrayIndex(const Vector &point) const
+{
+    return this->gridToArrayIndex( pointToGridIndex(point) );
+}
+
+/** Return the AABox that encompasses the grid box at point 'idx'.
+    This returns an empty box if the point is not in the grid */
+AABox GridInfo::box(const GridIndex &idx) const
+{
+    if (idx.isNull() or idx.i() >= dimx or idx.j() >= dimy or idx.k() >= dimz)
+    {
+        return AABox();
+    }
+    else
+    {
+        return AABox( grid_origin + Vector( (0.5+idx.i()) * grid_spacing,
+                                            (0.5+idx.j()) * grid_spacing,
+                                            (0.5+idx.k()) * grid_spacing ),
+                      Vector(grid_spacing) );
+    }
+}
+
+/** Return the AABox that encompasses the grid box at point 'i'. This
+    returns an empty box if there is no such point in the grid */
+AABox GridInfo::box(int i) const
+{
+    return box( arrayToGridIndex(i) );
+}
+
+/** Return the AABox that encompasses the grid box that contains the
+    point 'p'. Note that returns a null AABox if the point is not in the grid */
+AABox GridInfo::box(const Vector &point) const
+{
+    return box( pointToGridIndex(point) );
 }

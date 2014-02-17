@@ -58,7 +58,14 @@ class SIREMM_EXPORT GridIndex
 {
 public:
     GridIndex(int i=0, int j=0, int k=0) : _i(i), _j(j), _k(k)
-    {}
+    {
+        if (i < 0 or j < 0 or k < 0)
+        {
+            _i = 0;
+            _j = 0;
+            _k = -1;
+        }
+    }
     
     GridIndex(const GridIndex &other) : _i(other._i), _j(other._j), _k(other._k)
     {}
@@ -89,6 +96,16 @@ public:
     const char* what() const;
     
     QString toString() const;
+    
+    bool isNull() const
+    {
+        return _k < 0;
+    }
+    
+    static GridIndex null()
+    {
+        return GridIndex(0,0,-1);
+    }
     
     qint32 i() const
     {
@@ -138,14 +155,22 @@ public:
     
     QString toString() const;
     
-    Vector operator[](int i) const;
-    Vector operator[](const GridIndex &idx) const;
+    GridIndex operator[](int i) const;
+
+    int operator[](const GridIndex &idx) const;
+    int operator[](const Vector &point) const;
     
-    Vector at(int i) const;
-    Vector at(const GridIndex &idx) const;
-    Vector at(int i, int j, int k) const;
+    GridIndex at(int i) const;
+
+    int at(const GridIndex &idx) const;
+    int at(int i, int j, int k) const;
+    int at(const Vector &point) const;
     
-    Vector getitem(int i) const;
+    GridIndex getitem(int i) const;
+    
+    AABox box(int i) const;
+    AABox box(const GridIndex &idx) const;
+    AABox box(const Vector &point) const;
     
     qint32 dimX() const;
     qint32 dimY() const;
@@ -158,19 +183,33 @@ public:
     bool isEmpty() const;
     
     Length spacing() const;
-    const AABox& dimensions() const;
+    AABox dimensions() const;
 
     int gridToArrayIndex(int i, int j, int k) const;
     int gridToArrayIndex(const GridIndex &idx) const;
+    int pointToArrayIndex(const Vector &point) const;
+
+    void pointToGridCorners(const Vector &point, QVector<int> &indicies) const;
+    void pointToGridCorners(const Vector &point, QVector<int> &indicies,
+                            QVector<float> &weights) const;
+
+    void pointToGridCorners(const MultiFloat &x, const MultiFloat &y, const MultiFloat &z,
+                            QVector<MultiInt> &indicies) const;
+    void pointToGridCorners(const MultiFloat &x, const MultiFloat &y, const MultiFloat &z,
+                            QVector<MultiInt> &indicies, QVector<MultiFloat> &weights) const;
 
     GridIndex arrayToGridIndex(int i) const;
+    GridIndex pointToGridIndex(const Vector &point) const;
 
 private:
-    /** The dimensions of the grid */
-    AABox grid_dimensions;
+    /** The origin of the grid */
+    Vector grid_origin;
     
     /** The spacing of the grid */
     float grid_spacing;
+    
+    /** Inverse of the grid spacing */
+    float inv_grid_spacing;
     
     /** The number of grid points along x, y, and z */
     qint32 dimx, dimy, dimz;
@@ -181,6 +220,9 @@ private:
 /** Get the grid index from the passed array index */
 inline GridIndex GridInfo::arrayToGridIndex(int i) const
 {
+    if (i < 0 or i >= (dimx*dimy*dimz))
+        return GridIndex::null();
+
     int ix = i / (dimy*dimz);
     i -= ix*dimy*dimz;
 
@@ -191,49 +233,70 @@ inline GridIndex GridInfo::arrayToGridIndex(int i) const
 }
 
 /** Get the index into the 1D array for the point corresponding to grid 
-    indicies i,j,k */
+    indicies i,j,k. */
 inline int GridInfo::gridToArrayIndex(int i, int j, int k) const
 {
-    return i*(dimy*dimz) + j*dimz + k;
+    if (i < 0 or i >= dimx or j < 0 or j >= dimy or k < 0 or k >= dimz)
+        return -1;
+    else
+        return i*(dimy*dimz) + j*dimz + k;
 }
 
 /** Get the index into the 1D array for the point corresponding to 
-    the grid point with index 'idx' */
+    the grid point with index 'idx'. Note that this returns '-1' if
+    the passed GridIndex is null */
 inline int GridInfo::gridToArrayIndex(const GridIndex &idx) const
 {
-    return idx.i()*(dimy*dimz) + idx.j()*dimz + idx.k();
+    if (idx.isNull() or idx.i() >= dimx or idx.j() >= dimy or idx.k() >= dimz)
+        return -1;
+    else
+        return idx.i()*(dimy*dimz) + idx.j()*dimz + idx.k();
 }
 
-/** Return the coordinates at the point with index 'idx' */
-inline Vector GridInfo::operator[](const GridIndex &idx) const
+/** Return the linear index of the point with grid index 'idx'. Note that this
+    returns '-1' if the passed GridIndex is null */
+inline int GridInfo::operator[](const GridIndex &idx) const
 {
-    return grid_dimensions.minCoords() + Vector(idx.i() * grid_spacing,
-                                                idx.j() * grid_spacing,
-                                                idx.k() * grid_spacing);
+    return gridToArrayIndex(idx);
 }
 
-/** Return the coordinates of the ith grid point */
-inline Vector GridInfo::operator[](int i) const
+/** Return the grid index of the ith grid point */
+inline GridIndex GridInfo::operator[](int i) const
 {
-    return operator[](arrayToGridIndex(i));
+    return arrayToGridIndex(i);
 }
 
-/** Return the coordinates of the point at grid index [i,j,k] */
-inline Vector GridInfo::at(int i, int j, int k) const
+/** Return the linear array index of the box that contains point 'point'.
+    Note that this will return -1 if the point lies outside the grid */
+inline int GridInfo::operator[](const Vector &point) const
 {
-    return operator[](GridIndex(i,j,k));
+    return pointToArrayIndex(point);
 }
 
-/** Return the coordinates at the point with index 'idx' */
-inline Vector GridInfo::at(const GridIndex &idx) const
+/** Return the linear index of the point with grid index [i,j,k] */
+inline int GridInfo::at(int i, int j, int k) const
+{
+    return gridToArrayIndex(i,j,k);
+}
+
+/** Return the linear index of the point with grid index 'idx'. Note that this
+    returns '-1' if the passed GridIndex is null */
+inline int GridInfo::at(const GridIndex &idx) const
 {
     return operator[](idx);
 }
 
-/** Return the coordinates of the ith grid point */
-inline Vector GridInfo::at(int i) const
+/** Return the grid index of the ith grid point */
+inline GridIndex GridInfo::at(int i) const
 {
     return operator[](i);
+}
+
+/** Return the linear array index of the box that contains point 'point'.
+    Note that this will return -1 if the point lies outside the grid */
+inline int GridInfo::at(const Vector &point) const
+{
+    return pointToArrayIndex(point);
 }
 
 /** Return the number of grid points along the x dimension */
@@ -285,9 +348,11 @@ inline Length GridInfo::spacing() const
 }
 
 /** Return the dimensions of the grid */
-inline const AABox& GridInfo::dimensions() const
+inline AABox GridInfo::dimensions() const
 {
-    return grid_dimensions;
+    return AABox::from( grid_origin, Vector(dimx*grid_spacing,
+                                            dimy*grid_spacing,
+                                            dimz*grid_spacing) );
 }
 
 #endif // SIRE_SKIP_INLINE_FUNCTIONS
