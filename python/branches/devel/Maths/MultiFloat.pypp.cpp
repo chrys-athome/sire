@@ -43,6 +43,7 @@ void register_MultiFloat_class(){
         MultiFloat_exposer.def( bp::init< QVector< double > const & >(( bp::arg("array") )) );
         MultiFloat_exposer.def( bp::init< SireMaths::MultiDouble const & >(( bp::arg("other") )) );
         MultiFloat_exposer.def( bp::init< SireMaths::MultiFloat const & >(( bp::arg("other") )) );
+        MultiFloat_exposer.def( bp::init< SireMaths::MultiInt const & >(( bp::arg("other") )) );
         { //::SireMaths::MultiFloat::abs
         
             typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*abs_function_type )(  ) const;
@@ -463,6 +464,18 @@ void register_MultiFloat_class(){
         { //::SireMaths::MultiFloat::operator=
         
             typedef ::SireMaths::MultiFloat & ( ::SireMaths::MultiFloat::*assign_function_type )( ::SireMaths::MultiDouble const & ) ;
+            assign_function_type assign_function_value( &::SireMaths::MultiFloat::operator= );
+            
+            MultiFloat_exposer.def( 
+                "assign"
+                , assign_function_value
+                , ( bp::arg("other") )
+                , bp::return_self< >() );
+        
+        }
+        { //::SireMaths::MultiFloat::operator=
+        
+            typedef ::SireMaths::MultiFloat & ( ::SireMaths::MultiFloat::*assign_function_type )( ::SireMaths::MultiInt const & ) ;
             assign_function_type assign_function_value( &::SireMaths::MultiFloat::operator= );
             
             MultiFloat_exposer.def( 

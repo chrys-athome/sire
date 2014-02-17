@@ -32,6 +32,7 @@ void register_MultiInt_class(){
         MultiInt_exposer.def( bp::init< qint32 >(( bp::arg("value") )) );
         MultiInt_exposer.def( bp::init< qint32 const *, int >(( bp::arg("array"), bp::arg("size") )) );
         MultiInt_exposer.def( bp::init< QVector< int > const & >(( bp::arg("array") )) );
+        MultiInt_exposer.def( bp::init< SireMaths::MultiFloat const & >(( bp::arg("other") )) );
         MultiInt_exposer.def( bp::init< SireMaths::MultiInt const & >(( bp::arg("other") )) );
         { //::SireMaths::MultiInt::at
         
@@ -323,6 +324,7 @@ void register_MultiInt_class(){
         MultiInt_exposer.def( !bp::self );
         MultiInt_exposer.def( bp::self != bp::self );
         MultiInt_exposer.def( bp::self & bp::self );
+        MultiInt_exposer.def( bp::self * bp::self );
         MultiInt_exposer.def( bp::self + bp::self );
         MultiInt_exposer.def( -bp::self );
         MultiInt_exposer.def( bp::self - bp::self );
@@ -349,6 +351,18 @@ void register_MultiInt_class(){
                 "assign"
                 , assign_function_value
                 , ( bp::arg("value") )
+                , bp::return_self< >() );
+        
+        }
+        { //::SireMaths::MultiInt::operator=
+        
+            typedef ::SireMaths::MultiInt & ( ::SireMaths::MultiInt::*assign_function_type )( ::SireMaths::MultiFloat const & ) ;
+            assign_function_type assign_function_value( &::SireMaths::MultiInt::operator= );
+            
+            MultiInt_exposer.def( 
+                "assign"
+                , assign_function_value
+                , ( bp::arg("other") )
                 , bp::return_self< >() );
         
         }

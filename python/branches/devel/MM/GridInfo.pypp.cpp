@@ -46,7 +46,7 @@ void register_GridInfo_class(){
         }
         { //::SireMM::GridInfo::at
         
-            typedef ::SireMaths::Vector ( ::SireMM::GridInfo::*at_function_type )( int ) const;
+            typedef ::SireMM::GridIndex ( ::SireMM::GridInfo::*at_function_type )( int ) const;
             at_function_type at_function_value( &::SireMM::GridInfo::at );
             
             GridInfo_exposer.def( 
@@ -57,7 +57,7 @@ void register_GridInfo_class(){
         }
         { //::SireMM::GridInfo::at
         
-            typedef ::SireMaths::Vector ( ::SireMM::GridInfo::*at_function_type )( ::SireMM::GridIndex const & ) const;
+            typedef int ( ::SireMM::GridInfo::*at_function_type )( ::SireMM::GridIndex const & ) const;
             at_function_type at_function_value( &::SireMM::GridInfo::at );
             
             GridInfo_exposer.def( 
@@ -68,13 +68,57 @@ void register_GridInfo_class(){
         }
         { //::SireMM::GridInfo::at
         
-            typedef ::SireMaths::Vector ( ::SireMM::GridInfo::*at_function_type )( int,int,int ) const;
+            typedef int ( ::SireMM::GridInfo::*at_function_type )( int,int,int ) const;
             at_function_type at_function_value( &::SireMM::GridInfo::at );
             
             GridInfo_exposer.def( 
                 "at"
                 , at_function_value
                 , ( bp::arg("i"), bp::arg("j"), bp::arg("k") ) );
+        
+        }
+        { //::SireMM::GridInfo::at
+        
+            typedef int ( ::SireMM::GridInfo::*at_function_type )( ::SireMaths::Vector const & ) const;
+            at_function_type at_function_value( &::SireMM::GridInfo::at );
+            
+            GridInfo_exposer.def( 
+                "at"
+                , at_function_value
+                , ( bp::arg("point") ) );
+        
+        }
+        { //::SireMM::GridInfo::box
+        
+            typedef ::SireVol::AABox ( ::SireMM::GridInfo::*box_function_type )( int ) const;
+            box_function_type box_function_value( &::SireMM::GridInfo::box );
+            
+            GridInfo_exposer.def( 
+                "box"
+                , box_function_value
+                , ( bp::arg("i") ) );
+        
+        }
+        { //::SireMM::GridInfo::box
+        
+            typedef ::SireVol::AABox ( ::SireMM::GridInfo::*box_function_type )( ::SireMM::GridIndex const & ) const;
+            box_function_type box_function_value( &::SireMM::GridInfo::box );
+            
+            GridInfo_exposer.def( 
+                "box"
+                , box_function_value
+                , ( bp::arg("idx") ) );
+        
+        }
+        { //::SireMM::GridInfo::box
+        
+            typedef ::SireVol::AABox ( ::SireMM::GridInfo::*box_function_type )( ::SireMaths::Vector const & ) const;
+            box_function_type box_function_value( &::SireMM::GridInfo::box );
+            
+            GridInfo_exposer.def( 
+                "box"
+                , box_function_value
+                , ( bp::arg("point") ) );
         
         }
         { //::SireMM::GridInfo::count
@@ -119,18 +163,17 @@ void register_GridInfo_class(){
         }
         { //::SireMM::GridInfo::dimensions
         
-            typedef ::SireVol::AABox const & ( ::SireMM::GridInfo::*dimensions_function_type )(  ) const;
+            typedef ::SireVol::AABox ( ::SireMM::GridInfo::*dimensions_function_type )(  ) const;
             dimensions_function_type dimensions_function_value( &::SireMM::GridInfo::dimensions );
             
             GridInfo_exposer.def( 
                 "dimensions"
-                , dimensions_function_value
-                , bp::return_value_policy< bp::copy_const_reference >() );
+                , dimensions_function_value );
         
         }
         { //::SireMM::GridInfo::getitem
         
-            typedef ::SireMaths::Vector ( ::SireMM::GridInfo::*getitem_function_type )( int ) const;
+            typedef ::SireMM::GridIndex ( ::SireMM::GridInfo::*getitem_function_type )( int ) const;
             getitem_function_type getitem_function_value( &::SireMM::GridInfo::getitem );
             
             GridInfo_exposer.def( 
@@ -197,7 +240,7 @@ void register_GridInfo_class(){
         GridInfo_exposer.def( bp::self == bp::self );
         { //::SireMM::GridInfo::operator[]
         
-            typedef ::SireMaths::Vector ( ::SireMM::GridInfo::*__getitem___function_type )( int ) const;
+            typedef ::SireMM::GridIndex ( ::SireMM::GridInfo::*__getitem___function_type )( int ) const;
             __getitem___function_type __getitem___function_value( &::SireMM::GridInfo::operator[] );
             
             GridInfo_exposer.def( 
@@ -208,13 +251,90 @@ void register_GridInfo_class(){
         }
         { //::SireMM::GridInfo::operator[]
         
-            typedef ::SireMaths::Vector ( ::SireMM::GridInfo::*__getitem___function_type )( ::SireMM::GridIndex const & ) const;
+            typedef int ( ::SireMM::GridInfo::*__getitem___function_type )( ::SireMM::GridIndex const & ) const;
             __getitem___function_type __getitem___function_value( &::SireMM::GridInfo::operator[] );
             
             GridInfo_exposer.def( 
                 "__getitem__"
                 , __getitem___function_value
                 , ( bp::arg("idx") ) );
+        
+        }
+        { //::SireMM::GridInfo::operator[]
+        
+            typedef int ( ::SireMM::GridInfo::*__getitem___function_type )( ::SireMaths::Vector const & ) const;
+            __getitem___function_type __getitem___function_value( &::SireMM::GridInfo::operator[] );
+            
+            GridInfo_exposer.def( 
+                "__getitem__"
+                , __getitem___function_value
+                , ( bp::arg("point") ) );
+        
+        }
+        { //::SireMM::GridInfo::pointToArrayIndex
+        
+            typedef int ( ::SireMM::GridInfo::*pointToArrayIndex_function_type )( ::SireMaths::Vector const & ) const;
+            pointToArrayIndex_function_type pointToArrayIndex_function_value( &::SireMM::GridInfo::pointToArrayIndex );
+            
+            GridInfo_exposer.def( 
+                "pointToArrayIndex"
+                , pointToArrayIndex_function_value
+                , ( bp::arg("point") ) );
+        
+        }
+        { //::SireMM::GridInfo::pointToGridCorners
+        
+            typedef void ( ::SireMM::GridInfo::*pointToGridCorners_function_type )( ::SireMaths::Vector const &,::QVector< int > & ) const;
+            pointToGridCorners_function_type pointToGridCorners_function_value( &::SireMM::GridInfo::pointToGridCorners );
+            
+            GridInfo_exposer.def( 
+                "pointToGridCorners"
+                , pointToGridCorners_function_value
+                , ( bp::arg("point"), bp::arg("indicies") ) );
+        
+        }
+        { //::SireMM::GridInfo::pointToGridCorners
+        
+            typedef void ( ::SireMM::GridInfo::*pointToGridCorners_function_type )( ::SireMaths::Vector const &,::QVector< int > &,::QVector< float > & ) const;
+            pointToGridCorners_function_type pointToGridCorners_function_value( &::SireMM::GridInfo::pointToGridCorners );
+            
+            GridInfo_exposer.def( 
+                "pointToGridCorners"
+                , pointToGridCorners_function_value
+                , ( bp::arg("point"), bp::arg("indicies"), bp::arg("weights") ) );
+        
+        }
+        { //::SireMM::GridInfo::pointToGridCorners
+        
+            typedef int ( ::SireMM::GridInfo::*pointToGridCorners_function_type )( ::SireMaths::MultiFloat const &,::SireMaths::MultiFloat const &,::SireMaths::MultiFloat const &,::QVector< SireMaths::MultiInt > & ) const;
+            pointToGridCorners_function_type pointToGridCorners_function_value( &::SireMM::GridInfo::pointToGridCorners );
+            
+            GridInfo_exposer.def( 
+                "pointToGridCorners"
+                , pointToGridCorners_function_value
+                , ( bp::arg("x"), bp::arg("y"), bp::arg("z"), bp::arg("indicies") ) );
+        
+        }
+        { //::SireMM::GridInfo::pointToGridCorners
+        
+            typedef int ( ::SireMM::GridInfo::*pointToGridCorners_function_type )( ::SireMaths::MultiFloat const &,::SireMaths::MultiFloat const &,::SireMaths::MultiFloat const &,::QVector< SireMaths::MultiInt > &,::QVector< SireMaths::MultiFloat > & ) const;
+            pointToGridCorners_function_type pointToGridCorners_function_value( &::SireMM::GridInfo::pointToGridCorners );
+            
+            GridInfo_exposer.def( 
+                "pointToGridCorners"
+                , pointToGridCorners_function_value
+                , ( bp::arg("x"), bp::arg("y"), bp::arg("z"), bp::arg("indicies"), bp::arg("weights") ) );
+        
+        }
+        { //::SireMM::GridInfo::pointToGridIndex
+        
+            typedef ::SireMM::GridIndex ( ::SireMM::GridInfo::*pointToGridIndex_function_type )( ::SireMaths::Vector const & ) const;
+            pointToGridIndex_function_type pointToGridIndex_function_value( &::SireMM::GridInfo::pointToGridIndex );
+            
+            GridInfo_exposer.def( 
+                "pointToGridIndex"
+                , pointToGridIndex_function_value
+                , ( bp::arg("point") ) );
         
         }
         { //::SireMM::GridInfo::size

@@ -40,6 +40,16 @@ void register_GridIndex_class(){
                 , i_function_value );
         
         }
+        { //::SireMM::GridIndex::isNull
+        
+            typedef bool ( ::SireMM::GridIndex::*isNull_function_type )(  ) const;
+            isNull_function_type isNull_function_value( &::SireMM::GridIndex::isNull );
+            
+            GridIndex_exposer.def( 
+                "isNull"
+                , isNull_function_value );
+        
+        }
         { //::SireMM::GridIndex::j
         
             typedef ::qint32 ( ::SireMM::GridIndex::*j_function_type )(  ) const;
@@ -58,6 +68,16 @@ void register_GridIndex_class(){
             GridIndex_exposer.def( 
                 "k"
                 , k_function_value );
+        
+        }
+        { //::SireMM::GridIndex::null
+        
+            typedef ::SireMM::GridIndex ( *null_function_type )(  );
+            null_function_type null_function_value( &::SireMM::GridIndex::null );
+            
+            GridIndex_exposer.def( 
+                "null"
+                , null_function_value );
         
         }
         GridIndex_exposer.def( bp::self != bp::self );
@@ -104,6 +124,7 @@ void register_GridIndex_class(){
                 , what_function_value );
         
         }
+        GridIndex_exposer.staticmethod( "null" );
         GridIndex_exposer.staticmethod( "typeName" );
         GridIndex_exposer.def( "__copy__", &__copy__);
         GridIndex_exposer.def( "__deepcopy__", &__copy__);
