@@ -197,6 +197,13 @@ inline int GridInfo::gridToArrayIndex(int i, int j, int k) const
     return i*(dimy*dimz) + j*dimz + k;
 }
 
+/** Get the index into the 1D array for the point corresponding to 
+    the grid point with index 'idx' */
+inline int GridInfo::gridToArrayIndex(const GridIndex &idx) const
+{
+    return idx.i()*(dimy*dimz) + idx.j()*dimz + idx.k();
+}
+
 /** Return the coordinates at the point with index 'idx' */
 inline Vector GridInfo::operator[](const GridIndex &idx) const
 {
@@ -293,7 +300,7 @@ Q_DECLARE_METATYPE( SireMM::GridInfo )
 Q_DECLARE_TYPEINFO( SireMM::GridIndex, Q_MOVABLE_TYPE );
 Q_DECLARE_TYPEINFO( SireMM::GridInfo, Q_MOVABLE_TYPE );
 
-SIRE_EXPOSE_CLASS( SireMM::GridInfo )
+SIRE_EXPOSE_CLASS( SireMM::GridIndex )
 SIRE_EXPOSE_CLASS( SireMM::GridInfo )
 
 SIRE_END_HEADER
