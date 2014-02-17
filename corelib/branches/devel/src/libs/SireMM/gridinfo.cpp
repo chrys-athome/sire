@@ -29,6 +29,8 @@
 #include "gridinfo.h"
 
 #include "SireMaths/vector.h"
+#include "SireMaths/multifloat.h"
+#include "SireMaths/multiint.h"
 
 #include "SireError/errors.h"
 
@@ -257,8 +259,264 @@ void GridInfo::pointToGridCorners(const Vector &point, QVector<int> &indicies) c
     }
     else
     {
-        NEED TO DO THIS
+        //i*(dimy*dimz) + j*dimz + k;
+        
+        const qint32 dimyz = dimz * dimy;
+        
+        ia[0] = (r  )*dimyz + (s  )*dimz + (t  );
+        ia[1] = (r  )*dimyz + (s  )*dimz + (t+1);
+        ia[2] = (r  )*dimyz + (s+1)*dimz + (t  );
+        ia[3] = (r  )*dimyz + (s+1)*dimz + (t+1);
+        ia[4] = (r+1)*dimyz + (s  )*dimz + (t  );
+        ia[5] = (r+1)*dimyz + (s  )*dimz + (t+1);
+        ia[6] = (r+1)*dimyz + (s+1)*dimz + (t  );
+        ia[7] = (r+1)*dimyz + (s+1)*dimz + (t+1);
     }
+}
+
+/** Return array indicies of the eight grid points that are on the corners of the 
+    box that contains the point 'point'. This returns eight '-1' values if the 
+    point does not lie in the grid. This also returns the weights of the eight
+    points, using tri-linear interpolation based on the distance between the 
+    point and each corner of the box */
+void GridInfo::pointToGridCorners(const Vector &point, QVector<int> &indicies,
+                                  QVector<float> &weights) const
+{
+    indicies.resize(8);
+    weights.resize(8);
+    
+    int *ia = indicies.data();
+    float *wa = weights.data();
+    
+    float dx = (point.x() - grid_origin.x()) * inv_grid_spacing;
+    float dy = (point.y() - grid_origin.y()) * inv_grid_spacing;
+    float dz = (point.z() - grid_origin.z()) * inv_grid_spacing;
+    
+    const qint32 r = qint32(dx);
+    const qint32 s = qint32(dy);
+    const qint32 t = qint32(dz);
+    
+    dx -= r;
+    dy -= s;
+    dz -= t;
+    
+    const float one_minus_dx = 1.0f - dx;
+    const float one_minus_dy = 1.0f - dy;
+    const float one_minus_dz = 1.0f - dz;
+    
+    if (r < 0 or r >= dimx or
+        s < 0 or s >= dimy or
+        t < 0 or t >= dimz)
+    {
+        for (int i=0; i<8; ++i)
+        {
+            ia[i] = -1;
+            wa[i] = 0;
+        }
+    }
+    else
+    {
+        //use tri-linear interpolation to get the weights
+        //
+        // This is described in 
+        //
+        // Davis, Madura and McCammon, Comp. Phys. Comm., 62, 187-197, 1991
+        //
+        // phi(x,y,z) = phi(i  ,j  ,k  )*(1-R)(1-S)(1-T) +
+        //              phi(i+1,j  ,k  )*(  R)(1-S)(1-T) +
+        //              phi(i  ,j+1,k  )*(1-R)(  S)(1-T) +
+        //              phi(i  ,j  ,k+1)*(1-R)(1-S)(  T) +
+        //              phi(i+1,j+1,k  )*(  R)(  S)(1-T) +
+        //              phi(i+1,j  ,k+1)*(  R)(1-S)(  T) +
+        //              phi(i  ,j+1,k+1)*(1-R)(  S)(  T) +
+        //              phi(i+1,j+1,k+1)*(  R)(  S)(  T) +
+        //
+        // where R, S and T are the coordinates of the atom in 
+        // fractional grid coordinates from the point (i,j,k), e.g.
+        // (0,0,0) is (i,j,k) and (1,1,1) is (i+1,j+1,k+1)
+
+        //i*(dimy*dimz) + j*dimz + k;
+        
+        const qint32 dimyz = dimz * dimy;
+        
+        ia[0] = (r  )*dimyz + (s  )*dimz + (t  );
+        ia[1] = (r  )*dimyz + (s  )*dimz + (t+1);
+        ia[2] = (r  )*dimyz + (s+1)*dimz + (t  );
+        ia[3] = (r  )*dimyz + (s+1)*dimz + (t+1);
+        ia[4] = (r+1)*dimyz + (s  )*dimz + (t  );
+        ia[5] = (r+1)*dimyz + (s  )*dimz + (t+1);
+        ia[6] = (r+1)*dimyz + (s+1)*dimz + (t  );
+        ia[7] = (r+1)*dimyz + (s+1)*dimz + (t+1);
+        
+        wa[0] = (one_minus_dx) * (one_minus_dy) * (one_minus_dz);
+        wa[1] = (one_minus_dx) * (one_minus_dy) * (    dz      );
+        wa[2] = (one_minus_dx) * (    dy      ) * (one_minus_dz);
+        wa[3] = (one_minus_dx) * (    dy      ) * (    dz      );
+        wa[4] = (    dx      ) * (one_minus_dy) * (one_minus_dz);
+        wa[5] = (    dx      ) * (one_minus_dy) * (    dz      );
+        wa[6] = (    dx      ) * (    dy      ) * (one_minus_dz);
+        wa[7] = (    dx      ) * (    dy      ) * (    dz      );
+    }
+}
+
+/** Return array indicies of the eight grid points that are on the corners of the 
+    box that contains the point 'point'. This returns eight '-1' values if the 
+    point does not lie in the grid. The return value is the number of points
+    that are in the box */
+int GridInfo::pointToGridCorners(const MultiFloat &x, const MultiFloat &y,
+                                 const MultiFloat &z, QVector<MultiInt> &indicies) const
+{
+    indicies.resize(8);
+    
+    MultiInt *ia = indicies.data();
+    
+    const MultiFloat ox( grid_origin.x() );
+    const MultiFloat oy( grid_origin.y() );
+    const MultiFloat oz( grid_origin.z() );
+    const MultiFloat inv_spacing( inv_grid_spacing );
+    
+    const MultiInt r = (x - ox) * inv_spacing;
+    const MultiInt s = (y - oy) * inv_spacing;
+    const MultiInt t = (z - oz) * inv_spacing;
+    
+    const MultiInt one(1);
+    
+    //i*(dimy*dimz) + j*dimz + k;
+    const MultiInt idz(dimz);
+    const MultiInt idyz(dimz * dimy);
+    
+    ia[0] = (r    )*idyz + (s    )*idz + (t    );
+    ia[1] = (r    )*idyz + (s    )*idz + (t+one);
+    ia[2] = (r    )*idyz + (s+one)*idz + (t    );
+    ia[3] = (r    )*idyz + (s+one)*idz + (t+one);
+    ia[4] = (r+one)*idyz + (s    )*idz + (t    );
+    ia[5] = (r+one)*idyz + (s    )*idz + (t+one);
+    ia[6] = (r+one)*idyz + (s+one)*idz + (t    );
+    ia[7] = (r+one)*idyz + (s+one)*idz + (t+one);
+
+    //now check that the points are in the box
+    int n_in_box = MultiFloat::count();
+    
+    for (int i=0; i<MultiInt::count(); ++i)
+    {
+        if (r[i] < 0 or r[i] >= dimx or
+            s[i] < 0 or s[i] >= dimy or
+            t[i] < 0 or t[i] >= dimz)
+        {
+            for (int j=0; j<8; ++j)
+            {
+                ia[j].set(i, -1);
+            }
+            
+            n_in_box -= 1;
+        }
+    }
+    
+    return n_in_box;
+}
+
+/** Return array indicies of the eight grid points that are on the corners of the 
+    box that contains the point 'point'. This returns eight '-1' values if the 
+    point does not lie in the grid. This also returns the weights of the eight
+    points, using tri-linear interpolation based on the distance between the 
+    point and each corner of the box */
+int GridInfo::pointToGridCorners(const MultiFloat &x, const MultiFloat &y,
+                                 const MultiFloat &z, QVector<MultiInt> &indicies,
+                                 QVector<MultiFloat> &weights) const
+{
+    indicies.resize(8);
+    weights.resize(8);
+    
+    MultiInt *ia = indicies.data();
+    MultiFloat *wa = weights.data();
+    
+    const MultiFloat ox(grid_origin.x());
+    const MultiFloat oy(grid_origin.y());
+    const MultiFloat oz(grid_origin.z());
+    
+    const MultiFloat inv_spacing(inv_grid_spacing);
+    
+    MultiFloat dx = (x - ox) * inv_spacing;
+    MultiFloat dy = (y - oy) * inv_spacing;
+    MultiFloat dz = (z - oz) * inv_spacing;
+    
+    const MultiInt r = dx;
+    const MultiInt s = dy;
+    const MultiInt t = dz;
+    
+    dx -= r;
+    dy -= s;
+    dz -= t;
+    
+    const MultiFloat one_minus_dx = MULTIFLOAT_ONE - dx;
+    const MultiFloat one_minus_dy = MULTIFLOAT_ONE - dy;
+    const MultiFloat one_minus_dz = MULTIFLOAT_ONE - dz;
+
+    //use tri-linear interpolation to get the weights
+    //
+    // This is described in 
+    //
+    // Davis, Madura and McCammon, Comp. Phys. Comm., 62, 187-197, 1991
+    //
+    // phi(x,y,z) = phi(i  ,j  ,k  )*(1-R)(1-S)(1-T) +
+    //              phi(i+1,j  ,k  )*(  R)(1-S)(1-T) +
+    //              phi(i  ,j+1,k  )*(1-R)(  S)(1-T) +
+    //              phi(i  ,j  ,k+1)*(1-R)(1-S)(  T) +
+    //              phi(i+1,j+1,k  )*(  R)(  S)(1-T) +
+    //              phi(i+1,j  ,k+1)*(  R)(1-S)(  T) +
+    //              phi(i  ,j+1,k+1)*(1-R)(  S)(  T) +
+    //              phi(i+1,j+1,k+1)*(  R)(  S)(  T) +
+    //
+    // where R, S and T are the coordinates of the atom in 
+    // fractional grid coordinates from the point (i,j,k), e.g.
+    // (0,0,0) is (i,j,k) and (1,1,1) is (i+1,j+1,k+1)
+
+    //i*(dimy*dimz) + j*dimz + k;
+    
+    const MultiInt one(1);
+    
+    //i*(dimy*dimz) + j*dimz + k;
+    const MultiInt idz(dimz);
+    const MultiInt idyz(dimz * dimy);
+    
+    ia[0] = (r    )*idyz + (s    )*idz + (t    );
+    ia[1] = (r    )*idyz + (s    )*idz + (t+one);
+    ia[2] = (r    )*idyz + (s+one)*idz + (t    );
+    ia[3] = (r    )*idyz + (s+one)*idz + (t+one);
+    ia[4] = (r+one)*idyz + (s    )*idz + (t    );
+    ia[5] = (r+one)*idyz + (s    )*idz + (t+one);
+    ia[6] = (r+one)*idyz + (s+one)*idz + (t    );
+    ia[7] = (r+one)*idyz + (s+one)*idz + (t+one);
+    
+    wa[0] = (one_minus_dx) * (one_minus_dy) * (one_minus_dz);
+    wa[1] = (one_minus_dx) * (one_minus_dy) * (    dz      );
+    wa[2] = (one_minus_dx) * (    dy      ) * (one_minus_dz);
+    wa[3] = (one_minus_dx) * (    dy      ) * (    dz      );
+    wa[4] = (    dx      ) * (one_minus_dy) * (one_minus_dz);
+    wa[5] = (    dx      ) * (one_minus_dy) * (    dz      );
+    wa[6] = (    dx      ) * (    dy      ) * (one_minus_dz);
+    wa[7] = (    dx      ) * (    dy      ) * (    dz      );
+    
+    //now check that the points are in the box
+    int n_in_box = MultiFloat::count();
+    
+    for (int i=0; i<MultiInt::count(); ++i)
+    {
+        if (r[i] < 0 or r[i] >= dimx or
+            s[i] < 0 or s[i] >= dimy or
+            t[i] < 0 or t[i] >= dimz)
+        {
+            for (int j=0; j<8; ++j)
+            {
+                ia[j].set(i, -1);
+                wa[j].set(i, 0);
+            }
+            
+            n_in_box -= 1;
+        }
+    }
+    
+    return n_in_box;
 }
 
 /** Return the array index of the grid box that contains the point 'point'. 

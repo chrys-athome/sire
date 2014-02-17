@@ -89,6 +89,26 @@ void MultiInt::assertAligned(const void *ptr, size_t size)
                     .arg(size), CODELOC );
 }
 
+/** Construct from a MultiFloat - this rounds down (same as standard float to int rounding) */
+MultiInt::MultiInt(const MultiFloat &other)
+{
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        v.a[i] = other.v.a[i];
+    }
+}
+
+/** Copy assignment from a MultiFloat - this rounds down (same as standard float to in rounding) */
+MultiInt& MultiInt::operator=(const MultiFloat &other)
+{
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        v.a[i] = other.v.a[i];
+    }
+
+    return *this;
+}
+
 /** Construct from the passed array. If size is greater than MultiInt::size()
     then an error will be raised. If size is less than MultiInt::size() then
     this float will be padded with zeroes */

@@ -29,6 +29,7 @@
 #include "multifloat.h"
 #include "multidouble.h"
 #include "multiuint.h"
+#include "multiint.h"
 
 #include <QStringList>
 
@@ -187,6 +188,26 @@ MultiFloat::MultiFloat(const QVector<double> &array)
     }
 
     this->operator=( MultiFloat(farray) );
+}
+
+/** Construct from a MultiInt */
+MultiFloat::MultiFloat(const MultiInt &other)
+{
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        v.a[i] = other.v.a[i];
+    }
+}
+
+/** Copy assignment from a MultiInt */
+MultiFloat& MultiFloat::operator=(const MultiInt &other)
+{
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        v.a[i] = other.v.a[i];
+    }
+    
+    return *this;
 }
 
 /** Return whether or not this MultiFloat is correctly aligned. If it is not,

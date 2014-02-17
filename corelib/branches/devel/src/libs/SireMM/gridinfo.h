@@ -46,12 +46,21 @@ QDataStream& operator>>(QDataStream&, SireMM::GridIndex&);
 QDataStream& operator<<(QDataStream&, const SireMM::GridInfo&);
 QDataStream& operator>>(QDataStream&, SireMM::GridInfo&);
 
+namespace SireMaths
+{
+class MultiFloat;
+class MultiInt;
+}
+
 namespace SireMM
 {
 
 using SireMaths::Vector;
 using SireVol::AABox;
 using SireUnits::Dimension::Length;
+
+using SireMaths::MultiInt;
+using SireMaths::MultiFloat;
 
 /** Very simple class providing a grid index */
 class SIREMM_EXPORT GridIndex
@@ -193,10 +202,10 @@ public:
     void pointToGridCorners(const Vector &point, QVector<int> &indicies,
                             QVector<float> &weights) const;
 
-    void pointToGridCorners(const MultiFloat &x, const MultiFloat &y, const MultiFloat &z,
-                            QVector<MultiInt> &indicies) const;
-    void pointToGridCorners(const MultiFloat &x, const MultiFloat &y, const MultiFloat &z,
-                            QVector<MultiInt> &indicies, QVector<MultiFloat> &weights) const;
+    int pointToGridCorners(const MultiFloat &x, const MultiFloat &y, const MultiFloat &z,
+                           QVector<MultiInt> &indicies) const;
+    int pointToGridCorners(const MultiFloat &x, const MultiFloat &y, const MultiFloat &z,
+                           QVector<MultiInt> &indicies, QVector<MultiFloat> &weights) const;
 
     GridIndex arrayToGridIndex(int i) const;
     GridIndex pointToGridIndex(const Vector &point) const;

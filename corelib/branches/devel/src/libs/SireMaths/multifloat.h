@@ -125,6 +125,7 @@ public:
     
     MultiFloat(const MultiDouble &other);
     MultiFloat(const MultiFloat &other);
+    MultiFloat(const MultiInt &other);
     
     ~MultiFloat();
     
@@ -141,6 +142,7 @@ public:
     
     MultiFloat& operator=(const MultiFloat &other);
     MultiFloat& operator=(const MultiDouble &other);
+    MultiFloat& operator=(const MultiInt &other);
     MultiFloat& operator=(float value);
     
     bool operator==(const MultiFloat &other) const;
