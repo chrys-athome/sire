@@ -137,18 +137,14 @@ GridInfo::GridInfo(const AABox &dimensions, Length spacing)
                 "(%1 A)").arg(grid_spacing), CODELOC );
     }
     
-    Vector nboxes = (2.0 / grid_spacing) * dimensions.halfExtents();
+    inv_grid_spacing = 1.0f / grid_spacing;
+    Vector nboxes = (2.0f * inv_grid_spacing) * dimensions.halfExtents();
     
     dimx = quint32( std::ceil(nboxes.x()) );
     dimy = quint32( std::ceil(nboxes.y()) );
     dimz = quint32( std::ceil(nboxes.z()) );
     
-    Vector maxcoords = dimensions.minCoords() + Vector( dimx*grid_spacing,
-                                                        dimy*grid_spacing,
-                                                        dimz*grid_spacing );
-    
     grid_origin = dimensions.minCoords();
-    inv_grid_spacing = 1.0f / grid_spacing;
 }
 
 /** Copy constructor */
@@ -539,7 +535,7 @@ AABox GridInfo::box(const GridIndex &idx) const
         return AABox( grid_origin + Vector( (0.5+idx.i()) * grid_spacing,
                                             (0.5+idx.j()) * grid_spacing,
                                             (0.5+idx.k()) * grid_spacing ),
-                      Vector(grid_spacing) );
+                      Vector(0.5*grid_spacing) );
     }
 }
 

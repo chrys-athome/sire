@@ -92,6 +92,19 @@ void MultiFloat::assertAligned(const void *ptr, size_t size)
                     .arg(size), CODELOC );
 }
 
+/** Construct from the passed array, taking the values of each element
+    of the vector from the index in the associated MultiInt, e.g.
+    
+    MultiFloat[i] = array[ MultiInt[i] ]
+*/
+MultiFloat::MultiFloat(const float *array, const MultiInt &idxs)
+{
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        v.a[i] = array[ idxs.v.a[i] ];
+    }
+}
+
 /** Construct from the passed array. If size is greater than MultiFloat::size()
     then an error will be raised. If size is less than MultiFloat::size() then
     this float will be padded with zeroes */

@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "cljshiftfunction.h"
+#include "gridinfo.h"
 
 #include "SireMaths/multifloat.h"
 #include "SireMaths/multidouble.h"
@@ -35,6 +36,10 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include "tbb/blocked_range.h"
+#include "tbb/parallel_for.h"
+
+#include <QElapsedTimer>
 #include <QDebug>
 
 using namespace SireMM;
@@ -1796,6 +1801,138 @@ void CLJShiftFunction::calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &
     
     cnrg = icnrg.sum();
     ljnrg = iljnrg.sum();
+}
+
+/** This function does support calculations using a grid */
+bool CLJShiftFunction::supportsGridCalculation() const
+{
+    return true;
+}
+
+namespace detail
+{
+    class CLJShiftVacGridCalculator
+    {
+    public:
+        CLJShiftVacGridCalculator()
+                : nats(0), x(0), y(0), z(0), q(0), id(0),
+                  gridpot_array(0)
+        {}
+        
+        CLJShiftVacGridCalculator(const GridInfo &_grid_info, int _nats,
+                                  const MultiFloat *_x, const MultiFloat *_y,
+                                  const MultiFloat *_z, const MultiFloat *_q,
+                                  const MultiInt *_id, float coul_cutoff,
+                                  double *_gridpot_array)
+                : grid_info(_grid_info), nats(_nats), x(_x), y(_y), z(_z), q(_q), id(_id),
+                  Rc(coul_cutoff), one_over_Rc( 1.0f / coul_cutoff ),
+                  one_over_Rc2( 1.0f / (coul_cutoff*coul_cutoff) ),
+                  gridpot_array(_gridpot_array)
+        {}
+        
+        ~CLJShiftVacGridCalculator()
+        {}
+        
+        void operator()(const tbb::blocked_range<int> &range) const
+        {
+            const MultiInt dummy_id = CLJAtoms::idOfDummy();
+            MultiFloat tmp, r, one_over_r, itmp;
+        
+            for (int i = range.begin(); i != range.end(); ++i)
+            {
+                const Vector grid_point = grid_info.point(i);
+                
+                const MultiFloat px(grid_point.x());
+                const MultiFloat py(grid_point.y());
+                const MultiFloat pz(grid_point.z());
+                
+                MultiDouble pot(0);
+                
+                for (int j=0; j<nats; ++j)
+                {
+                    //calculate the distance between the atom and grid point
+                    tmp = px - x[j];
+                    r = tmp * tmp;
+                    tmp = py - y[j];
+                    r.multiplyAdd(tmp, tmp);
+                    tmp = pz - z[j];
+                    r.multiplyAdd(tmp, tmp);
+                    r = r.sqrt();
+
+                    one_over_r = r.reciprocal();
+            
+                    //calculate the coulomb energy using shift-electrostatics
+                    // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
+                    tmp = r - Rc;
+                    tmp *= one_over_Rc2;
+                    tmp -= one_over_Rc;
+                    tmp += one_over_r;
+                    tmp *= q[j];
+                
+                    //apply the cutoff - compare r against Rc. This will
+                    //return 1 if r is less than Rc, or 0 otherwise. Logical
+                    //and will then remove all energies where r >= Rc
+                    tmp &= r.compareLess(Rc);
+
+                    //make sure that the ID of atoms1 is not zero, and is
+                    //also not the same as the atoms0.
+                    itmp = id[j].compareEqual(dummy_id);
+                    pot += tmp.logicalAndNot(itmp);
+                }
+                
+                gridpot_array[i] = pot.sum();
+            }
+        }
+        
+    private:
+        const GridInfo grid_info;
+        const int nats;
+    
+        const MultiFloat* const x;
+        const MultiFloat* const y;
+        const MultiFloat* const z;
+        const MultiFloat* const q;
+        const MultiInt* id;
+        
+        const MultiFloat Rc;
+        const MultiFloat one_over_Rc;
+        const MultiFloat one_over_Rc2;
+        
+        double *gridpot_array;
+    };
+}
+
+/** Calculate the energy on the grid from the passed atoms using vacuum boundary conditions */
+void CLJShiftFunction::calcVacGrid(const CLJAtoms &atoms, const GridInfo &info,
+                                   QVector<double> &gridpot) const
+{
+    QElapsedTimer t;
+    t.start();
+
+    ::detail::CLJShiftVacGridCalculator calc(info, atoms.x().count(), atoms.x().constData(),
+                                             atoms.y().constData(), atoms.z().constData(),
+                                             atoms.q().constData(), atoms.ID().constData(),
+                                             coul_cutoff, gridpot.data());
+
+    tbb::parallel_for(tbb::blocked_range<int>(0,info.nPoints(),4096), calc);
+    
+    qint64 ns = t.nsecsElapsed();
+    qDebug() << "Building the grid took" << (0.000001*ns) << "ms";
+    
+    double sum = 0;
+    
+    for (int i=0; i<gridpot.count(); ++i)
+    {
+        sum += gridpot.constData()[i];
+    }
+    
+    qDebug() << "Sum of grid potentials is" << sum;
+}
+
+/** Calculate the energy on the grid from the passed atoms using vacuum boundary conditions */
+void CLJShiftFunction::calcBoxGrid(const CLJAtoms &atoms, const GridInfo &info,
+                                   QVector<double> &gridpot) const
+{
 }
 
 /////////

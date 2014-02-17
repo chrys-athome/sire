@@ -469,8 +469,8 @@ AABox AABox::from(const Vector &mincoords, const Vector &maxcoords)
     Vector max = maxcoords;
     max.setMax(mincoords);
     
-    Vector cent = 0.5 * (maxcoords + mincoords);
-    Vector halfextents = maxcoords - cent;
+    Vector halfextents = 0.5 * (max - min);
+    Vector cent = min + halfextents;
     
     return AABox(cent, halfextents);
 }

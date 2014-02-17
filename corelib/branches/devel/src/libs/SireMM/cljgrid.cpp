@@ -32,6 +32,8 @@
 
 #include "SireVol/cartesian.h"
 
+#include "SireMaths/multidouble.h"
+
 #include "SireUnits/dimensions.h"
 #include "SireUnits/units.h"
 
@@ -134,6 +136,13 @@ CLJGrid::CLJGrid(const GridInfo &grid)
         : grid_buffer(global_grid_buffer), cljfunc(global_func), use_grid(true)
 {
     setGrid(grid);
+    checkIfGridSupported();
+}
+
+/** Construct, specifying the function to use to calculate the energy */
+CLJGrid::CLJGrid(const CLJFunction &func)
+        : grid_buffer(global_grid_buffer), cljfunc(func), use_grid(true)
+{
     checkIfGridSupported();
 }
 
@@ -357,17 +366,50 @@ void CLJGrid::setGridDimensions(const CLJAtoms &atoms, Length spacing, Length bu
         const MultiFloat *x = atoms.x().constData();
         const MultiFloat *y = atoms.y().constData();
         const MultiFloat *z = atoms.z().constData();
+        const MultiInt *id = atoms.ID().constData();
+        
+        const qint32 dummy_id = CLJAtoms::idOfDummy()[0];
         
         for (int i=0; i<nats; ++i)
         {
-            min_x = min_x.min(x[i]);
-            max_x = max_x.max(x[i]);
+            bool has_dummy = false;
+        
+            for (int j=0; j<MultiInt::count(); ++j)
+            {
+                if (id[i][j] == dummy_id)
+                {
+                    has_dummy = true;
+                    break;
+                }
+            }
+        
+            if (has_dummy)
+            {
+                for (int j=0; j<MultiInt::count(); ++j)
+                {
+                    if (id[i][j] != dummy_id)
+                    {
+                        min_x.set(j, qMin(min_x[j], x[i][j]));
+                        min_y.set(j, qMin(min_y[j], y[i][j]));
+                        min_z.set(j, qMin(min_z[j], z[i][j]));
+                        
+                        max_x.set(j, qMax(max_x[j], x[i][j]));
+                        max_y.set(j, qMax(max_y[j], y[i][j]));
+                        max_z.set(j, qMax(max_z[j], z[i][j]));
+                    }
+                }
+            }
+            else
+            {
+                min_x = min_x.min(x[i]);
+                max_x = max_x.max(x[i]);
 
-            min_y = min_y.min(y[i]);
-            max_y = max_y.max(y[i]);
+                min_y = min_y.min(y[i]);
+                max_y = max_y.max(y[i]);
 
-            min_z = min_z.min(z[i]);
-            max_z = max_z.max(z[i]);
+                min_z = min_z.min(z[i]);
+                max_z = max_z.max(z[i]);
+            }
         }
         
         Vector mincoords( min_x.min(), min_y.min(), min_z.min() );
@@ -538,9 +580,12 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
         //now calculate the grid energy of each atom
         const float *gridpot_array = grid_pots.constData();
 
-        double grid_nrg = 0;
-
         bool all_within_grid = true;
+
+        QVector<MultiInt> grid_corners;
+        QVector<MultiFloat> grid_weights;
+
+        MultiDouble grid_nrg(0);
 
         for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = atoms.occupiedBoxes().constBegin();
              it != atoms.occupiedBoxes().constEnd();
@@ -555,100 +600,35 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
             
             const int nats = atms.x().count();
 
-            const float grid_spacing = grid_info.spacing().value();
-            const MultiFloat inv_grid_spacing( 1.0 / grid_spacing );
-            const MultiFloat grid_ox( grid_info.dimensions().minCoords().x() );
-            const MultiFloat grid_oy( grid_info.dimensions().minCoords().y() );
-            const MultiFloat grid_oz( grid_info.dimensions().minCoords().z() );
-
-            const qint32 dimx_minus_1 = grid_info.dimX() - 1;
-            const qint32 dimy_minus_1 = grid_info.dimY() - 1;
-            const qint32 dimz_minus_1 = grid_info.dimZ() - 1;
-
-            MultiFloat gx, gy, gz;
-
             for (int i=0; i<nats; ++i)
             {
-                gx = grid_ox - x[i];
-                gy = grid_oy - y[i];
-                gz = grid_oz - z[i];
-                
-                gx *= inv_grid_spacing;
-                gy *= inv_grid_spacing;
-                gz *= inv_grid_spacing;
-            
-                for (int ii=0; ii<MultiFloat::count(); ++ii)
-                {
-                    int i_0 = int(gx[ii]);
-                    int j_0 = int(gy[ii]);
-                    int k_0 = int(gz[ii]);
-                
-                    if (i_0 < 0 or i_0 >= dimx_minus_1 or
-                        j_0 < 0 or j_0 >= dimy_minus_1 or
-                        k_0 < 0 or k_0 >= dimz_minus_1)
-                    {
-                        Vector p( x[i][ii], y[i][ii], z[i][ii] );
-                    
-                        qDebug() << "POINT" << p.toString() << "LIES OUTSIDE OF "
-                                 << "THE GRID?" << grid_info.toString();
-                        
-                        all_within_grid = false;
-                        break;
-                    }
-                    else
-                    {
-                        //use tri-linear interpolation to get the potential at the atom
-                        //
-                        // This is described in 
-                        //
-                        // Davis, Madura and McCammon, Comp. Phys. Comm., 62, 187-197, 1991
-                        //
-                        // phi(x,y,z) = phi(i  ,j  ,k  )*(1-R)(1-S)(1-T) +
-                        //              phi(i+1,j  ,k  )*(  R)(1-S)(1-T) +
-                        //              phi(i  ,j+1,k  )*(1-R)(  S)(1-T) +
-                        //              phi(i  ,j  ,k+1)*(1-R)(1-S)(  T) +
-                        //              phi(i+1,j+1,k  )*(  R)(  S)(1-T) +
-                        //              phi(i+1,j  ,k+1)*(  R)(1-S)(  T) +
-                        //              phi(i  ,j+1,k+1)*(1-R)(  S)(  T) +
-                        //              phi(i+1,j+1,k+1)*(  R)(  S)(  T) +
-                        //
-                        // where R, S and T are the coordinates of the atom in 
-                        // fractional grid coordinates from the point (i,j,k), e.g.
-                        // (0,0,0) is (i,j,k) and (1,1,1) is (i+1,j+1,k+1)
-                        //
-                        const Vector c000 = grid_info.dimensions().minCoords() +
-                                                Vector( i_0 * grid_spacing,
-                                                        j_0 * grid_spacing,
-                                                        k_0 * grid_spacing );
+                int n_in_grid = grid_info.pointToGridCorners(x[i], y[i], z[i],
+                                                             grid_corners, grid_weights);
 
-                        const double R = (x[i][ii] - c000.x()) / grid_spacing;
-                        const double S = (y[i][ii] - c000.y()) / grid_spacing;
-                        const double T = (z[i][ii] - c000.z()) / grid_spacing;
-                        
-                        int i000 = grid_info.gridToArrayIndex(i_0  , j_0  , k_0  );
-                        int i001 = grid_info.gridToArrayIndex(i_0  , j_0  , k_0+1);
-                        int i010 = grid_info.gridToArrayIndex(i_0  , j_0+1, k_0  );
-                        int i100 = grid_info.gridToArrayIndex(i_0+1, j_0  , k_0  );
-                        int i011 = grid_info.gridToArrayIndex(i_0  , j_0+1, k_0+1);
-                        int i101 = grid_info.gridToArrayIndex(i_0+1, j_0  , k_0+1);
-                        int i110 = grid_info.gridToArrayIndex(i_0+1, j_0+1, k_0  );
-                        int i111 = grid_info.gridToArrayIndex(i_0+1, j_0+1, k_0+1);
-                        
-                        double phi = (gridpot_array[i000] * (1-R)*(1-S)*(1-T)) + 
-                                     (gridpot_array[i001] * (1-R)*(1-S)*(  T)) +
-                                     (gridpot_array[i010] * (1-R)*(  S)*(1-T)) +
-                                     (gridpot_array[i100] * (  R)*(1-S)*(1-T)) +
-                                     (gridpot_array[i011] * (1-R)*(  S)*(  T)) +
-                                     (gridpot_array[i101] * (  R)*(1-S)*(  T)) +
-                                     (gridpot_array[i110] * (  R)*(  S)*(1-T)) +
-                                     (gridpot_array[i111] * (  R)*(  S)*(  T));                         
-                                          
-                        grid_nrg += phi * q[i][ii];
-                    }
-                }
+                if (n_in_grid != MultiFloat::count())
+                {
+                    // NEED TO CHECK IF ANY OF THE POINTS ARE DUMMIES. IF THEY ARE
+                    // THEN WE NEED TO CALCULATE THE SUM MANUALLY
+                    //WARNING - I AM HERE
                 
-                if (not all_within_grid)
+                    //at least one of the grid points is outside of the grid
+                    qDebug() << "POINT" << x[i].toString() << y[i].toString()
+                                        << z[i].toString() << "LIES OUTSIDE OF"
+                             << "THE GRID?" << grid_info.toString();
+                    
+                    all_within_grid = false;
                     break;
+                }
+
+                MultiDouble phi(0);
+                
+                for (int j=0; j<8; ++j)
+                {
+                    phi += MultiFloat(gridpot_array, grid_weights.constData()[j]) *
+                              grid_weights.constData()[j];
+                }
+
+                grid_nrg += q[i] * phi;
             }
             
             if (not all_within_grid)
@@ -657,7 +637,7 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
         
         if (all_within_grid)
         {
-            cnrg = nrgs.get<0>() + grid_nrg;
+            cnrg = nrgs.get<0>() + grid_nrg.sum();
             ljnrg = nrgs.get<1>();
             return;
         }

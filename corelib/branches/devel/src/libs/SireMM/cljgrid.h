@@ -71,6 +71,7 @@ public:
     CLJGrid(const AABox &grid_dimensions);
     CLJGrid(const AABox &grid_dimensions, Length grid_spacing);
     CLJGrid(const GridInfo &grid);
+    CLJGrid(const CLJFunction &cljfunc);
     CLJGrid(const CLJFunction &cljfunc, const AABox &grid_dimensions);
     CLJGrid(const CLJFunction &cljfunc, const AABox &grid_dimensions, Length grid_spacing);
     CLJGrid(const CLJFunction &cljfunc, const GridInfo &grid);

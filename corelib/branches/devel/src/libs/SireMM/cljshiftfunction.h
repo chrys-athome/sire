@@ -92,6 +92,8 @@ public:
     
     CLJShiftFunction* clone() const;
 
+    bool supportsGridCalculation() const;
+
 protected:
     void calcVacEnergyAri(const CLJAtoms &atoms,
                           double &cnrg, double &ljnrg) const;
@@ -126,6 +128,12 @@ protected:
     double calcVacLJEnergyAri(const CLJAtoms &atoms) const;
     double calcVacLJEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                               float min_distance) const;
+
+    void calcVacGrid(const CLJAtoms &atoms, const GridInfo &gridinfo,
+                     QVector<double> &potential) const;
+    
+    void calcBoxGrid(const CLJAtoms &atoms, const GridInfo &gridinfo,
+                     QVector<double> &potential) const;
 };
 
 /** This CLJFunction calculates the intramolecular coulomb and LJ energy of the passed

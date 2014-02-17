@@ -120,6 +120,8 @@ public:
     MultiFloat(float value);
     
     MultiFloat(const float *array, int size);
+    MultiFloat(const float *array, const MultiInt &indicies);
+    
     MultiFloat(const QVector<float> &array);
     MultiFloat(const QVector<double> &array);
     
