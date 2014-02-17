@@ -222,9 +222,9 @@ GridIndex GridInfo::pointToGridIndex(const Vector &point) const
     const qint32 j = qint32( (point.y() - grid_origin.y()) * inv_grid_spacing );
     const qint32 k = qint32( (point.z() - grid_origin.z()) * inv_grid_spacing );
     
-    if (i < 0 or i >= dimx or
-        j < 0 or j >= dimy or
-        k < 0 or k >= dimz)
+    if (i < 0 or i >= (dimx-1) or
+        j < 0 or j >= (dimy-1) or
+        k < 0 or k >= (dimz-1))
     {
         //the point is outside of the grid
         return GridIndex::null();
@@ -248,9 +248,9 @@ void GridInfo::pointToGridCorners(const Vector &point, QVector<int> &indicies) c
     const qint32 s = qint32( (point.y() - grid_origin.y()) * inv_grid_spacing );
     const qint32 t = qint32( (point.z() - grid_origin.z()) * inv_grid_spacing );
     
-    if (r < 0 or r >= dimx or
-        s < 0 or s >= dimy or
-        t < 0 or t >= dimz)
+    if (r < 0 or r >= (dimx-1) or
+        s < 0 or s >= (dimy-1) or
+        t < 0 or t >= (dimz-1))
     {
         for (int i=0; i<8; ++i)
         {
@@ -304,9 +304,9 @@ void GridInfo::pointToGridCorners(const Vector &point, QVector<int> &indicies,
     const float one_minus_dy = 1.0f - dy;
     const float one_minus_dz = 1.0f - dz;
     
-    if (r < 0 or r >= dimx or
-        s < 0 or s >= dimy or
-        t < 0 or t >= dimz)
+    if (r < 0 or r >= (dimx-1) or
+        s < 0 or s >= (dimy-1) or
+        t < 0 or t >= (dimz-1))
     {
         for (int i=0; i<8; ++i)
         {
@@ -399,9 +399,9 @@ int GridInfo::pointToGridCorners(const MultiFloat &x, const MultiFloat &y,
     
     for (int i=0; i<MultiInt::count(); ++i)
     {
-        if (r[i] < 0 or r[i] >= dimx or
-            s[i] < 0 or s[i] >= dimy or
-            t[i] < 0 or t[i] >= dimz)
+        if (r[i] < 0 or r[i] >= (dimx-1) or
+            s[i] < 0 or s[i] >= (dimy-1) or
+            t[i] < 0 or t[i] >= (dimz-1))
         {
             for (int j=0; j<8; ++j)
             {
@@ -502,9 +502,9 @@ int GridInfo::pointToGridCorners(const MultiFloat &x, const MultiFloat &y,
     
     for (int i=0; i<MultiInt::count(); ++i)
     {
-        if (r[i] < 0 or r[i] >= dimx or
-            s[i] < 0 or s[i] >= dimy or
-            t[i] < 0 or t[i] >= dimz)
+        if (r[i] < 0 or r[i] >= (dimx-1) or
+            s[i] < 0 or s[i] >= (dimy-1) or
+            t[i] < 0 or t[i] >= (dimz-1))
         {
             for (int j=0; j<8; ++j)
             {
@@ -555,4 +555,34 @@ AABox GridInfo::box(int i) const
 AABox GridInfo::box(const Vector &point) const
 {
     return box( pointToGridIndex(point) );
+}
+
+/** Return the point at the bottom, left, back (lowest i, j, k indicies) of the
+    box at grid index 'idx'. This returns a zero vector if the point is invalid. */
+Vector GridInfo::point(const GridIndex &idx) const
+{
+    if (idx.isNull() or idx.i() >= dimx or idx.j() >= dimy or idx.k() >= dimz)
+    {
+        return Vector(0);
+    }
+    else
+    {
+        return Vector( grid_origin + Vector(idx.i() * grid_spacing,
+                                            idx.j() * grid_spacing,
+                                            idx.k() * grid_spacing ) );
+    }
+}
+
+/** Return the point at the bottom, left, back (lowest i, j, k indicies) of the
+    ith box. This returns a zero vector if the point is invalid. */
+Vector GridInfo::point(int i) const
+{
+    return point( arrayToGridIndex(i) );
+}
+
+/** Return the point at the bottom, left, back (lowest i, j, k indicies) of the
+    box containing the point 'point'. This returns a zero vector if the point is invalid. */
+Vector GridInfo::point(const Vector &p) const
+{
+    return point( pointToGridIndex(p) );
 }

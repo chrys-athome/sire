@@ -181,6 +181,10 @@ public:
     AABox box(const GridIndex &idx) const;
     AABox box(const Vector &point) const;
     
+    Vector point(int i) const;
+    Vector point(const GridIndex &idx) const;
+    Vector point(const Vector &point) const;
+    
     qint32 dimX() const;
     qint32 dimY() const;
     qint32 dimZ() const;
