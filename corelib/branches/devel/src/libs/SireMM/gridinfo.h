@@ -36,8 +36,12 @@ SIRE_BEGIN_HEADER
 
 namespace SireMM
 {
+class GridIndex;
 class GridInfo;
 }
+
+QDataStream& operator<<(QDataStream&, const SireMM::GridIndex&);
+QDataStream& operator>>(QDataStream&, SireMM::GridIndex&);
 
 QDataStream& operator<<(QDataStream&, const SireMM::GridInfo&);
 QDataStream& operator>>(QDataStream&, SireMM::GridInfo&);
@@ -86,23 +90,23 @@ public:
     
     QString toString() const;
     
-    int i() const
+    qint32 i() const
     {
         return _i;
     }
     
-    int j() const
+    qint32 j() const
     {
         return _j;
     }
     
-    int k() const
+    qint32 k() const
     {
         return _k;
     }
     
 private:
-    int _i, _j, _k;
+    qint32 _i, _j, _k;
 };
 
 /** This is a simple class that describes a 3D regular grid
@@ -283,8 +287,13 @@ inline const AABox& GridInfo::dimensions() const
 
 }
 
+Q_DECLARE_METATYPE( SireMM::GridIndex )
 Q_DECLARE_METATYPE( SireMM::GridInfo )
 
+Q_DECLARE_TYPEINFO( SireMM::GridIndex, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireMM::GridInfo, Q_MOVABLE_TYPE );
+
+SIRE_EXPOSE_CLASS( SireMM::GridInfo )
 SIRE_EXPOSE_CLASS( SireMM::GridInfo )
 
 SIRE_END_HEADER

@@ -41,7 +41,32 @@ using namespace SireStream;
 /////////
 ///////// Implementation of GridIndex
 /////////
+
+static const RegisterMetaType<GridIndex> r_index(NO_ROOT);
+
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const GridIndex &idx)
+{
+    writeHeader(ds, r_index, 1);
+    ds << idx.i() << idx.j() << idx.k();
+    return ds;
+}
+
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridIndex &idx)
+{
+    VersionID v = readHeader(ds, r_index);
     
+    if (v == 1)
+    {
+        qint32 i,j,k;
+        ds >> i >> j >> k;
+        idx = GridIndex(i,j,k);
+    }
+    else
+        throw version_error( v, "1", r_index, CODELOC );
+    
+    return ds;
+}
+
 const char* GridIndex::typeName()
 {
     return "SireMM::GridIndex";
