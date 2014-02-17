@@ -271,6 +271,39 @@ void register_GridInfo_class(){
                 , ( bp::arg("point") ) );
         
         }
+        { //::SireMM::GridInfo::point
+        
+            typedef ::SireMaths::Vector ( ::SireMM::GridInfo::*point_function_type )( int ) const;
+            point_function_type point_function_value( &::SireMM::GridInfo::point );
+            
+            GridInfo_exposer.def( 
+                "point"
+                , point_function_value
+                , ( bp::arg("i") ) );
+        
+        }
+        { //::SireMM::GridInfo::point
+        
+            typedef ::SireMaths::Vector ( ::SireMM::GridInfo::*point_function_type )( ::SireMM::GridIndex const & ) const;
+            point_function_type point_function_value( &::SireMM::GridInfo::point );
+            
+            GridInfo_exposer.def( 
+                "point"
+                , point_function_value
+                , ( bp::arg("idx") ) );
+        
+        }
+        { //::SireMM::GridInfo::point
+        
+            typedef ::SireMaths::Vector ( ::SireMM::GridInfo::*point_function_type )( ::SireMaths::Vector const & ) const;
+            point_function_type point_function_value( &::SireMM::GridInfo::point );
+            
+            GridInfo_exposer.def( 
+                "point"
+                , point_function_value
+                , ( bp::arg("point") ) );
+        
+        }
         { //::SireMM::GridInfo::pointToArrayIndex
         
             typedef int ( ::SireMM::GridInfo::*pointToArrayIndex_function_type )( ::SireMaths::Vector const & ) const;
