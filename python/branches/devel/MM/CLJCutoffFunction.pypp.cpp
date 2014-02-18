@@ -23,6 +23,10 @@ namespace bp = boost::python;
 
 #include "gridinfo.h"
 
+#include "tbb/blocked_range.h"
+
+#include "tbb/parallel_for.h"
+
 #include <QElapsedTimer>
 
 #include "cljfunction.h"

@@ -23,6 +23,8 @@ namespace bp = boost::python;
 
 #include "cljboxes.h"
 
+#include "tostring.h"
+
 #include <QDebug>
 
 #include <QElapsedTimer>

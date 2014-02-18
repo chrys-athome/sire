@@ -19,7 +19,11 @@ namespace bp = boost::python;
 
 #include "cljshiftfunction.h"
 
+#include "gridinfo.h"
+
 #include <QDebug>
+
+#include <QElapsedTimer>
 
 #include "cljshiftfunction.h"
 
@@ -59,6 +63,16 @@ void register_CLJShiftFunction_class(){
         
         }
         CLJShiftFunction_exposer.def( bp::self == bp::self );
+        { //::SireMM::CLJShiftFunction::supportsGridCalculation
+        
+            typedef bool ( ::SireMM::CLJShiftFunction::*supportsGridCalculation_function_type )(  ) const;
+            supportsGridCalculation_function_type supportsGridCalculation_function_value( &::SireMM::CLJShiftFunction::supportsGridCalculation );
+            
+            CLJShiftFunction_exposer.def( 
+                "supportsGridCalculation"
+                , supportsGridCalculation_function_value );
+        
+        }
         { //::SireMM::CLJShiftFunction::typeName
         
             typedef char const * ( *typeName_function_type )(  );

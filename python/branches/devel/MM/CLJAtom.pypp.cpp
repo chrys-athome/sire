@@ -19,7 +19,11 @@ namespace bp = boost::python;
 
 #include "SireMol/molecule.h"
 
+#include "SireMol/moleculegroup.h"
+
 #include "SireMol/molecules.h"
+
+#include "SireMol/molidx.h"
 
 #include "SireMol/partialmolecule.h"
 

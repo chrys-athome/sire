@@ -19,6 +19,8 @@ namespace bp = boost::python;
 
 #include "gridinfo.h"
 
+#include <QDebug>
+
 #include "gridinfo.h"
 
 SireMM::GridIndex __copy__(const SireMM::GridIndex &other){ return SireMM::GridIndex(other); }

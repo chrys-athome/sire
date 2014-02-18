@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+#include "SireMaths/multidouble.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
@@ -43,6 +45,7 @@ void register_CLJGrid_class(){
         CLJGrid_exposer.def( bp::init< SireVol::AABox const & >(( bp::arg("grid_dimensions") )) );
         CLJGrid_exposer.def( bp::init< SireVol::AABox const &, SireUnits::Dimension::Length >(( bp::arg("grid_dimensions"), bp::arg("grid_spacing") )) );
         CLJGrid_exposer.def( bp::init< SireMM::GridInfo const & >(( bp::arg("grid") )) );
+        CLJGrid_exposer.def( bp::init< SireMM::CLJFunction const & >(( bp::arg("cljfunc") )) );
         CLJGrid_exposer.def( bp::init< SireMM::CLJFunction const &, SireVol::AABox const & >(( bp::arg("cljfunc"), bp::arg("grid_dimensions") )) );
         CLJGrid_exposer.def( bp::init< SireMM::CLJFunction const &, SireVol::AABox const &, SireUnits::Dimension::Length >(( bp::arg("cljfunc"), bp::arg("grid_dimensions"), bp::arg("grid_spacing") )) );
         CLJGrid_exposer.def( bp::init< SireMM::CLJFunction const &, SireMM::GridInfo const & >(( bp::arg("cljfunc"), bp::arg("grid") )) );

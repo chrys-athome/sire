@@ -19,7 +19,11 @@ namespace bp = boost::python;
 
 #include "cljshiftfunction.h"
 
+#include "gridinfo.h"
+
 #include <QDebug>
+
+#include <QElapsedTimer>
 
 #include "cljshiftfunction.h"
 

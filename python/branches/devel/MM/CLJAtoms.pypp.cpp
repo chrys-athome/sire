@@ -19,7 +19,11 @@ namespace bp = boost::python;
 
 #include "SireMol/molecule.h"
 
+#include "SireMol/moleculegroup.h"
+
 #include "SireMol/molecules.h"
+
+#include "SireMol/molidx.h"
 
 #include "SireMol/partialmolecule.h"
 
@@ -65,7 +69,9 @@ void register_CLJAtoms_class(){
         CLJAtoms_exposer.def( bp::init< SireMol::MoleculeView const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecule"), bp::arg("map")=SireBase::PropertyMap() )) );
         CLJAtoms_exposer.def( bp::init< SireMol::MoleculeView const &, SireMM::CLJAtoms::ID_SOURCE, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecule"), bp::arg("id_source"), bp::arg("map")=SireBase::PropertyMap() )) );
         CLJAtoms_exposer.def( bp::init< SireMol::Molecules const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecules"), bp::arg("map")=SireBase::PropertyMap() )) );
+        CLJAtoms_exposer.def( bp::init< SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecules"), bp::arg("map")=SireBase::PropertyMap() )) );
         CLJAtoms_exposer.def( bp::init< SireMol::Molecules const &, SireMM::CLJAtoms::ID_SOURCE, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecules"), bp::arg("id_source"), bp::arg("map")=SireBase::PropertyMap() )) );
+        CLJAtoms_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireMM::CLJAtoms::ID_SOURCE, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecules"), bp::arg("id_source"), bp::arg("map")=SireBase::PropertyMap() )) );
         CLJAtoms_exposer.def( bp::init< SireMM::CLJAtoms const & >(( bp::arg("other") )) );
         { //::SireMM::CLJAtoms::ID
         
