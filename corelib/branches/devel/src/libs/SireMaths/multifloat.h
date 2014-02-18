@@ -70,6 +70,12 @@
         #endif
     #else
     #ifdef __SSE2__
+        #ifdef SIRE_USE_SSE4
+           #ifdef __SSE4_1__
+               #include <smmintrin.h>
+               #define MULTIFLOAT_SSE4_IS_AVAILABLE 1
+           #endif
+        #endif
         #include <emmintrin.h>   // CONDITIONAL_INCLUDE
         #define MULTIFLOAT_SSE_IS_AVAILABLE 1
         #undef MULTIFLOAT_AVX_IS_AVAILABLE
@@ -82,6 +88,12 @@
 #else
 #ifdef SIRE_USE_SSE
     #ifdef __SSE2__
+        #ifdef SIRE_USE_SSE4
+           #ifdef __SSE4_1__
+               #include <smmintrin.h>
+               #define MULTIFLOAT_SSE4_IS_AVAILABLE 1
+           #endif
+        #endif
         #include <emmintrin.h>   // CONDITIONAL_INCLUDE
         #define MULTIFLOAT_SSE_IS_AVAILABLE 1
         #undef MULTIFLOAT_AVX_IS_AVAILABLE

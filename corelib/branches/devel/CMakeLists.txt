@@ -181,6 +181,10 @@ option ( SIRE_DISABLE_SSE "Prevent use of SSE when compiling" OFF )
 # Add option to disable use of AVX
 option ( SIRE_DISABLE_AVX "Prevent use of AVX when compiling" OFF )
 
+# Add option to enable use of SSE4 (only works if SSE is not disabled)
+# This is on by default as most processors now support SSE4
+option ( SIRE_ENABLE_SSE4 "Enable use of SSE4 when compiling" ON )
+
 # Add option to enable use of AVX2 (only works if AVX is not disabled)
 # This is off by default as AVX2 is not widespread
 option ( SIRE_ENABLE_AVX2 "Enable use of AVX2 when compiling" OFF )
@@ -216,6 +220,7 @@ check_function_exists( lseek64 HAVE_LSEEK64 )
 
 check_include_files( malloc/malloc.h HAVE_MALLOC_MALLOC_H )
 check_include_files( emmintrin.h HAVE_EMMINTRIN_H )
+check_include_files( smmintrin.h HAVE_SMMINTRIN_H )
 check_include_files( immintrin.h HAVE_IMMINTRIN_H )
 check_include_files( execinfo.h HAVE_EXECINFO_H )
 check_include_files( stdint.h HAVE_STDINT_H )
@@ -355,14 +360,28 @@ if ( ${SIRE_CXX_COMPILER_ID} MATCHES "GNU" )
       elseif ( HAVE_EMMINTRIN_H AND HAVE_SSE_FLAG )
         # we have emmintrin.h so we have SSE
         message( STATUS "Compiling with SSE2 enabled. Resulting binary will not work on really old Intel CPUs" )
-        set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
+
+        CHECK_CXX_COMPILER_FLAG( "-msse4.1" HAVE_SSE4_FLAG )
+
+        if ( SIRE_ENABLE_SSE4 AND HAVE_SMMINTRIN_H AND HAVE_SSE4_FLAG )
+          message( STATUS "Compiling with SSE4 enabled. Resulting binary will only work on newer Intel CPUs" )
+          set( SIRE_VECTOR_FLAGS "-msse4.1 -DSIRE_USE_SSE -DSIRE_USE_SSE4" )
+        else()
+          set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
+        endif()
       endif()
     elseif (NOT SIRE_DISABLE_SSE)   
-      if ( HAVE_EMMINTRIN_H AND HAVE_SSE_FLAG)
         # we have emmintrin.h so we have SSE
         message( STATUS "Compiling with SSE2 enabled. Resulting binary will not work on really old Intel CPUs" )
-        set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
-      endif()
+
+        CHECK_CXX_COMPILER_FLAG( "-msse4.1" HAVE_SSE4_FLAG )
+
+        if ( SIRE_ENABLE_SSE4 AND HAVE_SMMINTRIN_H AND HAVE_SSE4_FLAG )
+          message( STATUS "Compiling with SSE4 enabled. Resulting binary will only work on newer Intel CPUs" )
+          set( SIRE_VECTOR_FLAGS "-msse4.1 -DSIRE_USE_SSE -DSIRE_USE_SSE4" )
+        else()
+          set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
+        endif()  
     endif()
 
     # Now gcc 4 specific options
@@ -431,14 +450,28 @@ elseif ( ${SIRE_CXX_COMPILER_ID} MATCHES "CLANG" )
      elseif ( HAVE_EMMINTRIN_H AND HAVE_SSE_FLAG )
         # we have emmintrin.h so we have SSE
         message( STATUS "Compiling with SSE2 enabled. Resulting binary will not work on really old Intel CPUs" )
-        set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
-      endif()
+
+        CHECK_CXX_COMPILER_FLAG( "-msse4.1" HAVE_SSE4_FLAG )
+        
+        if ( SIRE_ENABLE_SSE4 AND HAVE_SMMINTRIN_H AND HAVE_SSE4_FLAG )
+          message( STATUS "Compiling with SSE4.1 enabled. Resulting binary will only work on newer Intel CPUs" )
+          set( SIRE_VECTOR_FLAGS "-msse4.1 -DSIRE_USE_SSE -DSIRE_USE_SSE4" )
+        else()
+          set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
+        endif() 
+     endif()
     elseif( NOT SIRE_DISABLE_SSE )
-      if ( HAVE_EMMINTRIN_H AND HAVE_SSE_FLAG )
         # we have emmintrin.h so we have SSE
         message( STATUS "Compiling with SSE2 enabled. Resulting binary will not work on really old Intel CPUs" )
-        set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
-      endif()
+
+        CHECK_CXX_COMPILER_FLAG( "-msse4.1" HAVE_SSE4_FLAG )
+
+        if ( SIRE_ENABLE_SSE4 AND HAVE_SMMINTRIN_H AND HAVE_SSE4_FLAG )
+          message( STATUS "Compiling with SSE4.1 enabled. Resulting binary will only work on newer Intel CPUs" )
+          set( SIRE_VECTOR_FLAGS "-msse4.1 -DSIRE_USE_SSE -DSIRE_USE_SSE4" )
+        else()
+          set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
+        endif()    
     endif()
        
     set ( SIRE_VISIBILITY_FLAGS "-DSIRE_VISIBILITY_AVAILABLE -fvisibility=hidden -fvisibility-inlines-hidden" )

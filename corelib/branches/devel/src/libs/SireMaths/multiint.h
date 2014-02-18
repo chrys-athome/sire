@@ -697,7 +697,7 @@ MultiInt MultiInt::operator*(const MultiInt &other) const
                              _mm_mul_epi32(v.x[1], other.v.x[1]) );
         #endif
     #else
-    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+    #ifdef MULTIFLOAT_SSE4_IS_AVAILABLE
         return MultiInt( _mm_mul_epi32(v.x, other.v.x) );
     #else
         MultiInt ret;
@@ -772,7 +772,7 @@ MultiInt& MultiInt::operator*=(const MultiInt &other)
             v.x[1] = _mm_mul_epi32(v.x[1], other.v.x[1]);
         #endif
     #else
-    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+    #ifdef MULTIFLOAT_SSE4_IS_AVAILABLE
         v.x = _mm_mul_epi32(v.x, other.v.x);
     #else
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
