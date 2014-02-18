@@ -34,11 +34,13 @@
 
 #include "SireMol/atomcoords.h"
 #include "SireMol/atomcharges.h"
+#include "SireMol/moleculegroup.h"
 #include "SireMol/molecules.h"
 #include "SireMol/molecule.h"
 #include "SireMol/partialmolecule.h"
 #include "SireMol/selector.hpp"
 #include "SireMol/atom.h"
+#include "SireMol/molidx.h"
 
 #include "SireID/index.h"
 
@@ -1121,6 +1123,203 @@ void CLJAtoms::constructFrom(const Molecules &molecules,
              << (0.000001*ns) << "ms";
 }
 
+/** Construct from the parameters in the passed set of Molecules */
+void CLJAtoms::constructFrom(const MoleculeGroup &molecules,
+                             ID_SOURCE id_source, const PropertyMap &map)
+{
+    if (molecules.isEmpty())
+        return;
+   
+    QElapsedTimer t;
+    t.start();
+    
+    //extract all of the data from the passed molecules
+    {
+        const PropertyName coords_property = map["coordinates"];
+        const PropertyName chg_property = map["charge"];
+        const PropertyName lj_property = map["LJ"];
+        
+        //calculate the number of atoms...
+        int nats = 0;
+        
+        for (Molecules::const_iterator it = molecules.constBegin();
+             it != molecules.constEnd();
+             ++it)
+        {
+            nats += it.value().selection().nSelected();
+        }
+        
+        //reserve space for the data
+        QVector<float> xf(nats);
+        QVector<float> yf(nats);
+        QVector<float> zf(nats);
+        
+        QVector<float> qf(nats);
+        QVector<float> sigf(nats);
+        QVector<float> epsf(nats);
+        
+        QVector<qint32> idf(nats);
+        
+        float *xa = xf.data();
+        float *ya = yf.data();
+        float *za = zf.data();
+        
+        float *qa = qf.data();
+        float *siga = sigf.data();
+        float *epsa = epsf.data();
+        
+        qint32 *ida = idf.data();
+        
+        int idx = 0;
+        
+        for (int i=0; i<molecules.nMolecules(); ++i)
+        {
+            const MoleculeView &view = molecules[MolIdx(i)];
+        
+            if (view.selectedAll())
+            {
+                Molecule mol = view.molecule();
+                
+                const AtomCoords &coords = mol.property(coords_property).asA<AtomCoords>();
+                const AtomCharges &chgs = mol.property(chg_property).asA<AtomCharges>();
+                const AtomLJs &ljs = mol.property(lj_property).asA<AtomLJs>();
+
+                const qint32 s_molid = mol.number();
+                const MoleculeInfoData &molinfo = mol.data().info();
+                
+                for (int i=0; i<coords.nCutGroups(); ++i)
+                {
+                    const CGIdx cgidx(i);
+                
+                    const Vector *icoords = coords.constData(cgidx);
+                    const Charge *ichg = chgs.constData(cgidx);
+                    const LJParameter *ilj = ljs.constData(cgidx);
+                    
+                    for (int j=0; j<coords.nAtoms(cgidx); ++j)
+                    {
+                        if (ichg[j].value() != 0 or (not ilj[j].isDummy()))
+                        {
+                            xa[idx] = icoords[j].x();
+                            ya[idx] = icoords[j].y();
+                            za[idx] = icoords[j].z();
+
+                            qa[idx] = ichg[j].value();
+
+                            siga[idx] = ilj[j].sigma();
+                            epsa[idx] = ilj[j].epsilon();
+                            
+                            if (id_source == USE_MOLNUM)
+                            {
+                                ida[idx] = s_molid;
+                            }
+                            else if (id_source == USE_ATOMIDX)
+                            {
+                                const AtomIdx atomidx
+                                                = molinfo.atomIdx( CGAtomIdx(CGIdx(i),Index(j)) );
+                                
+                                ida[idx] = atomidx.value() + 1;
+                            }
+                            else
+                            {
+                                throw SireError::program_bug( QObject::tr(
+                                        "Unknown source used for ID (%1)")
+                                            .arg(id_source), CODELOC );
+                            }
+                        
+                            idx += 1;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                Selector<Atom> atoms = view.atoms();
+                
+                QList<Vector> coords = atoms.property<Vector>(coords_property);
+                QList<Charge> chgs = atoms.property<Charge>(chg_property);
+                QList<LJParameter> ljs = atoms.property<LJParameter>(lj_property);
+                
+                if (coords.count() != chgs.count() or
+                    coords.count() != ljs.count())
+                {
+                    throw SireError::program_bug( QObject::tr(
+                            "It should not be possible for the number of coordinates (%1) "
+                            "to be different to the number of charges (%2) or LJs (%3) "
+                            "for molecule %4.")
+                                .arg(coords.count())
+                                .arg(chgs.count())
+                                .arg(ljs.count())
+                                .arg(atoms.molecule().toString()), CODELOC );
+                }
+
+                const qint32 s_molid = view.data().number();
+                
+                for (int i=0; i<coords.count(); ++i)
+                {
+                    if (chgs[i].value() != 0 or (not ljs[i].isDummy()))
+                    {
+                        xa[idx] = coords[i].x();
+                        ya[idx] = coords[i].y();
+                        za[idx] = coords[i].z();
+                        
+                        qa[idx] = chgs[i].value();
+                        siga[idx] = ljs[i].sigma();
+                        epsa[idx] = ljs[i].epsilon();
+
+                        if (id_source == USE_MOLNUM)
+                        {
+                            ida[idx] = s_molid;
+                        }
+                        else if (id_source == USE_ATOMIDX)
+                        {
+                            ida[idx] = atoms[i].index().value() + 1;
+                        }
+                        else
+                        {
+                            throw SireError::program_bug( QObject::tr(
+                                    "Unknown source used for ID (%1)")
+                                        .arg(id_source), CODELOC );
+                        }
+                        
+                        idx += 1;
+                    }
+                }
+            }
+        }
+        
+        if (idx > 0)
+        {
+            _x = MultiFloat::fromArray(xf.constData(), idx);
+            _y = MultiFloat::fromArray(yf.constData(), idx);
+            _z = MultiFloat::fromArray(zf.constData(), idx);
+            _q = MultiFloat::fromArray(qf.constData(), idx);
+            _sig = MultiFloat::fromArray(sigf.constData(), idx);
+            _eps = MultiFloat::fromArray(epsf.constData(), idx);
+            _id = MultiInt::fromArray(idf.constData(), idx);
+        }
+    }
+    
+    MultiFloat *q = _q.data();
+    MultiFloat *s = _sig.data();
+    MultiFloat *e = _eps.data();
+    
+    const MultiFloat four(4.0);
+    const MultiFloat one_over_4_pi_eps_0( std::sqrt(SireUnits::one_over_four_pi_eps0) );
+    
+    //now reduce the charge, sigma and epsilon parameters
+    for (int i=0; i<_q.count(); ++i)
+    {
+        q[i] = q[i] * one_over_4_pi_eps_0;
+        s[i] = s[i].sqrt();
+        e[i] = (e[i] * four).sqrt();
+    }
+    
+    quint64 ns = t.nsecsElapsed();
+    
+    qDebug() << "Converting" << (_q.count() * MultiFloat::count()) << "atoms took"
+             << (0.000001*ns) << "ms";
+}
+
 /** Construct from the parameters in the passed molecule view */
 CLJAtoms::CLJAtoms(const MoleculeView &view, const PropertyMap &map)
 {
@@ -1129,6 +1328,12 @@ CLJAtoms::CLJAtoms(const MoleculeView &view, const PropertyMap &map)
 
 /** Construct from the parameters in the passed set of Molecules */
 CLJAtoms::CLJAtoms(const Molecules &molecules, const PropertyMap &map)
+{
+    constructFrom(molecules, USE_MOLNUM, map);
+}
+
+/** Construct from the parameters in the passed set of Molecules */
+CLJAtoms::CLJAtoms(const MoleculeGroup &molecules, const PropertyMap &map)
 {
     constructFrom(molecules, USE_MOLNUM, map);
 }
@@ -1143,6 +1348,13 @@ CLJAtoms::CLJAtoms(const MoleculeView &view, ID_SOURCE id_source, const Property
 /** Construct from the parameters in the passed molecule view, specifying
     how the ID number should be obtained for each atom */
 CLJAtoms::CLJAtoms(const Molecules &molecules, ID_SOURCE id_source, const PropertyMap &map)
+{
+    constructFrom(molecules, id_source, map);
+}
+
+/** Construct from the parameters in the passed molecule view, specifying
+    how the ID number should be obtained for each atom */
+CLJAtoms::CLJAtoms(const MoleculeGroup &molecules, ID_SOURCE id_source, const PropertyMap &map)
 {
     constructFrom(molecules, id_source, map);
 }

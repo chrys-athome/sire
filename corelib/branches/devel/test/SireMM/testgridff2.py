@@ -68,7 +68,11 @@ cljgridff.setGridDimensions( cljatoms, 0.5 * angstrom, 2 * angstrom )
 print("Grid box equals %s" % cljgridff.grid())
 cljboxes = CLJBoxes(cljatoms)
 (cnrg, ljnrg) = cljgridff.calculate(cljboxes)
-print("CLJGridFF:  %s  %s  %s" % (cnrg+ljnrg, cnrg,ljnrg))
+print("CLJGridFF:  %s  %s  %s" % (cnrg+ljnrg, cnrg, ljnrg))
+cljgridff.setUseGrid(False)
+(cnrg, ljnrg) = cljgridff.calculate(cljboxes)
+print("CLJGridFF:  %s  %s  %s" % (cnrg+ljnrg, cnrg, ljnrg))
+
 
 gridff.add(swapwaters, MGIdx(0))
 gridff.add(waters, MGIdx(1))

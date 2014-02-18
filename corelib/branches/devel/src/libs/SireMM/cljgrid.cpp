@@ -249,7 +249,7 @@ QString CLJGrid::toString() const
 void CLJGrid::clearGrid()
 {
     grid_pots.clear();
-    close_atoms = CLJAtoms();
+    close_atoms = CLJBoxes();
 }
 
 /** Add the passed atoms onto the set of fixed atoms */
@@ -645,11 +645,23 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
                 
                 for (int j=0; j<8; ++j)
                 {
-                    phi += MultiFloat(gridpot_array, grid_weights.constData()[j]) *
+                    phi += MultiFloat(gridpot_array, grid_corners.constData()[j]) *
                                       grid_weights.constData()[j];
+                    
+                    qDebug() << grid_corners[j][0] << grid_weights[j][0]
+                             << gridpot_array[grid_corners[j][0]] << phi[0];
+                    
+                    Vector my_point = grid_info.point( grid_corners[j][0] );
+                    Vector my_co( x[i][0], y[i][0], z[i][0] );
+                    
+                    qDebug() << "DIST" << my_co.toString() << my_point.toString()
+                             << Vector::distance(my_co,my_point);
                 }
 
+                qDebug() << "GRID" << q[i][0] << std::sqrt(one_over_four_pi_eps0) << phi[0] << (q[i][0]*phi[0]);
+
                 grid_nrg += q[i] * phi;
+                qDebug() << "SUM" << grid_nrg[0];
             }
             
             if (not all_within_grid)
@@ -658,6 +670,7 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
         
         if (all_within_grid)
         {
+            qDebug() << "TOTAL" << grid_nrg[0];
             qDebug() << "COULOMB" << nrgs.get<0>() << "GRID" << grid_nrg.sum();
             cnrg = nrgs.get<0>() + grid_nrg.sum();
             ljnrg = nrgs.get<1>();

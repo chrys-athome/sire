@@ -59,6 +59,7 @@ namespace SireMol
 {
 class Molecule;
 class Molecules;
+class MoleculeGroup;
 class MoleculeView;
 }
 
@@ -73,6 +74,7 @@ using SireMaths::Vector;
 using SireMaths::MultiFloat;
 using SireMaths::MultiInt;
 
+using SireMol::MoleculeGroup;
 using SireMol::Molecules;
 using SireMol::MoleculeView;
 
@@ -177,7 +179,14 @@ public:
     CLJAtoms(const Molecules &molecules,
              const PropertyMap &map = PropertyMap());
 
+    CLJAtoms(const MoleculeGroup &molecules,
+             const PropertyMap &map = PropertyMap());
+
     CLJAtoms(const Molecules &molecules,
+             ID_SOURCE id_source,
+             const PropertyMap &map = PropertyMap());
+
+    CLJAtoms(const MoleculeGroup &molecules,
              ID_SOURCE id_source,
              const PropertyMap &map = PropertyMap());
 
@@ -245,6 +254,8 @@ public:
     static MultiInt idOfDummy();
     
 private:
+    void constructFrom(const MoleculeGroup &molecules,
+                       const ID_SOURCE id_source, const PropertyMap &map);
     void constructFrom(const Molecules &molecules,
                        const ID_SOURCE id_source, const PropertyMap &map);
     void constructFrom(const MoleculeView &molecule,

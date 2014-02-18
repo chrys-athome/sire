@@ -40,6 +40,8 @@
 #include <QElapsedTimer>
 #include <QDebug>
 
+#include "tostring.h"
+
 using namespace SireMM;
 using namespace SireMaths;
 using namespace SireVol;
@@ -527,8 +529,8 @@ CLJBoxes::CLJBoxes() : box_length(default_box_length)
 /** Construct from the passed set of atoms */
 void CLJBoxes::constructFrom(const CLJAtoms &atoms)
 {
-    QElapsedTimer t;
-    t.start();
+    /*QElapsedTimer t;
+    t.start();*/
     
     const float inv_length = 1.0 / box_length;
     
@@ -556,11 +558,11 @@ void CLJBoxes::constructFrom(const CLJAtoms &atoms)
         bxs.insert( it.key(), new CLJBox(CLJAtoms(it.value())) );
     }
     
-    quint64 ns = t.nsecsElapsed();
+    /*quint64 ns = t.nsecsElapsed();
     qDebug() << "Boxing up" << atoms.count() << "atoms took"
              << (0.000001*ns) << "ms";
-
-    qDebug() << "number of boxes ==" << boxed_atoms.count();
+    
+    qDebug() << "number of boxes ==" << boxed_atoms.count();*/
 }
 
 /** Add together two boxes - both boxes must have the same box length */
