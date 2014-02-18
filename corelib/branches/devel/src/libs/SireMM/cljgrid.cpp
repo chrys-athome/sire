@@ -586,6 +586,8 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
         QVector<MultiFloat> grid_weights;
 
         MultiDouble grid_nrg(0);
+    
+        const qint32 dummy_id = CLJAtoms::idOfDummy()[0];
 
         for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = atoms.occupiedBoxes().constBegin();
              it != atoms.occupiedBoxes().constEnd();
@@ -597,6 +599,7 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
             const MultiFloat *y = atms.y().constData();
             const MultiFloat *z = atms.z().constData();
             const MultiFloat *q = atms.q().constData();
+            const MultiInt *id = atms.ID().constData();
             
             const int nats = atms.x().count();
 
@@ -609,15 +612,33 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
                 {
                     // NEED TO CHECK IF ANY OF THE POINTS ARE DUMMIES. IF THEY ARE
                     // THEN WE NEED TO CALCULATE THE SUM MANUALLY
-                    //WARNING - I AM HERE
-                
-                    //at least one of the grid points is outside of the grid
-                    qDebug() << "POINT" << x[i].toString() << y[i].toString()
-                                        << z[i].toString() << "LIES OUTSIDE OF"
-                             << "THE GRID?" << grid_info.toString();
+                    int ndummies = 0;
                     
-                    all_within_grid = false;
-                    break;
+                    for (int j=0; j<MultiFloat::count(); ++j)
+                    {
+                        if (id[i][j] == dummy_id)
+                        {
+                            ndummies += 1;
+                            
+                            //put the dummy into the first grid box
+                            for (int k=0; k<8; ++k)
+                            {
+                                grid_corners[k].set(j, 0);
+                                grid_weights[k].set(j, 0.0);
+                            }
+                        }
+                    }
+                    
+                    if (ndummies + n_in_grid != MultiFloat::count())
+                    {
+                        //at least one of the grid points is outside of the grid
+                        qDebug() << "POINT" << x[i].toString() << y[i].toString()
+                                            << z[i].toString() << "LIES OUTSIDE OF"
+                                 << "THE GRID?" << grid_info.toString();
+                        
+                        all_within_grid = false;
+                        break;
+                    }
                 }
 
                 MultiDouble phi(0);
@@ -625,7 +646,7 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
                 for (int j=0; j<8; ++j)
                 {
                     phi += MultiFloat(gridpot_array, grid_weights.constData()[j]) *
-                              grid_weights.constData()[j];
+                                      grid_weights.constData()[j];
                 }
 
                 grid_nrg += q[i] * phi;
@@ -637,6 +658,7 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
         
         if (all_within_grid)
         {
+            qDebug() << "COULOMB" << nrgs.get<0>() << "GRID" << grid_nrg.sum();
             cnrg = nrgs.get<0>() + grid_nrg.sum();
             ljnrg = nrgs.get<1>();
             return;

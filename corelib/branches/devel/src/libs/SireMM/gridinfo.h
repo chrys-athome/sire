@@ -363,9 +363,9 @@ inline Length GridInfo::spacing() const
 /** Return the dimensions of the grid */
 inline AABox GridInfo::dimensions() const
 {
-    return AABox::from( grid_origin, grid_origin + Vector(dimx*grid_spacing,
-                                                          dimy*grid_spacing,
-                                                          dimz*grid_spacing) );
+    return AABox::from( grid_origin, grid_origin + Vector((dimx-1)*grid_spacing,
+                                                          (dimy-1)*grid_spacing,
+                                                          (dimz-1)*grid_spacing) );
 }
 
 #endif // SIRE_SKIP_INLINE_FUNCTIONS

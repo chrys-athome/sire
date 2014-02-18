@@ -41,6 +41,9 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include "tbb/blocked_range.h"
+#include "tbb/parallel_for.h"
+
 using namespace SireMM;
 using namespace SireVol;
 using namespace SireMaths;
@@ -319,16 +322,68 @@ bool CLJFunction::supportsGridCalculation() const
 
 /** Dummy function that needs to be overridden to support grid calculations */
 void CLJFunction::calcBoxGrid(const CLJAtoms &atoms, const GridInfo &gridinfo,
-                              QVector<double> &gridpot) const
+                              const int start, const int end, float *gridpot) const
 {
-    return;
+    for (int i=start; i<end; ++i)
+    {
+        gridpot[i] = 0;
+    }
 }
 
 /** Dummy function that needs to be overridden to support grid calculations */
 void CLJFunction::calcVacGrid(const CLJAtoms &atoms, const GridInfo &gridinfo,
-                              QVector<double> &gridpot) const
+                              const int start, const int end, float *gridpot) const
 {
-    return;
+    for (int i=start; i<end; ++i)
+    {
+        gridpot[i] = 0;
+    }
+}
+
+namespace SireMM
+{
+    namespace detail
+    {
+        class CLJGridCalculator
+        {
+        public:
+            CLJGridCalculator()
+                : atoms(0), grid_info(0), cljfunc(0), gridpot(0), use_box(false)
+            {}
+            
+            CLJGridCalculator(const CLJAtoms &_atoms, const GridInfo &_grid_info,
+                              const CLJFunction &_cljfunc, float *_gridpot)
+                : atoms(&_atoms), grid_info(&_grid_info), cljfunc(&_cljfunc),
+                  gridpot(_gridpot), use_box(_cljfunc.use_box)
+            {}
+            
+            ~CLJGridCalculator()
+            {}
+            
+            void operator()(const tbb::blocked_range<int> &range) const
+            {
+                if (use_box)
+                {
+                    cljfunc->calcBoxGrid(*atoms, *grid_info,
+                                         range.begin(), range.end(),
+                                         &(gridpot[range.begin()]));
+                }
+                else
+                {
+                    cljfunc->calcVacGrid(*atoms, *grid_info,
+                                         range.begin(), range.end(),
+                                         &(gridpot[range.begin()]));
+                }
+            }
+            
+        private:
+            const CLJAtoms* const atoms;
+            const GridInfo* const grid_info;
+            const CLJFunction* const cljfunc;
+            float *gridpot;
+            const bool use_box;
+        };
+    }
 }
 
 /** Return the potential on the described grid of the passed atoms using
@@ -336,32 +391,26 @@ void CLJFunction::calcVacGrid(const CLJAtoms &atoms, const GridInfo &gridinfo,
     grid calculations */
 QVector<float> CLJFunction::calculate(const CLJAtoms &atoms, const GridInfo &gridinfo) const
 {
-    QVector<float> gridpot;
+    QElapsedTimer t;
+    t.start();
+
+    QVector<float> gridpot( gridinfo.nPoints(), 0.0 );
     
     if (this->supportsGridCalculation() and not gridinfo.isEmpty())
     {
-        QVector<double> dgridpot( gridinfo.nPoints(), 0.0 );
-        
-        if (this->isPeriodic())
-        {
-            this->calcBoxGrid(atoms, gridinfo, dgridpot);
-        }
-        else
-        {
-            this->calcVacGrid(atoms, gridinfo, dgridpot);
-        }
-        
-        gridpot = QVector<float>(dgridpot.count());
-        gridpot.squeeze();
-        
-        float *g = gridpot.data();
-        const double *dg = dgridpot.constData();
-        
-        for (int i=0; i<gridpot.count(); ++i)
-        {
-            g[i] = dg[i];
-        }
+        SireMM::detail::CLJGridCalculator calc(atoms, gridinfo, *this, gridpot.data());
+        tbb::parallel_for(tbb::blocked_range<int>(0,gridinfo.nPoints(),4096), calc);
     }
+
+    qint64 ns = t.nsecsElapsed();
+    qDebug() << "Building the grid took" << (0.000001*ns) << "ms";
+    
+    double sum = 0;
+    for (int i=0; i<gridinfo.nPoints(); ++i)
+    {
+        sum += gridpot.constData()[i];
+    }
+    qDebug() << "Sum of grid potential is" << sum;
     
     return gridpot;
 }

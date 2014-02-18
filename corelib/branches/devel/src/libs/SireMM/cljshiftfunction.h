@@ -130,10 +130,10 @@ protected:
                               float min_distance) const;
 
     void calcVacGrid(const CLJAtoms &atoms, const GridInfo &gridinfo,
-                     QVector<double> &potential) const;
+                     const int start, const int end, float *gridpot) const;
     
     void calcBoxGrid(const CLJAtoms &atoms, const GridInfo &gridinfo,
-                     QVector<double> &potential) const;
+                     const int start, const int end, float *gridpot) const;
 };
 
 /** This CLJFunction calculates the intramolecular coulomb and LJ energy of the passed

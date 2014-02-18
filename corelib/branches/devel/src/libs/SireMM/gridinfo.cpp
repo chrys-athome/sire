@@ -140,9 +140,9 @@ GridInfo::GridInfo(const AABox &dimensions, Length spacing)
     inv_grid_spacing = 1.0f / grid_spacing;
     Vector nboxes = (2.0f * inv_grid_spacing) * dimensions.halfExtents();
     
-    dimx = quint32( std::ceil(nboxes.x()) );
-    dimy = quint32( std::ceil(nboxes.y()) );
-    dimz = quint32( std::ceil(nboxes.z()) );
+    dimx = 1 + quint32( std::ceil(nboxes.x()) );
+    dimy = 1 + quint32( std::ceil(nboxes.y()) );
+    dimz = 1 + quint32( std::ceil(nboxes.z()) );
     
     grid_origin = dimensions.minCoords();
 }

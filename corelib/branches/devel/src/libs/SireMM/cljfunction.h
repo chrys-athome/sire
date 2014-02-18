@@ -74,6 +74,8 @@ using SireMol::Connectivity;
 
 using SireVol::Space;
 
+namespace detail { class CLJGridCalculator; }
+
 /** Base class of all CLJFunctions. These are function classes that
     calculate the coulomb and LJ energy of the passed CLJAtoms groups
     
@@ -168,11 +170,13 @@ protected:
     
     bool operator==(const CLJFunction &other) const;
 
+    friend class ::SireMM::detail::CLJGridCalculator;
+
     virtual void calcVacGrid(const CLJAtoms &atoms, const GridInfo &gridinfo,
-                             QVector<double> &potential) const;
+                             const int start, const int end, float *potential) const;
     
     virtual void calcBoxGrid(const CLJAtoms &atoms, const GridInfo &gridinfo,
-                             QVector<double> &potential) const;
+                             const int start, const int end, float *potential) const;
 
     virtual void calcVacEnergyAri(const CLJAtoms &atoms,
                                   double &cnrg, double &ljnrg) const=0;
