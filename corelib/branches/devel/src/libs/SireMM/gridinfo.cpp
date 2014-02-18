@@ -448,12 +448,17 @@ int GridInfo::pointToGridCorners(const MultiFloat &x, const MultiFloat &y,
 
     qDebug() << x[0] << ox[0] << (x[0]-ox[0]) << r[0] << dx[0];
     qDebug() << (grid_spacing * r[0]) << (grid_spacing*(r[0] + dx[0])) << (grid_spacing*(r[0]+1));
+    qDebug() << y[0] << oy[0] << (y[0]-oy[0]) << s[0] << dy[0];
+    qDebug() << (grid_spacing * s[0]) << (grid_spacing*(s[0] + dy[0])) << (grid_spacing*(s[0]+1));
+    qDebug() << z[0] << oz[0] << (z[0]-oz[0]) << t[0] << dz[0];
+    qDebug() << (grid_spacing * t[0]) << (grid_spacing*(t[0] + dz[0])) << (grid_spacing*(t[0]+1));
     
     const MultiFloat one_minus_dx = MULTIFLOAT_ONE - dx;
     const MultiFloat one_minus_dy = MULTIFLOAT_ONE - dy;
     const MultiFloat one_minus_dz = MULTIFLOAT_ONE - dz;
 
-    qDebug() << one_minus_dx[0];
+    qDebug() << "deltas" << dx[0] << dy[0] << dz[0];
+    qDebug() << one_minus_dx[0] << one_minus_dy[0] << one_minus_dz[0];
 
     //use tri-linear interpolation to get the weights
     //
@@ -490,11 +495,6 @@ int GridInfo::pointToGridCorners(const MultiFloat &x, const MultiFloat &y,
     ia[5] = (r+one)*idyz + (s    )*idz + (t+one);
     ia[6] = (r+one)*idyz + (s+one)*idz + (t    );
     ia[7] = (r+one)*idyz + (s+one)*idz + (t+one);
-    
-    qDebug() << r[0] << s[0] << t[0] << ia[0][0] << gridToArrayIndex(r[0],s[0],t[0]);
-    qDebug() << r[0] << s[0] << (t+one)[0] << ia[1][0] << gridToArrayIndex(r[0], s[0], (t+one)[0]);
-    qDebug() << (r+one)[0] << (s+one)[0] << (t+one)[0] << ia[7][0] << gridToArrayIndex(
-                    (r+one)[0],(s+one)[0],(t+one)[0]);
     
     wa[0] = (one_minus_dx) * (one_minus_dy) * (one_minus_dz);
     wa[1] = (one_minus_dx) * (one_minus_dy) * (    dz      );
