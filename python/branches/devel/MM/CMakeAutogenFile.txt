@@ -114,6 +114,7 @@ set ( PYPP_SOURCES
        ScaledChargeParameterNames3D.pypp.cpp
        AngleParameterName.pypp.cpp
        StretchBendSymbols.pypp.cpp
+       NullCLJFunction.pypp.cpp
        AtomFunctions.pypp.cpp
        ScaledLJParameterNames3D.pypp.cpp
        CLJPotentialInterface_InterSoftCLJPotential_.pypp.cpp
@@ -124,6 +125,7 @@ set ( PYPP_SOURCES
        LJParameter.pypp.cpp
        LJScaleFactor.pypp.cpp
        CLJPotentialInterface_IntraCLJPotential_.pypp.cpp
+       InterFF.pypp.cpp
        AtomFunction.pypp.cpp
        BondSymbols.pypp.cpp
        LJComponent.pypp.cpp

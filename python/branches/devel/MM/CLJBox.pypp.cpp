@@ -91,6 +91,16 @@ void register_CLJBox_class(){
         
         }
         CLJBox_exposer.def( bp::self == bp::self );
+        { //::SireMM::CLJBox::squeeze
+        
+            typedef ::SireMM::CLJBox ( ::SireMM::CLJBox::*squeeze_function_type )(  ) const;
+            squeeze_function_type squeeze_function_value( &::SireMM::CLJBox::squeeze );
+            
+            CLJBox_exposer.def( 
+                "squeeze"
+                , squeeze_function_value );
+        
+        }
         { //::SireMM::CLJBox::toString
         
             typedef ::QString ( ::SireMM::CLJBox::*toString_function_type )(  ) const;

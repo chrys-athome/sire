@@ -240,6 +240,16 @@ void register_CLJBoxes_class(){
         
         }
         CLJBoxes_exposer.def( bp::self == bp::self );
+        { //::SireMM::CLJBoxes::squeeze
+        
+            typedef ::SireMM::CLJBoxes ( ::SireMM::CLJBoxes::*squeeze_function_type )(  ) const;
+            squeeze_function_type squeeze_function_value( &::SireMM::CLJBoxes::squeeze );
+            
+            CLJBoxes_exposer.def( 
+                "squeeze"
+                , squeeze_function_value );
+        
+        }
         { //::SireMM::CLJBoxes::toString
         
             typedef ::QString ( ::SireMM::CLJBoxes::*toString_function_type )(  ) const;

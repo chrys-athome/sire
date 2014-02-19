@@ -7,6 +7,16 @@
 
 namespace bp = boost::python;
 
+#include "SireBase/errors.h"
+
+#include "SireBase/lengthproperty.h"
+
+#include "SireBase/numberproperty.h"
+
+#include "SireBase/properties.h"
+
+#include "SireBase/stringproperty.h"
+
 #include "SireError/errors.h"
 
 #include "SireMaths/multidouble.h"
@@ -23,9 +33,13 @@ namespace bp = boost::python;
 
 #include "gridinfo.h"
 
+#include "switchingfunction.h"
+
 #include "tbb/blocked_range.h"
 
 #include "tbb/parallel_for.h"
+
+#include "tostring.h"
 
 #include <QElapsedTimer>
 
@@ -52,6 +66,38 @@ void register_CLJIntraFunction_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireMM::CLJIntraFunction::containsProperty
+        
+            typedef bool ( ::SireMM::CLJIntraFunction::*containsProperty_function_type )( ::QString const & ) const;
+            containsProperty_function_type containsProperty_function_value( &::SireMM::CLJIntraFunction::containsProperty );
+            
+            CLJIntraFunction_exposer.def( 
+                "containsProperty"
+                , containsProperty_function_value
+                , ( bp::arg("name") ) );
+        
+        }
+        { //::SireMM::CLJIntraFunction::properties
+        
+            typedef ::SireBase::Properties ( ::SireMM::CLJIntraFunction::*properties_function_type )(  ) const;
+            properties_function_type properties_function_value( &::SireMM::CLJIntraFunction::properties );
+            
+            CLJIntraFunction_exposer.def( 
+                "properties"
+                , properties_function_value );
+        
+        }
+        { //::SireMM::CLJIntraFunction::property
+        
+            typedef ::SireBase::PropertyPtr ( ::SireMM::CLJIntraFunction::*property_function_type )( ::QString const & ) const;
+            property_function_type property_function_value( &::SireMM::CLJIntraFunction::property );
+            
+            CLJIntraFunction_exposer.def( 
+                "property"
+                , property_function_value
+                , ( bp::arg("name") ) );
+        
+        }
         { //::SireMM::CLJIntraFunction::setConnectivity
         
             typedef void ( ::SireMM::CLJIntraFunction::*setConnectivity_function_type )( ::SireMol::Connectivity const & ) ;
@@ -72,6 +118,17 @@ void register_CLJIntraFunction_class(){
                 "setConnectivity"
                 , setConnectivity_function_value
                 , ( bp::arg("molecule"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMM::CLJIntraFunction::setProperty
+        
+            typedef ::SireMM::CLJFunctionPtr ( ::SireMM::CLJIntraFunction::*setProperty_function_type )( ::QString const &,::SireBase::Property const & ) const;
+            setProperty_function_type setProperty_function_value( &::SireMM::CLJIntraFunction::setProperty );
+            
+            CLJIntraFunction_exposer.def( 
+                "setProperty"
+                , setProperty_function_value
+                , ( bp::arg("name"), bp::arg("value") ) );
         
         }
         { //::SireMM::CLJIntraFunction::typeName

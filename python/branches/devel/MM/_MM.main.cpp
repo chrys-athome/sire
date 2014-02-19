@@ -149,6 +149,8 @@
 
 #include "InterCoulombFFBase.pypp.hpp"
 
+#include "InterFF.pypp.hpp"
+
 #include "InterGroupCLJFF.pypp.hpp"
 
 #include "InterGroupCLJFFBase.pypp.hpp"
@@ -244,6 +246,8 @@
 #include "LJScaleFactor.pypp.hpp"
 
 #include "NoCutoff.pypp.hpp"
+
+#include "NullCLJFunction.pypp.hpp"
 
 #include "NullRestraint.pypp.hpp"
 
@@ -538,6 +542,8 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_ImproperSymbols_class();
 
+    register_InterFF_class();
+
     register_InternalComponent_class();
 
     register_InternalFF_class();
@@ -573,6 +579,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_LJProbe_class();
 
     register_NoCutoff_class();
+
+    register_NullCLJFunction_class();
 
     register_NullRestraint_class();
 

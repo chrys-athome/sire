@@ -26,6 +26,7 @@
 #include "gridinfo.h"
 #include "intercljff.h"
 #include "intercoulombff.h"
+#include "interff.h"
 #include "interljff.h"
 #include "internalcomponent.h"
 #include "internalff.h"

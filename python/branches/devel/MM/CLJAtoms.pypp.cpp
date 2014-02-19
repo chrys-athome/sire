@@ -269,6 +269,17 @@ void register_CLJAtoms_class(){
                 , ( bp::arg("i"), bp::arg("atom") ) );
         
         }
+        { //::SireMM::CLJAtoms::setAllID
+        
+            typedef void ( ::SireMM::CLJAtoms::*setAllID_function_type )( ::qint32 ) ;
+            setAllID_function_type setAllID_function_value( &::SireMM::CLJAtoms::setAllID );
+            
+            CLJAtoms_exposer.def( 
+                "setAllID"
+                , setAllID_function_value
+                , ( bp::arg("idnum") ) );
+        
+        }
         { //::SireMM::CLJAtoms::setCharge
         
             typedef void ( ::SireMM::CLJAtoms::*setCharge_function_type )( int,::SireUnits::Dimension::Charge ) ;
@@ -332,6 +343,16 @@ void register_CLJAtoms_class(){
             CLJAtoms_exposer.def( 
                 "size"
                 , size_function_value );
+        
+        }
+        { //::SireMM::CLJAtoms::squeeze
+        
+            typedef ::SireMM::CLJAtoms ( ::SireMM::CLJAtoms::*squeeze_function_type )(  ) const;
+            squeeze_function_type squeeze_function_value( &::SireMM::CLJAtoms::squeeze );
+            
+            CLJAtoms_exposer.def( 
+                "squeeze"
+                , squeeze_function_value );
         
         }
         { //::SireMM::CLJAtoms::toString

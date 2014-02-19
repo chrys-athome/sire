@@ -7,6 +7,16 @@
 
 namespace bp = boost::python;
 
+#include "SireBase/errors.h"
+
+#include "SireBase/lengthproperty.h"
+
+#include "SireBase/numberproperty.h"
+
+#include "SireBase/properties.h"
+
+#include "SireBase/stringproperty.h"
+
 #include "SireError/errors.h"
 
 #include "SireMaths/multidouble.h"
@@ -23,9 +33,13 @@ namespace bp = boost::python;
 
 #include "gridinfo.h"
 
+#include "switchingfunction.h"
+
 #include "tbb/blocked_range.h"
 
 #include "tbb/parallel_for.h"
+
+#include "tostring.h"
 
 #include <QElapsedTimer>
 
@@ -51,6 +65,17 @@ void register_CLJSoftFunction_class(){
                 , alpha_function_value );
         
         }
+        { //::SireMM::CLJSoftFunction::containsProperty
+        
+            typedef bool ( ::SireMM::CLJSoftFunction::*containsProperty_function_type )( ::QString const & ) const;
+            containsProperty_function_type containsProperty_function_value( &::SireMM::CLJSoftFunction::containsProperty );
+            
+            CLJSoftFunction_exposer.def( 
+                "containsProperty"
+                , containsProperty_function_value
+                , ( bp::arg("name") ) );
+        
+        }
         { //::SireMM::CLJSoftFunction::coulombPower
         
             typedef float ( ::SireMM::CLJSoftFunction::*coulombPower_function_type )(  ) const;
@@ -69,6 +94,27 @@ void register_CLJSoftFunction_class(){
             CLJSoftFunction_exposer.def( 
                 "isSoftened"
                 , isSoftened_function_value );
+        
+        }
+        { //::SireMM::CLJSoftFunction::properties
+        
+            typedef ::SireBase::Properties ( ::SireMM::CLJSoftFunction::*properties_function_type )(  ) const;
+            properties_function_type properties_function_value( &::SireMM::CLJSoftFunction::properties );
+            
+            CLJSoftFunction_exposer.def( 
+                "properties"
+                , properties_function_value );
+        
+        }
+        { //::SireMM::CLJSoftFunction::property
+        
+            typedef ::SireBase::PropertyPtr ( ::SireMM::CLJSoftFunction::*property_function_type )( ::QString const & ) const;
+            property_function_type property_function_value( &::SireMM::CLJSoftFunction::property );
+            
+            CLJSoftFunction_exposer.def( 
+                "property"
+                , property_function_value
+                , ( bp::arg("name") ) );
         
         }
         { //::SireMM::CLJSoftFunction::setAlpha
@@ -91,6 +137,17 @@ void register_CLJSoftFunction_class(){
                 "setCoulombPower"
                 , setCoulombPower_function_value
                 , ( bp::arg("power") ) );
+        
+        }
+        { //::SireMM::CLJSoftFunction::setProperty
+        
+            typedef ::SireMM::CLJFunctionPtr ( ::SireMM::CLJSoftFunction::*setProperty_function_type )( ::QString const &,::SireBase::Property const & ) const;
+            setProperty_function_type setProperty_function_value( &::SireMM::CLJSoftFunction::setProperty );
+            
+            CLJSoftFunction_exposer.def( 
+                "setProperty"
+                , setProperty_function_value
+                , ( bp::arg("name"), bp::arg("value") ) );
         
         }
         { //::SireMM::CLJSoftFunction::setShiftDelta

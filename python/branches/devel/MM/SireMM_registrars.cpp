@@ -18,6 +18,7 @@
 #include "cljprobe.h"
 #include "intrasoftcljff.h"
 #include "switchingfunction.h"
+#include "cljfunction.h"
 #include "threeatomfunctions.h"
 #include "cljparam.h"
 #include "cljcomponent.h"
@@ -27,6 +28,7 @@
 #include "cljcalculator.h"
 #include "cljgrid.h"
 #include "intracljff.h"
+#include "interff.h"
 #include "internalparameters.h"
 #include "internalcomponent.h"
 #include "restraintff.h"
@@ -85,6 +87,7 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::NoCutoff >();
     ObjectRegistry::registerConverterFor< SireMM::HarmonicSwitchingFunction >();
     ObjectRegistry::registerConverterFor< SireMM::CHARMMSwitchingFunction >();
+    ObjectRegistry::registerConverterFor< SireMM::NullCLJFunction >();
     ObjectRegistry::registerConverterFor< SireMM::ThreeAtomFunctions >();
     ObjectRegistry::registerConverterFor< SireMM::CLJParams >();
     ObjectRegistry::registerConverterFor< SireMM::CLJParamsArray >();
@@ -103,6 +106,7 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::IntraCLJFF >();
     ObjectRegistry::registerConverterFor< SireMM::IntraGroupCLJFFBase >();
     ObjectRegistry::registerConverterFor< SireMM::IntraGroupCLJFF >();
+    ObjectRegistry::registerConverterFor< SireMM::InterFF >();
     ObjectRegistry::registerConverterFor< SireMM::InternalParameters >();
     ObjectRegistry::registerConverterFor< SireMM::InternalParameters3D >();
     ObjectRegistry::registerConverterFor< SireMM::BondComponent >();

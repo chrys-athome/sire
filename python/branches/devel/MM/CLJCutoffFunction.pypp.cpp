@@ -7,6 +7,16 @@
 
 namespace bp = boost::python;
 
+#include "SireBase/errors.h"
+
+#include "SireBase/lengthproperty.h"
+
+#include "SireBase/numberproperty.h"
+
+#include "SireBase/properties.h"
+
+#include "SireBase/stringproperty.h"
+
 #include "SireError/errors.h"
 
 #include "SireMaths/multidouble.h"
@@ -23,9 +33,13 @@ namespace bp = boost::python;
 
 #include "gridinfo.h"
 
+#include "switchingfunction.h"
+
 #include "tbb/blocked_range.h"
 
 #include "tbb/parallel_for.h"
+
+#include "tostring.h"
 
 #include <QElapsedTimer>
 
@@ -41,6 +55,17 @@ void register_CLJCutoffFunction_class(){
         typedef bp::class_< SireMM::CLJCutoffFunction, bp::bases< SireMM::CLJFunction, SireBase::Property >, boost::noncopyable > CLJCutoffFunction_exposer_t;
         CLJCutoffFunction_exposer_t CLJCutoffFunction_exposer = CLJCutoffFunction_exposer_t( "CLJCutoffFunction", bp::no_init );
         bp::scope CLJCutoffFunction_scope( CLJCutoffFunction_exposer );
+        { //::SireMM::CLJCutoffFunction::containsProperty
+        
+            typedef bool ( ::SireMM::CLJCutoffFunction::*containsProperty_function_type )( ::QString const & ) const;
+            containsProperty_function_type containsProperty_function_value( &::SireMM::CLJCutoffFunction::containsProperty );
+            
+            CLJCutoffFunction_exposer.def( 
+                "containsProperty"
+                , containsProperty_function_value
+                , ( bp::arg("name") ) );
+        
+        }
         { //::SireMM::CLJCutoffFunction::coulombCutoff
         
             typedef ::SireUnits::Dimension::Length ( ::SireMM::CLJCutoffFunction::*coulombCutoff_function_type )(  ) const;
@@ -69,6 +94,27 @@ void register_CLJCutoffFunction_class(){
             CLJCutoffFunction_exposer.def( 
                 "ljCutoff"
                 , ljCutoff_function_value );
+        
+        }
+        { //::SireMM::CLJCutoffFunction::properties
+        
+            typedef ::SireBase::Properties ( ::SireMM::CLJCutoffFunction::*properties_function_type )(  ) const;
+            properties_function_type properties_function_value( &::SireMM::CLJCutoffFunction::properties );
+            
+            CLJCutoffFunction_exposer.def( 
+                "properties"
+                , properties_function_value );
+        
+        }
+        { //::SireMM::CLJCutoffFunction::property
+        
+            typedef ::SireBase::PropertyPtr ( ::SireMM::CLJCutoffFunction::*property_function_type )( ::QString const & ) const;
+            property_function_type property_function_value( &::SireMM::CLJCutoffFunction::property );
+            
+            CLJCutoffFunction_exposer.def( 
+                "property"
+                , property_function_value
+                , ( bp::arg("name") ) );
         
         }
         { //::SireMM::CLJCutoffFunction::setCoulombCutoff
@@ -113,6 +159,17 @@ void register_CLJCutoffFunction_class(){
                 "setLJCutoff"
                 , setLJCutoff_function_value
                 , ( bp::arg("distance") ) );
+        
+        }
+        { //::SireMM::CLJCutoffFunction::setProperty
+        
+            typedef ::SireMM::CLJFunctionPtr ( ::SireMM::CLJCutoffFunction::*setProperty_function_type )( ::QString const &,::SireBase::Property const & ) const;
+            setProperty_function_type setProperty_function_value( &::SireMM::CLJCutoffFunction::setProperty );
+            
+            CLJCutoffFunction_exposer.def( 
+                "setProperty"
+                , setProperty_function_value
+                , ( bp::arg("name"), bp::arg("value") ) );
         
         }
         { //::SireMM::CLJCutoffFunction::typeName

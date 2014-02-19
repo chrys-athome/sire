@@ -13,6 +13,7 @@
 #include "getinstalldir.h"
 #include "increment.h"
 #include "incremint.h"
+#include "lengthproperty.h"
 #include "linktoproperty.h"
 #include "majorminorversion.h"
 #include "meminfo.h"

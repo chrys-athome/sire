@@ -196,6 +196,16 @@ void register_CLJGrid_class(){
                 , gridSpacing_function_value );
         
         }
+        { //::SireMM::CLJGrid::idOfFixedAtom
+        
+            typedef ::qint32 ( *idOfFixedAtom_function_type )(  );
+            idOfFixedAtom_function_type idOfFixedAtom_function_value( &::SireMM::CLJGrid::idOfFixedAtom );
+            
+            CLJGrid_exposer.def( 
+                "idOfFixedAtom"
+                , idOfFixedAtom_function_value );
+        
+        }
         { //::SireMM::CLJGrid::isEmpty
         
             typedef bool ( ::SireMM::CLJGrid::*isEmpty_function_type )(  ) const;
@@ -435,6 +445,7 @@ void register_CLJGrid_class(){
                 , what_function_value );
         
         }
+        CLJGrid_exposer.staticmethod( "idOfFixedAtom" );
         CLJGrid_exposer.staticmethod( "typeName" );
         CLJGrid_exposer.def( "__copy__", &__copy__);
         CLJGrid_exposer.def( "__deepcopy__", &__copy__);

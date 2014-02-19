@@ -49,6 +49,16 @@ void register_CLJIntraShiftFunction_class(){
         CLJIntraShiftFunction_exposer.def( bp::init< SireVol::Space const &, SireUnits::Dimension::Length, SireMM::CLJFunction::COMBINING_RULES >(( bp::arg("space"), bp::arg("cutoff"), bp::arg("combining_rules") )) );
         CLJIntraShiftFunction_exposer.def( bp::init< SireVol::Space const &, SireUnits::Dimension::Length, SireUnits::Dimension::Length, SireMM::CLJFunction::COMBINING_RULES >(( bp::arg("space"), bp::arg("coul_cutoff"), bp::arg("lj_cutoff"), bp::arg("combining_rules") )) );
         CLJIntraShiftFunction_exposer.def( bp::init< SireMM::CLJIntraShiftFunction const & >(( bp::arg("other") )) );
+        { //::SireMM::CLJIntraShiftFunction::defaultShiftFunction
+        
+            typedef ::SireMM::CLJFunctionPtr ( *defaultShiftFunction_function_type )(  );
+            defaultShiftFunction_function_type defaultShiftFunction_function_value( &::SireMM::CLJIntraShiftFunction::defaultShiftFunction );
+            
+            CLJIntraShiftFunction_exposer.def( 
+                "defaultShiftFunction"
+                , defaultShiftFunction_function_value );
+        
+        }
         CLJIntraShiftFunction_exposer.def( bp::self != bp::self );
         { //::SireMM::CLJIntraShiftFunction::operator=
         
@@ -83,6 +93,7 @@ void register_CLJIntraShiftFunction_class(){
                 , what_function_value );
         
         }
+        CLJIntraShiftFunction_exposer.staticmethod( "defaultShiftFunction" );
         CLJIntraShiftFunction_exposer.staticmethod( "typeName" );
         CLJIntraShiftFunction_exposer.def( "__copy__", &__copy__);
         CLJIntraShiftFunction_exposer.def( "__deepcopy__", &__copy__);

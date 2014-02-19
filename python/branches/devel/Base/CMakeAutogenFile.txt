@@ -34,6 +34,7 @@ set ( PYPP_SOURCES
        TrimString.pypp.cpp
        FlopsMark.pypp.cpp
        PackedArray2D_double_Array.pypp.cpp
+       LengthProperty.pypp.cpp
        CPUID.pypp.cpp
        PackedArray2D_QVariant_.pypp.cpp
        Process.pypp.cpp

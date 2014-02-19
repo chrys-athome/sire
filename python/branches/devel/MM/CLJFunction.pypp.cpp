@@ -8,6 +8,16 @@
 
 namespace bp = boost::python;
 
+#include "SireBase/errors.h"
+
+#include "SireBase/lengthproperty.h"
+
+#include "SireBase/numberproperty.h"
+
+#include "SireBase/properties.h"
+
+#include "SireBase/stringproperty.h"
+
 #include "SireError/errors.h"
 
 #include "SireMaths/multidouble.h"
@@ -24,9 +34,13 @@ namespace bp = boost::python;
 
 #include "gridinfo.h"
 
+#include "switchingfunction.h"
+
 #include "tbb/blocked_range.h"
 
 #include "tbb/parallel_for.h"
+
+#include "tostring.h"
 
 #include <QElapsedTimer>
 
@@ -90,6 +104,17 @@ void register_CLJFunction_class(){
             CLJFunction_exposer.def( 
                 "combiningRules"
                 , combiningRules_function_value );
+        
+        }
+        { //::SireMM::CLJFunction::containsProperty
+        
+            typedef bool ( ::SireMM::CLJFunction::*containsProperty_function_type )( ::QString const & ) const;
+            containsProperty_function_type containsProperty_function_value( &::SireMM::CLJFunction::containsProperty );
+            
+            CLJFunction_exposer.def( 
+                "containsProperty"
+                , containsProperty_function_value
+                , ( bp::arg("name") ) );
         
         }
         { //::SireMM::CLJFunction::coulomb
@@ -186,6 +211,17 @@ void register_CLJFunction_class(){
                 , ljCutoff_function_value );
         
         }
+        { //::SireMM::CLJFunction::null
+        
+            typedef ::SireMM::NullCLJFunction const & ( *null_function_type )(  );
+            null_function_type null_function_value( &::SireMM::CLJFunction::null );
+            
+            CLJFunction_exposer.def( 
+                "null"
+                , null_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
         { //::SireMM::CLJFunction::operator()
         
             typedef void ( ::SireMM::CLJFunction::*__call___function_type )( ::SireMM::CLJAtoms const &,double &,double & ) const;
@@ -206,6 +242,27 @@ void register_CLJFunction_class(){
                 "__call__"
                 , __call___function_value
                 , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("cnrg"), bp::arg("ljnrg"), bp::arg("min_distance")=0 ) );
+        
+        }
+        { //::SireMM::CLJFunction::properties
+        
+            typedef ::SireBase::Properties ( ::SireMM::CLJFunction::*properties_function_type )(  ) const;
+            properties_function_type properties_function_value( &::SireMM::CLJFunction::properties );
+            
+            CLJFunction_exposer.def( 
+                "properties"
+                , properties_function_value );
+        
+        }
+        { //::SireMM::CLJFunction::property
+        
+            typedef ::SireBase::PropertyPtr ( ::SireMM::CLJFunction::*property_function_type )( ::QString const & ) const;
+            property_function_type property_function_value( &::SireMM::CLJFunction::property );
+            
+            CLJFunction_exposer.def( 
+                "property"
+                , property_function_value
+                , ( bp::arg("name") ) );
         
         }
         { //::SireMM::CLJFunction::setArithmeticCombiningRules
@@ -283,6 +340,17 @@ void register_CLJFunction_class(){
                 "setLJCutoff"
                 , setLJCutoff_function_value
                 , ( bp::arg("distance") ) );
+        
+        }
+        { //::SireMM::CLJFunction::setProperty
+        
+            typedef ::SireMM::CLJFunctionPtr ( ::SireMM::CLJFunction::*setProperty_function_type )( ::QString const &,::SireBase::Property const & ) const;
+            setProperty_function_type setProperty_function_value( &::SireMM::CLJFunction::setProperty );
+            
+            CLJFunction_exposer.def( 
+                "setProperty"
+                , setProperty_function_value
+                , ( bp::arg("name"), bp::arg("value") ) );
         
         }
         { //::SireMM::CLJFunction::setSpace
@@ -369,10 +437,13 @@ void register_CLJFunction_class(){
                 , usingGeometricCombiningRules_function_value );
         
         }
+        CLJFunction_exposer.staticmethod( "null" );
         CLJFunction_exposer.staticmethod( "typeName" );
         bp::register_ptr_to_python< boost::shared_ptr< SireMM::CLJFunction > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJFunction >, boost::shared_ptr< SireBase::Property > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJFunction >, boost::shared_ptr< QSharedData > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireBase::ConcreteProperty< SireMM::NullCLJFunction, SireMM::CLJFunction > >, boost::shared_ptr< SireMM::CLJFunction > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireMM::NullCLJFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJCutoffFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJSoftFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
         bp::implicitly_convertible< boost::shared_ptr< SireBase::ConcreteProperty< SireMM::CLJShiftFunction, SireMM::CLJCutoffFunction > >, boost::shared_ptr< SireMM::CLJFunction > >();
