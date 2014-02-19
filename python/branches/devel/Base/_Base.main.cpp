@@ -222,8 +222,6 @@ BOOST_PYTHON_MODULE(_Base){
 
     bp::implicitly_convertible< int, SireBase::NumberProperty >();
 
-    bp::implicitly_convertible< SireUnits::Dimension::Length, SireBase::LengthProperty >();
-
     bp::implicitly_convertible< SireBase::LengthProperty, SireUnits::Dimension::Length >();
 
     bp::implicitly_convertible< QHash<QString,SireBase::PropertyName>, SireBase::PropertyMap >();

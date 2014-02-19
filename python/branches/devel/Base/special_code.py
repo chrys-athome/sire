@@ -15,7 +15,6 @@ implicitly_convertible = [ ("QString", "SireBase::PropertyName"),
                            ("SireBase::StringProperty", "QString"),
                            ("double", "SireBase::NumberProperty"),
                            ("int", "SireBase::NumberProperty"),
-                           ("SireUnits::Dimension::Length", "SireBase::LengthProperty"),
                            ("SireBase::LengthProperty", "SireUnits::Dimension::Length"),
                            ("QHash<QString,SireBase::PropertyName>", "SireBase::PropertyMap") ] 
 
