@@ -104,7 +104,7 @@ static const Length global_grid_spacing = 1 * angstrom;
 void CLJGrid::checkIfGridSupported()
 {
     cljfunc_supports_grid = cljfunc.read().supportsGridCalculation() and
-                            (not cljfunc.read().isPeriodic()) and
+                            //(not cljfunc.read().isPeriodic()) and
                             cljfunc.read().hasCutoff() and
        cljfunc.read().coulombCutoff().value() > (cljfunc.read().ljCutoff().value() + 5);
 }
@@ -231,6 +231,14 @@ CLJGrid* CLJGrid::clone() const
     return new CLJGrid(*this);
 }
 
+/** Return the ID number of a fixed atom. All fixed atoms are given this ID, so that
+    you can mask out interactions with them. This is a negative number and unlikely
+    to be used by any other part of the code */
+qint32 CLJGrid::idOfFixedAtom()
+{
+    return -439284;
+}
+
 /** Return the number of fixed atoms */
 int CLJGrid::nFixedAtoms() const
 {
@@ -255,28 +263,34 @@ void CLJGrid::clearGrid()
 /** Add the passed atoms onto the set of fixed atoms */
 void CLJGrid::addFixedAtoms(const CLJAtoms &atoms)
 {
-    cljboxes = cljboxes + CLJBoxes(atoms);
+    CLJAtoms atms(atoms);
+    atms.setAllID( idOfFixedAtom() );
+    cljboxes = CLJBoxes( (cljboxes.atoms() + atms).squeeze() );
     clearGrid();
 }
 
 /** Set the fixed atoms equal to the passed atoms */
 void CLJGrid::setFixedAtoms(const CLJAtoms &atoms)
 {
-    cljboxes = CLJBoxes(atoms);
+    CLJAtoms atms(atoms);
+    atms.setAllID( idOfFixedAtom() );
+    cljboxes = CLJBoxes(atms.squeeze());
     clearGrid();
 }
 
 /** Set the fixed atoms equal to the passed atoms */
 void CLJGrid::setFixedAtoms(const CLJBoxes &atoms)
 {
-    cljboxes = atoms;
+    CLJAtoms atms( atoms.atoms() );
+    atms.setAllID( idOfFixedAtom() );
+    cljboxes = CLJBoxes(atms.squeeze());
     clearGrid();
 }
 
 /** Return all of the fixed atoms */
 CLJAtoms CLJGrid::fixedAtoms() const
 {
-    return cljboxes.atoms();
+    return cljboxes.atoms().squeeze();
 }
 
 /** Set the function used to calculate the coulomb and LJ energy */
@@ -502,7 +516,7 @@ void CLJGrid::calculateGrid()
         QVector<CLJAtom> near_atms;
         QVector<CLJAtom> far_atms;
 
-        const Cartesian space;
+        const Space &space = cljfunc.read().space();
         const float lj_cutoff = cljfunc->ljCutoff();
         const float coul_cutoff = cljfunc->coulombCutoff();
 
@@ -588,6 +602,10 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
         MultiDouble grid_nrg(0);
     
         const qint32 dummy_id = CLJAtoms::idOfDummy()[0];
+        const qint32 grid_id = idOfFixedAtom();
+
+        const MultiInt m_dummy_id(dummy_id);
+        const MultiInt m_grid_id(grid_id);
 
         for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = atoms.occupiedBoxes().constBegin();
              it != atoms.occupiedBoxes().constEnd();
@@ -651,7 +669,13 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
                 }
 
 
-                grid_nrg += q[i] * phi;
+                //add the energy of these atoms onto the total, taking care to ignore
+                //dummy atoms and to ignore atoms with IDs equal to the grid ID
+                //(this allows atoms to be screened, e.g. for "intramolecular" calculations
+                // where some of the molecule is fixed and on the grid, while the rest
+                // is mobile)
+                grid_nrg += (q[i] * phi).logicalAndNot( id[i].compareEqual(m_dummy_id) )
+                                        .logicalAndNot( id[i].compareEqual(m_grid_id) );
             }
             
             if (not all_within_grid)

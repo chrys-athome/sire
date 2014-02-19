@@ -133,6 +133,7 @@ protected:
                      const int start, const int end, float *gridpot) const;
     
     void calcBoxGrid(const CLJAtoms &atoms, const GridInfo &gridinfo,
+                     const Vector &box_dimensions,
                      const int start, const int end, float *gridpot) const;
 };
 

@@ -167,8 +167,8 @@ const char* CLJAtom::what() const
 /** Construct an array of CLJAtom atoms from the passed molecule view */
 QVector<CLJAtom> CLJAtom::buildFrom(const MoleculeView &molecule, const PropertyMap &map)
 {
-    QElapsedTimer t;
-    t.start();
+    //QElapsedTimer t;
+    //t.start();
     
     const PropertyName coords_property = map["coordinates"];
     const PropertyName chg_property = map["charge"];
@@ -279,10 +279,10 @@ QVector<CLJAtom> CLJAtom::buildFrom(const MoleculeView &molecule, const Property
         }
     }
     
-    quint64 ns = t.nsecsElapsed();
+    //quint64 ns = t.nsecsElapsed();
     
-    qDebug() << "Converting" << cljatoms.count() << "atoms took"
-             << (0.000001*ns) << "ms";
+    //qDebug() << "Converting" << cljatoms.count() << "atoms took"
+    //         << (0.000001*ns) << "ms";
     
     return cljatoms;
 }
@@ -603,8 +603,8 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
                    const QVector<LJParameter> &ljparams,
                    const QVector<qint32> &atomids)
 {
-    QElapsedTimer t;
-    t.start();
+    //QElapsedTimer t;
+    //t.start();
 
     if (coordinates.count() != charges.count() or
         coordinates.count() != ljparams.count() or
@@ -697,18 +697,18 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
         e[i] = (e[i] * four).sqrt();
     }
     
-    quint64 ns = t.nsecsElapsed();
+    //quint64 ns = t.nsecsElapsed();
     
-    qDebug() << "Converting" << (_q.count() * MultiFloat::count()) << "atoms took"
-             << (0.000001*ns) << "ms";
+    //qDebug() << "Converting" << (_q.count() * MultiFloat::count()) << "atoms took"
+    //         << (0.000001*ns) << "ms";
 }
 
 /** Construct from the passed MoleculeView */
 void CLJAtoms::constructFrom(const MoleculeView &molecule,
                              const ID_SOURCE id_source, const PropertyMap &map)
 {
-    QElapsedTimer t;
-    t.start();
+    //QElapsedTimer t;
+    //t.start();
     
     //extract all of the data from the passed molecules
     {
@@ -920,10 +920,10 @@ void CLJAtoms::constructFrom(const MoleculeView &molecule,
         e[i] = (e[i] * four).sqrt();
     }
     
-    quint64 ns = t.nsecsElapsed();
+    //quint64 ns = t.nsecsElapsed();
     
-    qDebug() << "Converting" << (_q.count() * MultiFloat::count()) << "atoms took"
-             << (0.000001*ns) << "ms";
+    //qDebug() << "Converting" << (_q.count() * MultiFloat::count()) << "atoms took"
+    //         << (0.000001*ns) << "ms";
 }
 
 /** Construct from the parameters in the passed set of Molecules */
@@ -933,8 +933,8 @@ void CLJAtoms::constructFrom(const Molecules &molecules,
     if (molecules.isEmpty())
         return;
    
-    QElapsedTimer t;
-    t.start();
+    //QElapsedTimer t;
+    //t.start();
     
     //extract all of the data from the passed molecules
     {
@@ -1117,10 +1117,10 @@ void CLJAtoms::constructFrom(const Molecules &molecules,
         e[i] = (e[i] * four).sqrt();
     }
     
-    quint64 ns = t.nsecsElapsed();
+    //quint64 ns = t.nsecsElapsed();
     
-    qDebug() << "Converting" << (_q.count() * MultiFloat::count()) << "atoms took"
-             << (0.000001*ns) << "ms";
+    //qDebug() << "Converting" << (_q.count() * MultiFloat::count()) << "atoms took"
+    //         << (0.000001*ns) << "ms";
 }
 
 /** Construct from the parameters in the passed set of Molecules */
@@ -1130,8 +1130,8 @@ void CLJAtoms::constructFrom(const MoleculeGroup &molecules,
     if (molecules.isEmpty())
         return;
    
-    QElapsedTimer t;
-    t.start();
+    //QElapsedTimer t;
+    //t.start();
     
     //extract all of the data from the passed molecules
     {
@@ -1314,10 +1314,10 @@ void CLJAtoms::constructFrom(const MoleculeGroup &molecules,
         e[i] = (e[i] * four).sqrt();
     }
     
-    quint64 ns = t.nsecsElapsed();
+    //quint64 ns = t.nsecsElapsed();
     
-    qDebug() << "Converting" << (_q.count() * MultiFloat::count()) << "atoms took"
-             << (0.000001*ns) << "ms";
+    //qDebug() << "Converting" << (_q.count() * MultiFloat::count()) << "atoms took"
+    //         << (0.000001*ns) << "ms";
 }
 
 /** Construct from the parameters in the passed molecule view */
@@ -1616,6 +1616,44 @@ bool CLJAtoms::isDummy(int i)
     int sub_idx = i % MultiFloat::count();
 
     return (_id[idx][sub_idx] == 0);
+}
+
+/** Set the ID number of all (non-dummy) atoms to 'idnum' */
+void CLJAtoms::setAllID(qint32 idnum)
+{
+    qint32 dummy_id = idOfDummy()[0];
+
+    for (int i=0; i<_id.count(); ++i)
+    {
+        for (int j=0; j<MultiInt::count(); ++j)
+        {
+            if (_id[i][j] != dummy_id)
+            {
+                _id[i].set(j, idnum);
+            }
+        }
+    }
+}
+
+/** Return a squeezed copy of these CLJAtoms whereby all of the 
+    dummy atoms are removed and atoms squeezed into a single, contiguous space */
+CLJAtoms CLJAtoms::squeeze() const
+{
+    QVector<CLJAtom> atms = this->atoms();
+    
+    QMutableVectorIterator<CLJAtom> it(atms);
+    
+    qint32 dummy_id = CLJAtoms::idOfDummy()[0];
+    
+    while (it.hasNext())
+    {
+        if (it.next().ID() == dummy_id)
+        {
+            it.remove();
+        }
+    }
+    
+    return CLJAtoms(atms);
 }
 
 /** Return an array of all of the atoms */

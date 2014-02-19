@@ -110,6 +110,8 @@ public:
 
     int nAtoms() const;
 
+    CLJBox squeeze() const;
+
 private:
     /** The actual atoms in the box */
     CLJAtoms atms;
@@ -125,6 +127,7 @@ friend QDataStream& ::operator>>(QDataStream&, CLJBoxPtr&);
 public:
     CLJBoxPtr();
     CLJBoxPtr(CLJBox *box);
+    CLJBoxPtr(const CLJBox &box);
     
     CLJBoxPtr(const CLJBoxPtr &other);
     
@@ -321,6 +324,8 @@ public:
     int nAtoms() const;
     
     int nOccupiedBoxes() const;
+    
+    CLJBoxes squeeze() const;
     
 private:
     void constructFrom(const CLJAtoms &atoms);

@@ -145,6 +145,8 @@ public:
     double lj(const CLJAtoms &atoms) const;
     double lj(const CLJBoxes &atoms) const;
     
+    static qint32 idOfFixedAtom();
+    
 private:
     void clearGrid();
     void calculateGrid();

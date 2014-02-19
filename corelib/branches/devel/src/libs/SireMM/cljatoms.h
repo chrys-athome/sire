@@ -231,6 +231,8 @@ public:
     void setLJParameter(int i, LJParameter ljparam);
     void setID(int i, qint32 idnum);
 
+    void setAllID(qint32 idnum);
+
     void makeDummy(int i);
     bool isDummy(int i);
     
@@ -252,6 +254,8 @@ public:
     const QVector<MultiInt>& ID() const;
     
     static MultiInt idOfDummy();
+    
+    CLJAtoms squeeze() const;
     
 private:
     void constructFrom(const MoleculeGroup &molecules,

@@ -199,6 +199,10 @@ CLJBoxPtr::CLJBoxPtr(CLJBox *box)
     }
 }
 
+/** Construct from the passed box */
+CLJBoxPtr::CLJBoxPtr(const CLJBox &box) : d(new CLJBox(box))
+{}
+
 /** Copy constructor */
 CLJBoxPtr::CLJBoxPtr(const CLJBoxPtr &other) : d(other.d)
 {}
@@ -468,6 +472,14 @@ bool CLJBoxDistance::operator<(const CLJBoxDistance &other) const
 bool CLJBoxDistance::operator>(const CLJBoxDistance &other) const
 {
     return dist > other.dist;
+}
+
+/** Return a copy of this box where the CLJAtoms are squeezed */
+CLJBox CLJBox::squeeze() const
+{
+    CLJBox ret(*this);
+    ret.atms = atms.squeeze();
+    return ret;
 }
 
 const char* CLJBoxDistance::typeName()
@@ -767,6 +779,21 @@ CLJAtoms CLJBoxes::atoms() const
     }
     
     return atms;
+}
+
+/** Return a copy of the boxes where all of the CLJAtoms objects have been squeezed */
+CLJBoxes CLJBoxes::squeeze() const
+{
+    CLJBoxes ret(*this);
+    
+    for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = bxs.constBegin();
+         it != bxs.constEnd();
+         ++it)
+    {
+        ret.bxs[it.key()] = it.value().read().squeeze();
+    }
+    
+    return ret;
 }
 
 /** Return the length of each side of each box */

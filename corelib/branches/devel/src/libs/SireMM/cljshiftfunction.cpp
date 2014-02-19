@@ -1844,6 +1844,7 @@ void CLJShiftFunction::calcVacGrid(const CLJAtoms &atoms, const GridInfo &grid_i
             r.multiplyAdd(tmp, tmp);
             tmp = pz - z[j];
             r.multiplyAdd(tmp, tmp);
+
             r = r.sqrt();
 
             one_over_r = r.reciprocal();
@@ -1870,12 +1871,83 @@ void CLJShiftFunction::calcVacGrid(const CLJAtoms &atoms, const GridInfo &grid_i
 }
 
 /** Calculate the energy on the grid from the passed atoms using vacuum boundary conditions */
-void CLJShiftFunction::calcBoxGrid(const CLJAtoms &atoms, const GridInfo &info,
-                                   const int start, const int end, float *gridpot) const
+void CLJShiftFunction::calcBoxGrid(const CLJAtoms &atoms, const GridInfo &grid_info,
+                                   const Vector &box_dimensions,
+                                   const int start, const int end, float *gridpot_array) const
 {
-    for (int i=start; i<end; ++i)
+    const MultiFloat* const x = atoms.x().constData();
+    const MultiFloat* const y = atoms.y().constData();
+    const MultiFloat* const z = atoms.z().constData();
+    const MultiFloat* const q = atoms.q().constData();
+    const MultiInt* const id = atoms.ID().constData();
+    
+    const MultiFloat Rc( coul_cutoff );
+    const MultiFloat one_over_Rc( 1.0f / coul_cutoff );
+    const MultiFloat one_over_Rc2( 1.0f / (coul_cutoff*coul_cutoff) );
+    const MultiInt dummy_id = CLJAtoms::idOfDummy();
+
+    const MultiFloat box_x( box_dimensions.x() );
+    const MultiFloat box_y( box_dimensions.y() );
+    const MultiFloat box_z( box_dimensions.z() );
+    
+    const MultiFloat half_box_x( 0.5 * box_dimensions.x() );
+    const MultiFloat half_box_y( 0.5 * box_dimensions.y() );
+    const MultiFloat half_box_z( 0.5 * box_dimensions.z() );
+
+    MultiFloat tmp, r, one_over_r, itmp;
+
+    const int nats = atoms.x().count();
+
+    for (int i = start; i < end; ++i)
     {
-        gridpot[i] = 0;
+        const Vector grid_point = grid_info.point(i);
+        
+        const MultiFloat px(grid_point.x());
+        const MultiFloat py(grid_point.y());
+        const MultiFloat pz(grid_point.z());
+        
+        MultiDouble pot(0);
+        
+        for (int j=0; j<nats; ++j)
+        {
+            //calculate the distance between the atom and grid point
+            tmp = px - x[j];
+            tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
+            tmp -= box_x.logicalAnd( half_box_x.compareLess(tmp) );
+            r = tmp * tmp;
+
+            tmp = py - y[j];
+            tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
+            tmp -= box_y.logicalAnd( half_box_y.compareLess(tmp) );
+            r.multiplyAdd(tmp, tmp);
+
+            tmp = pz - z[j];
+            tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
+            tmp -= box_z.logicalAnd( half_box_z.compareLess(tmp) );
+            r.multiplyAdd(tmp, tmp);
+
+            r = r.sqrt();
+
+            one_over_r = r.reciprocal();
+    
+            //calculate the coulomb energy using shift-electrostatics
+            // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
+            tmp = r - Rc;
+            tmp *= one_over_Rc2;
+            tmp -= one_over_Rc;
+            tmp += one_over_r;
+            
+            //exclude dummy atoms when building the grid
+            tmp *= q[j].logicalAndNot( id[j].compareEqual(dummy_id) );
+        
+            //apply the cutoff - compare r against Rc. This will
+            //return 1 if r is less than Rc, or 0 otherwise. Logical
+            //and will then remove all energies where r >= Rc
+            pot += tmp.logicalAnd( r.compareLess(Rc) );
+        }
+        
+        *gridpot_array = pot.sum();
+        ++gridpot_array;
     }
 }
 

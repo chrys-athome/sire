@@ -322,6 +322,7 @@ bool CLJFunction::supportsGridCalculation() const
 
 /** Dummy function that needs to be overridden to support grid calculations */
 void CLJFunction::calcBoxGrid(const CLJAtoms &atoms, const GridInfo &gridinfo,
+                              const Vector &box_dimensions,
                               const int start, const int end, float *gridpot) const
 {
     for (int i=start; i<end; ++i)
@@ -364,7 +365,7 @@ namespace SireMM
             {
                 if (use_box)
                 {
-                    cljfunc->calcBoxGrid(*atoms, *grid_info,
+                    cljfunc->calcBoxGrid(*atoms, *grid_info, cljfunc->box_dimensions,
                                          range.begin(), range.end(),
                                          &(gridpot[range.begin()]));
                 }
