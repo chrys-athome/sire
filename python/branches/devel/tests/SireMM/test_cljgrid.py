@@ -17,6 +17,7 @@ lj_cutoff = 10 * angstrom
 grid_spacing = 0.25 * angstrom
 
 (mols, space) = Amber().readCrdTop("../io/waterbox.crd", "../io/waterbox.top")
+water_space = space
 
 cljatoms = CLJAtoms( mols.molecules() )
 
@@ -70,9 +71,9 @@ def test_build_grid(verbose = False):
         assert_almost_equal( cnrg, gridpot[i] * reduce_fac, 2 )
 
 
-def test_energy(verbose = False):
+def pvt_test_energy(space, verbose):
     cljfunc = CLJShiftFunction(coul_cutoff, lj_cutoff)
-    cljfunc.setSpace(Cartesian())
+    cljfunc.setSpace(space)
 
     t = QElapsedTimer()
 
@@ -82,7 +83,7 @@ def test_energy(verbose = False):
     cljgrid.setGridDimensions(clusteratoms, grid_spacing, 2*angstrom)
 
     cljff = InterGroupCLJFF("cljff")
-    cljff.setSpace(Cartesian())
+    cljff.setSpace(space)
     cljff.setSwitchingFunction( HarmonicSwitchingFunction(coul_cutoff,lj_cutoff) )
     cljff.setShiftElectrostatics(True)
     cljff.setCombiningRules("arithmetic")
@@ -159,15 +160,26 @@ def test_energy(verbose = False):
 
         assert_almost_equal( grid_cnrg, grid2_cnrg, 5 )
         assert_almost_equal( grid_ljnrg, grid_ljnrg, 5 )
-        assert_almost_equal( grid_cnrg, nogrid_cnrg, 2 )
+        assert_almost_equal( grid_cnrg, nogrid_cnrg, 1 )
         assert_almost_equal( grid_ljnrg, nogrid_ljnrg, 5 )
-        assert_almost_equal( grid_cnrg, cnrg, 2 )
+        assert_almost_equal( grid_cnrg, cnrg, 1 )
         assert_almost_equal( nogrid_cnrg, cnrg, 5 )
         assert_almost_equal( grid_ljnrg, ljnrg, 5 )
-        assert_almost_equal( grid_cnrg, old_cnrg, 2 )
+        assert_almost_equal( grid_cnrg, old_cnrg, 1 )
         assert_almost_equal( grid_ljnrg, old_ljnrg, 3 )
 
+def test_energy(verbose = False):
+    pvt_test_energy(Cartesian(), verbose)
+
+def test_energy_box(verbose = False):
+    pvt_test_energy(water_space, verbose)
 
 if __name__ == "__main__":
+    print("\nTesting building a grid...")
     test_build_grid(True)
+
+    print("\nInfinite box test")
     test_energy(True)
+
+    print("\nPeriodic box test (%s)" % water_space)
+    test_energy_box(True)
