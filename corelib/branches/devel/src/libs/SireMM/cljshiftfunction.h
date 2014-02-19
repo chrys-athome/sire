@@ -94,6 +94,8 @@ public:
 
     bool supportsGridCalculation() const;
 
+    static CLJFunctionPtr defaultShiftFunction();
+
 protected:
     void calcVacEnergyAri(const CLJAtoms &atoms,
                           double &cnrg, double &ljnrg) const;
@@ -178,6 +180,8 @@ public:
     const char* what() const;
     
     CLJIntraShiftFunction* clone() const;
+
+    static CLJFunctionPtr defaultShiftFunction();
 
 protected:
     void calcVacEnergyAri(const CLJAtoms &atoms,

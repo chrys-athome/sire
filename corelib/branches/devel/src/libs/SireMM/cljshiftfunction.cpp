@@ -77,6 +77,12 @@ CLJShiftFunction::CLJShiftFunction()
                  : ConcreteProperty<CLJShiftFunction,CLJCutoffFunction>()
 {}
 
+CLJFunctionPtr CLJShiftFunction::defaultShiftFunction()
+{
+    static CLJFunctionPtr ptr( new CLJShiftFunction() );
+    return ptr;
+}
+
 CLJShiftFunction::CLJShiftFunction(Length cutoff)
                  : ConcreteProperty<CLJShiftFunction,CLJCutoffFunction>(cutoff)
 {}
@@ -1983,6 +1989,12 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJIntraShiftFunction &in
 CLJIntraShiftFunction::CLJIntraShiftFunction()
                       : ConcreteProperty<CLJIntraShiftFunction,CLJIntraFunction>()
 {}
+
+CLJFunctionPtr CLJIntraShiftFunction::defaultShiftFunction()
+{
+    static CLJFunctionPtr ptr( new CLJIntraShiftFunction() );
+    return ptr;
+}
 
 CLJIntraShiftFunction::CLJIntraShiftFunction(Length cutoff)
                       : ConcreteProperty<CLJIntraShiftFunction,CLJIntraFunction>(cutoff)

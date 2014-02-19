@@ -30,6 +30,7 @@
 
 #include "cljfunction.h"
 #include "gridinfo.h"
+#include "switchingfunction.h"
 
 #include "SireMaths/multidouble.h"
 
@@ -38,8 +39,16 @@
 
 #include "SireError/errors.h"
 
+#include "SireBase/properties.h"
+#include "SireBase/stringproperty.h"
+#include "SireBase/numberproperty.h"
+#include "SireBase/lengthproperty.h"
+#include "SireBase/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
+
+#include "tostring.h"
 
 #include "tbb/blocked_range.h"
 #include "tbb/parallel_for.h"
@@ -188,6 +197,107 @@ const char* CLJFunction::typeName()
 bool CLJFunction::operator==(const CLJFunction &other) const
 {
     return use_arithmetic == other.use_arithmetic and Property::operator==(other);
+}
+
+/** Return the null (do nothing) function */
+const NullCLJFunction& CLJFunction::null()
+{
+    static NullCLJFunction nullfunc;
+    return nullfunc;
+}
+
+/** Return all of the configurable properties of this function */
+Properties CLJFunction::properties() const
+{
+    Properties props;
+    props.setProperty( "space", spce );
+    
+    if (use_arithmetic)
+        props.setProperty( "combiningRules", StringProperty("arithmetic") );
+    else
+        props.setProperty( "combiningRules", StringProperty("geometric") );
+    
+    return props;
+}
+
+/** Return a copy of this function where the property 'name' has been set to 
+    the value 'value'
+    
+    \throw SireBase::missing_property
+*/
+CLJFunctionPtr CLJFunction::setProperty(const QString &name, const Property &value) const
+{
+    CLJFunctionPtr ret(*this);
+
+    if (name == "space")
+    {
+        ret.edit().setSpace( value.asA<Space>() );
+    }
+    else if (name == "combiningRules")
+    {
+        QString typ;
+    
+        if (value.isA<VariantProperty>())
+            typ = value.asA<VariantProperty>().toString();
+        else
+            typ = value.asA<StringProperty>();
+        
+        if (typ.toLower() == "arithmetic")
+            ret.edit().setCombiningRules( CLJFunction::ARITHMETIC );
+        else if (typ.toLower() == "geometric")
+            ret.edit().setCombiningRules( CLJFunction::GEOMETRIC );
+        else
+            throw SireError::invalid_arg( QObject::tr(
+                    "Cannot interpret combining rules from value \"%1\". Valid "
+                    "values are \"arithmetic\" or \"geometric\".")
+                        .arg(typ), CODELOC );
+    }
+    else
+    {
+        throw SireBase::missing_property( QObject::tr(
+                "There is no property with the name \"%1\" in function \"%2\". "
+                "Available property names are %3.")
+                    .arg(name).arg(this->toString())
+                    .arg( Sire::toString(this->properties().propertyKeys()) ), CODELOC );
+    }
+    
+    return ret;
+}
+
+/** Return the value of the property with name 'name' */
+PropertyPtr CLJFunction::property(const QString &name) const
+{
+    if (name == "space")
+        return spce;
+
+    else if (name == "combiningRules")
+    {
+        static StringProperty arithmetic_property("arithmetic");
+        static StringProperty geometric_property("geometric");
+        
+        if (use_arithmetic)
+            return arithmetic_property;
+        else
+            return geometric_property;
+    }
+    else
+    {
+        throw SireBase::missing_property( QObject::tr(
+                "There is no property with the name \"%1\" in function \"%2\". "
+                "Available property names are %3.")
+                    .arg(name).arg(this->toString())
+                    .arg( Sire::toString(this->properties().propertyKeys()) ), CODELOC );
+        
+        // the code below is never executed
+        static NullCLJFunction func;
+        return func;
+    }
+}
+
+/** Return whether or not this function contains a property with name 'name' */
+bool CLJFunction::containsProperty(const QString &name) const
+{
+    return (name == "space") or (name == "combiningRules");
 }
 
 /** Tell the function to use arithmetic combining rules for LJ parameters */
@@ -802,6 +912,135 @@ double CLJFunction::lj(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
 }
 
 /////////
+///////// Implementation of NulCLJFunction
+/////////
+
+static const RegisterMetaType<NullCLJFunction> r_nullfunc;
+
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const NullCLJFunction &nullfunc)
+{
+    writeHeader(ds, r_nullfunc, 1);
+    
+    ds << static_cast<const CLJFunction&>(nullfunc);
+    
+    return ds;
+}
+
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, NullCLJFunction &nullfunc)
+{
+    VersionID v = readHeader(ds, r_nullfunc);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<CLJFunction&>(nullfunc);
+    }
+    else
+        throw version_error(v, "1", r_nullfunc, CODELOC);
+    
+    return ds;
+}
+
+/** Constructor */
+NullCLJFunction::NullCLJFunction() : ConcreteProperty<NullCLJFunction,CLJFunction>()
+{}
+
+/** Copy constructor */
+NullCLJFunction::NullCLJFunction(const NullCLJFunction &other)
+                : ConcreteProperty<NullCLJFunction,CLJFunction>(other)
+{}
+
+/** Destructor */
+NullCLJFunction::~NullCLJFunction()
+{}
+
+/** Copy assignment operator */
+NullCLJFunction& NullCLJFunction::operator=(const NullCLJFunction &other)
+{
+    CLJFunction::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool NullCLJFunction::operator==(const NullCLJFunction &other) const
+{
+    return CLJFunction::operator==(other);
+}
+
+/** Comparison operator */
+bool NullCLJFunction::operator!=(const NullCLJFunction &other) const
+{
+    return not operator==(other);
+}
+
+const char* NullCLJFunction::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NullCLJFunction>() );
+}
+
+const char* NullCLJFunction::what() const
+{
+    return NullCLJFunction::typeName();
+}
+    
+void NullCLJFunction::calcVacEnergyAri(const CLJAtoms &atoms,
+                                      double &cnrg, double &ljnrg) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+}
+
+void NullCLJFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                       double &cnrg, double &ljnrg, float min_distance) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+}
+
+void NullCLJFunction::calcVacEnergyGeo(const CLJAtoms &atoms,
+                                       double &cnrg, double &ljnrg) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+}
+
+void NullCLJFunction::calcVacEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                       double &cnrg, double &ljnrg, float min_distance) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+}
+
+void NullCLJFunction::calcBoxEnergyAri(const CLJAtoms &atoms, const Vector &box,
+                                       double &cnrg, double &ljnrg) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+}
+
+void NullCLJFunction::calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                       const Vector &box, double &cnrg, double &ljnrg,
+                                       float min_distance) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+}
+
+void NullCLJFunction::calcBoxEnergyGeo(const CLJAtoms &atoms, const Vector &box,
+                                       double &cnrg, double &ljnrg) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+}
+
+void NullCLJFunction::calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                                       const Vector &box, double &cnrg, double &ljnrg,
+                                       float min_distance) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+}
+
+/////////
 ///////// Implementation of CLJCutoffFunction
 /////////
 
@@ -955,6 +1194,75 @@ bool CLJCutoffFunction::operator==(const CLJCutoffFunction &other) const
 const char* CLJCutoffFunction::typeName()
 {
     return "SireMM::CLJCutoffFunction";
+}
+
+/** Return the properties that can be set in this function */
+Properties CLJCutoffFunction::properties() const
+{
+    Properties props = CLJFunction::properties();
+    
+    props.setProperty( "coulombCutoff", LengthProperty( Length(coul_cutoff) ) );
+    props.setProperty( "ljCutoff", LengthProperty( Length(lj_cutoff) ) );
+    props.setProperty( "switchingFunction", HarmonicSwitchingFunction( Length(coul_cutoff),
+                                                                       Length(lj_cutoff) ) );
+    
+    return props;
+}
+
+/** Set the property with name 'name' to value 'value' */
+CLJFunctionPtr CLJCutoffFunction::setProperty(const QString &name, const Property &value) const
+{
+    CLJFunctionPtr ret(*this);
+
+    if (name == "switchingFunction")
+    {
+        const SwitchingFunction &switchfunc = value.asA<SwitchingFunction>();
+        
+        ret.edit().setCoulombCutoff( Length(switchfunc.electrostaticCutoffDistance()) );
+        ret.edit().setLJCutoff( Length(switchfunc.vdwCutoffDistance()) );
+    }
+    else if (name == "coulombCutoff")
+    {
+        ret.edit().setCoulombCutoff( value.asA<LengthProperty>() );
+    }
+    else if (name == "ljCutoff")
+    {
+        ret.edit().setLJCutoff( value.asA<LengthProperty>() );
+    }
+    else
+    {
+        ret = CLJFunction::setProperty(name, value);
+    }
+    
+    return ret;
+}
+
+/** Return the value of the property with name 'name' */
+PropertyPtr CLJCutoffFunction::property(const QString &name) const
+{
+    if (name == "switchingFunction")
+    {
+        return HarmonicSwitchingFunction( Length(coul_cutoff), Length(lj_cutoff) );
+    }
+    else if (name == "coulombCutoff")
+    {
+        return LengthProperty( Length(coul_cutoff) );
+    }
+    else if (name == "ljCutoff")
+    {
+        return LengthProperty( Length(lj_cutoff) );
+    }
+    else
+    {
+        return CLJFunction::property(name);
+    }
+}
+
+/** Return whether or not this function contains a property called 'name' */
+bool CLJCutoffFunction::containsProperty(const QString &name) const
+{
+    return (name == "switchingFunction") or (name == "coulombCutoff") or
+           (name == "ljCutoff") or CLJFunction::containsProperty(name);
 }
 
 /** Return whether or not this function has a cutoff */
@@ -1115,6 +1423,52 @@ CLJIntraFunction& CLJIntraFunction::operator=(const CLJIntraFunction &other)
 bool CLJIntraFunction::operator==(const CLJIntraFunction &other) const
 {
     return cty == other.cty and CLJCutoffFunction::operator==(other);
+}
+
+/** Return the properties that can be set in this function */
+Properties CLJIntraFunction::properties() const
+{
+    Properties props = CLJCutoffFunction::properties();
+    
+    props.setProperty( "connectivity", cty );
+    
+    return props;
+}
+
+/** Set the property with name 'name' to value 'value' */
+CLJFunctionPtr CLJIntraFunction::setProperty(const QString &name, const Property &value) const
+{
+    CLJFunctionPtr ret(*this);
+
+    if (name == "connectivity")
+    {
+        ret.edit().asA<CLJIntraFunction>().setConnectivity( value.asA<Connectivity>() );
+    }
+    else
+    {
+        ret = CLJCutoffFunction::setProperty(name, value);
+    }
+    
+    return ret;
+}
+
+/** Return the value of the property with name 'name' */
+PropertyPtr CLJIntraFunction::property(const QString &name) const
+{
+    if (name == "connectivity")
+    {
+        return cty;
+    }
+    else
+    {
+        return CLJCutoffFunction::property(name);
+    }
+}
+
+/** Return whether or not this function contains a property called 'name' */
+bool CLJIntraFunction::containsProperty(const QString &name) const
+{
+    return (name == "connectivity") or CLJCutoffFunction::containsProperty(name);
 }
 
 /** Return the connectivity used to find the non-bonded pairs */
@@ -1296,6 +1650,74 @@ const char* CLJSoftFunction::typeName()
 bool CLJSoftFunction::isSoftened() const
 {
     return true;
+}
+
+/** Return the properties that can be set in this function */
+Properties CLJSoftFunction::properties() const
+{
+    Properties props = CLJCutoffFunction::properties();
+    
+    props.setProperty( "alpha", NumberProperty(alpha_value) );
+    props.setProperty( "shiftDelta", NumberProperty(shift_delta) );
+    props.setProperty( "coulombPower", NumberProperty(coulomb_power) );
+    
+    return props;
+}
+
+/** Set the property with name 'name' to value 'value' */
+CLJFunctionPtr CLJSoftFunction::setProperty(const QString &name, const Property &value) const
+{
+    CLJFunctionPtr ret(*this);
+
+    if (name == "alpha")
+    {
+        ret.edit().asA<CLJSoftFunction>()
+                  .setAlpha( value.asA<NumberProperty>().toDouble() );
+    }
+    else if (name == "shiftDelta")
+    {
+        ret.edit().asA<CLJSoftFunction>()
+                  .setShiftDelta( value.asA<NumberProperty>().toDouble() );
+    }
+    else if (name == "coulombPower")
+    {
+        ret.edit().asA<CLJSoftFunction>()
+                  .setCoulombPower( value.asA<NumberProperty>().toDouble() );
+    }
+    else
+    {
+        ret = CLJCutoffFunction::setProperty(name, value);
+    }
+    
+    return ret;
+}
+
+/** Return the value of the property with name 'name' */
+PropertyPtr CLJSoftFunction::property(const QString &name) const
+{
+    if (name == "alpha")
+    {
+        return NumberProperty(alpha_value);
+    }
+    else if (name == "shiftDelta")
+    {
+        return NumberProperty(shift_delta);
+    }
+    else if (name == "coulombPower")
+    {
+        return NumberProperty(coulomb_power);
+    }
+    else
+    {
+        return CLJCutoffFunction::property(name);
+    }
+}
+
+/** Return whether or not this function contains a property called 'name' */
+bool CLJSoftFunction::containsProperty(const QString &name) const
+{
+    return (name == "alpha") or (name == "shiftDelta") or
+           (name == "coulombPower") or CLJCutoffFunction::containsProperty(name);
 }
 
 /** Return the soft-core alpha value. A value of 0 is a completely hard

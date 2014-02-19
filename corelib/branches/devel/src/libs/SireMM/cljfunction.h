@@ -38,6 +38,7 @@
 #include "SireVol/space.h"
 
 #include "SireBase/property.h"
+#include "SireBase/properties.h"
 
 #include "SireUnits/dimensions.h"
 
@@ -49,10 +50,14 @@ class CLJFunction;
 class CLJCutoffFunction;
 class CLJIntraFunction;
 class CLJSoftFunction;
+class NullCLJFunction;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMM::CLJFunction&);
 QDataStream& operator>>(QDataStream&, SireMM::CLJFunction&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::NullCLJFunction&);
+QDataStream& operator>>(QDataStream&, SireMM::NullCLJFunction&);
 
 QDataStream& operator<<(QDataStream&, const SireMM::CLJCutoffFunction&);
 QDataStream& operator>>(QDataStream&, SireMM::CLJCutoffFunction&);
@@ -74,7 +79,13 @@ using SireMol::Connectivity;
 
 using SireVol::Space;
 
+using SireBase::Property;
+using SireBase::Properties;
+using SireBase::PropertyPtr;
+
 namespace detail { class CLJGridCalculator; }
+
+typedef SireBase::PropPtr<CLJFunction> CLJFunctionPtr;
 
 /** Base class of all CLJFunctions. These are function classes that
     calculate the coulomb and LJ energy of the passed CLJAtoms groups
@@ -106,6 +117,14 @@ public:
  
     static const char* typeName();
     
+    virtual Properties properties() const;
+    
+    virtual CLJFunctionPtr setProperty(const QString &name, const Property &value) const;
+    
+    virtual PropertyPtr property(const QString &name) const;
+    
+    virtual bool containsProperty(const QString &name) const;
+    
     void operator()(const CLJAtoms &atoms,
                     double &cnrg, double &ljnrg) const;
     
@@ -135,6 +154,8 @@ public:
               float min_distance=0) const;
 
     virtual CLJFunction* clone() const=0;
+
+    static const NullCLJFunction& null();
 
     virtual bool supportsGridCalculation() const;
 
@@ -262,6 +283,52 @@ private:
     bool use_box;
 };
 
+/** This is a null (empty) CLJ function that calculates nothing */
+class SIREMM_EXPORT NullCLJFunction
+        : public SireBase::ConcreteProperty<NullCLJFunction,CLJFunction>
+{
+public:
+    NullCLJFunction();
+    NullCLJFunction(const NullCLJFunction &other);
+    ~NullCLJFunction();
+    
+    NullCLJFunction& operator=(const NullCLJFunction &other);
+    
+    bool operator==(const NullCLJFunction &other) const;
+    bool operator!=(const NullCLJFunction &other) const;
+    
+    static const char* typeName();
+    
+    const char* what() const;
+    
+private:
+    void calcVacEnergyAri(const CLJAtoms &atoms,
+                          double &cnrg, double &ljnrg) const;
+
+    void calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                          double &cnrg, double &ljnrg, float min_distance) const;
+
+    void calcVacEnergyGeo(const CLJAtoms &atoms,
+                          double &cnrg, double &ljnrg) const;
+
+    void calcVacEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                          double &cnrg, double &ljnrg, float min_distance) const;
+
+    void calcBoxEnergyAri(const CLJAtoms &atoms, const Vector &box,
+                          double &cnrg, double &ljnrg) const;
+
+    void calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                          const Vector &box, double &cnrg, double &ljnrg,
+                          float min_distance) const;
+
+    void calcBoxEnergyGeo(const CLJAtoms &atoms, const Vector &box,
+                          double &cnrg, double &ljnrg) const;
+
+    void calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                          const Vector &box, double &cnrg, double &ljnrg,
+                          float min_distance) const;
+};
+
 /** This is the base class of all CLJ functions that have a cutoff
 
     @author Christopher Woods
@@ -293,6 +360,11 @@ public:
     ~CLJCutoffFunction();
     
     static const char* typeName();
+
+    Properties properties() const;
+    CLJFunctionPtr setProperty(const QString &name, const Property &value) const;
+    PropertyPtr property(const QString &name) const;
+    bool containsProperty(const QString &name) const;
 
     bool hasCutoff() const;
     
@@ -352,6 +424,11 @@ public:
     
     static const char* typeName();
 
+    Properties properties() const;
+    CLJFunctionPtr setProperty(const QString &name, const Property &value) const;
+    PropertyPtr property(const QString &name) const;
+    bool containsProperty(const QString &name) const;
+
     void setConnectivity(const Connectivity &connectivity);
     void setConnectivity(const MoleculeView &molecule, const PropertyMap &map = PropertyMap());
 
@@ -401,6 +478,11 @@ public:
     static const char* typeName();
 
     bool isSoftened() const;
+
+    Properties properties() const;
+    CLJFunctionPtr setProperty(const QString &name, const Property &value) const;
+    PropertyPtr property(const QString &name) const;
+    bool containsProperty(const QString &name) const;
     
     float alpha() const;
     float shiftDelta() const;
@@ -496,10 +578,15 @@ inline const QVector< QVector<bool> >& CLJIntraFunction::bondMatrix() const
 
 }
 
+Q_DECLARE_METATYPE( SireMM::NullCLJFunction )
+
 SIRE_EXPOSE_CLASS( SireMM::CLJFunction )
+SIRE_EXPOSE_CLASS( SireMM::NullCLJFunction )
 SIRE_EXPOSE_CLASS( SireMM::CLJCutoffFunction )
 SIRE_EXPOSE_CLASS( SireMM::CLJSoftFunction )
 SIRE_EXPOSE_CLASS( SireMM::CLJIntraFunction )
+
+SIRE_EXPOSE_PROPERTY( SireMM::CLJFunctionPtr, SireMM::CLJFunction )
 
 SIRE_END_HEADER
 

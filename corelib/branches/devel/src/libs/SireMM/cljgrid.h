@@ -162,7 +162,7 @@ private:
     QVector<float> grid_pots;
     
     /** The CLJFunction used to calculate the potential */
-    SireBase::PropPtr<CLJFunction> cljfunc;
+    CLJFunctionPtr cljfunc;
     
     /** The atoms whose potentials are contained in the grid */
     CLJBoxes cljboxes;

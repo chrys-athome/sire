@@ -37,6 +37,7 @@ set ( SIREMM_HEADERS
       gridinfo.h
       intercljff.h
       intercoulombff.h
+      interff.h
       interljff.h
       internalcomponent.h
       internalff.h
@@ -97,6 +98,7 @@ set ( SIREMM_SOURCES
       gridinfo.cpp
       intercljff.cpp
       intercoulombff.cpp
+      interff.cpp
       interljff.cpp
       internalcomponent.cpp
       internalff.cpp
