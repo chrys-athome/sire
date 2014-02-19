@@ -11,6 +11,11 @@ from nose.tools import assert_almost_equal
 
 import math
 
+coul_cutoff = 25 * angstrom
+lj_cutoff = 10 * angstrom
+
+grid_spacing = 0.25 * angstrom
+
 (mols, space) = Amber().readCrdTop("../io/waterbox.crd", "../io/waterbox.top")
 
 cljatoms = CLJAtoms( mols.molecules() )
@@ -35,16 +40,11 @@ clusteratoms = CLJAtoms(cluster)
 waterboxes = CLJBoxes(wateratoms)
 clusterboxes = CLJBoxes(clusteratoms)
 
-coul_cutoff = 25 * angstrom
-lj_cutoff = 10 * angstrom
-
-grid_spacing = 0.25 * angstrom
-
 def test_build_grid(verbose = False):
 
     cljfunc = CLJShiftFunction(coul_cutoff, lj_cutoff)
 
-    grid = GridInfo(AABox(Vector(10),Vector(2)), grid_spacing)
+    grid = GridInfo(AABox(Vector(10),Vector(1)), 0.23*angstrom)
 
     if verbose:
         print("\nTest grid equals %s" % grid)
@@ -62,14 +62,17 @@ def test_build_grid(verbose = False):
         atom = CLJAtoms( [CLJAtom(gridpoint, 1*mod_electron, LJParameter.dummy(), 1000)] )
         cnrg = cljfunc.coulomb(atom, water)
 
-        #if verbose:
-            #print("%s  %s   %s   %s   %s   %s" % (i, grid[i], gridpoint, gridpot[i], 
-            #                                      cnrg, gridpot[i] * reduce_fac))
+        if verbose:
+            if (i % 100 == 0) or (abs(cnrg - gridpot[i] * reduce_fac) > 0.1):
+                print("%s  %s   %s   %s   %s   %s" % (i, grid[i], gridpoint, gridpot[i], 
+                                                      cnrg, gridpot[i] * reduce_fac))
+
         assert_almost_equal( cnrg, gridpot[i] * reduce_fac, 2 )
 
 
 def test_energy(verbose = False):
     cljfunc = CLJShiftFunction(coul_cutoff, lj_cutoff)
+    cljfunc.setSpace(Cartesian())
 
     t = QElapsedTimer()
 
@@ -82,6 +85,7 @@ def test_energy(verbose = False):
     cljff.setSpace(Cartesian())
     cljff.setSwitchingFunction( HarmonicSwitchingFunction(coul_cutoff,lj_cutoff) )
     cljff.setShiftElectrostatics(True)
+    cljff.setCombiningRules("arithmetic")
     cljff.add(cluster, MGIdx(0))
     cljff.add(waters, MGIdx(1))
 
@@ -128,6 +132,13 @@ def test_energy(verbose = False):
     old_cnrg = cljff.energy( cljff.components().coulomb() ).value()
     old_ljnrg = cljff.energy( cljff.components().lj() ).value()
 
+    if coul_cutoff.value() != lj_cutoff.value():
+        # the old forcefield has a broken implementation of the LJ
+        # cutoff when it is not equal to the coulomb cutoff - we need
+        # to recalculate the LJ energy...
+        cljff.setSwitchingFunction( HarmonicSwitchingFunction(lj_cutoff) )
+        old_ljnrg = cljff.energy( cljff.components().lj() ).value()
+
     if verbose:
         print("\nRESULTS")
         print("GRID  1:  %s  %s  %s  (%s ms)" % (grid_cnrg+grid_ljnrg,
@@ -145,6 +156,16 @@ def test_energy(verbose = False):
         print("OLD    :  %s  %s  %s  (%s ms)" % (old_cnrg+old_ljnrg,
                                                  old_cnrg, old_ljnrg,
                                                  (0.000001*old_ns)) )
+
+        assert_almost_equal( grid_cnrg, grid2_cnrg, 5 )
+        assert_almost_equal( grid_ljnrg, grid_ljnrg, 5 )
+        assert_almost_equal( grid_cnrg, nogrid_cnrg, 2 )
+        assert_almost_equal( grid_ljnrg, nogrid_ljnrg, 5 )
+        assert_almost_equal( grid_cnrg, cnrg, 2 )
+        assert_almost_equal( nogrid_cnrg, cnrg, 5 )
+        assert_almost_equal( grid_ljnrg, ljnrg, 5 )
+        assert_almost_equal( grid_cnrg, old_cnrg, 2 )
+        assert_almost_equal( grid_ljnrg, old_ljnrg, 3 )
 
 
 if __name__ == "__main__":
