@@ -446,19 +446,9 @@ int GridInfo::pointToGridCorners(const MultiFloat &x, const MultiFloat &y,
     dy -= s;
     dz -= t;
 
-    qDebug() << x[0] << ox[0] << (x[0]-ox[0]) << r[0] << dx[0];
-    qDebug() << (grid_spacing * r[0]) << (grid_spacing*(r[0] + dx[0])) << (grid_spacing*(r[0]+1));
-    qDebug() << y[0] << oy[0] << (y[0]-oy[0]) << s[0] << dy[0];
-    qDebug() << (grid_spacing * s[0]) << (grid_spacing*(s[0] + dy[0])) << (grid_spacing*(s[0]+1));
-    qDebug() << z[0] << oz[0] << (z[0]-oz[0]) << t[0] << dz[0];
-    qDebug() << (grid_spacing * t[0]) << (grid_spacing*(t[0] + dz[0])) << (grid_spacing*(t[0]+1));
-    
     const MultiFloat one_minus_dx = MULTIFLOAT_ONE - dx;
     const MultiFloat one_minus_dy = MULTIFLOAT_ONE - dy;
     const MultiFloat one_minus_dz = MULTIFLOAT_ONE - dz;
-
-    qDebug() << "deltas" << dx[0] << dy[0] << dz[0];
-    qDebug() << one_minus_dx[0] << one_minus_dy[0] << one_minus_dz[0];
 
     //use tri-linear interpolation to get the weights
     //
@@ -504,10 +494,6 @@ int GridInfo::pointToGridCorners(const MultiFloat &x, const MultiFloat &y,
     wa[5] = (    dx      ) * (one_minus_dy) * (    dz      );
     wa[6] = (    dx      ) * (    dy      ) * (one_minus_dz);
     wa[7] = (    dx      ) * (    dy      ) * (    dz      );
-    
-    qDebug() << "weight" << wa[0][0] << wa[1][0] << wa[2][0] << wa[3][0] << wa[4][0]
-             << wa[5][0] << wa[6][0] << wa[7][0];
-    qDebug() << "SUM" << (wa[0][0] + wa[1][0] + wa[2][0] + wa[3][0] + wa[4][0] + wa[5][0] + wa[6][0] + wa[7][0]);
     
     //now check that the points are in the box
     int n_in_box = MultiFloat::count();

@@ -689,25 +689,12 @@ MultiInt MultiInt::operator-(const MultiInt &other) const
 inline
 MultiInt MultiInt::operator*(const MultiInt &other) const
 {
-    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
-            return MultiInt( _mm256_mul_epi32(v.x, other.v.x) );
-        #else
-            return MultiInt( _mm_mul_epi32(v.x[0], other.v.x[0]),
-                             _mm_mul_epi32(v.x[1], other.v.x[1]) );
-        #endif
-    #else
-    #ifdef MULTIFLOAT_SSE4_IS_AVAILABLE
-        return MultiInt( _mm_mul_epi32(v.x, other.v.x) );
-    #else
-        MultiInt ret;
-        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-        {
-            ret.v.a[i] = v.a[i] * other.v.a[i];
-        }
-        return ret;
-    #endif
-    #endif
+    MultiInt ret;
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        ret.v.a[i] = v.a[i] * other.v.a[i];
+    }
+    return ret;
 }
 
 /** In-place addition operator */
@@ -764,23 +751,10 @@ MultiInt& MultiInt::operator-=(const MultiInt &other)
 inline
 MultiInt& MultiInt::operator*=(const MultiInt &other)
 {
-    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        #ifdef MULTIFLOAT_AVX2_IS_AVAILABLE
-            v.x = _mm256_mul_epi32(v.x, other.v.x);
-        #else
-            v.x[0] = _mm_mul_epi32(v.x[0], other.v.x[0]);
-            v.x[1] = _mm_mul_epi32(v.x[1], other.v.x[1]);
-        #endif
-    #else
-    #ifdef MULTIFLOAT_SSE4_IS_AVAILABLE
-        v.x = _mm_mul_epi32(v.x, other.v.x);
-    #else
-        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-        {
-            v.a[i] *= other.v.a[i];
-        }
-    #endif
-    #endif
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        v.a[i] *= other.v.a[i];
+    }
 
     return *this;
 }
