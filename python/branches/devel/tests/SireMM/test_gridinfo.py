@@ -35,10 +35,10 @@ def test_setup(verbose = False):
 
     assert( info.dimensions() == AABox( Vector(0), Vector(2) ) )
     assert( info.spacing() == 1*angstrom )
-    assert( info.nPoints() == 64 )
-    assert( info.dimX() == 4 )
-    assert( info.dimY() == 4 )
-    assert( info.dimZ() == 4 )
+    assert( info.nPoints() == 125 )
+    assert( info.dimX() == 5 )
+    assert( info.dimY() == 5 )
+    assert( info.dimZ() == 5 )
     assert( info.isEmpty() != True )
 
 if __name__ == "__main__":
