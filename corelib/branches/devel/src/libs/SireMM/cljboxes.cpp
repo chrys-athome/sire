@@ -164,7 +164,14 @@ QVector<int> CLJBox::add(const CLJAtoms &atoms)
     
     qDebug() << "GAPS" << Sire::toString( QVector<int>(gaps) );
     
-    int n = atoms.count() - 1;
+    int n = atoms.nAtoms();
+    
+    if (n == 0)
+        //nothing to add
+        return QVector<int>();
+    
+    //now we use 'n' as an index
+    n -= 1;
     
     while (not gaps.isEmpty())
     {

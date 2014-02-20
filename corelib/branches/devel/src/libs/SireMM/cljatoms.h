@@ -383,7 +383,7 @@ inline int CLJAtoms::nPadded() const
         
         for (int i=MultiInt::count()-1; i>=0; --i)
         {
-            if (last[i] == id_of_dummy)
+            if (last[i] != id_of_dummy)
                 return n;
             
             n += 1;
