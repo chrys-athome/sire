@@ -98,6 +98,26 @@ void register_CLJAtom_class(){
                 , coordinates_function_value );
         
         }
+        { //::SireMM::CLJAtom::isDummy
+        
+            typedef bool ( ::SireMM::CLJAtom::*isDummy_function_type )(  ) const;
+            isDummy_function_type isDummy_function_value( &::SireMM::CLJAtom::isDummy );
+            
+            CLJAtom_exposer.def( 
+                "isDummy"
+                , isDummy_function_value );
+        
+        }
+        { //::SireMM::CLJAtom::isNull
+        
+            typedef bool ( ::SireMM::CLJAtom::*isNull_function_type )(  ) const;
+            isNull_function_type isNull_function_value( &::SireMM::CLJAtom::isNull );
+            
+            CLJAtom_exposer.def( 
+                "isNull"
+                , isNull_function_value );
+        
+        }
         { //::SireMM::CLJAtom::ljParameter
         
             typedef ::SireMM::LJParameter ( ::SireMM::CLJAtom::*ljParameter_function_type )(  ) const;

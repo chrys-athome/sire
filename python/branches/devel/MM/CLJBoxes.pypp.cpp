@@ -43,6 +43,7 @@ void register_CLJBoxes_class(){
         typedef bp::class_< SireMM::CLJBoxes > CLJBoxes_exposer_t;
         CLJBoxes_exposer_t CLJBoxes_exposer = CLJBoxes_exposer_t( "CLJBoxes", bp::init< >() );
         bp::scope CLJBoxes_scope( CLJBoxes_exposer );
+        CLJBoxes_exposer.def( bp::init< SireUnits::Dimension::Length >(( bp::arg("box_size") )) );
         CLJBoxes_exposer.def( bp::init< SireMM::CLJAtoms const & >(( bp::arg("atoms") )) );
         CLJBoxes_exposer.def( bp::init< SireMM::CLJAtoms const &, SireUnits::Dimension::Length >(( bp::arg("atoms"), bp::arg("box_size") )) );
         CLJBoxes_exposer.def( bp::init< SireMM::CLJBoxes const & >(( bp::arg("other") )) );
@@ -55,6 +56,17 @@ void register_CLJBoxes_class(){
                 "add"
                 , add_function_value
                 , ( bp::arg("atoms") ) );
+        
+        }
+        { //::SireMM::CLJBoxes::at
+        
+            typedef ::SireMM::CLJAtom ( ::SireMM::CLJBoxes::*at_function_type )( ::SireMM::CLJBoxIndex const & ) const;
+            at_function_type at_function_value( &::SireMM::CLJBoxes::at );
+            
+            CLJBoxes_exposer.def( 
+                "at"
+                , at_function_value
+                , ( bp::arg("idx") ) );
         
         }
         { //::SireMM::CLJBoxes::atoms
@@ -175,6 +187,17 @@ void register_CLJBoxes_class(){
                 , ( bp::arg("space"), bp::arg("boxes0"), bp::arg("boxes1"), bp::arg("cutoff") ) );
         
         }
+        { //::SireMM::CLJBoxes::getitem
+        
+            typedef ::SireMM::CLJAtom ( ::SireMM::CLJBoxes::*getitem_function_type )( ::SireMM::CLJBoxIndex const & ) const;
+            getitem_function_type getitem_function_value( &::SireMM::CLJBoxes::getitem );
+            
+            CLJBoxes_exposer.def( 
+                "getitem"
+                , getitem_function_value
+                , ( bp::arg("idx") ) );
+        
+        }
         { //::SireMM::CLJBoxes::isEmpty
         
             typedef bool ( ::SireMM::CLJBoxes::*isEmpty_function_type )(  ) const;
@@ -251,6 +274,17 @@ void register_CLJBoxes_class(){
         
         }
         CLJBoxes_exposer.def( bp::self == bp::self );
+        { //::SireMM::CLJBoxes::operator[]
+        
+            typedef ::SireMM::CLJAtom ( ::SireMM::CLJBoxes::*__getitem___function_type )( ::SireMM::CLJBoxIndex const & ) const;
+            __getitem___function_type __getitem___function_value( &::SireMM::CLJBoxes::operator[] );
+            
+            CLJBoxes_exposer.def( 
+                "__getitem__"
+                , __getitem___function_value
+                , ( bp::arg("idx") ) );
+        
+        }
         { //::SireMM::CLJBoxes::remove
         
             typedef void ( ::SireMM::CLJBoxes::*remove_function_type )( ::QList< SireMM::CLJBoxIndex > const & ) ;
@@ -313,6 +347,7 @@ void register_CLJBoxes_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CLJBoxes_exposer.def( "__str__", &__str__< ::SireMM::CLJBoxes > );
         CLJBoxes_exposer.def( "__repr__", &__str__< ::SireMM::CLJBoxes > );
+        CLJBoxes_exposer.def( "__getitem__", &::SireMM::CLJBoxes::getitem );
     }
 
 }
