@@ -604,19 +604,6 @@ bool MultiFloat::operator>=(const MultiFloat &other) const
     return true;
 }
 
-/** Negative operator */
-MultiFloat MultiFloat::operator-() const
-{
-    MultiFloat ret;
-    
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        ret.v.a[i] = -v.a[i];
-    }
-    
-    return ret;
-}
-
 /** Set the ith value of the multifloat to 'value' */
 void MultiFloat::set(int i, float value)
 {

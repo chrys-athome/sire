@@ -363,6 +363,7 @@ private:
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 static const MultiFloat MULTIFLOAT_ONE(1);
+static const MultiFloat MULTIFLOAT_NEGATIVE_ONE(-1);
 
 static quint32 MULTIFLOAT_POS_MASK_INT = 0x7FFFFFFF;
 static const MultiFloat MULTIFLOAT_POS_MASK(
@@ -786,6 +787,12 @@ MultiFloat& MultiFloat::operator/=(const MultiFloat &other)
     #endif
 
     return *this;
+}
+
+/** Negative operator */
+inline MultiFloat MultiFloat::operator-() const
+{
+    return this->operator*(MULTIFLOAT_NEGATIVE_ONE);
 }
 
 /** Bitwise logical "and" comparison */

@@ -1635,6 +1635,22 @@ void CLJAtoms::setAllID(qint32 idnum)
     }
 }
 
+/** Return a copy of these CLJAtoms where the charge and LJ epsilon parameters
+    are negated. This will mean that the negative of the energy of these CLJAtoms
+    will be calculated by the CLJFunctions (useful for calculating energy differences) */
+CLJAtoms CLJAtoms::negate() const
+{
+    CLJAtoms ret(*this);
+    
+    for (int i=0; i<_q.count(); ++i)
+    {
+        ret._q[i] = -(_q[i]);
+        ret._eps[i] = -(_eps[i]);
+    }
+    
+    return ret;
+}
+
 /** Return a squeezed copy of these CLJAtoms whereby all of the 
     dummy atoms are removed and atoms squeezed into a single, contiguous space */
 CLJAtoms CLJAtoms::squeeze() const
