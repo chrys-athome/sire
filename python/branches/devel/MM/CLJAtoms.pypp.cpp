@@ -94,6 +94,17 @@ void register_CLJAtoms_class(){
                 , IDs_function_value );
         
         }
+        { //::SireMM::CLJAtoms::append
+        
+            typedef void ( ::SireMM::CLJAtoms::*append_function_type )( ::SireMM::CLJAtoms const &,int ) ;
+            append_function_type append_function_value( &::SireMM::CLJAtoms::append );
+            
+            CLJAtoms_exposer.def( 
+                "append"
+                , append_function_value
+                , ( bp::arg("atoms"), bp::arg("n")=(int)(-0x00000000000000001) ) );
+        
+        }
         { //::SireMM::CLJAtoms::at
         
             typedef ::SireMM::CLJAtom ( ::SireMM::CLJAtoms::*at_function_type )( int ) const;
@@ -179,7 +190,7 @@ void register_CLJAtoms_class(){
         }
         { //::SireMM::CLJAtoms::isDummy
         
-            typedef bool ( ::SireMM::CLJAtoms::*isDummy_function_type )( int ) ;
+            typedef bool ( ::SireMM::CLJAtoms::*isDummy_function_type )( int ) const;
             isDummy_function_type isDummy_function_value( &::SireMM::CLJAtoms::isDummy );
             
             CLJAtoms_exposer.def( 
@@ -196,6 +207,16 @@ void register_CLJAtoms_class(){
             CLJAtoms_exposer.def( 
                 "isEmpty"
                 , isEmpty_function_value );
+        
+        }
+        { //::SireMM::CLJAtoms::isPadded
+        
+            typedef bool ( ::SireMM::CLJAtoms::*isPadded_function_type )(  ) const;
+            isPadded_function_type isPadded_function_value( &::SireMM::CLJAtoms::isPadded );
+            
+            CLJAtoms_exposer.def( 
+                "isPadded"
+                , isPadded_function_value );
         
         }
         { //::SireMM::CLJAtoms::ljParameters
@@ -217,6 +238,26 @@ void register_CLJAtoms_class(){
                 "makeDummy"
                 , makeDummy_function_value
                 , ( bp::arg("i") ) );
+        
+        }
+        { //::SireMM::CLJAtoms::nAtoms
+        
+            typedef int ( ::SireMM::CLJAtoms::*nAtoms_function_type )(  ) const;
+            nAtoms_function_type nAtoms_function_value( &::SireMM::CLJAtoms::nAtoms );
+            
+            CLJAtoms_exposer.def( 
+                "nAtoms"
+                , nAtoms_function_value );
+        
+        }
+        { //::SireMM::CLJAtoms::nPadded
+        
+            typedef int ( ::SireMM::CLJAtoms::*nPadded_function_type )(  ) const;
+            nPadded_function_type nPadded_function_value( &::SireMM::CLJAtoms::nPadded );
+            
+            CLJAtoms_exposer.def( 
+                "nPadded"
+                , nPadded_function_value );
         
         }
         { //::SireMM::CLJAtoms::negate

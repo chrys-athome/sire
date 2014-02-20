@@ -46,6 +46,17 @@ void register_CLJBoxes_class(){
         CLJBoxes_exposer.def( bp::init< SireMM::CLJAtoms const & >(( bp::arg("atoms") )) );
         CLJBoxes_exposer.def( bp::init< SireMM::CLJAtoms const &, SireUnits::Dimension::Length >(( bp::arg("atoms"), bp::arg("box_size") )) );
         CLJBoxes_exposer.def( bp::init< SireMM::CLJBoxes const & >(( bp::arg("other") )) );
+        { //::SireMM::CLJBoxes::add
+        
+            typedef ::QVector< SireMM::CLJBoxIndex > ( ::SireMM::CLJBoxes::*add_function_type )( ::SireMM::CLJAtoms const & ) ;
+            add_function_type add_function_value( &::SireMM::CLJBoxes::add );
+            
+            CLJBoxes_exposer.def( 
+                "add"
+                , add_function_value
+                , ( bp::arg("atoms") ) );
+        
+        }
         { //::SireMM::CLJBoxes::atoms
         
             typedef ::SireMM::CLJAtoms ( ::SireMM::CLJBoxes::*atoms_function_type )(  ) const;
@@ -240,6 +251,17 @@ void register_CLJBoxes_class(){
         
         }
         CLJBoxes_exposer.def( bp::self == bp::self );
+        { //::SireMM::CLJBoxes::remove
+        
+            typedef void ( ::SireMM::CLJBoxes::*remove_function_type )( ::QList< SireMM::CLJBoxIndex > const & ) ;
+            remove_function_type remove_function_value( &::SireMM::CLJBoxes::remove );
+            
+            CLJBoxes_exposer.def( 
+                "remove"
+                , remove_function_value
+                , ( bp::arg("atoms") ) );
+        
+        }
         { //::SireMM::CLJBoxes::squeeze
         
             typedef ::SireMM::CLJBoxes ( ::SireMM::CLJBoxes::*squeeze_function_type )(  ) const;
