@@ -219,6 +219,16 @@ void register_CLJAtoms_class(){
                 , ( bp::arg("i") ) );
         
         }
+        { //::SireMM::CLJAtoms::negate
+        
+            typedef ::SireMM::CLJAtoms ( ::SireMM::CLJAtoms::*negate_function_type )(  ) const;
+            negate_function_type negate_function_value( &::SireMM::CLJAtoms::negate );
+            
+            CLJAtoms_exposer.def( 
+                "negate"
+                , negate_function_value );
+        
+        }
         CLJAtoms_exposer.def( bp::self != bp::self );
         CLJAtoms_exposer.def( bp::self + bp::self );
         CLJAtoms_exposer.def( bp::self + bp::other< SireMM::CLJAtom >() );
