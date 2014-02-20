@@ -103,6 +103,14 @@ public:
     static const char* typeName();
     const char* what() const;
     
+    CLJAtom operator[](int i) const;
+    
+    CLJAtom at(int i) const;
+    CLJAtom getitem(int i) const;
+
+    int count() const;
+    int size() const;
+    
     bool isEmpty() const;
     
     QString toString() const;
@@ -289,6 +297,7 @@ friend QDataStream& ::operator>>(QDataStream&, CLJBoxes&);
 
 public:
     CLJBoxes();
+    CLJBoxes(Length box_size);
     CLJBoxes(const CLJAtoms &atoms);
     CLJBoxes(const CLJAtoms &atoms, Length box_size);
     
@@ -300,6 +309,11 @@ public:
     
     bool operator==(const CLJBoxes &other) const;
     bool operator!=(const CLJBoxes &other) const;
+
+    CLJAtom operator[](const CLJBoxIndex &idx) const;
+    
+    CLJAtom at(const CLJBoxIndex &idx) const;
+    CLJAtom getitem(const CLJBoxIndex &idx) const;
 
     CLJBoxes operator+(const CLJBoxes &other) const;
 

@@ -92,6 +92,18 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJAtom &cljatom)
 CLJAtom::CLJAtom() : x(0), y(0), z(0), chg(0), sig(0), eps(0), idnum(0)
 {}
 
+/** Return whether or not this is a dummy atom (has no ID number) */
+bool CLJAtom::isDummy() const
+{
+    return idnum == 0;
+}
+
+/** Return whether or not this atom is null (no information) */
+bool CLJAtom::isNull() const
+{
+    return this->operator==( CLJAtom() );
+}
+
 /** Construct from the passed coordinates, charge and LJ parameters */
 CLJAtom::CLJAtom(Vector coords, Charge charge, LJParameter ljparam, qint32 atomid)
         : x(coords.x()), y(coords.y()), z(coords.z()),
@@ -1491,13 +1503,15 @@ void CLJAtoms::append(const CLJAtoms &other, int n)
         const int n_partial = n % MultiFloat::count();
     
         //how many whole vectors need to be added?
-        const int n_whole = (n / MultiFloat::count()) - (n_partial == 0 ? 0 : 1);
+        const int n_whole = n / MultiFloat::count();
         
         //start index of added vectors
         const int start_idx = _x.count();
         
         //what will be the new size of the vector?
         const int new_size = start_idx + n_whole + (n_partial == 0 ? 0 : 1);
+
+        qDebug() << "APPEND" << n << n_partial << n_whole << start_idx << new_size;
         
         _x.resize(new_size);
         _y.resize(new_size);

@@ -106,11 +106,11 @@ void CLJBox::findGaps()
     
     const quint32 dummy_id = CLJAtoms::idOfDummy()[0];
     
-    for (int i=0; i<ids.count(); ++i)
+    for (int i=ids.count()-1; i>=0; --i)
     {
         const MultiInt &id = ids[i];
         
-        for (int j=0; j<MultiInt::count(); ++j)
+        for (int j=MultiInt::count()-1; j>=0; --j)
         {
             if (id[j] == dummy_id)
             {
@@ -160,9 +160,11 @@ QVector<int> CLJBox::add(const CLJAtoms &atoms)
     QVector<int> indicies(atoms.count(), -1);
 
     //sort the list of gaps so that we add from the bottom first
-    qSort(gaps);
+    qSort(gaps.begin(), gaps.end(), qGreater<int>());
     
-    int n = atoms.count();
+    qDebug() << "GAPS" << Sire::toString( QVector<int>(gaps) );
+    
+    int n = atoms.count() - 1;
     
     while (not gaps.isEmpty())
     {
@@ -179,6 +181,8 @@ QVector<int> CLJBox::add(const CLJAtoms &atoms)
         
         //this atom is not a dummy. Copy it and put it into the gap
         int gap = gaps.pop();
+        qDebug() << "popped off" << gap;
+        qDebug() << "setting" << gap << n;
         atms.set(gap, atoms.at(n));
         indicies[n] = gap;
         
@@ -187,9 +191,17 @@ QVector<int> CLJBox::add(const CLJAtoms &atoms)
         if (n < 0)
         {
             //all of the atoms have been added
+            qDebug() << "GAPS NOW" << Sire::toString( QVector<int>(gaps) );
             return indicies;
         }
     }
+    
+    //n was used to refer to index, so need to add 1 as we now
+    //use n to refer to the number of atoms that need to still be added
+    n += 1;
+    
+    qDebug() << "GAPS NOW" << Sire::toString( QVector<int>(gaps) );
+    qDebug() << "N now" << n;
     
     //there are still atoms to add and there are no gaps to add them
     //Just add them onto the end of the vector
@@ -197,9 +209,15 @@ QVector<int> CLJBox::add(const CLJAtoms &atoms)
     atms.append( atoms, n );
     
     if (atms.nAtoms() != start + n)
-        throw SireError::program_bug( QObject::tr(
-                "Something went wrong when adding atoms? %1 + %2 vs. %3")
-                    .arg(start).arg(n).arg(atms.nAtoms()), CODELOC );
+    {
+        //there is some padding
+        for (int i=atms.nAtoms()-1; i>=(start+n); --i)
+        {
+            gaps.push(i);
+        }
+    }
+    
+    qDebug() << "GAPS NOW" << Sire::toString( QVector<int>(gaps) );
     
     for (int i = 0; i<n; ++i)
     {
@@ -244,10 +262,44 @@ bool CLJBox::operator!=(const CLJBox &other) const
     return not operator==(other);
 }
 
-/** Return the number of atoms in the box */
+/** Return the number of atoms in the box. This is equal to the
+    number of actual atoms (i.e. not including padding or dummy atoms) */
 int CLJBox::nAtoms() const
 {
+    return atms.count() - gaps.count();
+}
+
+/** Return the count of the box - this includes dummy atoms and padding */
+int CLJBox::count() const
+{
     return atms.count();
+}
+
+/** Return the count of the box - this includes dummy atoms and padding */
+int CLJBox::size() const
+{
+    return atms.size();
+}
+
+/** Return the ith CLJAtom - this uses the CLJAtoms index, i.e. includes
+    dummy atoms and padding */
+CLJAtom CLJBox::operator[](int i) const
+{
+    return atms[i];
+}
+
+/** Return the ith CLJAtom - this uses the CLJAtoms index, i.e. includes
+    dummy atoms and padding */
+CLJAtom CLJBox::at(int i) const
+{
+    return atms.at(i);
+}
+
+/** Return the ith CLJAtom - this uses the CLJAtoms index, i.e. includes
+    dummy atoms and padding */
+CLJAtom CLJBox::getitem(int i) const
+{
+    return atms.getitem(i);
 }
 
 const char* CLJBox::typeName()
@@ -688,6 +740,14 @@ const double default_box_length = 10;
 CLJBoxes::CLJBoxes() : box_length(default_box_length)
 {}
 
+/** Construct, specifying the box length */
+CLJBoxes::CLJBoxes(Length size) : box_length(size)
+{
+    if (size.value() <= 2)
+        //don't be silly!
+        box_length = 2.0;
+}
+
 /** Construct from the passed set of atoms */
 void CLJBoxes::constructFrom(const CLJAtoms &atoms)
 {
@@ -773,8 +833,9 @@ CLJBoxes::CLJBoxes(const CLJAtoms &atoms) : box_length(default_box_length)
 CLJBoxes::CLJBoxes(const CLJAtoms &atoms, Length box_size)
          : box_length(box_size.value())
 {
-    if (box_length <= 0)
-        box_length = default_box_length;
+    if (box_length < 2)
+        //don't be silly
+        box_length = 2.0;
     
     constructFrom(atoms);
 }
@@ -810,6 +871,38 @@ bool CLJBoxes::operator==(const CLJBoxes &other) const
 bool CLJBoxes::operator!=(const CLJBoxes &other) const
 {
     return not operator==(other);
+}
+
+/** Return the atom at the specified index, or a null atom if
+    none such atom exists */
+CLJAtom CLJBoxes::operator[](const CLJBoxIndex &idx) const
+{
+    if (idx.isNull())
+        return CLJAtom();
+    
+    QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = bxs.constFind(idx.boxOnly());
+    
+    if (it == bxs.constEnd())
+        return CLJAtom();
+    
+    if (idx.index() < 0 or idx.index() >= it.value().read().count())
+        return CLJAtom();
+    else
+        return it.value().read().at( idx.index() );
+}
+
+/** Return the atom at the specified index, or a null atom if
+    none such atom exists */
+CLJAtom CLJBoxes::at(const CLJBoxIndex &idx) const
+{
+    return this->operator[](idx);
+}
+
+/** Return the atom at the specified index, or a null atom if
+    none such atom exists */
+CLJAtom CLJBoxes::getitem(const CLJBoxIndex &idx) const
+{
+    return this->operator[](idx);
 }
 
 QString CLJBoxes::toString() const
@@ -970,12 +1063,10 @@ QVector<CLJBoxIndex> CLJBoxes::add(const CLJAtoms &atoms)
             QVector<int> box_idxs = bxs[idx].write().add( CLJAtoms(it.value().get<0>()) );
             const QList<int> &atom_idxs = it.value().get<1>();
 
-            if (box_idxs.count() != atom_idxs.count())
-                throw SireError::program_bug( QObject::tr(
-                        "Problem with box indexes: %1 vs. %2.")
-                            .arg(box_idxs.count()).arg(atom_idxs.count()), CODELOC );
-            
-            for (int i=0; i<box_idxs.count(); ++i)
+            qDebug() << Sire::toString(box_idxs);
+            qDebug() << Sire::toString(atom_idxs);
+
+            for (int i=0; i<atom_idxs.count(); ++i)
             {
                 indicies[ atom_idxs.at(i) ] = CLJBoxIndex( idx.i(), idx.j(), idx.k(),
                                                            box_idxs.at(i) );

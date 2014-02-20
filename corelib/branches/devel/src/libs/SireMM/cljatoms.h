@@ -114,6 +114,9 @@ public:
     LJParameter ljParameter() const;
     qint32 ID() const;
     
+    bool isDummy() const;
+    bool isNull() const;
+    
 private:
     /** The coordinates of the atom */
     float x;
