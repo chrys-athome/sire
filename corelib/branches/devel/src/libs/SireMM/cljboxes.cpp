@@ -71,6 +71,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJBox &box)
     {
         SharedDataStream sds(ds);
         sds >> box.atms;
+        box.findGaps();
     }
     else
         throw version_error(v, "1", r_cljbox, CODELOC);
@@ -84,19 +85,128 @@ CLJBox::CLJBox()
 
 /** Construct a box that holds the passed atoms */
 CLJBox::CLJBox(const CLJAtoms &atoms) : atms(atoms)
-{}
+{
+    findGaps();
+}
 
 /** Copy constructor */
-CLJBox::CLJBox(const CLJBox &other) : atms(other.atms)
+CLJBox::CLJBox(const CLJBox &other) : atms(other.atms), gaps(other.gaps)
 {}
 
 /** Destructor */
 CLJBox::~CLJBox()
 {}
 
+/** Search for all of the gaps (dummy atoms) in the box */
+void CLJBox::findGaps()
+{
+    gaps.clear();
+    
+    const QVector<MultiInt> &ids = atms.ID();
+    
+    const quint32 dummy_id = CLJAtoms::idOfDummy()[0];
+    
+    for (int i=0; i<ids.count(); ++i)
+    {
+        const MultiInt &id = ids[i];
+        
+        for (int j=0; j<MultiInt::count(); ++j)
+        {
+            if (id[j] == dummy_id)
+            {
+                gaps.push( i*MultiInt::count() + j );
+            }
+        }
+    }
+}
+
 QString CLJBox::toString() const
 {
     return QObject::tr("CLJBox( nAtoms() == %1 )").arg(nAtoms());
+}
+
+/** Remove the atom at index 'atom' from the box */
+void CLJBox::remove(int atom)
+{
+    if (atom < 0 or atom >= atms.count())
+    {
+        //this is an invalid atom
+        return;
+    }
+    
+    if (not atms.isDummy(atom))
+    {
+        atms.makeDummy(atom);
+        gaps.push(atom);
+    }
+}
+
+/** Remove the atoms whose indicies are in 'atoms' */
+void CLJBox::remove(const QList<int> &atoms)
+{
+    foreach (int atom, atoms)
+    {
+        this->remove(atom);
+    }
+}
+
+/** Add the passed atoms into this box. This returns the indicies
+    of each added atom (in the same order as they were added) */
+QVector<int> CLJBox::add(const CLJAtoms &atoms)
+{
+    if (atoms.isEmpty())
+        return QVector<int>();
+    
+    QVector<int> indicies(atoms.count(), -1);
+
+    //sort the list of gaps so that we add from the bottom first
+    qSort(gaps);
+    
+    int n = atoms.count();
+    
+    while (not gaps.isEmpty())
+    {
+        //take atoms from the top to fill in the gaps
+        while (atoms.isDummy(n))
+        {
+            n -= 1;
+            if (n < 0)
+            {
+                //all remaining atoms are dummies - nothing left to add
+                return indicies;
+            }
+        }
+        
+        //this atom is not a dummy. Copy it and put it into the gap
+        int gap = gaps.pop();
+        atms.set(gap, atoms.at(n));
+        indicies[n] = gap;
+        
+        n -= 1;
+        
+        if (n < 0)
+        {
+            //all of the atoms have been added
+            return indicies;
+        }
+    }
+    
+    //there are still atoms to add and there are no gaps to add them
+    //Just add them onto the end of the vector
+    int start = atms.count();
+    atms.append( atoms, n );
+    
+    if (atms.nAtoms() != start + n)
+        throw SireError::program_bug( QObject::tr(
+                "Something went wrong when adding atoms? %1 + %2 vs. %3")
+                    .arg(start).arg(n).arg(atms.nAtoms()), CODELOC );
+    
+    for (int i = 0; i<n; ++i)
+    {
+        indicies[i] = start + i;
+    }
+    
+    return indicies;
 }
 
 /** Combine the atoms of the two passed boxes */
@@ -110,6 +220,7 @@ CLJBox CLJBox::operator+(const CLJBox &other) const
     {
         CLJBox ret(*this);
         ret.atms += other.atms;
+        ret.findGaps();
         return ret;
     }
 }
@@ -265,12 +376,15 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJBoxIndex &index)
 /** Null constructor */
 CLJBoxIndex::CLJBoxIndex()
 {
-    v.val = 0;
+    v.index.ii = std::numeric_limits<qint16>::min();
+    v.index.jj = v.index.ii;
+    v.index.kk = v.index.ii;
+    v.index.idx = v.index.ii;
 }
 
 /** Construct the index of the box at index i,j,k with (optionally supplied)
     index of a particular atom in the box */
-CLJBoxIndex::CLJBoxIndex(qint16 ii, qint16 jj, qint16 kk, quint16 atom_idx)
+CLJBoxIndex::CLJBoxIndex(qint16 ii, qint16 jj, qint16 kk, qint16 atom_idx)
 {
     v.index.ii = ii;
     v.index.jj = jj;
@@ -293,6 +407,18 @@ CLJBoxIndex& CLJBoxIndex::operator=(const CLJBoxIndex &other)
 {
     v.val = other.v.val;
     return *this;
+}
+
+/** Return a null CLJBoxIndex */
+CLJBoxIndex CLJBoxIndex::null()
+{
+    return CLJBoxIndex();
+}
+
+/** Return whether or not this is null */
+bool CLJBoxIndex::isNull() const
+{
+    return this->operator==( CLJBoxIndex() );
 }
 
 const char* CLJBoxIndex::typeName()
@@ -477,8 +603,32 @@ bool CLJBoxDistance::operator>(const CLJBoxDistance &other) const
 /** Return a copy of this box where the CLJAtoms are squeezed */
 CLJBox CLJBox::squeeze() const
 {
+    if (gaps.isEmpty())
+        return *this;
+
+    //see if all of the gaps are at the end of the vector
+    //(because of padding the MultiFloat values)
+    const int natoms = atms.count() - atms.nPadded();
+    
+    bool all_padding = true;
+    
+    foreach (const int gap, gaps)
+    {
+        if (gap < natoms)
+        {
+            all_padding = false;
+            break;
+        }
+    }
+
+    if (all_padding)
+        //nothing needs to be done
+        return *this;
+
+    //we need to squeeze out the gaps
     CLJBox ret(*this);
     ret.atms = atms.squeeze();
+    ret.findGaps();
     return ret;
 }
 
@@ -779,6 +929,92 @@ CLJAtoms CLJBoxes::atoms() const
     }
     
     return atms;
+}
+
+/** Add a set of CLJAtoms to the box, returning the indicies of each added atom */
+QVector<CLJBoxIndex> CLJBoxes::add(const CLJAtoms &atoms)
+{
+    if (atoms.isEmpty())
+        return QVector<CLJBoxIndex>();
+
+    QVector<CLJBoxIndex> indicies(atoms.count(), CLJBoxIndex::null());
+
+    const float inv_length = 1.0 / box_length;
+    
+    QMap< CLJBoxIndex, tuple< QList<CLJAtom>, QList<int> > > boxed_atoms;
+    
+    for (int i=0; i<atoms.count(); ++i)
+    {
+        const CLJAtom atom = atoms[i];
+
+        if (atom.ID() != 0)
+        {
+            CLJBoxIndex cljindex = CLJBoxIndex::createWithInverseBoxLength(
+                                                        atom.coordinates(), inv_length);
+            
+            boxed_atoms[cljindex].get<0>().append(atom);
+            boxed_atoms[cljindex].get<1>().append(i);
+        }
+    }
+
+    //now build the CLJAtoms for each box
+    for (QMap< CLJBoxIndex, tuple< QList<CLJAtom>,QList<int> > >::iterator
+                                                it = boxed_atoms.begin();
+         it != boxed_atoms.end();
+         ++it)
+    {
+        const CLJBoxIndex &idx = it.key();
+        
+        if (bxs.contains(idx))
+        {
+            QVector<int> box_idxs = bxs[idx].write().add( CLJAtoms(it.value().get<0>()) );
+            const QList<int> &atom_idxs = it.value().get<1>();
+
+            if (box_idxs.count() != atom_idxs.count())
+                throw SireError::program_bug( QObject::tr(
+                        "Problem with box indexes: %1 vs. %2.")
+                            .arg(box_idxs.count()).arg(atom_idxs.count()), CODELOC );
+            
+            for (int i=0; i<box_idxs.count(); ++i)
+            {
+                indicies[ atom_idxs.at(i) ] = CLJBoxIndex( idx.i(), idx.j(), idx.k(),
+                                                           box_idxs.at(i) );
+            }
+        }
+        else
+        {
+            const QList<int> &atom_idxs = it.value().get<1>();
+            bxs.insert( idx, new CLJBox(CLJAtoms(it.value().get<0>())) );
+            
+            for (int i=0; i<atom_idxs.count(); ++i)
+            {
+                indicies[ atom_idxs.at(i) ] = CLJBoxIndex( idx.i(), idx.j(), idx.k(), i );
+            }
+        }
+    }
+    
+    return indicies;
+}
+
+/** Remove the atoms at the specified indicies. This does a rapid remove, i.e.
+    it just turns the specified atoms into dummies (which may be overwritten by
+    subsequent "add" operations). If you want to completely remove the atoms then
+    use "remove" followed by "squeeze". This will turn the atoms into dummies and will
+    then remove all dummy atoms from the boxes */
+void CLJBoxes::remove(const QList<CLJBoxIndex> &atoms)
+{
+    foreach (const CLJBoxIndex &atom, atoms)
+    {
+        if (atom.hasAtomIndex())
+        {
+            QMap<CLJBoxIndex,CLJBoxPtr>::Iterator it = bxs.find( atom.boxOnly() );
+            
+            if (it != bxs.end())
+            {
+                it.value().write().remove(atom.index());
+            }
+        }
+    }
 }
 
 /** Return a copy of the boxes where all of the CLJAtoms objects have been squeezed */

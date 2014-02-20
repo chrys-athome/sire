@@ -207,6 +207,8 @@ public:
     int count() const;
     int size() const;
     
+    int nAtoms() const;
+    
     bool isEmpty() const;
     
     CLJAtom operator[](int i) const;
@@ -224,6 +226,8 @@ public:
     CLJAtoms& operator+=(const CLJAtom &atom);
     CLJAtoms& operator+=(const QVector<CLJAtom> &atoms);
     
+    void append(const CLJAtoms &atoms, int n=-1);
+    
     void set(int i, const CLJAtom &atom);
     
     void setCoordinates(int i, Vector coords);
@@ -234,7 +238,7 @@ public:
     void setAllID(qint32 idnum);
 
     void makeDummy(int i);
-    bool isDummy(int i);
+    bool isDummy(int i) const;
     
     CLJAtoms negate() const;
     
@@ -259,6 +263,9 @@ public:
     
     CLJAtoms squeeze() const;
     
+    bool isPadded() const;
+    int nPadded() const;
+
 private:
     void constructFrom(const MoleculeGroup &molecules,
                        const ID_SOURCE id_source, const PropertyMap &map);
@@ -290,6 +297,9 @@ private:
         number are part of the same molecule. Also, if this number is
         zero, then this is a dummy atom */
     QVector<MultiInt> _id;
+    
+    /** ID number given to all dummy atoms */
+    static qint32 id_of_dummy;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -335,6 +345,49 @@ inline const QVector<MultiFloat>& CLJAtoms::epsilon() const
 inline const QVector<MultiInt>& CLJAtoms::ID() const
 {
     return _id;
+}
+
+/** Return whether or not the ith atom is a dummy atom (has an ID of 0) */
+inline bool CLJAtoms::isDummy(int i) const
+{
+    int idx = i / MultiFloat::count();
+    int sub_idx = i % MultiFloat::count();
+
+    return (_id[idx][sub_idx] == 0);
+}
+
+/** Return whether or not this set of atoms is padded
+    (has dummy atoms at the end of the array to pad out
+     the MultiFloat/MultiInt vectors) */
+inline bool CLJAtoms::isPadded() const
+{
+    if (_id.isEmpty())
+        return false;
+    else
+        return _id.constData()[ _id.count()-1 ][ MultiInt::count() -1 ] == id_of_dummy;
+}
+
+/** Return the number of padded elements on the end of this set of atoms */
+inline int CLJAtoms::nPadded() const
+{
+    if (_id.isEmpty())
+        return 0;
+    else
+    {
+        const MultiInt &last = _id.constData()[ _id.count() - 1 ];
+        
+        int n = 0;
+        
+        for (int i=MultiInt::count()-1; i>=0; --i)
+        {
+            if (last[i] == id_of_dummy)
+                return n;
+            
+            n += 1;
+        }
+        
+        return n;
+    }
 }
 
 #endif // SIRE_SKIP_INLINE_FUNCTIONS

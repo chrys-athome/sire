@@ -34,6 +34,7 @@
 #include <QMap>
 #include <QSharedDataPointer>
 #include <QSharedData>
+#include <QStack>
 
 SIRE_BEGIN_HEADER
 
@@ -112,9 +113,19 @@ public:
 
     CLJBox squeeze() const;
 
+    QVector<int> add(const CLJAtoms &atoms);
+
+    void remove(int atom);
+    void remove(const QList<int> &atoms);
+
 private:
+    void findGaps();
+
     /** The actual atoms in the box */
     CLJAtoms atms;
+    
+    /** The indicies of gaps (dummy atoms) in the box */
+    QStack<int> gaps;
 };
 
 /** A simple implicitly shared pointer used to hold each CLJBox */
@@ -156,7 +167,7 @@ friend QDataStream& ::operator>>(QDataStream&, CLJBoxIndex&);
 
 public:
     CLJBoxIndex();
-    CLJBoxIndex(qint16 i, qint16 j, qint16 k, quint16 atom_idx=0);
+    CLJBoxIndex(qint16 i, qint16 j, qint16 k, qint16 atom_idx=-1);
     
     CLJBoxIndex(const CLJBoxIndex &other);
     
@@ -182,11 +193,17 @@ public:
     qint16 j() const;
     qint16 k() const;
     
-    quint16 index() const;
+    qint16 index() const;
+    
+    bool isNull() const;
     
     SireVol::AABox box(Length box_length) const;
 
     CLJBoxIndex boxOnly() const;
+
+    static CLJBoxIndex null();
+
+    bool hasAtomIndex() const;
 
     static CLJBoxIndex createWithBoxLength(float x, float y, float z, Length box_length);
     static CLJBoxIndex createWithInverseBoxLength(float x, float y, float z, float inv_length);
@@ -204,7 +221,7 @@ private:
             qint16 ii;
             qint16 jj;
             qint16 kk;
-            quint16 idx;
+            qint16 idx;
         } index;
 
     } v;
@@ -317,6 +334,10 @@ public:
                                                 const CLJBoxes &boxes0, const CLJBoxes &boxes1,
                                                 Length cutoff);
     
+    QVector<CLJBoxIndex> add(const CLJAtoms &atoms);
+
+    void remove(const QList<CLJBoxIndex> &atoms);
+    
     CLJAtoms atoms() const;
     
     Length length() const;
@@ -364,9 +385,15 @@ inline qint16 CLJBoxIndex::k() const
 }
 
 /** Return the (optionally supplied) index of a particular atom in the box */
-inline quint16 CLJBoxIndex::index() const
+inline qint16 CLJBoxIndex::index() const
 {
     return v.index.idx;
+}
+
+/** Return whether or not this contains an atom index */
+inline bool CLJBoxIndex::hasAtomIndex() const
+{
+    return v.index.idx >= 0;
 }
 
 /** Comparison operator */

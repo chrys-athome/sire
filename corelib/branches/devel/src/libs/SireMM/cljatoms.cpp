@@ -351,10 +351,12 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJAtoms &cljatoms)
     return ds;
 }
 
+qint32 CLJAtoms::id_of_dummy = 0;
+
 /** Return a MultiFloat of the ID of a dummy atom */
 MultiInt CLJAtoms::idOfDummy()
 {
-    return MultiInt(0);
+    return MultiInt(id_of_dummy);
 }
 
 /** Null constructor */
@@ -1471,6 +1473,67 @@ CLJAtoms CLJAtoms::operator+(const QVector<CLJAtom> &atoms) const
     return ret;
 }
 
+/** Append the passed set of atoms onto the end of this set. If n is greater than or
+    equal to zero, then only 'n' of the passed atoms will be added onto this set */
+void CLJAtoms::append(const CLJAtoms &other, int n)
+{
+    if (n == 0)
+        return;
+    
+    else if (n < 0 or n >= other.count())
+    {
+        this->operator+=(other);
+        return;
+    }
+    else
+    {
+        //how many partial vectors need to be added?
+        const int n_partial = n % MultiFloat::count();
+    
+        //how many whole vectors need to be added?
+        const int n_whole = (n / MultiFloat::count()) - (n_partial == 0 ? 0 : 1);
+        
+        //start index of added vectors
+        const int start_idx = _x.count();
+        
+        //what will be the new size of the vector?
+        const int new_size = start_idx + n_whole + (n_partial == 0 ? 0 : 1);
+        
+        _x.resize(new_size);
+        _y.resize(new_size);
+        _z.resize(new_size);
+        _q.resize(new_size);
+        _sig.resize(new_size);
+        _eps.resize(new_size);
+        _id.resize(new_size);
+        
+        if (n_whole > 0)
+        {
+            std::memcpy( &(_x[start_idx]), &(other._x[0]), n_whole * sizeof(MultiFloat) );
+            std::memcpy( &(_y[start_idx]), &(other._y[0]), n_whole * sizeof(MultiFloat) );
+            std::memcpy( &(_z[start_idx]), &(other._z[0]), n_whole * sizeof(MultiFloat) );
+            std::memcpy( &(_q[start_idx]), &(other._q[0]), n_whole * sizeof(MultiFloat) );
+            std::memcpy( &(_sig[start_idx]), &(other._sig[0]), n_whole * sizeof(MultiFloat) );
+            std::memcpy( &(_eps[start_idx]), &(other._eps[0]), n_whole * sizeof(MultiFloat) );
+            std::memcpy( &(_id[start_idx]), &(other._id[0]), n_whole * sizeof(MultiInt) );
+        }
+        
+        if (n_partial > 0)
+        {
+            for (int i=0; i<n_partial; ++i)
+            {
+                _x.last().set(i, other._x[n_whole][i]);
+                _y.last().set(i, other._y[n_whole][i]);
+                _z.last().set(i, other._z[n_whole][i]);
+                _q.last().set(i, other._q[n_whole][i]);
+                _sig.last().set(i, other._sig[n_whole][i]);
+                _eps.last().set(i, other._eps[n_whole][i]);
+                _id.last().set(i, other._id[n_whole][i]);
+            }
+        }
+    }
+}
+
 /** Return whether or not this array is empty */
 bool CLJAtoms::isEmpty() const
 {
@@ -1607,15 +1670,6 @@ void CLJAtoms::makeDummy(int i)
     int idx = i / MultiFloat::count();
     int sub_idx = i % MultiFloat::count();
     _id[idx].set(sub_idx, 0);
-}
-
-/** Return whether or not the ith atom is a dummy atom (has an ID of 0) */
-bool CLJAtoms::isDummy(int i)
-{
-    int idx = i / MultiFloat::count();
-    int sub_idx = i % MultiFloat::count();
-
-    return (_id[idx][sub_idx] == 0);
 }
 
 /** Set the ID number of all (non-dummy) atoms to 'idnum' */
@@ -1816,4 +1870,11 @@ QVector<qint32> CLJAtoms::IDs() const
     }
 
     return ids;
+}
+
+/** Return the number of atoms in this set. This is equal to 
+    count() - nPadded() */
+int CLJAtoms::nAtoms() const
+{
+    return count() - nPadded();
 }
