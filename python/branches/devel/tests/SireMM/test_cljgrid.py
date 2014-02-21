@@ -71,7 +71,7 @@ def test_build_grid(verbose = False):
         assert_almost_equal( cnrg, gridpot[i] * reduce_fac, 2 )
 
 
-def pvt_test_energy(space, verbose):
+def _pvt_energy(space, verbose):
     cljfunc = CLJShiftFunction(coul_cutoff, lj_cutoff)
     cljfunc.setSpace(space)
 
@@ -169,10 +169,10 @@ def pvt_test_energy(space, verbose):
         assert_almost_equal( grid_ljnrg, old_ljnrg, 3 )
 
 def test_energy(verbose = False):
-    pvt_test_energy(Cartesian(), verbose)
+    _pvt_energy(Cartesian(), verbose)
 
 def test_energy_box(verbose = False):
-    pvt_test_energy(water_space, verbose)
+    _pvt_energy(water_space, verbose)
 
 if __name__ == "__main__":
     print("\nTesting building a grid...")
