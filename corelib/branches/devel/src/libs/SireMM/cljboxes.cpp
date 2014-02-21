@@ -749,7 +749,7 @@ CLJBoxes::CLJBoxes(Length size) : box_length(size)
 }
 
 /** Construct from the passed set of atoms */
-void CLJBoxes::constructFrom(const CLJAtoms &atoms)
+void CLJBoxes::constructFrom(const CLJAtoms &atoms0, const CLJAtoms &atoms1)
 {
     /*QElapsedTimer t;
     t.start();*/
@@ -758,9 +758,22 @@ void CLJBoxes::constructFrom(const CLJAtoms &atoms)
     
     QMap< CLJBoxIndex,QList<CLJAtom> > boxed_atoms;
     
-    for (int i=0; i<atoms.count(); ++i)
+    for (int i=0; i<atoms0.count(); ++i)
     {
-        const CLJAtom atom = atoms[i];
+        const CLJAtom atom = atoms0[i];
+
+        if (atom.ID() != 0)
+        {
+            CLJBoxIndex cljindex = CLJBoxIndex::createWithInverseBoxLength(
+                                                        atom.coordinates(), inv_length);
+            
+            boxed_atoms[cljindex].append(atom);
+        }
+    }
+
+    for (int i=0; i<atoms1.count(); ++i)
+    {
+        const CLJAtom atom = atoms1[i];
 
         if (atom.ID() != 0)
         {
@@ -826,7 +839,7 @@ CLJBoxes CLJBoxes::operator+(const CLJBoxes &other) const
     (5 angstroms) */
 CLJBoxes::CLJBoxes(const CLJAtoms &atoms) : box_length(default_box_length)
 {
-    constructFrom(atoms);
+    constructFrom(atoms, CLJAtoms());
 }
 
 /** Box up the passed set of atoms into boxes of specified box size */
@@ -837,7 +850,25 @@ CLJBoxes::CLJBoxes(const CLJAtoms &atoms, Length box_size)
         //don't be silly
         box_length = 2.0;
     
-    constructFrom(atoms);
+    constructFrom(atoms, CLJAtoms());
+}
+
+/** Box up the passed set of atoms into boxes of the default box size
+    (5 angstroms) */
+CLJBoxes::CLJBoxes(const CLJAtoms &atoms0, const CLJAtoms &atoms1) : box_length(default_box_length)
+{
+    constructFrom(atoms0, atoms1);
+}
+
+/** Box up the passed set of atoms into boxes of specified box size */
+CLJBoxes::CLJBoxes(const CLJAtoms &atoms0, const CLJAtoms &atoms1, Length box_size)
+         : box_length(box_size.value())
+{
+    if (box_length < 2)
+        //don't be silly
+        box_length = 2.0;
+    
+    constructFrom(atoms0, atoms1);
 }
 
 /** Copy constructor */
@@ -1089,7 +1120,7 @@ QVector<CLJBoxIndex> CLJBoxes::add(const CLJAtoms &atoms)
     subsequent "add" operations). If you want to completely remove the atoms then
     use "remove" followed by "squeeze". This will turn the atoms into dummies and will
     then remove all dummy atoms from the boxes */
-void CLJBoxes::remove(const QList<CLJBoxIndex> &atoms)
+void CLJBoxes::remove(const QVector<CLJBoxIndex> &atoms)
 {
     foreach (const CLJBoxIndex &atom, atoms)
     {

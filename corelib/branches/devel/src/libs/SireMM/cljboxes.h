@@ -298,8 +298,12 @@ friend QDataStream& ::operator>>(QDataStream&, CLJBoxes&);
 public:
     CLJBoxes();
     CLJBoxes(Length box_size);
+    
     CLJBoxes(const CLJAtoms &atoms);
+    CLJBoxes(const CLJAtoms &atoms0, const CLJAtoms &atoms1);
+    
     CLJBoxes(const CLJAtoms &atoms, Length box_size);
+    CLJBoxes(const CLJAtoms &atoms0, const CLJAtoms &atoms1, Length box_size);
     
     CLJBoxes(const CLJBoxes &other);
     
@@ -350,7 +354,7 @@ public:
     
     QVector<CLJBoxIndex> add(const CLJAtoms &atoms);
 
-    void remove(const QList<CLJBoxIndex> &atoms);
+    void remove(const QVector<CLJBoxIndex> &atoms);
     
     CLJAtoms atoms() const;
     
@@ -363,7 +367,7 @@ public:
     CLJBoxes squeeze() const;
     
 private:
-    void constructFrom(const CLJAtoms &atoms);
+    void constructFrom(const CLJAtoms &atoms0, const CLJAtoms &atoms1);
 
     /** All of the boxes that contain atoms */
     QMap<CLJBoxIndex,CLJBoxPtr> bxs;

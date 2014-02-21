@@ -85,6 +85,30 @@ public:
 
     const CLJComponent& components() const;
 
+    void setCLJFunction(const CLJFunction &cljfunc);
+    const CLJFunction& cljFunction() const;
+
+    void addFixedAtoms(const MoleculeView &molecule, const PropertyMap &map = PropertyMap());
+    void addFixedAtoms(const Molecules &molecules, const PropertyMap &map = PropertyMap());
+    void addFixedAtoms(const CLJAtoms &atoms);
+    
+    void setFixedAtoms(const MoleculeView &molecule, const PropertyMap &map = PropertyMap());
+    void setFixedAtoms(const Molecules &molecules, const PropertyMap &map = PropertyMap());
+    void setFixedAtoms(const CLJAtoms &atoms);
+
+    void enableGrid();
+    void disableGrid();
+    void setUseGrid(bool on);
+    bool usesGrid() const;
+    
+    void setGridBuffer(Length buffer);
+    Length gridBuffer() const;
+    
+    void setGridSpacing(Length spacing);
+    Length gridSpacing() const;
+
+    GridInfo grid() const;
+
     bool setProperty(const QString &name, const Property &property);
     const Property& property(const QString &name) const;
     bool containsProperty(const QString &name) const;
@@ -94,6 +118,14 @@ public:
 
 private:
     void recalculateEnergy();
+    void rebuildProps();
+    
+    void reboxAtoms();
+    void reboxChangedAtoms();
+    
+    void reextractAtoms();
+    
+    void regridAtoms();
     
     void _pvt_added(const SireMol::PartialMolecule &mol,
                     const SireBase::PropertyMap &map);
@@ -109,6 +141,19 @@ private:
                                     const SireBase::PropertyMap &map) const;
 
     void _pvt_updateName();
+
+    /** The CLJAtoms of all molecules in this forcefield, organised
+        by molecule number, together with their indicies into cljboxes*/
+    QHash<SireMol::MolNum,QPair<QVector<CLJBoxIndex>,CLJAtoms> > cljatoms;
+
+    /** All of the changed atoms whose energy is yet to be calculated */
+    CLJBoxes changed_atoms;
+
+    /** The molecule numbers of changed atoms */
+    QList<SireMol::MolNum> changed_mols;
+
+    /** The property map used to add each molecule */
+    QHash<SireMol::MolNum,PropertyMap> maps_for_mol;
 
     /** The function used to calculate energies */
     CLJFunctionPtr cljfunc;
