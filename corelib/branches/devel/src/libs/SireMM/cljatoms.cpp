@@ -1510,8 +1510,6 @@ void CLJAtoms::append(const CLJAtoms &other, int n)
         
         //what will be the new size of the vector?
         const int new_size = start_idx + n_whole + (n_partial == 0 ? 0 : 1);
-
-        qDebug() << "APPEND" << n << n_partial << n_whole << start_idx << new_size;
         
         _x.resize(new_size);
         _y.resize(new_size);

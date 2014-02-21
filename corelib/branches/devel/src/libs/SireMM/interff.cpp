@@ -516,8 +516,13 @@ void InterFF::recalculateEnergy()
             this->reboxAtoms();
         
         //calculate the energy from scratch
+        QElapsedTimer t;
+        t.start();
         CLJCalculator calc;
         tuple<double,double> nrgs = calc.calculate(*cljfunc, cljboxes);
+        qint64 ns = t.nsecsElapsed();
+        
+        qDebug() << "Calculating total energy took" << (0.000001*ns) << "ms";
 
         if (not fixed_atoms.isEmpty())
         {
