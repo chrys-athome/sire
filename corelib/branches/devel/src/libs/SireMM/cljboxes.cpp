@@ -162,8 +162,6 @@ QVector<int> CLJBox::add(const CLJAtoms &atoms)
     //sort the list of gaps so that we add from the bottom first
     qSort(gaps.begin(), gaps.end(), qGreater<int>());
     
-    qDebug() << "GAPS" << Sire::toString( QVector<int>(gaps) );
-    
     int n = atoms.nAtoms();
     
     if (n == 0)
@@ -188,8 +186,6 @@ QVector<int> CLJBox::add(const CLJAtoms &atoms)
         
         //this atom is not a dummy. Copy it and put it into the gap
         int gap = gaps.pop();
-        qDebug() << "popped off" << gap;
-        qDebug() << "setting" << gap << n;
         atms.set(gap, atoms.at(n));
         indicies[n] = gap;
         
@@ -198,7 +194,6 @@ QVector<int> CLJBox::add(const CLJAtoms &atoms)
         if (n < 0)
         {
             //all of the atoms have been added
-            qDebug() << "GAPS NOW" << Sire::toString( QVector<int>(gaps) );
             return indicies;
         }
     }
@@ -207,25 +202,20 @@ QVector<int> CLJBox::add(const CLJAtoms &atoms)
     //use n to refer to the number of atoms that need to still be added
     n += 1;
     
-    qDebug() << "GAPS NOW" << Sire::toString( QVector<int>(gaps) );
-    qDebug() << "N now" << n;
-    
     //there are still atoms to add and there are no gaps to add them
     //Just add them onto the end of the vector
     int start = atms.count();
     atms.append( atoms, n );
     
-    if (atms.nAtoms() != start + n)
+    if (atms.isPadded())
     {
         //there is some padding
-        for (int i=atms.nAtoms()-1; i>=(start+n); --i)
+        for (int i=atms.nAtoms(); i<atms.count(); ++i)
         {
             gaps.push(i);
         }
     }
-    
-    qDebug() << "GAPS NOW" << Sire::toString( QVector<int>(gaps) );
-    
+
     for (int i = 0; i<n; ++i)
     {
         indicies[i] = start + i;
@@ -510,11 +500,14 @@ CLJBoxIndex CLJBoxIndex::boxOnly() const
 
 QString CLJBoxIndex::toString() const
 {
-    return QObject::tr("CLJBoxIndex( %1, %2, %3 : %4 )")
-                .arg(v.index.ii)
-                .arg(v.index.jj)
-                .arg(v.index.kk)
-                .arg(v.index.idx);
+    if (isNull())
+        return QObject::tr("CLJBoxIndex::null()");
+    else
+        return QObject::tr("CLJBoxIndex( %1, %2, %3 : %4 )")
+                    .arg(v.index.ii)
+                    .arg(v.index.jj)
+                    .arg(v.index.kk)
+                    .arg(v.index.idx);
 }
 
 /** Create the index for the box that contains the point 'x,y,z' in a set of boxes
@@ -1069,9 +1062,6 @@ QVector<CLJBoxIndex> CLJBoxes::add(const CLJAtoms &atoms)
         {
             QVector<int> box_idxs = bxs[idx].write().add( CLJAtoms(it.value().get<0>()) );
             const QList<int> &atom_idxs = it.value().get<1>();
-
-            qDebug() << Sire::toString(box_idxs);
-            qDebug() << Sire::toString(atom_idxs);
 
             for (int i=0; i<atom_idxs.count(); ++i)
             {

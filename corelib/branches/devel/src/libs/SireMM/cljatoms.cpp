@@ -1890,7 +1890,5 @@ QVector<qint32> CLJAtoms::IDs() const
     count() - nPadded() */
 int CLJAtoms::nAtoms() const
 {
-    qDebug() << "count" << count() << "padded" << nPadded();
-
     return count() - nPadded();
 }
