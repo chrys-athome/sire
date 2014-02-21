@@ -5,6 +5,7 @@
 
 #include "array2d.h"
 #include "array2d.hpp"
+#include "booleanproperty.h"
 #include "chunkedvector.hpp"
 #include "combineproperties.h"
 #include "countflops.h"

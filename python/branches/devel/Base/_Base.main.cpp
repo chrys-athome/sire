@@ -13,6 +13,8 @@
 
 #include "Array2D_double_.pypp.hpp"
 
+#include "BooleanProperty.pypp.hpp"
+
 #include "CPUID.pypp.hpp"
 
 #include "ChunkedVector_double_.pypp.hpp"
@@ -125,6 +127,8 @@ BOOST_PYTHON_MODULE(_Base){
     register_Array2D_double__class();
 
     register_Property_class();
+
+    register_BooleanProperty_class();
 
     register_CPUID_class();
 

@@ -45,7 +45,9 @@ void register_CLJBoxes_class(){
         bp::scope CLJBoxes_scope( CLJBoxes_exposer );
         CLJBoxes_exposer.def( bp::init< SireUnits::Dimension::Length >(( bp::arg("box_size") )) );
         CLJBoxes_exposer.def( bp::init< SireMM::CLJAtoms const & >(( bp::arg("atoms") )) );
+        CLJBoxes_exposer.def( bp::init< SireMM::CLJAtoms const &, SireMM::CLJAtoms const & >(( bp::arg("atoms0"), bp::arg("atoms1") )) );
         CLJBoxes_exposer.def( bp::init< SireMM::CLJAtoms const &, SireUnits::Dimension::Length >(( bp::arg("atoms"), bp::arg("box_size") )) );
+        CLJBoxes_exposer.def( bp::init< SireMM::CLJAtoms const &, SireMM::CLJAtoms const &, SireUnits::Dimension::Length >(( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("box_size") )) );
         CLJBoxes_exposer.def( bp::init< SireMM::CLJBoxes const & >(( bp::arg("other") )) );
         { //::SireMM::CLJBoxes::add
         
@@ -287,7 +289,7 @@ void register_CLJBoxes_class(){
         }
         { //::SireMM::CLJBoxes::remove
         
-            typedef void ( ::SireMM::CLJBoxes::*remove_function_type )( ::QList< SireMM::CLJBoxIndex > const & ) ;
+            typedef void ( ::SireMM::CLJBoxes::*remove_function_type )( ::QVector< SireMM::CLJBoxIndex > const & ) ;
             remove_function_type remove_function_value( &::SireMM::CLJBoxes::remove );
             
             CLJBoxes_exposer.def( 
