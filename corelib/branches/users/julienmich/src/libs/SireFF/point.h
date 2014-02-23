@@ -76,6 +76,8 @@ namespace SireFF
 {
 class MolForceTable;
 class ForceTable;
+class MolEnergyTable;
+class EnergyTable;
 }
 
 namespace SireFF
@@ -152,6 +154,7 @@ public:
     virtual bool contains(const MolID &molid) const=0;
     
     virtual bool usesMoleculesIn(const ForceTable &forcetable) const=0;
+    virtual bool usesMoleculesIn(const EnergyTable &energytable) const=0;
     virtual bool usesMoleculesIn(const Molecules &molecules) const=0;
     virtual bool usesMoleculesIn(const MoleculeGroup &molgroup) const=0;
     virtual bool usesMoleculesIn(const MolGroupsBase &molgroups) const=0;
@@ -159,6 +162,9 @@ public:
     virtual bool addForce(MolForceTable &molforces, const Vector &force) const=0;
     virtual bool addForce(ForceTable &forces, const Vector &force) const=0;
     
+    virtual bool addEnergy(MolEnergyTable &molenergies, const double &nrg) const=0;
+    virtual bool addEnergy(EnergyTable &energies, const double &nrg) const=0;
+
     static const VectorPoint& null();
 
     virtual bool isExtraMoleculePoint() const=0;
@@ -220,6 +226,9 @@ public:
     
     bool addForce(MolForceTable &molforces, const Vector &force) const;
     bool addForce(ForceTable &forces, const Vector &force) const;
+ 
+    bool addEnergy(MolEnergyTable &molenergies, const double &energy) const;
+    bool addEnergy(EnergyTable &energies, const double &energy) const;   
     
 private:
     /** Pointer to the implementation of this point */
@@ -268,6 +277,7 @@ public:
     bool contains(const MolID &molid) const;
 
     bool usesMoleculesIn(const ForceTable &forcetable) const;
+    bool usesMoleculesIn(const EnergyTable &energytable) const;
     bool usesMoleculesIn(const Molecules &molecules) const;
     bool usesMoleculesIn(const MoleculeGroup &molgroup) const;
     bool usesMoleculesIn(const MolGroupsBase &molgroups) const;
@@ -276,6 +286,9 @@ public:
     
     bool addForce(MolForceTable &molforces, const Vector &force) const;
     bool addForce(ForceTable &forces, const Vector &force) const;
+
+    bool addEnergy(MolEnergyTable &molenergies, const double &energy) const;
+    bool addEnergy(EnergyTable &energies, const double &energy) const;  
 
     bool isExtraMoleculePoint() const;
     bool isIntraMoleculePoint() const;
@@ -331,12 +344,16 @@ public:
     bool contains(const MolID &molid) const;
 
     bool usesMoleculesIn(const ForceTable &forcetable) const;
+    bool usesMoleculesIn(const EnergyTable &energytable) const;
     bool usesMoleculesIn(const Molecules &molecules) const;
     bool usesMoleculesIn(const MoleculeGroup &molgroup) const;
     bool usesMoleculesIn(const MolGroupsBase &molgroups) const;
     
     bool addForce(MolForceTable &molforces, const Vector &force) const;
     bool addForce(ForceTable &forces, const Vector &force) const;
+
+    bool addEnergy(MolEnergyTable &molenergies, const double &energy) const;
+    bool addEnergy(EnergyTable &energies, const double &energy) const;  
 
     bool isExtraMoleculePoint() const;
     bool isIntraMoleculePoint() const;
@@ -389,12 +406,16 @@ public:
     bool contains(const MolID &molid) const;
 
     bool usesMoleculesIn(const ForceTable &forcetable) const;
+    bool usesMoleculesIn(const EnergyTable &energytable) const;
     bool usesMoleculesIn(const Molecules &molecules) const;
     bool usesMoleculesIn(const MoleculeGroup &molgroup) const;
     bool usesMoleculesIn(const MolGroupsBase &molgroups) const;
     
     bool addForce(MolForceTable &molforces, const Vector &force) const;
     bool addForce(ForceTable &forces, const Vector &force) const;
+
+    bool addEnergy(MolEnergyTable &molenergies, const double &energy) const;
+    bool addEnergy(EnergyTable &energies, const double &energy) const;  
 
     bool isExtraMoleculePoint() const;
     bool isIntraMoleculePoint() const;
@@ -459,12 +480,16 @@ public:
     bool contains(const MolID &molid) const;
 
     bool usesMoleculesIn(const ForceTable &forcetable) const;
+    bool usesMoleculesIn(const EnergyTable &energytable) const;
     bool usesMoleculesIn(const Molecules &molecules) const;
     bool usesMoleculesIn(const MoleculeGroup &molgroup) const;
     bool usesMoleculesIn(const MolGroupsBase &molgroups) const;
     
     bool addForce(MolForceTable &molforces, const Vector &force) const;
     bool addForce(ForceTable &forces, const Vector &force) const;
+
+    bool addEnergy(MolEnergyTable &molenergies, const double &energy) const;
+    bool addEnergy(EnergyTable &energies, const double &energy) const;  
 
     bool isExtraMoleculePoint() const;
     bool isIntraMoleculePoint() const;
@@ -529,12 +554,16 @@ public:
     bool contains(const MolID &molid) const;
 
     bool usesMoleculesIn(const ForceTable &forcetable) const;
+    bool usesMoleculesIn(const EnergyTable &energytable) const;
     bool usesMoleculesIn(const Molecules &molecules) const;
     bool usesMoleculesIn(const MoleculeGroup &molgroup) const;
     bool usesMoleculesIn(const MolGroupsBase &molgroups) const;
     
     bool addForce(MolForceTable &molforces, const Vector &force) const;
     bool addForce(ForceTable &forces, const Vector &force) const;
+
+    bool addEnergy(MolEnergyTable &molenergies, const double &energy) const;
+    bool addEnergy(EnergyTable &energies, const double &energy) const;  
 
     bool isExtraMoleculePoint() const;
     bool isIntraMoleculePoint() const;

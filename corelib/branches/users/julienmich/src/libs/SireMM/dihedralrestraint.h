@@ -102,6 +102,9 @@ public:
     void force(MolForceTable &forcetable, double scale_force=1) const;
     void force(ForceTable &forcetable, double scale_force=1) const;
 
+    void energy(MolEnergyTable &energytable, double scale_energy=1) const;
+    void energy(EnergyTable &energytable, double scale_energy=1) const;
+
     void update(const MoleculeData &moldata);
     void update(const Molecules &molecules);
 

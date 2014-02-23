@@ -2310,13 +2310,13 @@ const Properties& InternalFF::properties() const
     return props;
 }
 
-void InternalFF::energyTable(EnergyTable &energytable, double scale_energy)
+void InternalFF::energy(EnergyTable &energytable, double scale_energy)
 {
     throw SireError::incomplete_code( QObject::tr(
             "InternalFF does not yet support energy calculations!"), CODELOC );
 }
 
-void InternalFF::energyTable(EnergyTable &energytable, const Symbol &symbol,
+void InternalFF::energy(EnergyTable &energytable, const Symbol &symbol,
 			double scale_energy)
 {
     throw SireError::incomplete_code( QObject::tr(

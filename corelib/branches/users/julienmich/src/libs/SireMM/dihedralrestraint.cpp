@@ -29,6 +29,7 @@
 #include "dihedralrestraint.h"
 
 #include "SireFF/forcetable.h"
+#include "SireFF/energytable.h"
 
 #include "SireCAS/symbols.h"
 #include "SireCAS/values.h"
@@ -404,6 +405,13 @@ void DihedralRestraint::force(MolForceTable &forcetable, double scale_force) con
             "by a dihedral restraint."), CODELOC );
 }
 
+void DihedralRestraint::energy(MolEnergyTable &energytable, double scale_energy) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "Haven't yet written the code to calculate energy caused "
+            "by a dihedral restraint."), CODELOC );
+}
+
 /** Calculate the force acting on the molecules in the forcetable 'forcetable' 
     caused by this restraint, and add it on to the forcetable scaled by 
     'scale_force' */
@@ -420,6 +428,13 @@ void DihedralRestraint::force(ForceTable &forcetable, double scale_force) const
 
     throw SireError::incomplete_code( QObject::tr(
             "Haven't yet written the code to calculate forces caused "
+            "by a dihedral restraint."), CODELOC );
+}
+
+void DihedralRestraint::energy(EnergyTable &energytable, double scale_energy) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "Haven't yet written the code to calculate energy caused "
             "by a dihedral restraint."), CODELOC );
 }
 

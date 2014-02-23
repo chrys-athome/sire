@@ -29,6 +29,7 @@
 #include "point.h"
 
 #include "forcetable.h"
+#include "energytable.h"
 
 #include "SireMol/evaluator.h"
 #include "SireMol/molecule.h"
@@ -561,6 +562,16 @@ bool AtomPoint::usesMoleculesIn(const ForceTable &forcetable) const
 }
 
 /** Return whether or not this point uses data from any of the 
+    molecules in the passed energytable */
+bool AtomPoint::usesMoleculesIn(const EnergyTable &energytable) const
+{
+    if (not atm.isEmpty())
+        return energytable.containsTable(atm.data().number());
+    else
+        return false;
+}
+
+/** Return whether or not this point uses data from any of the 
     molecules in 'molecules' */
 bool AtomPoint::usesMoleculesIn(const Molecules &molecules) const
 {
@@ -615,6 +626,30 @@ bool AtomPoint::addForce(ForceTable &forces, const Vector &force) const
     if (forces.containsTable(atm.data().number()))
     {
         return forces.getTable(atm.data().number()).add( atm.cgAtomIdx(), force );
+    }
+    else
+        return false;
+}
+
+/** Add the energy acting on this atom to the passed table (if it is 
+    the table for the molecule containing the atom */
+bool AtomPoint::addEnergy(MolEnergyTable &molenergies, const double &energy) const
+{
+    if (molenergies.molNum() == atm.data().number())
+    {
+        return molenergies.add( atm.cgAtomIdx(), energy );
+    }
+    else
+        return false;
+} 
+
+/** Add the energy acting on this atom to the passed table (if it contains 
+    the table for the molecule containing the atom */
+bool AtomPoint::addEnergy(EnergyTable &energies, const double &energy) const
+{
+    if (energies.containsTable(atm.data().number()))
+    {
+        return energies.getTable(atm.data().number()).add( atm.cgAtomIdx(), energy );
     }
     else
         return false;
@@ -799,6 +834,12 @@ bool VectorPoint::usesMoleculesIn(const ForceTable&) const
 }
 
 /** No molecules are needed to create this point */
+bool VectorPoint::usesMoleculesIn(const EnergyTable&) const
+{
+    return false;
+}
+
+/** No molecules are needed to create this point */
 bool VectorPoint::usesMoleculesIn(const Molecules&) const
 {
     return false;
@@ -827,6 +868,18 @@ bool VectorPoint::addForce(ForceTable&, const Vector&) const
 {
     return false;
 }
+/** No energy on a point */
+bool VectorPoint::addEnergy(MolEnergyTable&, const double&) const
+{
+    return false;
+} 
+
+/** No energy on a point */
+bool VectorPoint::addEnergy(EnergyTable&, const double&) const
+{
+    return false;
+}
+
 
 /** Return whether this is an intramolecular point (it depends on coordinates
     of atoms in just one molecule) */
@@ -1124,6 +1177,21 @@ bool Center::usesMoleculesIn(const ForceTable &forcetable) const
 }
 
 /** Return whether or not this point uses data from any of the 
+    molecules in the passed energytable */
+bool Center::usesMoleculesIn(const EnergyTable &energytable) const
+{
+    for (Molecules::const_iterator it = mols.constBegin();
+         it != mols.constEnd();
+         ++it)
+    {
+        if (energytable.containsTable(it->number()))
+            return true;
+    }
+    
+    return false;
+}
+
+/** Return whether or not this point uses data from any of the 
     molecules in 'molecules' */
 bool Center::usesMoleculesIn(const Molecules &molecules) const
 {
@@ -1169,6 +1237,14 @@ bool Center::addForce(MolForceTable &molforces, const Vector &force) const
     return false;
 } 
 
+bool Center::addEnergy(MolEnergyTable &molenergies, const double &nrg) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "Todo"), CODELOC );
+            
+    return false;
+} 
+
 /** Decompose the force 'force' into the forces acting on 
     the molecules that contribute to this point and add those
     forces onto the table 'forces' */
@@ -1176,6 +1252,14 @@ bool Center::addForce(ForceTable &forces, const Vector &force) const
 {
     throw SireError::incomplete_code( QObject::tr(
             "Need to work out how to decompose forces..."), CODELOC );
+            
+    return false;
+}
+
+bool Center::addEnergy(EnergyTable &energies, const double &nrg) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "Todo "), CODELOC );
             
     return false;
 }
@@ -1509,6 +1593,21 @@ bool CenterOfGeometry::usesMoleculesIn(const ForceTable &forcetable) const
 }
 
 /** Return whether or not this point uses data from any of the 
+    molecules in the passed forcetable */
+bool CenterOfGeometry::usesMoleculesIn(const EnergyTable &energytable) const
+{
+    for (Molecules::const_iterator it = mols.constBegin();
+         it != mols.constEnd();
+         ++it)
+    {
+        if (energytable.containsTable(it->number()))
+            return true;
+    }
+    
+    return false;
+}
+
+/** Return whether or not this point uses data from any of the 
     molecules in 'molecules' */
 bool CenterOfGeometry::usesMoleculesIn(const Molecules &molecules) const
 {
@@ -1554,6 +1653,14 @@ bool CenterOfGeometry::addForce(MolForceTable &molforces, const Vector &force) c
     return false;
 } 
 
+bool CenterOfGeometry::addEnergy(MolEnergyTable &molenergies, const double &nrg) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "Todo"), CODELOC );
+            
+    return false;
+} 
+
 /** Decompose the force 'force' into the forces acting on 
     the molecules that contribute to this point and add those
     forces onto the table 'forces' */
@@ -1561,6 +1668,14 @@ bool CenterOfGeometry::addForce(ForceTable &forces, const Vector &force) const
 {
     throw SireError::incomplete_code( QObject::tr(
             "Need to work out how to decompose forces..."), CODELOC );
+            
+    return false;
+}
+
+bool CenterOfGeometry::addEnergy(EnergyTable &energies, const double &nrg) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "Todo"), CODELOC );
             
     return false;
 }
@@ -1856,6 +1971,20 @@ bool CenterOfMass::contains(const MolID &molid) const
 }
 
 /** Return whether or not this point uses data from any of the 
+    molecules in the passed energytable */
+bool CenterOfMass::usesMoleculesIn(const EnergyTable &energytable) const
+{
+    for (Molecules::const_iterator it = mols.constBegin();
+         it != mols.constEnd();
+         ++it)
+    {
+        if (energytable.containsTable(it->number()))
+            return true;
+    }
+    
+    return false;
+}
+/** Return whether or not this point uses data from any of the 
     molecules in the passed forcetable */
 bool CenterOfMass::usesMoleculesIn(const ForceTable &forcetable) const
 {
@@ -1869,6 +1998,7 @@ bool CenterOfMass::usesMoleculesIn(const ForceTable &forcetable) const
     
     return false;
 }
+
 
 /** Return whether or not this point uses data from any of the 
     molecules in 'molecules' */
@@ -1916,6 +2046,14 @@ bool CenterOfMass::addForce(MolForceTable &molforces, const Vector &force) const
     return false;
 } 
 
+bool CenterOfMass::addEnergy(MolEnergyTable &molenergies, const double &nrg) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "Todo"), CODELOC );
+            
+    return false;
+} 
+
 /** Decompose the force 'force' into the forces acting on 
     the molecules that contribute to this point and add those
     forces onto the table 'forces' */
@@ -1923,6 +2061,14 @@ bool CenterOfMass::addForce(ForceTable &forces, const Vector &force) const
 {
     throw SireError::incomplete_code( QObject::tr(
             "Need to work out how to decompose forces..."), CODELOC );
+            
+    return false;
+}
+
+bool CenterOfMass::addEnergy(EnergyTable &energies, const double &nrg) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "Todo "), CODELOC );
             
     return false;
 }
@@ -1998,10 +2144,24 @@ bool PointRef::addForce(MolForceTable &molforces, const Vector &force) const
     return ptr.read().addForce(molforces, force);
 } 
 
+bool PointRef::addEnergy(MolEnergyTable &molenergies, const double &nrg) const
+{
+  throw SireError::incomplete_code( QObject::tr(
+						"Todo"), CODELOC );
+  return false;
+} 
+
 /** Decompose the force 'force' into the forces acting on 
     the molecules that contribute to this point and add those
     forces onto the table 'forces' */
 bool PointRef::addForce(ForceTable &forces, const Vector &force) const
 {
     return ptr.read().addForce(forces, force);
+}
+
+bool PointRef::addEnergy(EnergyTable &energies, const double &nrg) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "Todo"), CODELOC );
+  return false;
 }

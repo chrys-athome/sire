@@ -29,6 +29,7 @@
 #include "anglerestraint.h"
 
 #include "SireFF/forcetable.h"
+#include "SireFF/energytable.h"
 
 #include "SireCAS/symbols.h"
 #include "SireCAS/values.h"
@@ -386,6 +387,15 @@ void AngleRestraint::force(MolForceTable &forcetable, double scale_force) const
             "Haven't yet written the code to calculate forces caused "
             "by an angle restraint."), CODELOC );
 }
+/** Calculate the energy acting on the molecule in the energytable 'energytable' 
+    caused by this restraint, and add it on to the energytable scaled by 
+    'scale_energy' */
+void AngleRestraint::energy(MolEnergyTable &energytable, double scale_energy) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "Haven't yet written the code to calculate energy caused "
+            "by an angle restraint."), CODELOC );
+}
 
 /** Calculate the force acting on the molecules in the forcetable 'forcetable' 
     caused by this restraint, and add it on to the forcetable scaled by 
@@ -402,6 +412,13 @@ void AngleRestraint::force(ForceTable &forcetable, double scale_force) const
 
     throw SireError::incomplete_code( QObject::tr(
             "Haven't yet written the code to calculate forces caused "
+            "by an angle restraint."), CODELOC );
+}
+
+void AngleRestraint::energy(EnergyTable &energytable, double scale_energy) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "Haven't yet written the code to calculate energies caused "
             "by an angle restraint."), CODELOC );
 }
 

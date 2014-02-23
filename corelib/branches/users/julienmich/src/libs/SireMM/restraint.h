@@ -75,6 +75,8 @@ namespace SireFF
 {
 class MolForceTable;
 class ForceTable;
+class MolEnergyTable;
+class EnergyTable;
 }
 
 namespace SireCAS
@@ -95,6 +97,8 @@ using SireMol::MolID;
 
 using SireFF::MolForceTable;
 using SireFF::ForceTable;
+using SireFF::MolEnergyTable;
+using SireFF::EnergyTable;
 
 using SireCAS::Symbol;
 using SireCAS::Symbols;
@@ -200,7 +204,12 @@ public:
 
     virtual void force(MolForceTable &forcetable, double scale_force=1) const=0;
     virtual void force(ForceTable &forcetable, double scale_force=1) const=0;
-    
+
+    virtual void energy(MolEnergyTable &energytable, double scale_energy=1) const=0;
+    virtual void energy(EnergyTable &energytable, double scale_energy=1) const=0;    
+
+    virtual SireUnits::Dimension::MolarEnergy energy() const=0;    
+
     virtual bool usesMoleculesIn(const ForceTable &forcetable) const=0;
     virtual bool usesMoleculesIn(const Molecules &molecules) const=0;
     
@@ -322,6 +331,9 @@ public:
     void force(MolForceTable &forcetable, double scale_force=1) const;
     void force(ForceTable &forcetable, double scale_force=1) const;
     
+    void energy(MolEnergyTable &energytable, double scale_energy=1) const;
+    void energy(EnergyTable &energytable, double scale_energy=1) const;
+
     void update(const MoleculeData &moldata);
     void update(const Molecules &molecules);
 

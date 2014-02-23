@@ -74,10 +74,10 @@ public:
     
     Inter2B3DFF<Potential>* clone() const;
 
-    void energyTable(EnergyTable &energytable, double scale_energy=1);
+    void energy(EnergyTable &energytable, double scale_energy=1);
     
-    void energyTable(EnergyTable &energytable, const Symbol &symbol,
-                     double scale_energy=1);
+    void energy(EnergyTable &energytable, const Symbol &symbol,
+		double scale_energy=1);
     
     void force(ForceTable &forcetable, double scale_force=1);
     
@@ -516,7 +516,7 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
     in the energy table, multiplied by the passed (optional) scaling factor */
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
-void Inter2B3DFF<Potential>::energyTable(EnergyTable &energytable, double scale_energy)
+void Inter2B3DFF<Potential>::energy(EnergyTable &energytable, double scale_energy)
 {
 
   //    qDebug() << " In void Inter2B3DFF<Potential>::energy(EnergyTable &energytable, const Symbol &symbol, double scale_energy";
@@ -578,7 +578,7 @@ void Inter2B3DFF<Potential>::energyTable(EnergyTable &energytable, double scale_
     multiplied by 'scale_energy' */
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
-void Inter2B3DFF<Potential>::energyTable(EnergyTable &energytable, const Symbol &symbol, double scale_energy)
+void Inter2B3DFF<Potential>::energy(EnergyTable &energytable, const Symbol &symbol, double scale_energy)
 {
   //throw SireError::incomplete_code( QObject::tr(
   //"Inter2B3DFF does not yet support energy calculations!"), CODELOC );

@@ -985,7 +985,7 @@ void FFSymbolFF::energy(EnergyTable &energytable, QVector<FFPtr> &forcefields,
             "not provide an energy function.")
                 .arg(ffield->what()), CODELOC );
 
-    ffield.edit().asA<FF3D>().energyTable(energytable, this->symbol(), scale_energy);
+    ffield.edit().asA<FF3D>().energy(energytable, this->symbol(), scale_energy);
 }
 
 void FFSymbolFF::force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
@@ -1563,7 +1563,7 @@ void FFTotalExpression::energy(EnergyTable &energytable,
         FFPtr &ffield = ffields_array[i];
         
         if (ffield->isA<FF3D>())
-            ffield.edit().asA<FF3D>().energyTable(energytable, scale_energy);
+            ffield.edit().asA<FF3D>().energy(energytable, scale_energy);
     }
 }
 

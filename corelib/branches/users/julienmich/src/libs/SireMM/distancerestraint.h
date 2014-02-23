@@ -127,6 +127,9 @@ public:
     void force(MolForceTable &forcetable, double scale_force=1) const;
     void force(ForceTable &forcetable, double scale_force=1) const;
 
+    void energy(MolEnergyTable &energytable, double scale_energy=1) const;
+    void energy(EnergyTable &energytable, double scale_energy=1) const;
+
     void update(const MoleculeData &moldata);
     void update(const Molecules &molecules);
 
@@ -136,6 +139,7 @@ public:
     bool contains(const MolID &molid) const;
     
     bool usesMoleculesIn(const ForceTable &forcetable) const;
+    bool usesMoleculesIn(const EnergyTable &energytable) const;
     bool usesMoleculesIn(const Molecules &molecules) const;
 
     static DistanceRestraint
@@ -228,6 +232,9 @@ public:
 
     void force(MolForceTable &forcetable, double scale_force=1) const;
     void force(ForceTable &forcetable, double scale_force=1) const;
+
+    void energy(MolEnergyTable &energytable, double scale_energy=1) const;
+    void energy(EnergyTable &energytable, double scale_energy=1) const;
 
     void update(const MoleculeData &moldata);
                 
@@ -328,6 +335,9 @@ public:
 
     void force(MolForceTable &forcetable, double scale_force=1) const;
     void force(ForceTable &forcetable, double scale_force=1) const;
+
+    void energy(MolEnergyTable &energytable, double scale_energy=1) const;
+    void energy(EnergyTable &energytable, double scale_energy=1) const;
 
     void update(const MoleculeData &moldata);
     void update(const Molecules &molecules);

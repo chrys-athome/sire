@@ -1186,6 +1186,27 @@ QVector<Vector> RBWorkspaceJM::beadEnergiesArray() const
 {
   return bead_energies;
 }
+/** Return the array of bead coordinates */
+QVector<Vector> RBWorkspaceJM::beadCoordinatesArray() const
+{
+  return bead_coordinates;
+}
+/** Return the Matrix beadtoworld */
+QVector<Matrix> RBWorkspaceJM::beadToWorldMatrix() const
+{
+  return bead_to_world;
+}
+/** Return the array of bead orientations  */
+QVector<Quaternion> RBWorkspaceJM::beadOrientationArray() const
+{
+  return bead_orientations;
+}
+
+/** Return the array of bead orientations  */
+QVector<QVector<Vector> > RBWorkspaceJM::beadAtomIntCoords() const
+{
+  return atom_int_coords;
+}
 
 
 /** Regenerate all of the linear and angular velocities using the passed generator */

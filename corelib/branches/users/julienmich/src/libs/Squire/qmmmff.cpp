@@ -34,6 +34,7 @@
 #include "SireFF/forcetable.h"
 #include "SireFF/fieldtable.h"
 #include "SireFF/potentialtable.h"
+#include "SireFF/energytable.h"
 
 #include "SireFF/errors.h"
 #include "SireError/errors.h"
@@ -251,14 +252,14 @@ void QMMMFF::mustNowRecalculateFromScratch()
 {
     G2FF::setDirty();
 }
-void QMMMFF::energyTable(EnergyTable &energytable, double scale_energy)
+void QMMMFF::energy(EnergyTable &energytable, double scale_energy)
 {
     throw SireError::incomplete_code( QObject::tr(
-            "QMMMFF does not yet support energy calculations!"), CODELOC );
+						  "QMMMFF does not yet support energy calculations!"), CODELOC );
 }
 
-void QMMMFF::energyTable(EnergyTable &energytable, const Symbol &symbol,
-                           double scale_energy)
+void QMMMFF::energy(EnergyTable &energytable, const Symbol &symbol,
+		    double scale_energy)
 {
     throw SireError::incomplete_code( QObject::tr(
             "QMMMFF does not yet support energy calculations!"), CODELOC );

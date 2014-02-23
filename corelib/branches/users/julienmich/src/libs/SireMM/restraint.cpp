@@ -38,6 +38,7 @@
 #include "SireCAS/expression.h"
 
 #include "SireFF/forcetable.h"
+#include "SireFF/energytable.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -513,6 +514,14 @@ void NullRestraint::force(MolForceTable&, double) const
 
 /** The null restraint will not change the force */
 void NullRestraint::force(ForceTable&, double) const
+{}
+
+/** The null restraint will not change the energy */
+void NullRestraint::energy(MolEnergyTable&, double) const
+{}
+
+/** The null restraint will not change the force */
+void NullRestraint::energy(EnergyTable&, double) const
 {}
 
 /** The null restraint cannot be updated */

@@ -913,17 +913,29 @@ bool RestraintFF::remove(const Restraint3D &restraint)
     return false;
 }
 
-void RestraintFF::energyTable(EnergyTable &energytable, double scale_energy)
+void RestraintFF::energy(EnergyTable &energytable, double scale_energy)
 {
-    throw SireError::incomplete_code( QObject::tr(
-            "RestraintFF does not yet support energy calculations!"), CODELOC );
+    for (int i=0; i<restraints_by_idx.count(); ++i)
+    {
+        restraints_by_idx.at(i).read().energy(energytable, scale_energy);
+    }
+    //throw SireError::incomplete_code( QObject::tr(
+    //        "RestraintFF does not yet support energy calculations!"), CODELOC );
 }
 
-void RestraintFF::energyTable(EnergyTable &energytable, const Symbol &symbol,
+void RestraintFF::energy(EnergyTable &energytable, const Symbol &symbol,
                            double scale_energy)
 {
-    throw SireError::incomplete_code( QObject::tr(
-            "RestraintFF does not yet support energy calculations!"), CODELOC );
+    if (symbol == ffcomponents.total())
+        this->energy(energytable, scale_energy);
+    else
+        throw SireFF::missing_component( QObject::tr(
+            "There is no forcefield component represented by %1 in the "
+            "forcefield %2. Available components are %3.")
+                .arg(symbol.toString(), this->toString(), 
+                     ffcomponents.total().toString()), CODELOC );
+  //    throw SireError::incomplete_code( QObject::tr(
+  //          "RestraintFF does not yet support energy calculations!"), CODELOC );
 }
 
 /** Calculate the forces on the molecules in 'forcetable' caused

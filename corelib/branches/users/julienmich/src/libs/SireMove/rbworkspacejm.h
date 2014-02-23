@@ -121,8 +121,11 @@ public:
     QVector<Vector> beadForcesArray() const;
     //const Vector* beadTorquesArray() const;
     QVector<Vector> beadTorquesArray() const;
-
     QVector<Vector> beadEnergiesArray() const;
+    QVector<Vector> beadCoordinatesArray() const;
+    QVector<Matrix> beadToWorldMatrix() const ; 
+    QVector<Quaternion> beadOrientationArray() const;
+    QVector< QVector<Vector> > beadAtomIntCoords() const;
 
 protected:
     void changedProperty(const QString &property);

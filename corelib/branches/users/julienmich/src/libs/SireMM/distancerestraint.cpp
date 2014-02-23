@@ -27,8 +27,8 @@
 \*********************************************/
 
 #include "distancerestraint.h"
-
 #include "SireFF/forcetable.h"
+#include "SireFF/energytable.h"
 
 #include "SireCAS/symbols.h"
 #include "SireCAS/values.h"
@@ -84,7 +84,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, DistanceRestraint &distre
         
         sds >> distrest.p[0] >> distrest.p[1]
             >> distrest.force_expression
-            >> static_cast<ExpressionRestraint3D&>(distrest);
+	    >> static_cast<ExpressionRestraint3D&>(distrest);
 
         distrest.intra_molecule_points = Point::areIntraMoleculePoints(distrest.p[0],
                                                                        distrest.p[1]);
@@ -410,6 +410,24 @@ void DistanceRestraint::force(MolForceTable &forcetable, double scale_force) con
     }
 }
 
+void DistanceRestraint::energy(MolEnergyTable &energytable, double scale_energy) const
+{
+  throw SireError::incomplete_code( QObject::tr(
+						"Haven't yet written the code to calculate energy caused "
+						"by a distance restraint."), CODELOC );
+  //bool in_p0 = p[0].read().contains(forcetable.molNum());
+  //bool in_p1 = p[1].read().contains(forcetable.molNum());
+  //  
+  //  if (in_p0 or in_p1)
+  //  {
+  //      const double force = scale_force * force_expression.evaluate( 
+  //                                              ExpressionRestraint3D::values() );
+  //
+  //      addForce(p[0], p[1], space(), intra_molecule_points,
+  //               in_p0, in_p1, force, forcetable);
+  //  }
+}
+
 /** Calculate the force acting on the molecules in the forcetable 'forcetable' 
     caused by this restraint, and add it on to the forcetable scaled by 
     'scale_force' */
@@ -428,6 +446,35 @@ void DistanceRestraint::force(ForceTable &forcetable, double scale_force) const
     }
 }
 
+void DistanceRestraint::energy(EnergyTable &energytable, double scale_energy) const
+{
+
+  bool in_p0 = p[0].read().usesMoleculesIn(energytable);
+  bool in_p1 = p[1].read().usesMoleculesIn(energytable);
+  
+  //qDebug() << " in_p0 is " << in_p0 << " in_p1 is " << in_p1;
+
+  if (in_p0 or in_p1 )
+    {
+      //qDebug() << " p[ 0 ] " << p[0].read().toString();
+      //qDebug() << " p[ 1 ] " << p[1].read().toString();
+      //double d01 = this->space().calcDist( p[0].read().point(),
+      //				    p[1].read().point() );
+      //qDebug() << "d01 " << d01;
+      
+      double scale = 0.5;
+      if ( p[0].read().isExtraMoleculePoint() or p[1].read().isExtraMoleculePoint() )
+	{
+	  scale = 1.0;
+	}
+      const double energy = scale * scale_energy * this->restraintFunction().evaluate( ExpressionRestraint3D::values() );
+      //qDebug() << energy;   
+      if (in_p0)
+	p[0].read().addEnergy(energytable, energy);
+      if (in_p1)
+	p[1].read().addEnergy(energytable, energy);
+    }
+}
 /** Update the points of this restraint using new molecule data from 'moldata'
 
     \throw SireBase::missing_property
@@ -552,6 +599,13 @@ bool DistanceRestraint::usesMoleculesIn(const ForceTable &forcetable) const
 {
     return p[0].read().usesMoleculesIn(forcetable) or 
            p[1].read().usesMoleculesIn(forcetable);
+}
+/** Return whether or not this restraint involves any of the molecules
+    that are in the energytable 'energytable' */
+bool DistanceRestraint::usesMoleculesIn(const EnergyTable &energytable) const
+{
+    return p[0].read().usesMoleculesIn(energytable) or 
+           p[1].read().usesMoleculesIn(energytable);
 }
 
 /** Return whether or not this restraint involves any of the molecules
@@ -726,7 +780,7 @@ void DoubleDistanceRestraint::calculateR()
             d01 = this->space().calcDist( p[0].read().point(),
                                           p[1].read().point() );
         
-        ExpressionRestraint3D::_pvt_setValue( r01(), d01 );
+	ExpressionRestraint3D::_pvt_setValue( r01(), d01 );
     }
     
     if (this->restraintFunction().isFunction(r23()))
@@ -1020,6 +1074,14 @@ void DoubleDistanceRestraint::force(MolForceTable &forcetable, double scale_forc
     }
 }
 
+void DoubleDistanceRestraint::energy(MolEnergyTable &molenergytable, double scale_energy) const
+{
+  throw SireError::incomplete_code( QObject::tr(
+						"Haven't yet written the code to calculate energy caused "
+						"by a double distance restraint."), CODELOC );
+}
+
+
 /** Calculate the force acting on the molecules in the forcetable 'forcetable' 
     caused by this restraint, and add it on to the forcetable scaled by 
     'scale_force' */
@@ -1047,6 +1109,13 @@ void DoubleDistanceRestraint::force(ForceTable &forcetable, double scale_force) 
         addForce(p[2], p[3], space(), intra_molecule_points23,
                  in_p2, in_p3, force, forcetable);
     }
+}
+
+void DoubleDistanceRestraint::energy(EnergyTable &energytable, double scale_energy) const
+{
+  throw SireError::incomplete_code( QObject::tr(
+						"Haven't yet written the code to calculate energy caused "
+						"by a double distance restraint."), CODELOC );
 }
 
 /** Update the points of this restraint using new molecule data from 'moldata'
@@ -1627,6 +1696,13 @@ void TripleDistanceRestraint::force(MolForceTable &forcetable, double scale_forc
     }
 }
 
+void TripleDistanceRestraint::energy(MolEnergyTable &molenergytable, double scale_energy) const
+{
+  throw SireError::incomplete_code( QObject::tr(
+						"Haven't yet written the code to calculate energy caused "
+						"by a double distance restraint."), CODELOC );
+}
+
 /** Calculate the force acting on the molecules in the forcetable 'forcetable' 
     caused by this restraint, and add it on to the forcetable scaled by 
     'scale_force' */
@@ -1665,6 +1741,13 @@ void TripleDistanceRestraint::force(ForceTable &forcetable, double scale_force) 
         addForce(p[4], p[5], space(), intra_molecule_points45,
                  in_p4, in_p5, force, forcetable);
     }
+}
+
+void TripleDistanceRestraint::energy(EnergyTable &energytable, double scale_energy) const
+{
+  throw SireError::incomplete_code( QObject::tr(
+						"Haven't yet written the code to calculate energy caused "
+						"by a double distance restraint."), CODELOC );
 }
 
 /** Update the points of this restraint using new molecule data from 'moldata'
