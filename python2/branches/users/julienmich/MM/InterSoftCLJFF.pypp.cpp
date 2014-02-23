@@ -28,27 +28,27 @@ void register_InterSoftCLJFF_class(){
         InterSoftCLJFF_exposer.def( bp::init< >() );
         InterSoftCLJFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         InterSoftCLJFF_exposer.def( bp::init< SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > > const & >(( bp::arg("other") )) );
-        { //::SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > >::energyTable
+        { //::SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > >::energy
         
             typedef SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > > exported_class_t;
-            typedef void ( ::SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > >::*energyTable_function_type )( ::SireFF::EnergyTable &,double ) ;
-            energyTable_function_type energyTable_function_value( &::SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > >::energyTable );
+            typedef void ( ::SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > >::*energy_function_type )( ::SireFF::EnergyTable &,double ) ;
+            energy_function_type energy_function_value( &::SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > >::energy );
             
             InterSoftCLJFF_exposer.def( 
-                "energyTable"
-                , energyTable_function_value
+                "energy"
+                , energy_function_value
                 , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
         
         }
-        { //::SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > >::energyTable
+        { //::SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > >::energy
         
             typedef SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > > exported_class_t;
-            typedef void ( ::SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > >::*energyTable_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
-            energyTable_function_type energyTable_function_value( &::SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > >::energyTable );
+            typedef void ( ::SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > >::*energy_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
+            energy_function_type energy_function_value( &::SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > >::energy );
             
             InterSoftCLJFF_exposer.def( 
-                "energyTable"
-                , energyTable_function_value
+                "energy"
+                , energy_function_value
                 , ( bp::arg("energytable"), bp::arg("symbol"), bp::arg("scale_energy")=1 ) );
         
         }

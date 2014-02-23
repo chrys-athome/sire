@@ -43,6 +43,7 @@
 #include "SireMove/move.h"
 #include "SireMove/supramove.h"
 #include "SireMove/zmatrix.h"
+#include "SireMove/rbworkspacejm.h"
 
 using namespace SireMove;
 
@@ -55,5 +56,9 @@ void register_SireMove_containers()
 
     register_list< QVector<ZMatrixLine> >();
     register_list< QVector<ZMatrixCoordsLine> >();
+
+    register_list< QVector<Matrix> >();
+    register_list< QVector<Quaternion> >();
+    register_list< QVector< QVector< Vector > > >();
 }
 

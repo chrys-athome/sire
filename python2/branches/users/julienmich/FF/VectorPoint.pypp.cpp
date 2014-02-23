@@ -25,6 +25,8 @@ namespace bp = boost::python;
 
 #include "SireVol/errors.h"
 
+#include "energytable.h"
+
 #include "forcetable.h"
 
 #include "point.h"
@@ -48,6 +50,28 @@ void register_VectorPoint_class(){
         VectorPoint_exposer.def( bp::init< >() );
         VectorPoint_exposer.def( bp::init< SireMaths::Vector const & >(( bp::arg("point") )) );
         VectorPoint_exposer.def( bp::init< SireFF::VectorPoint const & >(( bp::arg("other") )) );
+        { //::SireFF::VectorPoint::addEnergy
+        
+            typedef bool ( ::SireFF::VectorPoint::*addEnergy_function_type )( ::SireFF::MolEnergyTable &,double const & ) const;
+            addEnergy_function_type addEnergy_function_value( &::SireFF::VectorPoint::addEnergy );
+            
+            VectorPoint_exposer.def( 
+                "addEnergy"
+                , addEnergy_function_value
+                , ( bp::arg("molenergies"), bp::arg("energy") ) );
+        
+        }
+        { //::SireFF::VectorPoint::addEnergy
+        
+            typedef bool ( ::SireFF::VectorPoint::*addEnergy_function_type )( ::SireFF::EnergyTable &,double const & ) const;
+            addEnergy_function_type addEnergy_function_value( &::SireFF::VectorPoint::addEnergy );
+            
+            VectorPoint_exposer.def( 
+                "addEnergy"
+                , addEnergy_function_value
+                , ( bp::arg("energies"), bp::arg("energy") ) );
+        
+        }
         { //::SireFF::VectorPoint::addForce
         
             typedef bool ( ::SireFF::VectorPoint::*addForce_function_type )( ::SireFF::MolForceTable &,::SireMaths::Vector const & ) const;
@@ -229,6 +253,17 @@ void register_VectorPoint_class(){
                 "usesMoleculesIn"
                 , usesMoleculesIn_function_value
                 , ( bp::arg("forcetable") ) );
+        
+        }
+        { //::SireFF::VectorPoint::usesMoleculesIn
+        
+            typedef bool ( ::SireFF::VectorPoint::*usesMoleculesIn_function_type )( ::SireFF::EnergyTable const & ) const;
+            usesMoleculesIn_function_type usesMoleculesIn_function_value( &::SireFF::VectorPoint::usesMoleculesIn );
+            
+            VectorPoint_exposer.def( 
+                "usesMoleculesIn"
+                , usesMoleculesIn_function_value
+                , ( bp::arg("energytable") ) );
         
         }
         { //::SireFF::VectorPoint::usesMoleculesIn

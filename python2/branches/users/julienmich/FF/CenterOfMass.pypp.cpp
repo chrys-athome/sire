@@ -25,6 +25,8 @@ namespace bp = boost::python;
 
 #include "SireVol/errors.h"
 
+#include "energytable.h"
+
 #include "forcetable.h"
 
 #include "point.h"
@@ -49,6 +51,28 @@ void register_CenterOfMass_class(){
         CenterOfMass_exposer.def( bp::init< SireMol::MoleculeView const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molview"), bp::arg("map")=SireBase::PropertyMap() )) );
         CenterOfMass_exposer.def( bp::init< SireMol::Molecules const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecules"), bp::arg("map")=SireBase::PropertyMap() )) );
         CenterOfMass_exposer.def( bp::init< SireFF::CenterOfMass const & >(( bp::arg("other") )) );
+        { //::SireFF::CenterOfMass::addEnergy
+        
+            typedef bool ( ::SireFF::CenterOfMass::*addEnergy_function_type )( ::SireFF::MolEnergyTable &,double const & ) const;
+            addEnergy_function_type addEnergy_function_value( &::SireFF::CenterOfMass::addEnergy );
+            
+            CenterOfMass_exposer.def( 
+                "addEnergy"
+                , addEnergy_function_value
+                , ( bp::arg("molenergies"), bp::arg("energy") ) );
+        
+        }
+        { //::SireFF::CenterOfMass::addEnergy
+        
+            typedef bool ( ::SireFF::CenterOfMass::*addEnergy_function_type )( ::SireFF::EnergyTable &,double const & ) const;
+            addEnergy_function_type addEnergy_function_value( &::SireFF::CenterOfMass::addEnergy );
+            
+            CenterOfMass_exposer.def( 
+                "addEnergy"
+                , addEnergy_function_value
+                , ( bp::arg("energies"), bp::arg("energy") ) );
+        
+        }
         { //::SireFF::CenterOfMass::addForce
         
             typedef bool ( ::SireFF::CenterOfMass::*addForce_function_type )( ::SireFF::MolForceTable &,::SireMaths::Vector const & ) const;
@@ -241,6 +265,17 @@ void register_CenterOfMass_class(){
                 "usesMoleculesIn"
                 , usesMoleculesIn_function_value
                 , ( bp::arg("forcetable") ) );
+        
+        }
+        { //::SireFF::CenterOfMass::usesMoleculesIn
+        
+            typedef bool ( ::SireFF::CenterOfMass::*usesMoleculesIn_function_type )( ::SireFF::EnergyTable const & ) const;
+            usesMoleculesIn_function_type usesMoleculesIn_function_value( &::SireFF::CenterOfMass::usesMoleculesIn );
+            
+            CenterOfMass_exposer.def( 
+                "usesMoleculesIn"
+                , usesMoleculesIn_function_value
+                , ( bp::arg("energytable") ) );
         
         }
         { //::SireFF::CenterOfMass::usesMoleculesIn

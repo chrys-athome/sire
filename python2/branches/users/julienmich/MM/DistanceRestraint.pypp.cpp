@@ -18,6 +18,8 @@ namespace bp = boost::python;
 
 #include "SireCAS/values.h"
 
+#include "SireFF/energytable.h"
+
 #include "SireFF/forcetable.h"
 
 #include "SireID/index.h"
@@ -108,6 +110,28 @@ void register_DistanceRestraint_class(){
                 "differentiate"
                 , differentiate_function_value
                 , ( bp::arg("symbol") ) );
+        
+        }
+        { //::SireMM::DistanceRestraint::energy
+        
+            typedef void ( ::SireMM::DistanceRestraint::*energy_function_type )( ::SireFF::MolEnergyTable &,double ) const;
+            energy_function_type energy_function_value( &::SireMM::DistanceRestraint::energy );
+            
+            DistanceRestraint_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
+        
+        }
+        { //::SireMM::DistanceRestraint::energy
+        
+            typedef void ( ::SireMM::DistanceRestraint::*energy_function_type )( ::SireFF::EnergyTable &,double ) const;
+            energy_function_type energy_function_value( &::SireMM::DistanceRestraint::energy );
+            
+            DistanceRestraint_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
         
         }
         { //::SireMM::DistanceRestraint::force
@@ -285,6 +309,17 @@ void register_DistanceRestraint_class(){
                 "usesMoleculesIn"
                 , usesMoleculesIn_function_value
                 , ( bp::arg("forcetable") ) );
+        
+        }
+        { //::SireMM::DistanceRestraint::usesMoleculesIn
+        
+            typedef bool ( ::SireMM::DistanceRestraint::*usesMoleculesIn_function_type )( ::SireFF::EnergyTable const & ) const;
+            usesMoleculesIn_function_type usesMoleculesIn_function_value( &::SireMM::DistanceRestraint::usesMoleculesIn );
+            
+            DistanceRestraint_exposer.def( 
+                "usesMoleculesIn"
+                , usesMoleculesIn_function_value
+                , ( bp::arg("energytable") ) );
         
         }
         { //::SireMM::DistanceRestraint::usesMoleculesIn

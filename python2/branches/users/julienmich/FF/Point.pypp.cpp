@@ -26,6 +26,8 @@ namespace bp = boost::python;
 
 #include "SireVol/errors.h"
 
+#include "energytable.h"
+
 #include "forcetable.h"
 
 #include "point.h"
@@ -300,6 +302,17 @@ void register_Point_class(){
                 "usesMoleculesIn"
                 , usesMoleculesIn_function_value
                 , ( bp::arg("forcetable") ) );
+        
+        }
+        { //::SireFF::Point::usesMoleculesIn
+        
+            typedef bool ( ::SireFF::Point::*usesMoleculesIn_function_type )( ::SireFF::EnergyTable const & ) const;
+            usesMoleculesIn_function_type usesMoleculesIn_function_value( &::SireFF::Point::usesMoleculesIn );
+            
+            Point_exposer.def( 
+                "usesMoleculesIn"
+                , usesMoleculesIn_function_value
+                , ( bp::arg("energytable") ) );
         
         }
         { //::SireFF::Point::usesMoleculesIn

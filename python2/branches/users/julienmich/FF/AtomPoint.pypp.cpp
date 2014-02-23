@@ -26,6 +26,8 @@ namespace bp = boost::python;
 
 #include "SireVol/errors.h"
 
+#include "energytable.h"
+
 #include "forcetable.h"
 
 #include "point.h"
@@ -49,6 +51,28 @@ void register_AtomPoint_class(){
         AtomPoint_exposer.def( bp::init< >() );
         AtomPoint_exposer.def( bp::init< SireMol::Atom const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("atom"), bp::arg("map")=SireBase::PropertyMap() )) );
         AtomPoint_exposer.def( bp::init< SireFF::AtomPoint const & >(( bp::arg("other") )) );
+        { //::SireFF::AtomPoint::addEnergy
+        
+            typedef bool ( ::SireFF::AtomPoint::*addEnergy_function_type )( ::SireFF::MolEnergyTable &,double const & ) const;
+            addEnergy_function_type addEnergy_function_value( &::SireFF::AtomPoint::addEnergy );
+            
+            AtomPoint_exposer.def( 
+                "addEnergy"
+                , addEnergy_function_value
+                , ( bp::arg("molenergies"), bp::arg("energy") ) );
+        
+        }
+        { //::SireFF::AtomPoint::addEnergy
+        
+            typedef bool ( ::SireFF::AtomPoint::*addEnergy_function_type )( ::SireFF::EnergyTable &,double const & ) const;
+            addEnergy_function_type addEnergy_function_value( &::SireFF::AtomPoint::addEnergy );
+            
+            AtomPoint_exposer.def( 
+                "addEnergy"
+                , addEnergy_function_value
+                , ( bp::arg("energies"), bp::arg("energy") ) );
+        
+        }
         { //::SireFF::AtomPoint::addForce
         
             typedef bool ( ::SireFF::AtomPoint::*addForce_function_type )( ::SireFF::MolForceTable &,::SireMaths::Vector const & ) const;
@@ -241,6 +265,17 @@ void register_AtomPoint_class(){
                 "usesMoleculesIn"
                 , usesMoleculesIn_function_value
                 , ( bp::arg("forcetable") ) );
+        
+        }
+        { //::SireFF::AtomPoint::usesMoleculesIn
+        
+            typedef bool ( ::SireFF::AtomPoint::*usesMoleculesIn_function_type )( ::SireFF::EnergyTable const & ) const;
+            usesMoleculesIn_function_type usesMoleculesIn_function_value( &::SireFF::AtomPoint::usesMoleculesIn );
+            
+            AtomPoint_exposer.def( 
+                "usesMoleculesIn"
+                , usesMoleculesIn_function_value
+                , ( bp::arg("energytable") ) );
         
         }
         { //::SireFF::AtomPoint::usesMoleculesIn

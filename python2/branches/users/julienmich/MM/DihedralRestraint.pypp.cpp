@@ -18,6 +18,8 @@ namespace bp = boost::python;
 
 #include "SireCAS/values.h"
 
+#include "SireFF/energytable.h"
+
 #include "SireFF/forcetable.h"
 
 #include "SireID/index.h"
@@ -112,6 +114,28 @@ void register_DihedralRestraint_class(){
                 "differentiate"
                 , differentiate_function_value
                 , ( bp::arg("symbol") ) );
+        
+        }
+        { //::SireMM::DihedralRestraint::energy
+        
+            typedef void ( ::SireMM::DihedralRestraint::*energy_function_type )( ::SireFF::MolEnergyTable &,double ) const;
+            energy_function_type energy_function_value( &::SireMM::DihedralRestraint::energy );
+            
+            DihedralRestraint_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
+        
+        }
+        { //::SireMM::DihedralRestraint::energy
+        
+            typedef void ( ::SireMM::DihedralRestraint::*energy_function_type )( ::SireFF::EnergyTable &,double ) const;
+            energy_function_type energy_function_value( &::SireMM::DihedralRestraint::energy );
+            
+            DihedralRestraint_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
         
         }
         { //::SireMM::DihedralRestraint::force

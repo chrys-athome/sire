@@ -25,6 +25,8 @@ namespace bp = boost::python;
 
 #include "SireVol/errors.h"
 
+#include "energytable.h"
+
 #include "forcetable.h"
 
 #include "point.h"
@@ -49,6 +51,28 @@ void register_Center_class(){
         Center_exposer.def( bp::init< SireMol::MoleculeView const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molview"), bp::arg("map")=SireBase::PropertyMap() )) );
         Center_exposer.def( bp::init< SireMol::Molecules const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecules"), bp::arg("map")=SireBase::PropertyMap() )) );
         Center_exposer.def( bp::init< SireFF::Center const & >(( bp::arg("other") )) );
+        { //::SireFF::Center::addEnergy
+        
+            typedef bool ( ::SireFF::Center::*addEnergy_function_type )( ::SireFF::MolEnergyTable &,double const & ) const;
+            addEnergy_function_type addEnergy_function_value( &::SireFF::Center::addEnergy );
+            
+            Center_exposer.def( 
+                "addEnergy"
+                , addEnergy_function_value
+                , ( bp::arg("molenergies"), bp::arg("energy") ) );
+        
+        }
+        { //::SireFF::Center::addEnergy
+        
+            typedef bool ( ::SireFF::Center::*addEnergy_function_type )( ::SireFF::EnergyTable &,double const & ) const;
+            addEnergy_function_type addEnergy_function_value( &::SireFF::Center::addEnergy );
+            
+            Center_exposer.def( 
+                "addEnergy"
+                , addEnergy_function_value
+                , ( bp::arg("energies"), bp::arg("energy") ) );
+        
+        }
         { //::SireFF::Center::addForce
         
             typedef bool ( ::SireFF::Center::*addForce_function_type )( ::SireFF::MolForceTable &,::SireMaths::Vector const & ) const;
@@ -241,6 +265,17 @@ void register_Center_class(){
                 "usesMoleculesIn"
                 , usesMoleculesIn_function_value
                 , ( bp::arg("forcetable") ) );
+        
+        }
+        { //::SireFF::Center::usesMoleculesIn
+        
+            typedef bool ( ::SireFF::Center::*usesMoleculesIn_function_type )( ::SireFF::EnergyTable const & ) const;
+            usesMoleculesIn_function_type usesMoleculesIn_function_value( &::SireFF::Center::usesMoleculesIn );
+            
+            Center_exposer.def( 
+                "usesMoleculesIn"
+                , usesMoleculesIn_function_value
+                , ( bp::arg("energytable") ) );
         
         }
         { //::SireFF::Center::usesMoleculesIn

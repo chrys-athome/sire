@@ -18,6 +18,8 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "SireFF/energytable.h"
+
 #include "SireFF/forcetable.h"
 
 #include "SireMol/moleculedata.h"
@@ -46,6 +48,38 @@ void register_Restraint3D_class(){
         typedef bp::class_< SireMM::Restraint3D, bp::bases< SireMM::Restraint, SireBase::Property >, boost::noncopyable > Restraint3D_exposer_t;
         Restraint3D_exposer_t Restraint3D_exposer = Restraint3D_exposer_t( "Restraint3D", bp::no_init );
         bp::scope Restraint3D_scope( Restraint3D_exposer );
+        { //::SireMM::Restraint3D::energy
+        
+            typedef void ( ::SireMM::Restraint3D::*energy_function_type )( ::SireFF::MolEnergyTable &,double ) const;
+            energy_function_type energy_function_value( &::SireMM::Restraint3D::energy );
+            
+            Restraint3D_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
+        
+        }
+        { //::SireMM::Restraint3D::energy
+        
+            typedef void ( ::SireMM::Restraint3D::*energy_function_type )( ::SireFF::EnergyTable &,double ) const;
+            energy_function_type energy_function_value( &::SireMM::Restraint3D::energy );
+            
+            Restraint3D_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
+        
+        }
+        { //::SireMM::Restraint3D::energy
+        
+            typedef ::SireUnits::Dimension::MolarEnergy ( ::SireMM::Restraint3D::*energy_function_type )(  ) const;
+            energy_function_type energy_function_value( &::SireMM::Restraint3D::energy );
+            
+            Restraint3D_exposer.def( 
+                "energy"
+                , energy_function_value );
+        
+        }
         { //::SireMM::Restraint3D::force
         
             typedef void ( ::SireMM::Restraint3D::*force_function_type )( ::SireFF::MolForceTable &,double ) const;

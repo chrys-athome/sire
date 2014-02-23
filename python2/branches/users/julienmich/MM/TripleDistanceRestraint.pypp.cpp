@@ -18,6 +18,8 @@ namespace bp = boost::python;
 
 #include "SireCAS/values.h"
 
+#include "SireFF/energytable.h"
+
 #include "SireFF/forcetable.h"
 
 #include "SireID/index.h"
@@ -130,6 +132,28 @@ void register_TripleDistanceRestraint_class(){
                 "differentiate"
                 , differentiate_function_value
                 , ( bp::arg("symbol") ) );
+        
+        }
+        { //::SireMM::TripleDistanceRestraint::energy
+        
+            typedef void ( ::SireMM::TripleDistanceRestraint::*energy_function_type )( ::SireFF::MolEnergyTable &,double ) const;
+            energy_function_type energy_function_value( &::SireMM::TripleDistanceRestraint::energy );
+            
+            TripleDistanceRestraint_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
+        
+        }
+        { //::SireMM::TripleDistanceRestraint::energy
+        
+            typedef void ( ::SireMM::TripleDistanceRestraint::*energy_function_type )( ::SireFF::EnergyTable &,double ) const;
+            energy_function_type energy_function_value( &::SireMM::TripleDistanceRestraint::energy );
+            
+            TripleDistanceRestraint_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
         
         }
         { //::SireMM::TripleDistanceRestraint::force

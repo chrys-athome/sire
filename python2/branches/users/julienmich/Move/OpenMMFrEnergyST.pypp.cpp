@@ -195,7 +195,7 @@ void register_OpenMMFrEnergyST_class(){
         }
         { //::SireMove::OpenMMFrEnergyST::getCoulomb_power
         
-            typedef int ( ::SireMove::OpenMMFrEnergyST::*getCoulomb_power_function_type )(  ) ;
+            typedef float ( ::SireMove::OpenMMFrEnergyST::*getCoulomb_power_function_type )(  ) ;
             getCoulomb_power_function_type getCoulomb_power_function_value( &::SireMove::OpenMMFrEnergyST::getCoulomb_power );
             
             OpenMMFrEnergyST_exposer.def( 
@@ -241,6 +241,16 @@ void register_OpenMMFrEnergyST_class(){
             OpenMMFrEnergyST_exposer.def( 
                 "getDeviceIndex"
                 , getDeviceIndex_function_value );
+        
+        }
+        { //::SireMove::OpenMMFrEnergyST::getEnergies
+        
+            typedef ::QVector< double > ( ::SireMove::OpenMMFrEnergyST::*getEnergies_function_type )(  ) ;
+            getEnergies_function_type getEnergies_function_value( &::SireMove::OpenMMFrEnergyST::getEnergies );
+            
+            OpenMMFrEnergyST_exposer.def( 
+                "getEnergies"
+                , getEnergies_function_value );
         
         }
         { //::SireMove::OpenMMFrEnergyST::getEnergyFrequency
@@ -517,7 +527,7 @@ void register_OpenMMFrEnergyST_class(){
         }
         { //::SireMove::OpenMMFrEnergyST::setCoulomb_power
         
-            typedef void ( ::SireMove::OpenMMFrEnergyST::*setCoulomb_power_function_type )( int ) ;
+            typedef void ( ::SireMove::OpenMMFrEnergyST::*setCoulomb_power_function_type )( float ) ;
             setCoulomb_power_function_type setCoulomb_power_function_value( &::SireMove::OpenMMFrEnergyST::setCoulomb_power );
             
             OpenMMFrEnergyST_exposer.def( 

@@ -49,6 +49,26 @@ void register_RBWorkspaceJM_class(){
         bp::scope RBWorkspaceJM_scope( RBWorkspaceJM_exposer );
         RBWorkspaceJM_exposer.def( bp::init< SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
         RBWorkspaceJM_exposer.def( bp::init< SireMove::RBWorkspaceJM const & >(( bp::arg("other") )) );
+        { //::SireMove::RBWorkspaceJM::beadAtomIntCoords
+        
+            typedef ::QVector< QVector< SireMaths::Vector > > ( ::SireMove::RBWorkspaceJM::*beadAtomIntCoords_function_type )(  ) const;
+            beadAtomIntCoords_function_type beadAtomIntCoords_function_value( &::SireMove::RBWorkspaceJM::beadAtomIntCoords );
+            
+            RBWorkspaceJM_exposer.def( 
+                "beadAtomIntCoords"
+                , beadAtomIntCoords_function_value );
+        
+        }
+        { //::SireMove::RBWorkspaceJM::beadCoordinatesArray
+        
+            typedef ::QVector< SireMaths::Vector > ( ::SireMove::RBWorkspaceJM::*beadCoordinatesArray_function_type )(  ) const;
+            beadCoordinatesArray_function_type beadCoordinatesArray_function_value( &::SireMove::RBWorkspaceJM::beadCoordinatesArray );
+            
+            RBWorkspaceJM_exposer.def( 
+                "beadCoordinatesArray"
+                , beadCoordinatesArray_function_value );
+        
+        }
         { //::SireMove::RBWorkspaceJM::beadEnergiesArray
         
             typedef ::QVector< SireMaths::Vector > ( ::SireMove::RBWorkspaceJM::*beadEnergiesArray_function_type )(  ) const;
@@ -67,6 +87,26 @@ void register_RBWorkspaceJM_class(){
             RBWorkspaceJM_exposer.def( 
                 "beadForcesArray"
                 , beadForcesArray_function_value );
+        
+        }
+        { //::SireMove::RBWorkspaceJM::beadOrientationArray
+        
+            typedef ::QVector< SireMaths::Quaternion > ( ::SireMove::RBWorkspaceJM::*beadOrientationArray_function_type )(  ) const;
+            beadOrientationArray_function_type beadOrientationArray_function_value( &::SireMove::RBWorkspaceJM::beadOrientationArray );
+            
+            RBWorkspaceJM_exposer.def( 
+                "beadOrientationArray"
+                , beadOrientationArray_function_value );
+        
+        }
+        { //::SireMove::RBWorkspaceJM::beadToWorldMatrix
+        
+            typedef ::QVector< SireMaths::Matrix > ( ::SireMove::RBWorkspaceJM::*beadToWorldMatrix_function_type )(  ) const;
+            beadToWorldMatrix_function_type beadToWorldMatrix_function_value( &::SireMove::RBWorkspaceJM::beadToWorldMatrix );
+            
+            RBWorkspaceJM_exposer.def( 
+                "beadToWorldMatrix"
+                , beadToWorldMatrix_function_value );
         
         }
         { //::SireMove::RBWorkspaceJM::beadTorquesArray

@@ -69,6 +69,28 @@ void register_QMFF_class(){
                 , ( bp::arg("name") ) );
         
         }
+        { //::Squire::QMFF::energy
+        
+            typedef void ( ::Squire::QMFF::*energy_function_type )( ::SireFF::EnergyTable &,double ) ;
+            energy_function_type energy_function_value( &::Squire::QMFF::energy );
+            
+            QMFF_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
+        
+        }
+        { //::Squire::QMFF::energy
+        
+            typedef void ( ::Squire::QMFF::*energy_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
+            energy_function_type energy_function_value( &::Squire::QMFF::energy );
+            
+            QMFF_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("symbol"), bp::arg("scale_energy")=1 ) );
+        
+        }
         { //::Squire::QMFF::energyCommandFile
         
             typedef ::QString ( ::Squire::QMFF::*energyCommandFile_function_type )(  ) const;
@@ -77,28 +99,6 @@ void register_QMFF_class(){
             QMFF_exposer.def( 
                 "energyCommandFile"
                 , energyCommandFile_function_value );
-        
-        }
-        { //::Squire::QMFF::energyTable
-        
-            typedef void ( ::Squire::QMFF::*energyTable_function_type )( ::SireFF::EnergyTable &,double ) ;
-            energyTable_function_type energyTable_function_value( &::Squire::QMFF::energyTable );
-            
-            QMFF_exposer.def( 
-                "energyTable"
-                , energyTable_function_value
-                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
-        
-        }
-        { //::Squire::QMFF::energyTable
-        
-            typedef void ( ::Squire::QMFF::*energyTable_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
-            energyTable_function_type energyTable_function_value( &::Squire::QMFF::energyTable );
-            
-            QMFF_exposer.def( 
-                "energyTable"
-                , energyTable_function_value
-                , ( bp::arg("energytable"), bp::arg("symbol"), bp::arg("scale_energy")=1 ) );
         
         }
         { //::Squire::QMFF::field

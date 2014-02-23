@@ -25,6 +25,8 @@ namespace bp = boost::python;
 
 #include "SireVol/errors.h"
 
+#include "energytable.h"
+
 #include "forcetable.h"
 
 #include "point.h"
@@ -46,6 +48,28 @@ void register_PointRef_class(){
         PointRef_exposer.def( bp::init< SireMaths::Vector const & >(( bp::arg("point") )) );
         PointRef_exposer.def( bp::init< SireFF::Point const & >(( bp::arg("point") )) );
         PointRef_exposer.def( bp::init< SireFF::PointPtr const & >(( bp::arg("point") )) );
+        { //::SireFF::PointRef::addEnergy
+        
+            typedef bool ( ::SireFF::PointRef::*addEnergy_function_type )( ::SireFF::MolEnergyTable &,double const & ) const;
+            addEnergy_function_type addEnergy_function_value( &::SireFF::PointRef::addEnergy );
+            
+            PointRef_exposer.def( 
+                "addEnergy"
+                , addEnergy_function_value
+                , ( bp::arg("molenergies"), bp::arg("energy") ) );
+        
+        }
+        { //::SireFF::PointRef::addEnergy
+        
+            typedef bool ( ::SireFF::PointRef::*addEnergy_function_type )( ::SireFF::EnergyTable &,double const & ) const;
+            addEnergy_function_type addEnergy_function_value( &::SireFF::PointRef::addEnergy );
+            
+            PointRef_exposer.def( 
+                "addEnergy"
+                , addEnergy_function_value
+                , ( bp::arg("energies"), bp::arg("energy") ) );
+        
+        }
         { //::SireFF::PointRef::addForce
         
             typedef bool ( ::SireFF::PointRef::*addForce_function_type )( ::SireFF::MolForceTable &,::SireMaths::Vector const & ) const;

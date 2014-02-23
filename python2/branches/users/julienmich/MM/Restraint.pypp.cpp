@@ -17,6 +17,8 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "SireFF/energytable.h"
+
 #include "SireFF/forcetable.h"
 
 #include "SireMol/moleculedata.h"

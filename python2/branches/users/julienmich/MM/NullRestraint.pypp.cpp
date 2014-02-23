@@ -17,6 +17,8 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "SireFF/energytable.h"
+
 #include "SireFF/forcetable.h"
 
 #include "SireMol/moleculedata.h"
@@ -110,6 +112,28 @@ void register_NullRestraint_class(){
             NullRestraint_exposer.def( 
                 "energy"
                 , energy_function_value );
+        
+        }
+        { //::SireMM::NullRestraint::energy
+        
+            typedef void ( ::SireMM::NullRestraint::*energy_function_type )( ::SireFF::MolEnergyTable &,double ) const;
+            energy_function_type energy_function_value( &::SireMM::NullRestraint::energy );
+            
+            NullRestraint_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
+        
+        }
+        { //::SireMM::NullRestraint::energy
+        
+            typedef void ( ::SireMM::NullRestraint::*energy_function_type )( ::SireFF::EnergyTable &,double ) const;
+            energy_function_type energy_function_value( &::SireMM::NullRestraint::energy );
+            
+            NullRestraint_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
         
         }
         { //::SireMM::NullRestraint::force

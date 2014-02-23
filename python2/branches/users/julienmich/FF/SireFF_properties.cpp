@@ -31,6 +31,7 @@
 #include "SireStream/shareddatastream.h"
 #include "SireVol/aabox.h"
 #include "SireVol/errors.h"
+#include "energytable.h"
 #include "forcetable.h"
 #include "point.h"
 #include <boost/tuple/tuple.hpp>

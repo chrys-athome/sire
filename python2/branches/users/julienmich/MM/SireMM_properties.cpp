@@ -9,6 +9,7 @@
 #include "SireCAS/symbols.h"
 #include "SireCAS/values.h"
 #include "SireError/errors.h"
+#include "SireFF/energytable.h"
 #include "SireFF/forcetable.h"
 #include "SireMol/moleculedata.h"
 #include "SireMol/molecules.h"
