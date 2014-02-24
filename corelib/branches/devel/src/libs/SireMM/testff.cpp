@@ -92,7 +92,7 @@ public:
     CLJCalculator();
     CLJCalculator(const CLJFunction* const function,
                   const CLJBoxDistance* const distances,
-                  const QMap<CLJBoxIndex,CLJBoxPtr> &cljboxes,
+                  const QHash<CLJBoxIndex,CLJBoxPtr> &cljboxes,
                   const float coulomb_cutoff, const float lenj_cutoff,
                   double *coulomb_energy, double *lj_energy)
         : func(function), dists(distances), boxes(&cljboxes),
@@ -128,7 +128,7 @@ public:
 private:
     const CLJFunction* const func;
     const CLJBoxDistance* const dists;
-    const QMap<CLJBoxIndex,CLJBoxPtr>* boxes;
+    const QHash<CLJBoxIndex,CLJBoxPtr>* boxes;
     
     double *coul_nrg;
     double *lj_nrg;
@@ -173,8 +173,8 @@ void TestFF::calculateEnergy()
     
     QVector<CLJBoxDistance> dists;
 
-    const QMap<CLJBoxIndex,CLJBoxPtr> &boxes0 = cljboxes0.occupiedBoxes();
-    const QMap<CLJBoxIndex,CLJBoxPtr> &boxes1 = cljboxes1.occupiedBoxes();
+    const QHash<CLJBoxIndex,CLJBoxPtr> &boxes0 = cljboxes0.occupiedBoxes();
+    const QHash<CLJBoxIndex,CLJBoxPtr> &boxes1 = cljboxes1.occupiedBoxes();
     
     qDebug() << "inter energy";
 

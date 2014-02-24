@@ -150,6 +150,44 @@ void CLJBox::remove(const QList<int> &atoms)
     }
 }
 
+/** Remove the atom at index 'atom', returning the atom removed */
+CLJAtom CLJBox::take(int atom)
+{
+    if (atom < 0 or atom >= atms.count())
+    {
+        return CLJAtom();
+    }
+    
+    if (not atms.isDummy(atom))
+    {
+        CLJAtom atm = atms[atom];
+        atms.makeDummy(atom);
+        gaps.push(atom);
+        return atm;
+    }
+    else
+        return CLJAtom();
+}
+
+/** Remove the atom at index 'atom', returning the negative of the atom removed */
+CLJAtom CLJBox::takeNegative(int atom)
+{
+    if (atom < 0 or atom >= atms.count())
+    {
+        return CLJAtom();
+    }
+    
+    if (not atms.isDummy(atom))
+    {
+        CLJAtom atm = atms[atom];
+        atms.makeDummy(atom);
+        gaps.push(atom);
+        return atm.negate();
+    }
+    else
+        return CLJAtom();
+}
+
 /** Add the passed atoms into this box. This returns the indicies
     of each added atom (in the same order as they were added) */
 QVector<int> CLJBox::add(const CLJAtoms &atoms)
@@ -756,7 +794,7 @@ void CLJBoxes::constructFrom(const CLJAtoms &atoms0, const CLJAtoms &atoms1)
     
     const float inv_length = 1.0 / box_length;
     
-    QMap< CLJBoxIndex,QList<CLJAtom> > boxed_atoms;
+    QHash< CLJBoxIndex,QList<CLJAtom> > boxed_atoms;
     
     for (int i=0; i<atoms0.count(); ++i)
     {
@@ -785,7 +823,7 @@ void CLJBoxes::constructFrom(const CLJAtoms &atoms0, const CLJAtoms &atoms1)
     }
 
     //now build the CLJAtoms for each box
-    for (QMap< CLJBoxIndex,QList<CLJAtom> >::const_iterator it = boxed_atoms.constBegin();
+    for (QHash< CLJBoxIndex,QList<CLJAtom> >::const_iterator it = boxed_atoms.constBegin();
          it != boxed_atoms.constEnd();
          ++it)
     {
@@ -818,7 +856,7 @@ CLJBoxes CLJBoxes::operator+(const CLJBoxes &other) const
     
     CLJBoxes ret(*this);
     
-    for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = other.bxs.constBegin();
+    for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = other.bxs.constBegin();
          it != other.bxs.constEnd();
          ++it)
     {
@@ -911,7 +949,7 @@ CLJAtom CLJBoxes::operator[](const CLJBoxIndex &idx) const
     if (idx.isNull())
         return CLJAtom();
     
-    QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = bxs.constFind(idx.boxOnly());
+    QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = bxs.constFind(idx.boxOnly());
     
     if (it == bxs.constEnd())
         return CLJAtom();
@@ -984,7 +1022,7 @@ QVector<CLJBox> CLJBoxes::boxes() const
     
     int idx = 0;
     
-    for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = bxs.constBegin();
+    for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = bxs.constBegin();
          it != bxs.constEnd();
          ++it)
     {
@@ -1007,7 +1045,7 @@ QVector<AABox> CLJBoxes::boxDimensions() const
     
     int idx = 0;
     
-    for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = bxs.constBegin();
+    for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = bxs.constBegin();
          it != bxs.constEnd();
          ++it)
     {
@@ -1029,7 +1067,7 @@ int CLJBoxes::nAtoms() const
 {
     int n = 0;
     
-    for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = bxs.constBegin();
+    for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = bxs.constBegin();
          it != bxs.constEnd();
          ++it)
     {
@@ -1045,7 +1083,7 @@ CLJAtoms CLJBoxes::atoms() const
 {
     CLJAtoms atms;
     
-    for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = bxs.constBegin();
+    for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = bxs.constBegin();
          it != bxs.constEnd();
          ++it)
     {
@@ -1065,7 +1103,7 @@ QVector<CLJBoxIndex> CLJBoxes::add(const CLJAtoms &atoms)
 
     const float inv_length = 1.0 / box_length;
     
-    QMap< CLJBoxIndex, tuple< QList<CLJAtom>, QList<int> > > boxed_atoms;
+    QHash< CLJBoxIndex, tuple< QList<CLJAtom>, QList<int> > > boxed_atoms;
     
     for (int i=0; i<atoms.count(); ++i)
     {
@@ -1082,7 +1120,7 @@ QVector<CLJBoxIndex> CLJBoxes::add(const CLJAtoms &atoms)
     }
 
     //now build the CLJAtoms for each box
-    for (QMap< CLJBoxIndex, tuple< QList<CLJAtom>,QList<int> > >::iterator
+    for (QHash< CLJBoxIndex, tuple< QList<CLJAtom>,QList<int> > >::iterator
                                                 it = boxed_atoms.begin();
          it != boxed_atoms.end();
          ++it)
@@ -1126,9 +1164,9 @@ void CLJBoxes::remove(const QVector<CLJBoxIndex> &atoms)
     {
         if (atom.hasAtomIndex())
         {
-            QMap<CLJBoxIndex,CLJBoxPtr>::Iterator it = bxs.find( atom.boxOnly() );
+            QHash<CLJBoxIndex,CLJBoxPtr>::iterator it = bxs.find( atom.boxOnly() );
             
-            if (it != bxs.end())
+            if (it != bxs.constEnd())
             {
                 it.value().write().remove(atom.index());
             }
@@ -1136,12 +1174,67 @@ void CLJBoxes::remove(const QVector<CLJBoxIndex> &atoms)
     }
 }
 
+/** Remove the atoms at the specified indicies, returning the atoms that are
+    removed. This does a rapid remove, i.e. it just turns the specified atoms into
+    dummies (which may be overwritten by subsequent "add" operations). If you want
+    to completely remove the atoms, use "take" followed by "squeeze" */
+CLJAtoms CLJBoxes::take(const QVector<CLJBoxIndex> &atoms)
+{
+    QList<CLJAtom> atms;
+    
+    foreach (const CLJBoxIndex &atom, atoms)
+    {
+        if (atom.hasAtomIndex())
+        {
+            QHash<CLJBoxIndex,CLJBoxPtr>::iterator it = bxs.find( atom.boxOnly() );
+            
+            if (it != bxs.end())
+            {
+                CLJAtom cljatom = it.value().write().take(atom.index());
+                
+                if (not cljatom.isDummy())
+                    atms.append(cljatom);
+            }
+        }
+    }
+    
+    return CLJAtoms(atms);
+}
+
+/** Remove the atoms at the specified indicies, returning the negative of the atoms that are
+    removed. This is equivalent to CLJBoxes::take(atoms).negate().
+    This does a rapid remove, i.e. it just turns the specified atoms into
+    dummies (which may be overwritten by subsequent "add" operations). If you want
+    to completely remove the atoms, use "take" followed by "squeeze" */
+CLJAtoms CLJBoxes::takeNegative(const QVector<CLJBoxIndex> &atoms)
+{
+    QList<CLJAtom> atms;
+    
+    foreach (const CLJBoxIndex &atom, atoms)
+    {
+        if (atom.hasAtomIndex())
+        {
+            QHash<CLJBoxIndex,CLJBoxPtr>::iterator it = bxs.find( atom.boxOnly() );
+            
+            if (it != bxs.end())
+            {
+                CLJAtom cljatom = it.value().write().takeNegative(atom.index());
+                
+                if (not cljatom.isDummy())
+                    atms.append(cljatom);
+            }
+        }
+    }
+    
+    return CLJAtoms(atms);
+}
+
 /** Return a copy of the boxes where all of the CLJAtoms objects have been squeezed */
 CLJBoxes CLJBoxes::squeeze() const
 {
     CLJBoxes ret(*this);
     
-    for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = bxs.constBegin();
+    for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = bxs.constBegin();
          it != bxs.constEnd();
          ++it)
     {
@@ -1261,13 +1354,13 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
     
     if (space.isCartesian() and not space.isPeriodic())
     {
-        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
+        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
              it != boxes.bxs.constEnd();
              ++it)
         {
             const CLJBoxIndex &box0 = it.key();
             
-            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
+            for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
                  it2 != boxes.bxs.constEnd();
                  ++it2)
             {
@@ -1282,13 +1375,13 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
     {
         const Length l(boxes.box_length);
         
-        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
+        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
              it != boxes.bxs.constEnd();
              ++it)
         {
             const AABox box0 = it.key().box(l);
         
-            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
+            for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
                  it2 != boxes.bxs.constEnd();
                  ++it2)
             {
@@ -1332,13 +1425,13 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
             const float box_cutoff = cutoff.value() / boxes.box_length;
             const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
             
-            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
+            for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
                  it != boxes.bxs.constEnd();
                  ++it)
             {
                 const CLJBoxIndex &box0 = it.key();
                 
-                for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
+                for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
                      it2 != boxes.bxs.constEnd();
                      ++it2)
                 {
@@ -1401,13 +1494,13 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
             const float box_cutoff = cutoff.value() / boxes.box_length;
             const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
             
-            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
+            for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
                  it != boxes.bxs.constEnd();
                  ++it)
             {
                 const CLJBoxIndex &box0 = it.key();
                 
-                for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
+                for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
                      it2 != boxes.bxs.constEnd();
                      ++it2)
                 {
@@ -1431,13 +1524,13 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
     {
         const Length l(boxes.box_length);
         
-        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
+        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes.bxs.constBegin();
              it != boxes.bxs.constEnd();
              ++it)
         {
             const AABox box0 = it.key().box(l);
         
-            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
+            for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = it;
                  it2 != boxes.bxs.constEnd();
                  ++it2)
             {
@@ -1468,13 +1561,13 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
     if (space.isCartesian() and (boxes0.box_length == boxes1.box_length)
         and not space.isPeriodic())
     {
-        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
+        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
              it != boxes0.bxs.constEnd();
              ++it)
         {
             const CLJBoxIndex &box0 = it.key();
             
-            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
+            for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
                  it2 != boxes1.bxs.constEnd();
                  ++it2)
             {
@@ -1490,13 +1583,13 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
         const Length l0(boxes0.box_length);
         const Length l1(boxes1.box_length);
         
-        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
+        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
              it != boxes0.bxs.constEnd();
              ++it)
         {
             const AABox box0 = it.key().box(l0);
             
-            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
+            for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
                  it2 != boxes1.bxs.constEnd();
                  ++it2)
             {
@@ -1539,13 +1632,13 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
             const float half_box_y = 0.5 * box_y;
             const float half_box_z = 0.5 * box_z;
             
-            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
+            for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
                  it != boxes0.bxs.constEnd();
                  ++it)
             {
                 const CLJBoxIndex &box0 = it.key();
                 
-                for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
+                for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
                      it2 != boxes1.bxs.constEnd();
                      ++it2)
                 {
@@ -1608,13 +1701,13 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
             const float box_cutoff = cutoff.value() / boxes0.box_length;
             const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
             
-            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
+            for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
                  it != boxes0.bxs.constEnd();
                  ++it)
             {
                 const CLJBoxIndex &box0 = it.key();
                 
-                for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
+                for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
                      it2 != boxes1.bxs.constEnd();
                      ++it2)
                 {
@@ -1639,13 +1732,13 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
         const Length l0(boxes0.box_length);
         const Length l1(boxes1.box_length);
         
-        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
+        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = boxes0.bxs.constBegin();
              it != boxes0.bxs.constEnd();
              ++it)
         {
             const AABox box0 = it.key().box(l0);
             
-            for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
+            for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it2 = boxes1.bxs.constBegin();
                  it2 != boxes1.bxs.constEnd();
                  ++it2)
             {

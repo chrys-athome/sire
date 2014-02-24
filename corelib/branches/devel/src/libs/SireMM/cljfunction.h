@@ -361,6 +361,8 @@ public:
     
     static const char* typeName();
 
+    QString toString() const;
+
     Properties properties() const;
     CLJFunctionPtr setProperty(const QString &name, const Property &value) const;
     PropertyPtr property(const QString &name) const;

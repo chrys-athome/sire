@@ -31,7 +31,7 @@
 
 #include "SireMM/cljatoms.h"
 
-#include <QMap>
+#include <QHash>
 #include <QSharedDataPointer>
 #include <QSharedData>
 #include <QStack>
@@ -126,6 +126,9 @@ public:
     void remove(int atom);
     void remove(const QList<int> &atoms);
 
+    CLJAtom take(int atom);
+    CLJAtom takeNegative(int atom);
+
 private:
     void findGaps();
 
@@ -208,6 +211,8 @@ public:
     SireVol::AABox box(Length box_length) const;
 
     CLJBoxIndex boxOnly() const;
+
+    uint hash() const;
 
     static CLJBoxIndex null();
 
@@ -331,7 +336,7 @@ public:
     
     QVector<CLJBoxIndex> occupiedBoxIndicies() const;
     
-    const QMap<CLJBoxIndex,CLJBoxPtr>& occupiedBoxes() const;
+    const QHash<CLJBoxIndex,CLJBoxPtr>& occupiedBoxes() const;
     
     CLJBox boxAt(const CLJBoxIndex &index) const;
     SireVol::AABox boxDimensionsAt(const CLJBoxIndex &index) const;
@@ -356,6 +361,9 @@ public:
 
     void remove(const QVector<CLJBoxIndex> &atoms);
     
+    CLJAtoms take(const QVector<CLJBoxIndex> &atoms);
+    CLJAtoms takeNegative(const QVector<CLJBoxIndex> &atoms);
+    
     CLJAtoms atoms() const;
     
     Length length() const;
@@ -370,7 +378,7 @@ private:
     void constructFrom(const CLJAtoms &atoms0, const CLJAtoms &atoms1);
 
     /** All of the boxes that contain atoms */
-    QMap<CLJBoxIndex,CLJBoxPtr> bxs;
+    QHash<CLJBoxIndex,CLJBoxPtr> bxs;
     
     /** The size of the box */
     float box_length;
@@ -400,6 +408,17 @@ inline qint16 CLJBoxIndex::j() const
 inline qint16 CLJBoxIndex::k() const
 {
     return v.index.kk;
+}
+
+/** Return a hash of the box index (used for QHash) */
+inline uint CLJBoxIndex::hash() const
+{
+    return v.val;
+}
+
+inline uint qHash(const CLJBoxIndex &index)
+{
+    return index.hash();
 }
 
 /** Return the (optionally supplied) index of a particular atom in the box */
@@ -463,7 +482,7 @@ inline const CLJAtoms& CLJBox::atoms() const
 }
 
 /** Return the set of all occupied boxes, indexed by their CLJBoxIndex */
-inline const QMap<CLJBoxIndex,CLJBoxPtr>& CLJBoxes::occupiedBoxes() const
+inline const QHash<CLJBoxIndex,CLJBoxPtr>& CLJBoxes::occupiedBoxes() const
 {
     return bxs;
 }

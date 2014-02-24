@@ -196,7 +196,8 @@ const char* CLJFunction::typeName()
 /** Comparison operator */
 bool CLJFunction::operator==(const CLJFunction &other) const
 {
-    return use_arithmetic == other.use_arithmetic and Property::operator==(other);
+    return use_arithmetic == other.use_arithmetic and
+           spce == other.spce and Property::operator==(other);
 }
 
 /** Return the null (do nothing) function */
@@ -228,6 +229,8 @@ Properties CLJFunction::properties() const
 CLJFunctionPtr CLJFunction::setProperty(const QString &name, const Property &value) const
 {
     CLJFunctionPtr ret(*this);
+
+    qDebug() << "setProperty(" << name << "," << value.toString() << ")";
 
     if (name == "space")
     {
@@ -1194,6 +1197,13 @@ bool CLJCutoffFunction::operator==(const CLJCutoffFunction &other) const
 const char* CLJCutoffFunction::typeName()
 {
     return "SireMM::CLJCutoffFunction";
+}
+
+QString CLJCutoffFunction::toString() const
+{
+    return QObject::tr("%1( coulombCutoff() = %2 A, ljCutoff() = %3 A, space() = %4 )")
+                .arg(this->what())
+                .arg(coul_cutoff).arg(lj_cutoff).arg(this->space().toString());
 }
 
 /** Return the properties that can be set in this function */

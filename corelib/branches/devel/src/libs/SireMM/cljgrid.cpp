@@ -520,7 +520,8 @@ void CLJGrid::calculateGrid()
         const float lj_cutoff = cljfunc->ljCutoff();
         const float coul_cutoff = cljfunc->coulombCutoff();
 
-        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = cljboxes.occupiedBoxes().constBegin();
+        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator
+                                    it = cljboxes.occupiedBoxes().constBegin();
              it != cljboxes.occupiedBoxes().constEnd();
              ++it)
         {
@@ -607,7 +608,7 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
         const MultiInt m_dummy_id(dummy_id);
         const MultiInt m_grid_id(grid_id);
 
-        for (QMap<CLJBoxIndex,CLJBoxPtr>::const_iterator it = atoms.occupiedBoxes().constBegin();
+        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = atoms.occupiedBoxes().constBegin();
              it != atoms.occupiedBoxes().constEnd();
              ++it)
         {

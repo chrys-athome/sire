@@ -117,6 +117,8 @@ public:
     bool isDummy() const;
     bool isNull() const;
     
+    CLJAtom negate() const;
+    
 private:
     /** The coordinates of the atom */
     float x;

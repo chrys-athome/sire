@@ -33,6 +33,8 @@
 #include "cljgrid.h"
 #include "cljfunction.h"
 
+#include "SireBase/chunkedhash.hpp"
+
 #include "SireFF/g1ff.h"
 
 SIRE_BEGIN_HEADER
@@ -50,6 +52,11 @@ namespace SireMM
 
 using SireBase::Property;
 using SireBase::Properties;
+
+namespace detail
+{
+    class InterFFData;
+}
 
 /** This is a forcefield that calculates the intermolecular coulomb
     and Lennard Jones (LJ) energy of all contained molecule views.
@@ -117,10 +124,11 @@ public:
     void mustNowRecalculateFromScratch();    
 
 private:
+    void mustNowReallyRecalculateFromScratch();
+
     void recalculateEnergy();
     void rebuildProps();
     
-    void reboxAtoms();
     void reboxChangedAtoms();
     
     void reextractAtoms();
@@ -142,33 +150,20 @@ private:
 
     void _pvt_updateName();
 
-    /** The CLJAtoms of all molecules in this forcefield, organised
-        by molecule number, together with their indicies into cljboxes*/
-    QHash<SireMol::MolNum,QPair<QVector<CLJBoxIndex>,CLJAtoms> > cljatoms;
+    /** The locations of the atoms of all of the molecules in the boxes */
+    SireBase::ChunkedHash< SireMol::MolNum,QVector<CLJBoxIndex> > atom_locs;
 
     /** All of the changed atoms whose energy is yet to be calculated */
     CLJBoxes changed_atoms;
 
     /** The molecule numbers of changed atoms */
-    QList<SireMol::MolNum> changed_mols;
-
-    /** The property map used to add each molecule */
-    QHash<SireMol::MolNum,PropertyMap> maps_for_mol;
-
-    /** The function used to calculate energies */
-    CLJFunctionPtr cljfunc;
+    QHash<SireMol::MolNum,CLJAtoms> changed_mols;
 
     /** All of the boxed-up atoms */
     CLJBoxes cljboxes;
-    
-    /** All of the fixed atoms */
-    CLJGrid fixed_atoms;
 
-    /** The energy components available for this forcefield */
-    CLJComponent cljcomps;
-    
-    /** All of the properties in this forcefield */
-    Properties props;
+    /** Implicitly shared pointer to the (mostly) const data for this forcefield */
+    QSharedDataPointer<detail::InterFFData> d;
 };
 
 }

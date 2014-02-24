@@ -327,6 +327,16 @@ qint32 CLJAtom::ID() const
     return idnum;
 }
 
+/** Return the negative of this atom - this returns a copy where
+    the reduced charge and reduced epsilon values have been negated */
+CLJAtom CLJAtom::negate() const
+{
+    CLJAtom ret(*this);
+    ret.eps *= -1;
+    ret.chg *= -1;
+    return ret;
+}
+
 ///////
 /////// Implementation of CLJAtoms
 ///////

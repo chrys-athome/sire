@@ -51,6 +51,45 @@ using namespace SireFF;
 using namespace SireBase;
 using namespace SireStream;
 
+namespace SireMM
+{
+    namespace detail
+    {
+        class InterFFData : public QSharedData
+        {
+        public:
+            InterFFData() : QSharedData()
+            {}
+            
+            InterFFData(const InterFFData &other)
+                 : maps_for_mol(other.maps_for_mol),
+                   cljfunc(other.cljfunc),
+                   fixed_atoms(other.fixed_atoms),
+                   cljcomps(other.cljcomps),
+                   props(other.props)
+            {}
+            
+            ~InterFFData()
+            {}
+            
+            /** The property map used to add each molecule */
+            QHash<SireMol::MolNum,PropertyMap> maps_for_mol;
+
+            /** The function used to calculate energies */
+            CLJFunctionPtr cljfunc;
+            
+            /** All of the fixed atoms */
+            CLJGrid fixed_atoms;
+
+            /** The energy components available for this forcefield */
+            CLJComponent cljcomps;
+            
+            /** All of the properties in this forcefield */
+            Properties props;
+        };
+    }
+}
+
 static RegisterMetaType<InterFF> r_interff;
 
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const InterFF &interff)
@@ -83,6 +122,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, InterFF &interff)
 /** Constructor */
 InterFF::InterFF() : ConcreteProperty<InterFF,G1FF>()
 {
+    d = new detail::InterFFData();
     this->_pvt_updateName();
     this->setCLJFunction( CLJShiftFunction::defaultShiftFunction() );
 }
@@ -90,6 +130,7 @@ InterFF::InterFF() : ConcreteProperty<InterFF,G1FF>()
 /** Construct, specifying the name of the forcefield */
 InterFF::InterFF(const QString &name) : ConcreteProperty<InterFF, G1FF>()
 {
+    d = new detail::InterFFData();
     G1FF::setName(name);
     this->setCLJFunction( CLJShiftFunction::defaultShiftFunction() );
 }
@@ -97,10 +138,8 @@ InterFF::InterFF(const QString &name) : ConcreteProperty<InterFF, G1FF>()
 /** Copy constructor */
 InterFF::InterFF(const InterFF &other)
         : ConcreteProperty<InterFF,G1FF>(other),
-          cljatoms(other.cljatoms), changed_atoms(other.changed_atoms),
-          changed_mols(other.changed_mols), maps_for_mol(other.maps_for_mol),
-          cljfunc(other.cljfunc), cljboxes(other.cljboxes), fixed_atoms(other.fixed_atoms),
-          cljcomps(other.cljcomps), props(other.props)
+          atom_locs(other.atom_locs), changed_atoms(other.changed_atoms),
+          changed_mols(other.changed_mols), cljboxes(other.cljboxes), d(other.d)
 {}
 
 /** Destructor */
@@ -110,11 +149,12 @@ InterFF::~InterFF()
 /** Function used to set the CLJFunction used to calculate the energy */
 void InterFF::setCLJFunction(const CLJFunction &func)
 {
-    if (not cljfunc.read().equals(func))
+    if (not d.constData()->cljfunc.read().equals(func))
     {
-        fixed_atoms.setCLJFunction(func);
-        cljfunc = func;
+        d->fixed_atoms.setCLJFunction(func);
+        d->cljfunc = func;
         rebuildProps();
+        qDebug() << this->properties().toString();
         this->mustNowRecalculateFromScratch();
     }
 }
@@ -122,13 +162,13 @@ void InterFF::setCLJFunction(const CLJFunction &func)
 /** Return the function used to calculate the energy */
 const CLJFunction& InterFF::cljFunction() const
 {
-    return cljfunc.read();
+    return d.constData()->cljfunc.read();
 }
 
 /** Internal function called when the name of the forcefield changes */
 void InterFF::_pvt_updateName()
 {
-    cljcomps = CLJComponent( this->name() );
+    d->cljcomps = CLJComponent( this->name() );
     G1FF::_pvt_updateName();
 }
 
@@ -147,15 +187,11 @@ InterFF& InterFF::operator=(const InterFF &other)
 {
     if (this != &other)
     {
-        cljatoms = other.cljatoms;
+        atom_locs = other.atom_locs;
         changed_atoms = other.changed_atoms;
         changed_mols = other.changed_mols;
-        maps_for_mol = other.maps_for_mol;
-        cljfunc = other.cljfunc;
         cljboxes = other.cljboxes;
-        fixed_atoms = other.fixed_atoms;
-        cljcomps = other.cljcomps;
-        props = other.props;
+        d = other.d;
         G1FF::operator=(other);
     }
     
@@ -166,7 +202,7 @@ InterFF& InterFF::operator=(const InterFF &other)
 bool InterFF::operator==(const InterFF &other) const
 {
     return (this == &other) or
-           (G1FF::operator==(other) and fixed_atoms == other.fixed_atoms);
+           (G1FF::operator==(other) and d->fixed_atoms == other.d->fixed_atoms);
 }
 
 /** Comparison operator */
@@ -183,18 +219,18 @@ InterFF* InterFF::clone() const
 /** Return the energy components of this forcefield */
 const CLJComponent& InterFF::components() const
 {
-    return cljcomps;
+    return d->cljcomps;
 }
 
 /** Internal function used to rebuild the properties object that 
     stores all of the properties of this forcefield */
 void InterFF::rebuildProps()
 {
-    props = cljfunc.read().properties();
-    props.setProperty("cljFunction", cljfunc);
-    props.setProperty("useGrid", BooleanProperty(fixed_atoms.usesGrid()));
-    props.setProperty("gridBuffer", LengthProperty(fixed_atoms.gridBuffer()));
-    props.setProperty("gridSpacing", LengthProperty(fixed_atoms.gridSpacing()));
+    d->props = d->cljfunc.read().properties();
+    d->props.setProperty("cljFunction", d->cljfunc);
+    d->props.setProperty("useGrid", BooleanProperty(d->fixed_atoms.usesGrid()));
+    d->props.setProperty("gridBuffer", LengthProperty(d->fixed_atoms.gridBuffer()));
+    d->props.setProperty("gridSpacing", LengthProperty(d->fixed_atoms.gridSpacing()));
 }
 
 /** Set the forcefield property called 'name' to the value 'property' */
@@ -202,7 +238,7 @@ bool InterFF::setProperty(const QString &name, const Property &property)
 {
     if (name == "cljFunction")
     {
-        if (not cljfunc.read().equals(property))
+        if (not d.constData()->cljfunc.read().equals(property))
         {
             this->setCLJFunction(property.asA<CLJFunction>());
             return true;
@@ -214,10 +250,10 @@ bool InterFF::setProperty(const QString &name, const Property &property)
     {
         bool use_grid = property.asA<BooleanProperty>().value();
         
-        if (use_grid != fixed_atoms.usesGrid())
+        if (use_grid != d.constData()->fixed_atoms.usesGrid())
         {
-            fixed_atoms.setUseGrid(use_grid);
-            props.setProperty("useGrid", BooleanProperty(use_grid));
+            d->fixed_atoms.setUseGrid(use_grid);
+            d->props.setProperty("useGrid", BooleanProperty(use_grid));
             return true;
         }
         else
@@ -227,10 +263,10 @@ bool InterFF::setProperty(const QString &name, const Property &property)
     {
         Length buffer = property.asA<LengthProperty>().value();
         
-        if (buffer != fixed_atoms.gridBuffer())
+        if (buffer != d.constData()->fixed_atoms.gridBuffer())
         {
-            fixed_atoms.setGridBuffer(buffer);
-            props.setProperty("gridBuffer", property);
+            d->fixed_atoms.setGridBuffer(buffer);
+            d->props.setProperty("gridBuffer", property);
             return true;
         }
         else
@@ -240,10 +276,10 @@ bool InterFF::setProperty(const QString &name, const Property &property)
     {
         Length spacing = property.asA<LengthProperty>().value();
         
-        if (spacing != fixed_atoms.gridSpacing())
+        if (spacing != d.constData()->fixed_atoms.gridSpacing())
         {
-            fixed_atoms.setGridSpacing(spacing);
-            props.setProperty("gridSpacing", property);
+            d->fixed_atoms.setGridSpacing(spacing);
+            d->props.setProperty("gridSpacing", property);
             return true;
         }
         else
@@ -251,12 +287,12 @@ bool InterFF::setProperty(const QString &name, const Property &property)
     }
     else
     {
-        PropertyPtr old_prop = cljfunc.read().property(name);
+        PropertyPtr old_prop = d.constData()->cljfunc.read().property(name);
     
         if (not property.equals(old_prop.read()))
         {
             //need to set the property
-            this->setCLJFunction( cljfunc.read().setProperty(name, property) );
+            this->setCLJFunction( d.constData()->cljfunc.read().setProperty(name, property) );
             return true;
         }
         else
@@ -267,25 +303,25 @@ bool InterFF::setProperty(const QString &name, const Property &property)
 /** Return the value of the forcefield property with name 'name' */
 const Property& InterFF::property(const QString &name) const
 {
-    return props.property(name);
+    return d->props.property(name);
 }
 
 /** Return whether or not this forcefield contains the property 'property' */
 bool InterFF::containsProperty(const QString &name) const
 {
-    return props.hasProperty(name);
+    return d->props.hasProperty(name);
 }
 
 /** Return all of the properties of this function */
 const Properties& InterFF::properties() const
 {
-    return props;
+    return d->props;
 }
 
 /** Add the passed atoms as fixed atoms to the forcefield */
 void InterFF::addFixedAtoms(const CLJAtoms &atoms)
 {
-    fixed_atoms.addFixedAtoms(atoms);
+    d->fixed_atoms.addFixedAtoms(atoms);
     this->mustNowRecalculateFromScratch();
 }
 
@@ -304,7 +340,7 @@ void InterFF::addFixedAtoms(const Molecules &molecules, const PropertyMap &map)
 /** Set the fixed atoms equal to 'atoms' */
 void InterFF::setFixedAtoms(const CLJAtoms &atoms)
 {
-    fixed_atoms.setFixedAtoms(atoms);
+    d->fixed_atoms.setFixedAtoms(atoms);
     this->mustNowRecalculateFromScratch();
 }
 
@@ -323,11 +359,11 @@ void InterFF::setFixedAtoms(const Molecules &molecules, const PropertyMap &map)
 /** Set whether or not a grid is used to optimise energy calculations with the fixed atoms */
 void InterFF::setUseGrid(bool on)
 {
-    if (fixed_atoms.usesGrid() != on)
+    if (d.constData()->fixed_atoms.usesGrid() != on)
     {
-        fixed_atoms.setUseGrid(on);
+        d->fixed_atoms.setUseGrid(on);
         this->mustNowRecalculateFromScratch();
-        props.setProperty("useGrid", BooleanProperty(on));
+        d->props.setProperty("useGrid", BooleanProperty(on));
     }
 }
 
@@ -346,7 +382,7 @@ void InterFF::disableGrid()
 /** Return whether or not the grid is used */
 bool InterFF::usesGrid() const
 {
-    return fixed_atoms.usesGrid();
+    return d->fixed_atoms.usesGrid();
 }
 
 /** Set the buffer used when using a grid. This is the distance
@@ -354,10 +390,10 @@ bool InterFF::usesGrid() const
     dimension of the grid */
 void InterFF::setGridBuffer(Length buffer)
 {
-    if (fixed_atoms.gridBuffer() != buffer)
+    if (d.constData()->fixed_atoms.gridBuffer() != buffer)
     {
-        fixed_atoms.setGridBuffer(buffer);
-        props.setProperty("gridBuffer", LengthProperty(buffer));
+        d->fixed_atoms.setGridBuffer(buffer);
+        d->props.setProperty("gridBuffer", LengthProperty(buffer));
         
         if (usesGrid())
             this->mustNowRecalculateFromScratch();
@@ -367,16 +403,16 @@ void InterFF::setGridBuffer(Length buffer)
 /** Return the buffer used when working out the dimension of the grid */
 Length InterFF::gridBuffer() const
 {
-    return fixed_atoms.gridBuffer();
+    return d->fixed_atoms.gridBuffer();
 }
 
 /** Set the spacing between grid points */
 void InterFF::setGridSpacing(Length spacing)
 {
-    if (fixed_atoms.gridSpacing() != spacing)
+    if (d.constData()->fixed_atoms.gridSpacing() != spacing)
     {
-        fixed_atoms.setGridSpacing(spacing);
-        props.setProperty("gridSpacing", LengthProperty(spacing));
+        d->fixed_atoms.setGridSpacing(spacing);
+        d->props.setProperty("gridSpacing", LengthProperty(spacing));
         
         if (usesGrid())
             this->mustNowRecalculateFromScratch();
@@ -386,89 +422,64 @@ void InterFF::setGridSpacing(Length spacing)
 /** Return spacing between grid points */
 Length InterFF::gridSpacing() const
 {
-    return fixed_atoms.gridSpacing();
+    return d->fixed_atoms.gridSpacing();
 }
 
 /** Return the grid used to calculate the energy with fixed atoms. This will
     only be set after the first energy calculation that uses the grid */
 GridInfo InterFF::grid() const
 {
-    return fixed_atoms.grid();
-}
-
-/** Internal function used to rebox atoms */
-void InterFF::reboxAtoms()
-{
-    //rebox everything
-    QElapsedTimer t;
-    t.start();
-    
-    cljboxes = CLJBoxes();
-    for (QHash<MolNum,QPair<QVector<CLJBoxIndex>,CLJAtoms> >::iterator it = cljatoms.begin();
-         it != cljatoms.end();
-         ++it)
-    {
-        it.value().first = cljboxes.add(it.value().second);
-    }
-    
-    qint64 ns = t.nsecsElapsed();
-    
-    qDebug() << "Reboxing took" << (0.000001*ns) << "ms";
+    return d->fixed_atoms.grid();
 }
 
 /** Internal function used to rebox changed atoms */
 void InterFF::reboxChangedAtoms()
 {
-    QElapsedTimer t;
-    t.start();
-
-    foreach (const MolNum &molnum, changed_mols)
+    for (QHash<MolNum,CLJAtoms>::const_iterator it = changed_mols.constBegin();
+         it != changed_mols.constEnd();
+         ++it)
     {
-        QHash<MolNum,QPair<QVector<CLJBoxIndex>,CLJAtoms> >::iterator it = cljatoms.find(molnum);
+        ChunkedHash< MolNum,QVector<CLJBoxIndex> >::iterator it2 = atom_locs.find(it.key());
         
-        if (it == cljatoms.end())
+        if (it2 == atom_locs.end())
             throw SireError::program_bug( QObject::tr(
                     "How can the changed molecule %1 be missing from cljatoms?")
-                        .arg(molnum.value()), CODELOC );
+                        .arg(it.key()), CODELOC );
         
-        it.value().first = cljboxes.add(it.value().second);
+        it2.value() = cljboxes.add(it.value());
     }
     
     changed_atoms = CLJBoxes();
     changed_mols.clear();
-    
-    qint64 ns = t.nsecsElapsed();
-    
-    qDebug() << "Reboxing the molecules took" << (0.000001*ns) << "ms";
 }
 
 /** Internal function used to regrid the atoms */
 void InterFF::regridAtoms()
 {
-    if (usesGrid() and not fixed_atoms.isEmpty())
+    if (usesGrid() and not d.constData()->fixed_atoms.isEmpty())
     {
-        fixed_atoms.setGridDimensions( cljboxes.atoms() );
+        d->fixed_atoms.setGridDimensions( cljboxes.atoms() );
     }
 }
 
 /** Signal that this forcefield must now be recalculated from scratch */
 void InterFF::mustNowRecalculateFromScratch()
 {
-    if (not cljatoms.isEmpty())
+    if (not changed_mols.isEmpty())
     {
-        changed_atoms = CLJBoxes();
-        changed_mols.clear();
-        cljatoms.clear();
-        
-        if (fixed_atoms.usesGrid())
-        {
-            //turn the grid off, then on again - this clears it
-            fixed_atoms.disableGrid();
-            fixed_atoms.enableGrid();
-        }
+        reboxChangedAtoms();
     }
     
-    FF::setDirty();
+    this->setDirty();
+}
+
+/** Signal to completely do everything from scratch */
+void InterFF::mustNowReallyRecalculateFromScratch()
+{
+    atom_locs.clear();
+    changed_atoms = CLJBoxes();
+    changed_mols.clear();
+    mustNowRecalculateFromScratch();
 }
 
 /** Re-extract all of the atoms - this also reboxes them all */
@@ -479,13 +490,22 @@ void InterFF::reextractAtoms()
 
     mustNowRecalculateFromScratch();
     
-    foreach (const MolNum &molnum, this->molNums())
+    //we know that we are only a single molecule group
+    const Molecules &mols = this->group( MGIdx(0) ).molecules();
+    
+    atom_locs.clear();
+    atom_locs.reserve(mols.nMolecules());
+    cljboxes = CLJBoxes();
+    
+    for (Molecules::const_iterator it = mols.constBegin();
+         it != mols.constEnd();
+         ++it)
     {
-        CLJAtoms mol( this->operator[](molnum), maps_for_mol.value(molnum,PropertyMap()) );
+        CLJAtoms mol( it.value(), d.constData()->maps_for_mol.value(it.key(),PropertyMap()) );
         
         QVector<CLJBoxIndex> idxs = cljboxes.add(mol);
         
-        cljatoms.insert(molnum, QPair<QVector<CLJBoxIndex>,CLJAtoms>(idxs,mol));
+        atom_locs.insert(it.key(), idxs);
     }
     
     qint64 ns = t.nsecsElapsed();
@@ -496,54 +516,50 @@ void InterFF::reextractAtoms()
 /** Recalculate the energy of this forcefield */
 void InterFF::recalculateEnergy()
 {
-    if (cljboxes.isEmpty())
+    if (atom_locs.isEmpty())
     {
         //everything needs to be recalculated from scratch
-        if (cljatoms.isEmpty())
-        {
-            //extract all of the atoms
-            reextractAtoms();
+        //extract all of the atoms
+        reextractAtoms();
             
-            //if there are no atoms, then nothing to be done
-            if (cljatoms.isEmpty())
-            {
-                cljcomps.setEnergy(*this, CLJEnergy(0.0));
-                FF::setClean();
-                return;
-            }
+        //if there are no atoms, then nothing to be done
+        if (atom_locs.isEmpty())
+        {
+            d.constData()->cljcomps.setEnergy(*this, CLJEnergy(0.0));
+            this->setClean();
+            return;
         }
-        else
-            this->reboxAtoms();
         
         //calculate the energy from scratch
         QElapsedTimer t;
         t.start();
         CLJCalculator calc;
-        tuple<double,double> nrgs = calc.calculate(*cljfunc, cljboxes);
+        tuple<double,double> nrgs = calc.calculate(*(d.constData()->cljfunc), cljboxes);
         qint64 ns = t.nsecsElapsed();
         
         qDebug() << "Calculating total energy took" << (0.000001*ns) << "ms";
 
-        if (not fixed_atoms.isEmpty())
+        if (not d.constData()->fixed_atoms.isEmpty())
         {
             this->regridAtoms();
-            tuple<double,double> grid_nrgs = fixed_atoms.calculate(cljboxes);
+            tuple<double,double> grid_nrgs = d.constData()->fixed_atoms.calculate(cljboxes);
             nrgs.get<0>() += grid_nrgs.get<0>();
             nrgs.get<1>() += grid_nrgs.get<1>();
         }
         
-        cljcomps.setEnergy(*this, CLJEnergy(nrgs.get<0>(), nrgs.get<1>()));
-        FF::setClean();
+        d.constData()->cljcomps.setEnergy(*this, CLJEnergy(nrgs.get<0>(), nrgs.get<1>()));
+        this->setClean();
     }
-    else if (not changed_atoms.isEmpty())
+    else if (not changed_mols.isEmpty())
     {
         //calculate the change in energy using the molecules in changed_atoms
         CLJCalculator calc;
-        tuple<double,double> delta_nrgs = calc.calculate(*cljfunc, changed_atoms, cljboxes);
+        tuple<double,double> delta_nrgs = calc.calculate(*(d.constData()->cljfunc),
+                                                         changed_atoms, cljboxes);
         
-        if (not fixed_atoms.isEmpty())
+        if (not d.constData()->fixed_atoms.isEmpty())
         {
-            tuple<double,double> grid_deltas = fixed_atoms.calculate(changed_atoms);
+            tuple<double,double> grid_deltas = d.constData()->fixed_atoms.calculate(changed_atoms);
             
             delta_nrgs.get<0>() += grid_deltas.get<0>();
             delta_nrgs.get<1>() += grid_deltas.get<1>();
@@ -552,16 +568,27 @@ void InterFF::recalculateEnergy()
         //now rebox the changed molecules
         this->reboxChangedAtoms();
         
-        cljcomps.changeEnergy(*this, CLJEnergy(delta_nrgs.get<0>(), delta_nrgs.get<1>()));
-        FF::setClean();
+        d.constData()->cljcomps.changeEnergy(*this,
+                                    CLJEnergy(delta_nrgs.get<0>(), delta_nrgs.get<1>()));
+        this->setClean();
     }
     else
     {
-        //strange - the forcefield thinks that it is dirty...
-        //Recalculate the energy from scratch to be sure we are ok
-        this->mustNowRecalculateFromScratch();
-        this->recalculateEnergy();
-        return;
+        //recalculate everything from scratch as this has been requested
+        //calculate the energy from scratch
+        CLJCalculator calc;
+        tuple<double,double> nrgs = calc.calculate(*(d.constData()->cljfunc), cljboxes);
+
+        if (not d.constData()->fixed_atoms.isEmpty())
+        {
+            this->regridAtoms();
+            tuple<double,double> grid_nrgs = d.constData()->fixed_atoms.calculate(cljboxes);
+            nrgs.get<0>() += grid_nrgs.get<0>();
+            nrgs.get<1>() += grid_nrgs.get<1>();
+        }
+        
+        d.constData()->cljcomps.setEnergy(*this, CLJEnergy(nrgs.get<0>(), nrgs.get<1>()));
+        this->setClean();
     }
 }
 
@@ -569,33 +596,37 @@ void InterFF::recalculateEnergy()
 void InterFF::_pvt_added(const SireMol::PartialMolecule &mol, const SireBase::PropertyMap &map)
 {
     //be lazy for the moment - recalculate everything!
-    mustNowRecalculateFromScratch();
+    mustNowReallyRecalculateFromScratch();
     
     //store the map used to get properties
     if (map.isDefault())
     {
-        if (maps_for_mol.contains(mol.number()))
-            maps_for_mol.remove(mol.number());
+        if (d.constData()->maps_for_mol.contains(mol.number()))
+            d->maps_for_mol.remove(mol.number());
     }
     else
     {
-        maps_for_mol.insert(mol.number(),map);
+        d->maps_for_mol.insert(mol.number(),map);
     }
+    
+    this->setDirty();
 }
 
 /** Function called to remove a molecule from this forcefield */
 void InterFF::_pvt_removed(const SireMol::PartialMolecule &mol)
 {
     //be lazy for the moment - recalculate everything!
-    mustNowRecalculateFromScratch();
+    mustNowReallyRecalculateFromScratch();
     
-    if (maps_for_mol.contains(mol.number()))
+    if (d.constData()->maps_for_mol.contains(mol.number()))
     {
         if (not this->contains(mol.number()))
         {
-            maps_for_mol.remove(mol.number());
+            d->maps_for_mol.remove(mol.number());
         }
     }
+    
+    this->setDirty();
 }
 
 /** Function called to indicate that a molecule in this forcefield has changed */
@@ -607,33 +638,26 @@ void InterFF::_pvt_changed(const SireMol::Molecule &molecule)
     {
         //we are trying to change the same molecule twice in a row. This is too
         //complicated to sort out, so we will have to do everything from scratch
-        mustNowRecalculateFromScratch();
+        mustNowReallyRecalculateFromScratch();
         return;
     }
 
-    QHash<MolNum,QPair<QVector<CLJBoxIndex>,CLJAtoms > >::iterator it = cljatoms.find(molnum);
+    ChunkedHash< MolNum,QVector<CLJBoxIndex> >::const_iterator it = atom_locs.constFind(molnum);
     
-    if (it == cljatoms.end())
+    if (it == atom_locs.constEnd())
     {
         //this molecule doesn't exist? - see if recalculating from scratch will be ok
-        mustNowRecalculateFromScratch();
+        mustNowReallyRecalculateFromScratch();
         return;
     }
 
     //create the new atoms
-    CLJAtoms new_atoms(this->operator[](molecule.number()),
-                       maps_for_mol.value(molecule.number(), PropertyMap()));
+    CLJAtoms new_atoms(this->group(MGIdx(0)).molecules()[molnum],
+                       d.constData()->maps_for_mol.value(molnum, PropertyMap()));
     
     //remove the old atoms from the grid
-    cljboxes.remove( it.value().first );
-    
-    //get the negative of the old atoms
-    CLJAtoms old_atoms = it.value().second.negate();
-    
-    //box up and save the new atoms
-    it.value().first = cljboxes.add(new_atoms);
-    it.value().second = new_atoms;
-    
+    CLJAtoms old_atoms = cljboxes.takeNegative(it.value());
+
     if (changed_atoms.isEmpty())
     {
         changed_atoms = CLJBoxes(old_atoms, new_atoms);
@@ -644,25 +668,31 @@ void InterFF::_pvt_changed(const SireMol::Molecule &molecule)
         changed_atoms.add(new_atoms);
     }
     
-    changed_mols.append(molnum);
+    changed_mols.insert(molnum, new_atoms);
+    
+    this->setDirty();
 }
 
 /** Function called to indicate that a list of molecules in this forcefield have changed */
 void InterFF::_pvt_changed(const QList<SireMol::Molecule> &molecules)
 {
     //be lazy for the moment - recalculate everything!
-    mustNowRecalculateFromScratch();
+    mustNowReallyRecalculateFromScratch();
+    
+    this->setDirty();
 }
 
 /** Function called to indicate that all molecules in this forcefield have been removed */
 void InterFF::_pvt_removedAll()
 {
-    cljatoms.clear();
+    atom_locs.clear();
     cljboxes = CLJBoxes();
     changed_atoms = CLJBoxes();
-    maps_for_mol.clear();
+    d->maps_for_mol.clear();
 
-    mustNowRecalculateFromScratch();
+    mustNowReallyRecalculateFromScratch();
+    
+    this->setDirty();
 }
 
 /** Function called to query whether or not a change in source properties would
@@ -672,10 +702,10 @@ bool InterFF::_pvt_wouldChangeProperties(SireMol::MolNum molnum,
 {
     if (map.isDefault())
     {
-        return maps_for_mol.contains(molnum);
+        return d->maps_for_mol.contains(molnum);
     }
     else
     {
-        return not maps_for_mol.contains(molnum);
+        return not d->maps_for_mol.contains(molnum);
     }
 }

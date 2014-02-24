@@ -48,6 +48,7 @@
 
 #include <QDebug>
 #include <QTime>
+#include <QElapsedTimer>
 
 using namespace SireMove;
 using namespace SireSystem;
@@ -915,26 +916,45 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
     
     try
     {
+        QElapsedTimer t, t2;
+        
+        qint64 old_ns = 0;
+        qint64 copy_ns = 0;
+        qint64 nrg_ns = 0;
+        qint64 move_ns = 0;
+        qint64 test_ns = 0;
+    
         const PropertyMap &map = Move::propertyMap();
-            
+        
+        t2.start();
+        
         for (int i=0; i<nmoves; ++i)
         {
             //get the old total energy of the system
+            t.start();
             double old_nrg = system.energy( this->energyComponent() );
+            old_ns += t.nsecsElapsed();
 
             //save the old system
+            t.start();
             System old_system(system);
+            copy_ns += t.nsecsElapsed();
 
             double old_bias = 1;
             double new_bias = 1;
 
+            t.start();
             this->performMove(system, old_bias, new_bias, map);
+            move_ns += t.nsecsElapsed();
     
             //calculate the energy of the system
+            t.start();
             double new_nrg = system.energy( this->energyComponent() );
+            nrg_ns += t.nsecsElapsed();
 
             //accept or reject the move based on the change of energy
             //and the biasing factors
+            t.start();
             if (not this->test(new_nrg, old_nrg, new_bias, old_bias))
             {
                 //the move has been rejected - reset the state
@@ -945,7 +965,15 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
             {
                 system.collectStats();
             }
+            test_ns += t.nsecsElapsed();
         }
+        
+        qint64 ns = t2.nsecsElapsed();
+        
+        qDebug() << "Timing for" << nmoves << "(" << (0.000001*ns) << ")";
+        qDebug() << "OLD:" << (0.000001*old_ns) << "COPY:" << (0.000001*copy_ns)
+                 << "MOVE:" << (0.000001*move_ns) << "ENERGY:" << (0.000001*nrg_ns)
+                 << "TEST:" << (0.000001*test_ns);
     }
     catch(...)
     {
