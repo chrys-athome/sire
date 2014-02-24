@@ -5106,19 +5106,9 @@ void ForceFields::update(const MoleculeData &moldata)
     }
     else
     {
-        ForceFields old_state( *this );
-    
-        try
+        foreach (const MGNum &mgnum, mgnums)
         {
-            foreach (const MGNum &mgnum, mgnums)
-            {
-                this->_pvt_forceField(mgnum).update(moldata);
-            }
-        }
-        catch(...)
-        {
-            this->operator=(old_state);
-            throw;
+            this->_pvt_forceField(mgnum).update(moldata);
         }
     }
 }
@@ -5141,22 +5131,12 @@ void ForceFields::update(const Molecules &molecules)
     }
     else
     {
-        ForceFields old_state( *this );
+        int nffields = ffields_by_idx.count();
+        FFPtr *ffields_array = ffields_by_idx.data();
         
-        try
+        for (int i=0; i<nffields; ++i)
         {
-            int nffields = ffields_by_idx.count();
-            FFPtr *ffields_array = ffields_by_idx.data();
-            
-            for (int i=0; i<nffields; ++i)
-            {
-                ffields_array[i].edit().update(molecules);
-            }
-        }
-        catch(...)
-        {
-            this->operator=(old_state);
-            throw;
+            ffields_array[i].edit().update(molecules);
         }
     }
 }

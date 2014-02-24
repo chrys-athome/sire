@@ -2789,6 +2789,9 @@ bool System::remove(const QSet<MolNum> &molnums, const MGID &mgid)
 void System::update(const MoleculeData &moldata)
 {
     Delta delta(*this);
+    //this ensures that only a single copy of System is used - prevents
+    //unnecessary copying
+    this->operator=( System() );
     delta.update(moldata);
     this->operator=( delta.apply() );
 }
@@ -2803,6 +2806,9 @@ void System::update(const MoleculeData &moldata)
 void System::update(const Molecules &molecules)
 {
     Delta delta(*this);
+    //this ensures that only a single copy of System is used - prevents
+    //unnecessary copying
+    this->operator=( System() );
     delta.update(molecules);
     this->operator=( delta.apply() );
 }
@@ -3125,20 +3131,11 @@ bool System::deltaUpdate(const MoleculeData &moldata)
 
     if (in_molgroup or in_ffields)
     {
-        SaveState old_state = SaveState::save(*this);
-        
-        try
-        {
-            if (in_molgroup)
-                this->_pvt_moleculeGroups().update(moldata);
-                
-            if (in_ffields)
-                this->_pvt_forceFields().update(moldata);
-        }
-        catch(...)
-        {
-            old_state.restore(*this);
-        }
+        if (in_molgroup)
+            this->_pvt_moleculeGroups().update(moldata);
+            
+        if (in_ffields)
+            this->_pvt_forceFields().update(moldata);
 
         ++subversion;
         
@@ -3184,21 +3181,11 @@ QList<MolNum> System::deltaUpdate(const Molecules &molecules)
     
     if (in_molgroup or in_ffields)
     {
-        SaveState old_state = SaveState::save(*this);
+        if (in_ffields)
+            this->_pvt_forceFields().update(molecules);
         
-        try
-        {
-            if (in_ffields)
-                this->_pvt_forceFields().update(molecules);
-            
-            if (in_molgroup)
-                this->_pvt_moleculeGroups().update(molecules);
-        }
-        catch(...)
-        {
-            old_state.restore(*this);
-            throw;
-        }
+        if (in_molgroup)
+            this->_pvt_moleculeGroups().update(molecules);
 
         ++subversion;
         

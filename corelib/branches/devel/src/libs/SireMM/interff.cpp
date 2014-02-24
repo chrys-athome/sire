@@ -140,7 +140,9 @@ InterFF::InterFF(const InterFF &other)
         : ConcreteProperty<InterFF,G1FF>(other),
           atom_locs(other.atom_locs), changed_atoms(other.changed_atoms),
           changed_mols(other.changed_mols), cljboxes(other.cljboxes), d(other.d)
-{}
+{
+    //qDebug() << "COPY CONSTRUCTOR!";
+}
 
 /** Destructor */
 InterFF::~InterFF()
@@ -185,6 +187,8 @@ const char* InterFF::what() const
 /** Copy assignment operator */
 InterFF& InterFF::operator=(const InterFF &other)
 {
+    //qDebug() << "COPY ASSIGNMENT";
+
     if (this != &other)
     {
         atom_locs = other.atom_locs;
