@@ -13,7 +13,7 @@ from nose.tools import assert_almost_equal
 
 (mols, space) = Amber().readCrdTop("../io/waterbox.crd", "../io/waterbox.top")
 
-space = Cartesian()
+#space = Cartesian()
 
 coul_cutoff = 15 * angstrom
 lj_cutoff = 15 * angstrom
