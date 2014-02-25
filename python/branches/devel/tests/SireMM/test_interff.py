@@ -55,7 +55,7 @@ old_clusterff = InterCLJFF("old_clusterff")
 old_clusterff.setSwitchingFunction(grid_switchfunc)
 old_clusterff.setSpace(Cartesian())
 old_clusterff.setShiftElectrostatics(True)
-old_fixedff = GridFF2("old_fixedff")
+old_fixedff = GridFF("old_fixedff")
 old_fixedff.setSwitchingFunction(grid_switchfunc)
 old_fixedff.setCoulombCutoff(long_coul_cutoff)
 old_fixedff.setLJCutoff(lj_cutoff)
@@ -305,11 +305,11 @@ def test_grid_sim(verbose = False):
 
     t = QElapsedTimer()
     t.start()
-    nrgs = oldsys.energies()
+    old_total = oldsys.energy().value()
     oldns = t.nsecsElapsed()
 
     t.start()
-    nrgs = newsys.energies()
+    new_total = newsys.energy().value()
     newns = t.nsecsElapsed()
 
     ff = newsys[FFName("new_clusterff")]
@@ -324,9 +324,9 @@ def test_grid_sim(verbose = False):
     new_ljnrg = newsys.energy( new_clusterff.components().lj() ).value()
 
     if verbose:
-        print("OLD:  %s  %s  %s  : %s ms" % (old_cnrg+old_ljnrg,old_cnrg,old_ljnrg,
+        print("OLD:  %s  %s  %s  %s  : %s ms" % (old_total,old_cnrg+old_ljnrg,old_cnrg,old_ljnrg,
                                              0.000001*oldns))
-        print("NEW:  %s  %s  %s  : %s ms" % (new_cnrg+new_ljnrg,new_cnrg,new_ljnrg,
+        print("NEW:  %s  %s  %s  %s  : %s ms" % (new_total,new_cnrg+new_ljnrg,new_cnrg,new_ljnrg,
                                              0.000001*newns))
 
     moves = RigidBodyMC(cluster)                    
@@ -344,11 +344,11 @@ def test_grid_sim(verbose = False):
     move_newns = t.nsecsElapsed()
 
     t.start()
-    nrgs = oldsys.energies()
+    old_total = oldsys.energy().value()
     old_ns = t.nsecsElapsed()
 
     t.start()
-    nrgs = newsys.energies()
+    new_total = newsys.energy().value()
     new_ns = t.nsecsElapsed()
 
     old_cnrg = oldsys.energy( old_clusterff.components().coulomb() ).value() + \
@@ -361,22 +361,20 @@ def test_grid_sim(verbose = False):
 
     if verbose:
         print("\nMoves: %s ms vs. %s ms" % (0.000001*move_oldns, 0.000001*move_newns))
-        print("OLD SYS:  %s  %s  %s  : %s ms" % (old_cnrg+old_ljnrg,old_cnrg,old_ljnrg,
+        print("OLD SYS:  %s  %s  %s  %s  : %s ms" % (old_total,old_cnrg+old_ljnrg,old_cnrg,old_ljnrg,
                                                  0.000001*old_ns))
-        print("NEW SYS:  %s  %s  %s  : %s ms" % (new_cnrg+new_ljnrg,new_cnrg,new_ljnrg,
+        print("NEW SYS:  %s  %s  %s  %s  : %s ms" % (new_total,new_cnrg+new_ljnrg,new_cnrg,new_ljnrg,
                                                  0.000001*new_ns))
-
-    return
 
     newsys.mustNowRecalculateFromScratch()
     oldsys.mustNowRecalculateFromScratch()
 
     t.start()
-    nrgs = oldsys.energies()
+    old_total = oldsys.energy().value()
     old_ns = t.nsecsElapsed()
 
     t.start()
-    nrgs = newsys.energies()
+    new_total = newsys.energy().value()
     new_ns = t.nsecsElapsed()
 
     old_cnrg = oldsys.energy( old_clusterff.components().coulomb() ).value() + \
@@ -389,9 +387,9 @@ def test_grid_sim(verbose = False):
 
     if verbose:
         print("\nRecalculate energy")
-        print("OLD SYS:  %s  %s  %s  : %s ms" % (old_cnrg+old_ljnrg,old_cnrg,old_ljnrg,
+        print("OLD SYS:  %s  %s  %s  %s  : %s ms" % (old_total,old_cnrg+old_ljnrg,old_cnrg,old_ljnrg,
                                                  0.000001*old_ns))
-        print("NEW SYS:  %s  %s  %s  : %s ms" % (new_cnrg+new_ljnrg,new_cnrg,new_ljnrg,
+        print("NEW SYS:  %s  %s  %s  %s  : %s ms" % (new_total,new_cnrg+new_ljnrg,new_cnrg,new_ljnrg,
                                                  0.000001*new_ns))
 
 
