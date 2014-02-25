@@ -40,6 +40,7 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QElapsedTimer>
 #include <QMutex>
 
 using namespace SireMM;
@@ -577,8 +578,6 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
     if (cljboxes.isEmpty() or atoms.isEmpty())
         return;
     
-    CLJCalculator cljcalc;
-    
     if (use_grid and cljfunc_supports_grid)
     {
         //there is a big enough difference between the coulomb and LJ cutoffs that
@@ -590,8 +589,8 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
         }
 
         //calculate the energy between the atoms and the close atoms
-        tuple<double,double> nrgs = cljcalc.calculate(cljfunc.read(), atoms, close_atoms);
-        
+        tuple<double,double> nrgs = cljfunc.read().calculate(close_atoms, atoms);
+
         //now calculate the grid energy of each atom
         const float *gridpot_array = grid_pots.constData();
 
@@ -694,6 +693,8 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
     
     //either the grid is not used or something went wrong with the grid calculation
     //Do not use a grid
+    qDebug() << "WARNING: NOT ALL WITHIN GRID";
+    CLJCalculator cljcalc;
     tuple<double,double> nrgs = cljcalc.calculate(cljfunc.read(), atoms, cljboxes);
         
     cnrg = nrgs.get<0>();

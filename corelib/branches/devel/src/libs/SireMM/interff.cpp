@@ -154,7 +154,6 @@ void InterFF::setCLJFunction(const CLJFunction &func)
         d->fixed_atoms.setCLJFunction(func);
         d->cljfunc = func;
         rebuildProps();
-        qDebug() << this->properties().toString();
         this->mustNowRecalculateFromScratch();
     }
 }
@@ -361,11 +360,22 @@ void InterFF::setFixedAtoms(const Molecules &molecules, const PropertyMap &map)
 /** Set whether or not a grid is used to optimise energy calculations with the fixed atoms */
 void InterFF::setUseGrid(bool on)
 {
-    if (d.constData()->fixed_atoms.usesGrid() != on)
+    if (this->usesGrid() != on)
     {
         d->fixed_atoms.setUseGrid(on);
-        this->mustNowRecalculateFromScratch();
-        d->props.setProperty("useGrid", BooleanProperty(on));
+        
+        if (this->usesGrid() == on)
+        {
+            this->mustNowRecalculateFromScratch();
+            d->props.setProperty("useGrid", BooleanProperty(on));
+        }
+        else
+        {
+            //enabling the grid may not actually enable it (cljfunction may not support the grid)
+            qDebug() << "Switching on the grid failed as the function"
+                     << d->fixed_atoms.cljFunction().toString() << "doesn't appear "
+                     << "to support using the grid.";
+        }
     }
 }
 
@@ -556,12 +566,9 @@ void InterFF::recalculateEnergy()
     else if (not changed_mols.isEmpty())
     {
         //calculate the change in energy using the molecules in changed_atoms
-        //CLJCalculator calc;
-        //tuple<double,double> delta_nrgs = calc.calculate(*(d.constData()->cljfunc),
-        //                                                 changed_atoms, cljboxes);
-        
-        tuple<double,double> delta_nrgs = d.constData()->cljfunc->calculate(changed_atoms,
-                                                                            cljboxes);
+        CLJCalculator calc;
+        tuple<double,double> delta_nrgs = calc.calculate(*(d.constData()->cljfunc),
+                                                         changed_atoms, cljboxes);
         
         if (not d.constData()->fixed_atoms.isEmpty())
         {

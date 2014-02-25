@@ -231,8 +231,6 @@ CLJFunctionPtr CLJFunction::setProperty(const QString &name, const Property &val
 {
     CLJFunctionPtr ret(*this);
 
-    qDebug() << "setProperty(" << name << "," << value.toString() << ")";
-
     if (name == "space")
     {
         ret.edit().setSpace( value.asA<Space>() );
@@ -1431,6 +1429,8 @@ CLJFunctionPtr CLJCutoffFunction::setProperty(const QString &name, const Propert
     if (name == "switchingFunction")
     {
         const SwitchingFunction &switchfunc = value.asA<SwitchingFunction>();
+        
+        qDebug() << "Set switching function" << switchfunc.toString();
         
         ret.edit().setCoulombCutoff( Length(switchfunc.electrostaticCutoffDistance()) );
         ret.edit().setLJCutoff( Length(switchfunc.vdwCutoffDistance()) );
