@@ -347,6 +347,8 @@ public:
     QVector<CLJBox> boxes() const;
     QVector<SireVol::AABox> boxDimensions() const;
     
+    float getDistance(const Space &space, const CLJBoxIndex &box0, const CLJBoxIndex &box1) const;
+    
     static QVector<CLJBoxDistance> getDistances(const Space &space, const CLJBoxes &boxes);
     static QVector<CLJBoxDistance> getDistances(const Space &space,
                                                 const CLJBoxes &boxes, Length cutoff);

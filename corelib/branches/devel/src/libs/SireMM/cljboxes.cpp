@@ -1345,6 +1345,21 @@ inline int getBoxDelta( const qint16 i0, const qint16 i1 )
     return (i0 == i1) ? 0 : (i0 < i1) ? (i1-i0) : (i0-i1);
 }
 
+/** Return the distance between the two boxes based on the space 'space' */
+float CLJBoxes::getDistance(const Space &space, const CLJBoxIndex &box0,
+                            const CLJBoxIndex &box1) const
+{
+    if (space.isCartesian() and not space.isPeriodic())
+    {
+        return box_length * square_root( getDelta2(box0,box1) );
+    }
+    else
+    {
+        const Length l(box_length);
+        return space.minimumDistance(box0.box(l), box1.box(l));
+    }
+}
+
 /** Return the distances between all of the occupied boxes in 'boxes'
     based on the space 'space' */
 QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes)

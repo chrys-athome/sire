@@ -73,6 +73,8 @@ namespace SireMM
 
 class GridInfo;
 
+class CLJBoxes;
+
 using SireUnits::Dimension::Length;
 
 using SireMol::Connectivity;
@@ -132,9 +134,18 @@ public:
                     double &cnrg, double &ljnrg,
                     float min_distance=0) const;
 
+    void operator()(const CLJBoxes &atoms,
+                    double &cnrg, double &ljnrg) const;
+    
+    void operator()(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
+                    double &cnrg, double &ljnrg) const;
+
     boost::tuple<double,double> calculate(const CLJAtoms &atoms) const;
     boost::tuple<double,double> calculate(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                                           float min_distance=0) const;
+
+    boost::tuple<double,double> calculate(const CLJBoxes &atoms) const;
+    boost::tuple<double,double> calculate(const CLJBoxes &atoms0, const CLJBoxes &atoms1) const;
 
     QVector<float> calculate(const CLJAtoms &atoms, const GridInfo &gridinfo) const;
 
@@ -145,13 +156,25 @@ public:
                double &cnrg, double &ljnrg,
                float min_distance=0) const;
     
+    void total(const CLJBoxes &atoms,
+               double &cnrg, double &ljnrg) const;
+    
+    void total(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
+               double &cnrg, double &ljnrg) const;
+    
     double coulomb(const CLJAtoms &atoms) const;
     double coulomb(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                    float min_distance=0) const;
     
+    double coulomb(const CLJBoxes &atoms) const;
+    double coulomb(const CLJBoxes &atoms0, const CLJBoxes &atoms1) const;
+    
     double lj(const CLJAtoms &atoms) const;
     double lj(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
               float min_distance=0) const;
+    
+    double lj(const CLJBoxes &atoms) const;
+    double lj(const CLJBoxes &atoms0, const CLJBoxes &atoms1) const;
 
     virtual CLJFunction* clone() const=0;
 

@@ -29,6 +29,7 @@
 #include <QElapsedTimer>
 
 #include "cljfunction.h"
+#include "cljboxes.h"
 #include "gridinfo.h"
 #include "switchingfunction.h"
 
@@ -672,6 +673,8 @@ double CLJFunction::calcBoxLJEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms &a
     return ljnrg;
 }
 
+/** Return the total energy between 'atoms', returning the coulomb part in 'cnrg'
+    and the LJ part in 'ljnrg' */
 void CLJFunction::operator()(const CLJAtoms &atoms,
                              double &cnrg, double &ljnrg) const
 {
@@ -699,6 +702,8 @@ void CLJFunction::operator()(const CLJAtoms &atoms,
     }
 }
 
+/** Return the total energy between 'atoms0' and 'atoms1', returning the coulomb part in 'cnrg'
+    and the LJ part in 'ljnrg' */
 void CLJFunction::operator()(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                              double &cnrg, double &ljnrg, float min_distance) const
 {
@@ -746,6 +751,143 @@ void CLJFunction::operator()(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
 
 /** Return the total energy between 'atoms', returning the coulomb part in 'cnrg'
     and the LJ part in 'ljnrg' */
+void CLJFunction::operator()(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+    
+    if (this->hasCutoff())
+    {
+        const float min_cutoff = qMin( this->coulombCutoff(), this->ljCutoff() );
+    
+        const QHash<CLJBoxIndex,CLJBoxPtr> &boxes = atoms.occupiedBoxes();
+    
+        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it0 = boxes.constBegin();
+             it0 != boxes.constEnd();
+             ++it0)
+        {
+            double icnrg(0), iljnrg(0);
+
+            //calculate the self-energy of the box
+            this->total(it0.value().read().atoms(), icnrg, iljnrg);
+        
+            cnrg += icnrg;
+            ljnrg += iljnrg;
+        
+            //now calculate its interaction with all other boxes
+            QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it1 = it0;
+        
+            for (++it1; it1 != boxes.constEnd(); ++it1)
+            {
+                float mindist = atoms.getDistance(spce.read(), it0.key(), it1.key());
+            
+                if (mindist < min_cutoff)
+                {
+                    this->total(it0.value().read().atoms(), it1.value().read().atoms(),
+                                icnrg, iljnrg, mindist);
+                    
+                    cnrg += icnrg;
+                    ljnrg += iljnrg;
+                }
+            }
+        }
+    }
+    else
+    {
+        const QHash<CLJBoxIndex,CLJBoxPtr> &boxes = atoms.occupiedBoxes();
+    
+        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it0 = boxes.constBegin();
+             it0 != boxes.constEnd();
+             ++it0)
+        {
+            double icnrg(0), iljnrg(0);
+
+            //calculate the self-energy of the box
+            this->total(it0.value().read().atoms(), icnrg, iljnrg);
+        
+            cnrg += icnrg;
+            ljnrg += iljnrg;
+        
+            //now calculate its interaction with all other boxes
+            QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it1 = it0;
+        
+            for (++it1; it1 != boxes.constEnd(); ++it1)
+            {
+                this->total(it0.value().read().atoms(), it1.value().read().atoms(),
+                            icnrg, iljnrg);
+                
+                cnrg += icnrg;
+                ljnrg += iljnrg;
+            }
+        }
+    }
+}
+
+/** Return the total energy between 'atoms0' and 'atoms1', returning the coulomb part in 'cnrg'
+    and the LJ part in 'ljnrg' */
+void CLJFunction::operator()(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
+                             double &cnrg, double &ljnrg) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+    
+    if (this->hasCutoff() and atoms0.length() == atoms1.length())
+    {
+        const QHash<CLJBoxIndex,CLJBoxPtr> &boxes0 = atoms0.occupiedBoxes();
+        const QHash<CLJBoxIndex,CLJBoxPtr> &boxes1 = atoms1.occupiedBoxes();
+        
+        const float min_cutoff = qMin(this->coulombCutoff(), this->ljCutoff());
+        
+        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it0 = boxes0.constBegin();
+             it0 != boxes0.constEnd();
+             ++it0)
+        {
+            for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it1 = boxes1.constBegin();
+                 it1 != boxes1.constEnd();
+                 ++it1)
+            {
+                double icnrg(0), iljnrg(0);
+                
+                const float mindist = atoms0.getDistance(spce.read(), it0.key(), it1.key());
+                
+                if (mindist < min_cutoff)
+                {
+                    this->operator()(it0.value().read().atoms(), it1.value().read().atoms(),
+                                     icnrg, iljnrg, mindist);
+                }
+                
+                cnrg += icnrg;
+                ljnrg += iljnrg;
+            }
+        }
+    }
+    else
+    {
+        const QHash<CLJBoxIndex,CLJBoxPtr> &boxes0 = atoms0.occupiedBoxes();
+        const QHash<CLJBoxIndex,CLJBoxPtr> &boxes1 = atoms1.occupiedBoxes();
+        
+        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it0 = boxes0.constBegin();
+             it0 != boxes0.constEnd();
+             ++it0)
+        {
+            for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it1 = boxes1.constBegin();
+                 it1 != boxes1.constEnd();
+                 ++it1)
+            {
+                double icnrg(0), iljnrg(0);
+                
+                this->operator()(it0.value().read().atoms(), it1.value().read().atoms(),
+                                 icnrg, iljnrg);
+                
+                cnrg += icnrg;
+                ljnrg += iljnrg;
+            }
+        }
+    }
+}
+
+/** Return the total energy between 'atoms', returning the coulomb part in 'cnrg'
+    and the LJ part in 'ljnrg' */
 void CLJFunction::total(const CLJAtoms &atoms, double &cnrg, double &ljnrg) const
 {
     return this->operator()(atoms, cnrg, ljnrg);
@@ -759,6 +901,23 @@ void CLJFunction::total(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
     return this->operator()(atoms0, atoms1, cnrg, ljnrg, min_distance);
 }
 
+/** Return the total energy between 'atoms', returning the coulomb part in 'cnrg'
+    and the LJ part in 'ljnrg' */
+void CLJFunction::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
+{
+    return this->operator()(atoms, cnrg, ljnrg);
+}
+
+/** Return the total energy between 'atoms0' and 'atoms1', returning the coulomb part in 'cnrg'
+    and the LJ part in 'ljnrg' */
+void CLJFunction::total(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
+                        double &cnrg, double &ljnrg) const
+{
+    return this->operator()(atoms0, atoms1, cnrg, ljnrg);
+}
+
+/** Return the total energy between 'atoms', returning the coulomb part as the first
+    element of the tuple and the LJ part as the second */
 boost::tuple<double,double> CLJFunction::calculate(const CLJAtoms &atoms) const
 {
     double cnrg, ljnrg;
@@ -766,11 +925,32 @@ boost::tuple<double,double> CLJFunction::calculate(const CLJAtoms &atoms) const
     return boost::tuple<double,double>(cnrg, ljnrg);
 }
 
+/** Return the total energy between 'atoms0' and 'atoms1', returning the coulomb part as the first
+    element of the tuple and the LJ part as the second */
 boost::tuple<double,double> CLJFunction::calculate(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                                                    float min_distance) const
 {
     double cnrg, ljnrg;
     this->operator()(atoms0, atoms1, cnrg, ljnrg, min_distance);
+    return boost::tuple<double,double>(cnrg, ljnrg);
+}
+
+/** Return the total energy between 'atoms', returning the coulomb part as the first
+    element of the tuple and the LJ part as the second */
+boost::tuple<double,double> CLJFunction::calculate(const CLJBoxes &atoms) const
+{
+    double cnrg, ljnrg;
+    this->operator()(atoms, cnrg, ljnrg);
+    return boost::tuple<double,double>(cnrg, ljnrg);
+}
+
+/** Return the total energy between 'atoms0' and 'atoms1', returning the coulomb part as the first
+    element of the tuple and the LJ part as the second */
+boost::tuple<double,double> CLJFunction::calculate(const CLJBoxes &atoms0,
+                                                   const CLJBoxes &atoms1) const
+{
+    double cnrg, ljnrg;
+    this->operator()(atoms0, atoms1, cnrg, ljnrg);
     return boost::tuple<double,double>(cnrg, ljnrg);
 }
 
@@ -798,6 +978,12 @@ double CLJFunction::coulomb(const CLJAtoms &atoms) const
                 return this->calcVacCoulombEnergyGeo(atoms);
         }
     }
+}
+
+/** Return the coulomb energy between the atoms in 'atoms' */
+double CLJFunction::coulomb(const CLJBoxes &atoms) const
+{
+    return this->calculate(atoms).get<0>();
 }
 
 /** Return the coulomb energy between the atoms in 'atoms0' and in 'atoms1' */
@@ -844,6 +1030,12 @@ double CLJFunction::coulomb(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
     }
 }
 
+/** Return the coulomb energy between the atoms in 'atoms0' and in 'atoms1' */
+double CLJFunction::coulomb(const CLJBoxes &atoms0, const CLJBoxes &atoms1) const
+{
+    return this->calculate(atoms0, atoms1).get<0>();
+}
+
 /** Return the LJ energy between the atoms in 'atoms' */
 double CLJFunction::lj(const CLJAtoms &atoms) const
 {
@@ -868,6 +1060,12 @@ double CLJFunction::lj(const CLJAtoms &atoms) const
                 return this->calcVacLJEnergyGeo(atoms);
         }
     }
+}
+
+/** Return the LJ energy between the atoms in 'atoms' */
+double CLJFunction::lj(const CLJBoxes &atoms) const
+{
+    return this->calculate(atoms).get<1>();
 }
 
 /** Return the LJ energy between the atoms in 'atoms0' and in 'atoms1' */
@@ -912,6 +1110,12 @@ double CLJFunction::lj(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                 return this->calcVacLJEnergyGeo(atoms0, atoms1, min_distance);
         }
     }
+}
+
+/** Return the LJ energy between the atoms in 'atoms0' and in 'atoms1' */
+double CLJFunction::lj(const CLJBoxes &atoms0, const CLJBoxes &atoms1) const
+{
+    return this->calculate(atoms0, atoms1).get<1>();
 }
 
 /////////
