@@ -120,6 +120,16 @@ void register_CLJBoxIndex_class(){
                 , hasAtomIndex_function_value );
         
         }
+        { //::SireMM::CLJBoxIndex::hash
+        
+            typedef ::uint ( ::SireMM::CLJBoxIndex::*hash_function_type )(  ) const;
+            hash_function_type hash_function_value( &::SireMM::CLJBoxIndex::hash );
+            
+            CLJBoxIndex_exposer.def( 
+                "hash"
+                , hash_function_value );
+        
+        }
         { //::SireMM::CLJBoxIndex::i
         
             typedef ::qint16 ( ::SireMM::CLJBoxIndex::*i_function_type )(  ) const;

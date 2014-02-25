@@ -189,6 +189,28 @@ void register_CLJBox_class(){
                 , squeeze_function_value );
         
         }
+        { //::SireMM::CLJBox::take
+        
+            typedef ::SireMM::CLJAtom ( ::SireMM::CLJBox::*take_function_type )( int ) ;
+            take_function_type take_function_value( &::SireMM::CLJBox::take );
+            
+            CLJBox_exposer.def( 
+                "take"
+                , take_function_value
+                , ( bp::arg("atom") ) );
+        
+        }
+        { //::SireMM::CLJBox::takeNegative
+        
+            typedef ::SireMM::CLJAtom ( ::SireMM::CLJBox::*takeNegative_function_type )( int ) ;
+            takeNegative_function_type takeNegative_function_value( &::SireMM::CLJBox::takeNegative );
+            
+            CLJBox_exposer.def( 
+                "takeNegative"
+                , takeNegative_function_value
+                , ( bp::arg("atom") ) );
+        
+        }
         { //::SireMM::CLJBox::toString
         
             typedef ::QString ( ::SireMM::CLJBox::*toString_function_type )(  ) const;

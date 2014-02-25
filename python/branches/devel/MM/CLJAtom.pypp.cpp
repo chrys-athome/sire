@@ -128,6 +128,16 @@ void register_CLJAtom_class(){
                 , ljParameter_function_value );
         
         }
+        { //::SireMM::CLJAtom::negate
+        
+            typedef ::SireMM::CLJAtom ( ::SireMM::CLJAtom::*negate_function_type )(  ) const;
+            negate_function_type negate_function_value( &::SireMM::CLJAtom::negate );
+            
+            CLJAtom_exposer.def( 
+                "negate"
+                , negate_function_value );
+        
+        }
         CLJAtom_exposer.def( bp::self != bp::self );
         { //::SireMM::CLJAtom::operator=
         

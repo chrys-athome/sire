@@ -172,6 +172,16 @@ void register_CLJCutoffFunction_class(){
                 , ( bp::arg("name"), bp::arg("value") ) );
         
         }
+        { //::SireMM::CLJCutoffFunction::toString
+        
+            typedef ::QString ( ::SireMM::CLJCutoffFunction::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireMM::CLJCutoffFunction::toString );
+            
+            CLJCutoffFunction_exposer.def( 
+                "toString"
+                , toString_function_value );
+        
+        }
         { //::SireMM::CLJCutoffFunction::typeName
         
             typedef char const * ( *typeName_function_type )(  );
