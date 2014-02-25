@@ -1409,6 +1409,8 @@ inline void MultiFloat::quickSet(int i, float value)
 
 }
 
+Q_DECLARE_TYPEINFO( SireMaths::MultiFloat, Q_PRIMITIVE_TYPE );
+
 SIRE_EXPOSE_CLASS( SireMaths::MultiFloat )
 
 SIRE_END_HEADER

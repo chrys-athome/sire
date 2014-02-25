@@ -1281,6 +1281,8 @@ qint64 MultiInt::doubleSum() const
 
 }
 
+Q_DECLARE_TYPEINFO( SireMaths::MultiInt, Q_PRIMITIVE_TYPE );
+
 SIRE_EXPOSE_CLASS( SireMaths::MultiInt )
 
 SIRE_END_HEADER

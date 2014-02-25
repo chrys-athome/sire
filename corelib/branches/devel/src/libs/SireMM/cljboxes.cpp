@@ -794,6 +794,67 @@ void CLJBoxes::constructFrom(const CLJAtoms &atoms0, const CLJAtoms &atoms1)
     
     const float inv_length = 1.0 / box_length;
     
+    //first check if all of the atoms are in the same box...
+    if (atoms0.count() < 50 and atoms1.count() < 50)
+    {
+        CLJBoxIndex same_box;
+        bool in_same_box = true;
+        
+        for (int i=0; i<atoms0.count(); ++i)
+        {
+            const CLJAtom atom = atoms0[i];
+            
+            if (atom.ID() != 0)
+            {
+                CLJBoxIndex index = CLJBoxIndex::createWithInverseBoxLength(
+                                                            atom.coordinates(), inv_length);
+            
+                if (same_box.isNull())
+                    same_box = index;
+                else if (same_box != index)
+                {
+                    in_same_box = false;
+                    break;
+                }
+            }
+        }
+        
+        if (in_same_box)
+        {
+            for (int i=0; i<atoms1.count(); ++i)
+            {
+                const CLJAtom atom = atoms1[i];
+                
+                if (atom.ID() != 0)
+                {
+                    CLJBoxIndex index = CLJBoxIndex::createWithInverseBoxLength(
+                                                                atom.coordinates(), inv_length);
+                
+                    if (same_box.isNull())
+                        same_box = index;
+                    else if (same_box != index)
+                    {
+                        in_same_box = false;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (in_same_box)
+        {
+            //just copy both sets of atoms into the same box
+            if (atoms1.isEmpty())
+                bxs.insert( same_box, CLJBox(atoms0) );
+            else if (atoms0.isEmpty())
+                bxs.insert( same_box, CLJBox(atoms1) );
+            else
+                bxs.insert( same_box, CLJBox(atoms0+atoms1) );
+        
+            return;
+        }
+    }
+    
     QHash< CLJBoxIndex,QList<CLJAtom> > boxed_atoms;
     
     for (int i=0; i<atoms0.count(); ++i)

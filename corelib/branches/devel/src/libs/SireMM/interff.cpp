@@ -140,9 +140,7 @@ InterFF::InterFF(const InterFF &other)
         : ConcreteProperty<InterFF,G1FF>(other),
           atom_locs(other.atom_locs), changed_atoms(other.changed_atoms),
           changed_mols(other.changed_mols), cljboxes(other.cljboxes), d(other.d)
-{
-    //qDebug() << "COPY CONSTRUCTOR!";
-}
+{}
 
 /** Destructor */
 InterFF::~InterFF()
@@ -539,6 +537,7 @@ void InterFF::recalculateEnergy()
         t.start();
         CLJCalculator calc;
         tuple<double,double> nrgs = calc.calculate(*(d.constData()->cljfunc), cljboxes);
+        //tuple<double,double> nrgs = d.constData()->cljfunc->calculate(cljboxes);
         qint64 ns = t.nsecsElapsed();
         
         qDebug() << "Calculating total energy took" << (0.000001*ns) << "ms";
@@ -557,9 +556,12 @@ void InterFF::recalculateEnergy()
     else if (not changed_mols.isEmpty())
     {
         //calculate the change in energy using the molecules in changed_atoms
-        CLJCalculator calc;
-        tuple<double,double> delta_nrgs = calc.calculate(*(d.constData()->cljfunc),
-                                                         changed_atoms, cljboxes);
+        //CLJCalculator calc;
+        //tuple<double,double> delta_nrgs = calc.calculate(*(d.constData()->cljfunc),
+        //                                                 changed_atoms, cljboxes);
+        
+        tuple<double,double> delta_nrgs = d.constData()->cljfunc->calculate(changed_atoms,
+                                                                            cljboxes);
         
         if (not d.constData()->fixed_atoms.isEmpty())
         {
@@ -582,6 +584,7 @@ void InterFF::recalculateEnergy()
         //calculate the energy from scratch
         CLJCalculator calc;
         tuple<double,double> nrgs = calc.calculate(*(d.constData()->cljfunc), cljboxes);
+        //tuple<double,double> nrgs = d.constData()->cljfunc->calculate(cljboxes);
 
         if (not d.constData()->fixed_atoms.isEmpty())
         {
@@ -671,7 +674,7 @@ void InterFF::_pvt_changed(const SireMol::Molecule &molecule)
         changed_atoms.add(old_atoms);
         changed_atoms.add(new_atoms);
     }
-    
+
     changed_mols.insert(molnum, new_atoms);
     
     this->setDirty();

@@ -758,7 +758,7 @@ void CLJFunction::operator()(const CLJBoxes &atoms, double &cnrg, double &ljnrg)
     
     if (this->hasCutoff())
     {
-        const float min_cutoff = qMin( this->coulombCutoff(), this->ljCutoff() );
+        const float min_cutoff = qMax( this->coulombCutoff(), this->ljCutoff() );
     
         const QHash<CLJBoxIndex,CLJBoxPtr> &boxes = atoms.occupiedBoxes();
     
@@ -836,7 +836,7 @@ void CLJFunction::operator()(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
         const QHash<CLJBoxIndex,CLJBoxPtr> &boxes0 = atoms0.occupiedBoxes();
         const QHash<CLJBoxIndex,CLJBoxPtr> &boxes1 = atoms1.occupiedBoxes();
         
-        const float min_cutoff = qMin(this->coulombCutoff(), this->ljCutoff());
+        const float min_cutoff = qMax(this->coulombCutoff(), this->ljCutoff());
         
         for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it0 = boxes0.constBegin();
              it0 != boxes0.constEnd();
