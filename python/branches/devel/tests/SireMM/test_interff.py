@@ -1,11 +1,13 @@
 
 from Sire.MM import *
+from Sire.FF import *
 from Sire.System import *
 from Sire.Move import *
 from Sire.IO import *
 from Sire.Mol import *
 from Sire.Maths import *
 from Sire.Vol import *
+from Sire.Base import *
 from Sire.Units import *
 from Sire.Qt import *
 
@@ -13,19 +15,69 @@ from nose.tools import assert_almost_equal
 
 (mols, space) = Amber().readCrdTop("../io/waterbox.crd", "../io/waterbox.top")
 
+grid_spacing = 0.5 * angstrom
+grid_buffer = 2.0 * angstrom
+
 #space = Cartesian()
 
+reflect_sphere_center = Vector(10)
+reflect_sphere_radius = 10 * angstrom
+
+long_coul_cutoff = 25 * angstrom
 coul_cutoff = 15 * angstrom
-lj_cutoff = 15 * angstrom
+lj_cutoff = 10 * angstrom
+
+switchfunc = HarmonicSwitchingFunction(coul_cutoff,coul_cutoff,lj_cutoff,lj_cutoff)
+grid_switchfunc = HarmonicSwitchingFunction(long_coul_cutoff,long_coul_cutoff,
+                                            lj_cutoff,lj_cutoff)
+
+cluster = MoleculeGroup("cluster")
+waters = MoleculeGroup("waters")
+
+for i in range(0, mols.nMolecules()):
+    mol = mols[ MolIdx(i) ].molecule()
+
+    if Vector.distance(mol.evaluate().center(),reflect_sphere_center) < reflect_sphere_radius.value() :
+        cluster.add(mol)
+    else:
+        waters.add(mol)
 
 oldff = InterCLJFF("oldff")
-oldff.setSwitchingFunction( HarmonicSwitchingFunction(coul_cutoff,lj_cutoff) )
+oldff.setSwitchingFunction(switchfunc)
 oldff.setSpace(space)
 oldff.setShiftElectrostatics(True)
 
 newff = InterFF("newff")
-newff.setProperty("switchingFunction", HarmonicSwitchingFunction(coul_cutoff,lj_cutoff))
+newff.setProperty("switchingFunction",switchfunc)
 newff.setProperty("space",space)
+
+old_clusterff = InterCLJFF("old_clusterff")
+old_clusterff.setSwitchingFunction(grid_switchfunc)
+old_clusterff.setSpace(Cartesian())
+old_clusterff.setShiftElectrostatics(True)
+old_fixedff = GridFF2("old_fixedff")
+old_fixedff.setSwitchingFunction(grid_switchfunc)
+old_fixedff.setCoulombCutoff(long_coul_cutoff)
+old_fixedff.setLJCutoff(lj_cutoff)
+old_fixedff.setSpace(Cartesian())
+old_fixedff.setShiftElectrostatics(True)
+old_fixedff.setGridSpacing(grid_spacing)
+old_fixedff.setBuffer(grid_buffer)
+
+new_clusterff = InterFF("new_clusterff")
+new_clusterff.setProperty("cljFunction", CLJShiftFunction())
+new_clusterff.setProperty("switchingFunction", grid_switchfunc )
+new_clusterff.setProperty("space", Cartesian())
+new_clusterff.setProperty("gridSpacing", LengthProperty(grid_spacing))
+new_clusterff.setProperty("gridBuffer", LengthProperty(grid_buffer))
+
+old_clusterff.add(cluster)
+old_fixedff.add(cluster, MGIdx(0))
+old_fixedff.addFixedAtoms(waters)
+
+new_clusterff.add(cluster)
+new_clusterff.setFixedAtoms(waters.molecules())
+new_clusterff.setUseGrid(True)
 
 t = QElapsedTimer()
 t.start()
@@ -239,8 +291,111 @@ def test_sim(verbose = False):
                                                  0.000001*oldns))
         print("NEW SYS:  %s  %s  %s  : %s ms" % (r_newcnrg+r_newljnrg,r_newcnrg,r_newljnrg,
                                                  0.000001*newns))
+
+def test_grid_sim(verbose = False):
+    oldsys = System()
+    newsys = System()
+
+    oldsys.add(cluster)
+    oldsys.add(old_clusterff)
+    oldsys.add(old_fixedff)
+
+    newsys.add(cluster)
+    newsys.add(new_clusterff)
+
+    t = QElapsedTimer()
+    t.start()
+    nrgs = oldsys.energies()
+    oldns = t.nsecsElapsed()
+
+    t.start()
+    nrgs = newsys.energies()
+    newns = t.nsecsElapsed()
+
+    ff = newsys[FFName("new_clusterff")]
+    print(ff.grid())
+
+    old_cnrg = oldsys.energy( old_clusterff.components().coulomb() ).value() + \
+               oldsys.energy( old_fixedff.components().coulomb() ).value()
+    old_ljnrg = oldsys.energy( old_clusterff.components().lj() ).value() + \
+                oldsys.energy( old_fixedff.components().lj() ).value()
+
+    new_cnrg = newsys.energy( new_clusterff.components().coulomb() ).value()
+    new_ljnrg = newsys.energy( new_clusterff.components().lj() ).value()
+
+    if verbose:
+        print("OLD:  %s  %s  %s  : %s ms" % (old_cnrg+old_ljnrg,old_cnrg,old_ljnrg,
+                                             0.000001*oldns))
+        print("NEW:  %s  %s  %s  : %s ms" % (new_cnrg+new_ljnrg,new_cnrg,new_ljnrg,
+                                             0.000001*newns))
+
+    moves = RigidBodyMC(cluster)                    
+    moves.setReflectionSphere( reflect_sphere_center, reflect_sphere_radius )
+    moves.setGenerator( RanGenerator( 42 ) )
     
+    t.start()
+    moves.move(oldsys, 1000, False)
+    move_oldns = t.nsecsElapsed()
+
+    moves.setGenerator( RanGenerator( 42 ) )
+
+    t.start()
+    moves.move(newsys, 1000, False)
+    move_newns = t.nsecsElapsed()
+
+    t.start()
+    nrgs = oldsys.energies()
+    old_ns = t.nsecsElapsed()
+
+    t.start()
+    nrgs = newsys.energies()
+    new_ns = t.nsecsElapsed()
+
+    old_cnrg = oldsys.energy( old_clusterff.components().coulomb() ).value() + \
+               oldsys.energy( old_fixedff.components().coulomb() ).value()
+    old_ljnrg = oldsys.energy( old_clusterff.components().lj() ).value() + \
+                oldsys.energy( old_fixedff.components().lj() ).value()
+
+    new_cnrg = newsys.energy( new_clusterff.components().coulomb() ).value()
+    new_ljnrg = newsys.energy( new_clusterff.components().lj() ).value()
+
+    if verbose:
+        print("\nMoves: %s ms vs. %s ms" % (0.000001*move_oldns, 0.000001*move_newns))
+        print("OLD SYS:  %s  %s  %s  : %s ms" % (old_cnrg+old_ljnrg,old_cnrg,old_ljnrg,
+                                                 0.000001*old_ns))
+        print("NEW SYS:  %s  %s  %s  : %s ms" % (new_cnrg+new_ljnrg,new_cnrg,new_ljnrg,
+                                                 0.000001*new_ns))
+
+    return
+
+    newsys.mustNowRecalculateFromScratch()
+    oldsys.mustNowRecalculateFromScratch()
+
+    t.start()
+    nrgs = oldsys.energies()
+    old_ns = t.nsecsElapsed()
+
+    t.start()
+    nrgs = newsys.energies()
+    new_ns = t.nsecsElapsed()
+
+    old_cnrg = oldsys.energy( old_clusterff.components().coulomb() ).value() + \
+               oldsys.energy( old_fixedff.components().coulomb() ).value()
+    old_ljnrg = oldsys.energy( old_clusterff.components().lj() ).value() + \
+                oldsys.energy( old_fixedff.components().lj() ).value()
+    
+    new_cnrg = newsys.energy( new_clusterff.components().coulomb() ).value()
+    new_ljnrg = newsys.energy( new_clusterff.components().lj() ).value()
+
+    if verbose:
+        print("\nRecalculate energy")
+        print("OLD SYS:  %s  %s  %s  : %s ms" % (old_cnrg+old_ljnrg,old_cnrg,old_ljnrg,
+                                                 0.000001*old_ns))
+        print("NEW SYS:  %s  %s  %s  : %s ms" % (new_cnrg+new_ljnrg,new_cnrg,new_ljnrg,
+                                                 0.000001*new_ns))
+
 
 if __name__ == "__main__":
     test_energy(True)
     test_sim(True)
+    test_grid_sim(True)
