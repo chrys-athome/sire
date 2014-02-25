@@ -145,6 +145,17 @@ void register_CLJBoxes_class(){
                 , boxes_function_value );
         
         }
+        { //::SireMM::CLJBoxes::getDistance
+        
+            typedef float ( ::SireMM::CLJBoxes::*getDistance_function_type )( ::SireVol::Space const &,::SireMM::CLJBoxIndex const &,::SireMM::CLJBoxIndex const & ) const;
+            getDistance_function_type getDistance_function_value( &::SireMM::CLJBoxes::getDistance );
+            
+            CLJBoxes_exposer.def( 
+                "getDistance"
+                , getDistance_function_value
+                , ( bp::arg("space"), bp::arg("box0"), bp::arg("box1") ) );
+        
+        }
         { //::SireMM::CLJBoxes::getDistances
         
             typedef ::QVector< SireMM::CLJBoxDistance > ( *getDistances_function_type )( ::SireVol::Space const &,::SireMM::CLJBoxes const & );

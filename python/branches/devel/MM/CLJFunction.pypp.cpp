@@ -30,6 +30,8 @@ namespace bp = boost::python;
 
 #include "SireVol/periodicbox.h"
 
+#include "cljboxes.h"
+
 #include "cljfunction.h"
 
 #include "gridinfo.h"
@@ -87,6 +89,28 @@ void register_CLJFunction_class(){
         }
         { //::SireMM::CLJFunction::calculate
         
+            typedef ::boost::tuples::tuple< double, double, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJFunction::*calculate_function_type )( ::SireMM::CLJBoxes const & ) const;
+            calculate_function_type calculate_function_value( &::SireMM::CLJFunction::calculate );
+            
+            CLJFunction_exposer.def( 
+                "calculate"
+                , calculate_function_value
+                , ( bp::arg("atoms") ) );
+        
+        }
+        { //::SireMM::CLJFunction::calculate
+        
+            typedef ::boost::tuples::tuple< double, double, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJFunction::*calculate_function_type )( ::SireMM::CLJBoxes const &,::SireMM::CLJBoxes const & ) const;
+            calculate_function_type calculate_function_value( &::SireMM::CLJFunction::calculate );
+            
+            CLJFunction_exposer.def( 
+                "calculate"
+                , calculate_function_value
+                , ( bp::arg("atoms0"), bp::arg("atoms1") ) );
+        
+        }
+        { //::SireMM::CLJFunction::calculate
+        
             typedef ::QVector< float > ( ::SireMM::CLJFunction::*calculate_function_type )( ::SireMM::CLJAtoms const &,::SireMM::GridInfo const & ) const;
             calculate_function_type calculate_function_value( &::SireMM::CLJFunction::calculate );
             
@@ -137,6 +161,28 @@ void register_CLJFunction_class(){
                 "coulomb"
                 , coulomb_function_value
                 , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("min_distance")=0 ) );
+        
+        }
+        { //::SireMM::CLJFunction::coulomb
+        
+            typedef double ( ::SireMM::CLJFunction::*coulomb_function_type )( ::SireMM::CLJBoxes const & ) const;
+            coulomb_function_type coulomb_function_value( &::SireMM::CLJFunction::coulomb );
+            
+            CLJFunction_exposer.def( 
+                "coulomb"
+                , coulomb_function_value
+                , ( bp::arg("atoms") ) );
+        
+        }
+        { //::SireMM::CLJFunction::coulomb
+        
+            typedef double ( ::SireMM::CLJFunction::*coulomb_function_type )( ::SireMM::CLJBoxes const &,::SireMM::CLJBoxes const & ) const;
+            coulomb_function_type coulomb_function_value( &::SireMM::CLJFunction::coulomb );
+            
+            CLJFunction_exposer.def( 
+                "coulomb"
+                , coulomb_function_value
+                , ( bp::arg("atoms0"), bp::arg("atoms1") ) );
         
         }
         { //::SireMM::CLJFunction::coulombCutoff
@@ -201,6 +247,28 @@ void register_CLJFunction_class(){
                 , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("min_distance")=0 ) );
         
         }
+        { //::SireMM::CLJFunction::lj
+        
+            typedef double ( ::SireMM::CLJFunction::*lj_function_type )( ::SireMM::CLJBoxes const & ) const;
+            lj_function_type lj_function_value( &::SireMM::CLJFunction::lj );
+            
+            CLJFunction_exposer.def( 
+                "lj"
+                , lj_function_value
+                , ( bp::arg("atoms") ) );
+        
+        }
+        { //::SireMM::CLJFunction::lj
+        
+            typedef double ( ::SireMM::CLJFunction::*lj_function_type )( ::SireMM::CLJBoxes const &,::SireMM::CLJBoxes const & ) const;
+            lj_function_type lj_function_value( &::SireMM::CLJFunction::lj );
+            
+            CLJFunction_exposer.def( 
+                "lj"
+                , lj_function_value
+                , ( bp::arg("atoms0"), bp::arg("atoms1") ) );
+        
+        }
         { //::SireMM::CLJFunction::ljCutoff
         
             typedef ::SireUnits::Dimension::Length ( ::SireMM::CLJFunction::*ljCutoff_function_type )(  ) const;
@@ -242,6 +310,28 @@ void register_CLJFunction_class(){
                 "__call__"
                 , __call___function_value
                 , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("cnrg"), bp::arg("ljnrg"), bp::arg("min_distance")=0 ) );
+        
+        }
+        { //::SireMM::CLJFunction::operator()
+        
+            typedef void ( ::SireMM::CLJFunction::*__call___function_type )( ::SireMM::CLJBoxes const &,double &,double & ) const;
+            __call___function_type __call___function_value( &::SireMM::CLJFunction::operator() );
+            
+            CLJFunction_exposer.def( 
+                "__call__"
+                , __call___function_value
+                , ( bp::arg("atoms"), bp::arg("cnrg"), bp::arg("ljnrg") ) );
+        
+        }
+        { //::SireMM::CLJFunction::operator()
+        
+            typedef void ( ::SireMM::CLJFunction::*__call___function_type )( ::SireMM::CLJBoxes const &,::SireMM::CLJBoxes const &,double &,double & ) const;
+            __call___function_type __call___function_value( &::SireMM::CLJFunction::operator() );
+            
+            CLJFunction_exposer.def( 
+                "__call__"
+                , __call___function_value
+                , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("cnrg"), bp::arg("ljnrg") ) );
         
         }
         { //::SireMM::CLJFunction::properties
@@ -405,6 +495,28 @@ void register_CLJFunction_class(){
                 "total"
                 , total_function_value
                 , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("cnrg"), bp::arg("ljnrg"), bp::arg("min_distance")=0 ) );
+        
+        }
+        { //::SireMM::CLJFunction::total
+        
+            typedef void ( ::SireMM::CLJFunction::*total_function_type )( ::SireMM::CLJBoxes const &,double &,double & ) const;
+            total_function_type total_function_value( &::SireMM::CLJFunction::total );
+            
+            CLJFunction_exposer.def( 
+                "total"
+                , total_function_value
+                , ( bp::arg("atoms"), bp::arg("cnrg"), bp::arg("ljnrg") ) );
+        
+        }
+        { //::SireMM::CLJFunction::total
+        
+            typedef void ( ::SireMM::CLJFunction::*total_function_type )( ::SireMM::CLJBoxes const &,::SireMM::CLJBoxes const &,double &,double & ) const;
+            total_function_type total_function_value( &::SireMM::CLJFunction::total );
+            
+            CLJFunction_exposer.def( 
+                "total"
+                , total_function_value
+                , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("cnrg"), bp::arg("ljnrg") ) );
         
         }
         { //::SireMM::CLJFunction::typeName

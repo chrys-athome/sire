@@ -25,6 +25,7 @@
 #include "SireStream/shareddatastream.h"
 #include "SireVol/cartesian.h"
 #include "SireVol/periodicbox.h"
+#include "cljboxes.h"
 #include "cljfunction.h"
 #include "gridinfo.h"
 #include "switchingfunction.h"

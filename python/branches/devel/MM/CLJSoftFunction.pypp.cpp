@@ -29,6 +29,8 @@ namespace bp = boost::python;
 
 #include "SireVol/periodicbox.h"
 
+#include "cljboxes.h"
+
 #include "cljfunction.h"
 
 #include "gridinfo.h"
