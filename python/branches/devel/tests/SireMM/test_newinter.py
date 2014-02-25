@@ -68,18 +68,25 @@ def pvt_compare_group(verbose):
     new_ns = t.nsecsElapsed()
 
     t.start()
-    (box_cnrg, box_ljnrg) = cljcalc.calculate(cljfunc, boxes0, boxes1)
+    (box_cnrg, box_ljnrg) = cljfunc.calculate(boxes0, boxes1)
     box_ns = t.nsecsElapsed()
+
+    t.start()
+    (cal_cnrg, cal_ljnrg) = cljcalc.calculate(cljfunc, boxes0, boxes1)
+    cal_ns = t.nsecsElapsed()
 
     if verbose:
         print("OLD: %s  %s  %s  %s ms" % (old_cnrg+old_ljnrg, old_cnrg, old_ljnrg, 0.000001*old_ns))
         print("NEW: %s  %s  %s  %s ms" % (new_cnrg+new_ljnrg, new_cnrg, new_ljnrg, 0.000001*new_ns))
         print("BOX: %s  %s  %s  %s ms" % (box_cnrg+box_ljnrg, box_cnrg, box_ljnrg, 0.000001*box_ns))
+        print("CAL: %s  %s  %s  %s ms" % (cal_cnrg+cal_ljnrg, cal_cnrg, cal_ljnrg, 0.000001*cal_ns))
 
     assert_almost_equal( new_cnrg, old_cnrg, 2 )
     assert_almost_equal( new_ljnrg, old_ljnrg, 2 )
     assert_almost_equal( box_cnrg, old_cnrg, 2 )
     assert_almost_equal( box_ljnrg, old_ljnrg, 2 )
+    assert_almost_equal( cal_cnrg, old_cnrg, 2 )
+    assert_almost_equal( cal_ljnrg, cal_ljnrg, 2 )
 
 
 def pvt_compare(verbose):
@@ -99,18 +106,25 @@ def pvt_compare(verbose):
     new_ns = t.nsecsElapsed()
 
     t.start()
-    (box_cnrg, box_ljnrg) = cljcalc.calculate(cljfunc, boxes)
+    (box_cnrg, box_ljnrg) = cljfunc.calculate(boxes)
     box_ns = t.nsecsElapsed()
+
+    t.start()
+    (cal_cnrg, cal_ljnrg) = cljcalc.calculate(cljfunc, boxes)
+    cal_ns = t.nsecsElapsed()
 
     if verbose:
         print("OLD: %s  %s  %s  %s ms" % (old_cnrg+old_ljnrg, old_cnrg, old_ljnrg, 0.000001*old_ns))
         print("NEW: %s  %s  %s  %s ms" % (new_cnrg+new_ljnrg, new_cnrg, new_ljnrg, 0.000001*new_ns))
         print("BOX: %s  %s  %s  %s ms" % (box_cnrg+box_ljnrg, box_cnrg, box_ljnrg, 0.000001*box_ns))
+        print("CAL: %s  %s  %s  %s ms" % (cal_cnrg+cal_ljnrg, cal_cnrg, cal_ljnrg, 0.000001*cal_ns))
 
     assert_almost_equal( new_cnrg, old_cnrg, 2 )
     assert_almost_equal( new_ljnrg, old_ljnrg, 2 )
     assert_almost_equal( box_cnrg, old_cnrg, 2 )
     assert_almost_equal( box_ljnrg, old_ljnrg, 2 )
+    assert_almost_equal( cal_cnrg, old_cnrg, 2 )
+    assert_almost_equal( cal_ljnrg, old_ljnrg, 2 )
 
 
 def test_compare_vacuum(verbose = True):
