@@ -758,9 +758,9 @@ void CLJFunction::operator()(const CLJBoxes &atoms, double &cnrg, double &ljnrg)
     {
         const float min_cutoff = qMax( this->coulombCutoff(), this->ljCutoff() );
     
-        const QHash<CLJBoxIndex,CLJBoxPtr> &boxes = atoms.occupiedBoxes();
+        const CLJBoxes::Container &boxes = atoms.occupiedBoxes();
     
-        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it0 = boxes.constBegin();
+        for (CLJBoxes::const_iterator it0 = boxes.constBegin();
              it0 != boxes.constEnd();
              ++it0)
         {
@@ -773,7 +773,7 @@ void CLJFunction::operator()(const CLJBoxes &atoms, double &cnrg, double &ljnrg)
             ljnrg += iljnrg;
         
             //now calculate its interaction with all other boxes
-            QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it1 = it0;
+            CLJBoxes::const_iterator it1 = it0;
         
             for (++it1; it1 != boxes.constEnd(); ++it1)
             {
@@ -792,9 +792,9 @@ void CLJFunction::operator()(const CLJBoxes &atoms, double &cnrg, double &ljnrg)
     }
     else
     {
-        const QHash<CLJBoxIndex,CLJBoxPtr> &boxes = atoms.occupiedBoxes();
+        const CLJBoxes::Container &boxes = atoms.occupiedBoxes();
     
-        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it0 = boxes.constBegin();
+        for (CLJBoxes::const_iterator it0 = boxes.constBegin();
              it0 != boxes.constEnd();
              ++it0)
         {
@@ -807,7 +807,7 @@ void CLJFunction::operator()(const CLJBoxes &atoms, double &cnrg, double &ljnrg)
             ljnrg += iljnrg;
         
             //now calculate its interaction with all other boxes
-            QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it1 = it0;
+            CLJBoxes::const_iterator it1 = it0;
         
             for (++it1; it1 != boxes.constEnd(); ++it1)
             {
@@ -831,16 +831,16 @@ void CLJFunction::operator()(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
     
     if (this->hasCutoff() and atoms0.length() == atoms1.length())
     {
-        const QHash<CLJBoxIndex,CLJBoxPtr> &boxes0 = atoms0.occupiedBoxes();
-        const QHash<CLJBoxIndex,CLJBoxPtr> &boxes1 = atoms1.occupiedBoxes();
+        const CLJBoxes::Container &boxes0 = atoms0.occupiedBoxes();
+        const CLJBoxes::Container &boxes1 = atoms1.occupiedBoxes();
         
         const float min_cutoff = qMax(this->coulombCutoff(), this->ljCutoff());
         
-        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it0 = boxes0.constBegin();
+        for (CLJBoxes::const_iterator it0 = boxes0.constBegin();
              it0 != boxes0.constEnd();
              ++it0)
         {
-            for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it1 = boxes1.constBegin();
+            for (CLJBoxes::const_iterator it1 = boxes1.constBegin();
                  it1 != boxes1.constEnd();
                  ++it1)
             {
@@ -861,14 +861,14 @@ void CLJFunction::operator()(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
     }
     else
     {
-        const QHash<CLJBoxIndex,CLJBoxPtr> &boxes0 = atoms0.occupiedBoxes();
-        const QHash<CLJBoxIndex,CLJBoxPtr> &boxes1 = atoms1.occupiedBoxes();
+        const CLJBoxes::Container &boxes0 = atoms0.occupiedBoxes();
+        const CLJBoxes::Container &boxes1 = atoms1.occupiedBoxes();
         
-        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it0 = boxes0.constBegin();
+        for (CLJBoxes::const_iterator it0 = boxes0.constBegin();
              it0 != boxes0.constEnd();
              ++it0)
         {
-            for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it1 = boxes1.constBegin();
+            for (CLJBoxes::const_iterator it1 = boxes1.constBegin();
                  it1 != boxes1.constEnd();
                  ++it1)
             {

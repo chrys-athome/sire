@@ -521,9 +521,8 @@ void CLJGrid::calculateGrid()
         const float lj_cutoff = cljfunc->ljCutoff();
         const float coul_cutoff = cljfunc->coulombCutoff();
 
-        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator
-                                    it = cljboxes.occupiedBoxes().constBegin();
-             it != cljboxes.occupiedBoxes().constEnd();
+        for (CLJBoxes::const_iterator it = cljboxes.constBegin();
+             it != cljboxes.constEnd();
              ++it)
         {
             const CLJAtoms &atoms = it.value().read().atoms();
@@ -589,7 +588,9 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
         }
 
         //calculate the energy between the atoms and the close atoms
-        tuple<double,double> nrgs = cljfunc.read().calculate(close_atoms, atoms);
+        //CLJCalculator cljcalc;
+        //tuple<double,double> nrgs = cljcalc.calculate(cljfunc.read(), close_atoms, atoms);
+        tuple<double,double> nrgs = cljfunc->calculate(atoms, close_atoms);
 
         //now calculate the grid energy of each atom
         const float *gridpot_array = grid_pots.constData();
@@ -607,8 +608,8 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
         const MultiInt m_dummy_id(dummy_id);
         const MultiInt m_grid_id(grid_id);
 
-        for (QHash<CLJBoxIndex,CLJBoxPtr>::const_iterator it = atoms.occupiedBoxes().constBegin();
-             it != atoms.occupiedBoxes().constEnd();
+        for (CLJBoxes::const_iterator it = atoms.constBegin();
+             it != atoms.constEnd();
              ++it)
         {
             const CLJAtoms &atms = it.value().read().atoms();

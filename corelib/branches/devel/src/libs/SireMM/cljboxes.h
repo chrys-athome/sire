@@ -301,6 +301,9 @@ friend QDataStream& ::operator<<(QDataStream&, const CLJBoxes&);
 friend QDataStream& ::operator>>(QDataStream&, CLJBoxes&);
 
 public:
+    typedef QMap<CLJBoxIndex,CLJBoxPtr> Container;
+    typedef Container::const_iterator const_iterator;
+
     CLJBoxes();
     CLJBoxes(Length box_size);
     
@@ -336,7 +339,16 @@ public:
     
     QVector<CLJBoxIndex> occupiedBoxIndicies() const;
     
-    const QHash<CLJBoxIndex,CLJBoxPtr>& occupiedBoxes() const;
+    const Container& occupiedBoxes() const;
+    
+    const_iterator begin() const;
+    const_iterator constBegin() const;
+    
+    const_iterator find(const CLJBoxIndex &box) const;
+    const_iterator constFind(const CLJBoxIndex &box) const;
+    
+    const_iterator end() const;
+    const_iterator constEnd() const;
     
     CLJBox boxAt(const CLJBoxIndex &index) const;
     SireVol::AABox boxDimensionsAt(const CLJBoxIndex &index) const;
@@ -347,6 +359,7 @@ public:
     QVector<CLJBox> boxes() const;
     QVector<SireVol::AABox> boxDimensions() const;
     
+    float getDistance(const CLJBoxIndex &box0, const CLJBoxIndex &box1) const;
     float getDistance(const Space &space, const CLJBoxIndex &box0, const CLJBoxIndex &box1) const;
     
     static QVector<CLJBoxDistance> getDistances(const Space &space, const CLJBoxes &boxes);
@@ -380,7 +393,7 @@ private:
     void constructFrom(const CLJAtoms &atoms0, const CLJAtoms &atoms1);
 
     /** All of the boxes that contain atoms */
-    QHash<CLJBoxIndex,CLJBoxPtr> bxs;
+    Container bxs;
     
     /** The size of the box */
     float box_length;
@@ -484,9 +497,45 @@ inline const CLJAtoms& CLJBox::atoms() const
 }
 
 /** Return the set of all occupied boxes, indexed by their CLJBoxIndex */
-inline const QHash<CLJBoxIndex,CLJBoxPtr>& CLJBoxes::occupiedBoxes() const
+inline const CLJBoxes::Container& CLJBoxes::occupiedBoxes() const
 {
     return bxs;
+}
+
+/** Return the iterator pointing to the first occupied box */
+inline CLJBoxes::const_iterator CLJBoxes::begin() const
+{
+    return bxs.begin();
+}
+
+/** Return the iterator pointing to the first occupied box */
+inline CLJBoxes::const_iterator CLJBoxes::constBegin() const
+{
+    return bxs.constBegin();
+}
+
+/** Return the iterator pointing to the occupied box at index 'box' */
+inline CLJBoxes::const_iterator CLJBoxes::find(const CLJBoxIndex &box) const
+{
+    return bxs.find(box);
+}
+
+/** Return the iterator pointing to the occupied box at index 'box' */
+inline CLJBoxes::const_iterator CLJBoxes::constFind(const CLJBoxIndex &box) const
+{
+    return bxs.constFind(box);
+}
+
+/** Return the iterator pointing to one space past the last occupied box */
+inline CLJBoxes::const_iterator CLJBoxes::end() const
+{
+    return bxs.end();
+}
+
+/** Return the iterator pointing to one space past the last occupied box */
+inline CLJBoxes::const_iterator CLJBoxes::constEnd() const
+{
+    return bxs.constEnd();
 }
 
 /** Return the index of the first box */

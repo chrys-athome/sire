@@ -103,6 +103,9 @@ public:
     void setFixedAtoms(const Molecules &molecules, const PropertyMap &map = PropertyMap());
     void setFixedAtoms(const CLJAtoms &atoms);
 
+    void setFixedOnly(bool on);
+    bool fixedOnly() const;
+
     void enableGrid();
     void disableGrid();
     void setUseGrid(bool on);

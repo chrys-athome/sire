@@ -58,7 +58,7 @@ namespace SireMM
         class InterFFData : public QSharedData
         {
         public:
-            InterFFData() : QSharedData()
+            InterFFData() : QSharedData(), fixed_only(false)
             {}
             
             InterFFData(const InterFFData &other)
@@ -66,7 +66,8 @@ namespace SireMM
                    cljfunc(other.cljfunc),
                    fixed_atoms(other.fixed_atoms),
                    cljcomps(other.cljcomps),
-                   props(other.props)
+                   props(other.props),
+                   fixed_only(other.fixed_only)
             {}
             
             ~InterFFData()
@@ -86,6 +87,10 @@ namespace SireMM
             
             /** All of the properties in this forcefield */
             Properties props;
+            
+            /** Whether or not to only calculate the energy with
+                the fixed atoms */
+            bool fixed_only;
         };
     }
 }
@@ -232,6 +237,7 @@ void InterFF::rebuildProps()
     d->props.setProperty("useGrid", BooleanProperty(d->fixed_atoms.usesGrid()));
     d->props.setProperty("gridBuffer", LengthProperty(d->fixed_atoms.gridBuffer()));
     d->props.setProperty("gridSpacing", LengthProperty(d->fixed_atoms.gridSpacing()));
+    d->props.setProperty("fixedOnly", BooleanProperty(d->fixed_only));
 }
 
 /** Set the forcefield property called 'name' to the value 'property' */
@@ -281,6 +287,20 @@ bool InterFF::setProperty(const QString &name, const Property &property)
         {
             d->fixed_atoms.setGridSpacing(spacing);
             d->props.setProperty("gridSpacing", property);
+            return true;
+        }
+        else
+            return false;
+    }
+    else if (name == "fixedOnly")
+    {
+        bool fixed_only = property.asA<BooleanProperty>().value();
+        
+        if (fixed_only != d.constData()->fixed_only)
+        {
+            d->fixed_only = fixed_only;
+            d->props.setProperty("fixedOnly", property);
+            this->mustNowRecalculateFromScratch();
             return true;
         }
         else
@@ -357,6 +377,18 @@ void InterFF::setFixedAtoms(const Molecules &molecules, const PropertyMap &map)
     this->setFixedAtoms( CLJAtoms(molecules,map) );
 }
 
+/** Set whether or not the energy calculation is only between the mobile and 
+    fixed atoms (i.e. the mobile-mobile interaction is ignored) */
+void InterFF::setFixedOnly(bool on)
+{
+    if (d.constData()->fixed_only != on)
+    {
+        d->fixed_only = on;
+        d->props.setProperty("fixedOnly", BooleanProperty(on));
+        this->mustNowRecalculateFromScratch();
+    }
+}
+
 /** Set whether or not a grid is used to optimise energy calculations with the fixed atoms */
 void InterFF::setUseGrid(bool on)
 {
@@ -395,6 +427,13 @@ void InterFF::disableGrid()
 bool InterFF::usesGrid() const
 {
     return d->fixed_atoms.usesGrid();
+}
+
+/** Return whether or not only the energy between the mobile and fixed
+    atoms is being calculated */
+bool InterFF::fixedOnly() const
+{
+    return d->fixed_only;
 }
 
 /** Set the buffer used when using a grid. This is the distance
@@ -543,14 +582,19 @@ void InterFF::recalculateEnergy()
         }
         
         //calculate the energy from scratch
-        QElapsedTimer t;
-        t.start();
-        CLJCalculator calc;
-        tuple<double,double> nrgs = calc.calculate(*(d.constData()->cljfunc), cljboxes);
-        //tuple<double,double> nrgs = d.constData()->cljfunc->calculate(cljboxes);
-        qint64 ns = t.nsecsElapsed();
+        tuple<double,double> nrgs(0,0);
         
-        qDebug() << "Calculating total energy took" << (0.000001*ns) << "ms";
+        if (not d.constData()->fixed_only)
+        {
+            QElapsedTimer t;
+            t.start();
+            CLJCalculator calc;
+            nrgs = calc.calculate(*(d.constData()->cljfunc), cljboxes);
+            //tuple<double,double> nrgs = d.constData()->cljfunc->calculate(cljboxes);
+            qint64 ns = t.nsecsElapsed();
+            
+            qDebug() << "Calculating total energy took" << (0.000001*ns) << "ms";
+        }
 
         if (not d.constData()->fixed_atoms.isEmpty())
         {
@@ -565,10 +609,15 @@ void InterFF::recalculateEnergy()
     }
     else if (not changed_mols.isEmpty())
     {
-        //calculate the change in energy using the molecules in changed_atoms
-        CLJCalculator calc;
-        tuple<double,double> delta_nrgs = calc.calculate(*(d.constData()->cljfunc),
-                                                         changed_atoms, cljboxes);
+        tuple<double,double> delta_nrgs(0,0);
+        
+        if (not d.constData()->fixed_only)
+        {
+            //calculate the change in energy using the molecules in changed_atoms
+            CLJCalculator calc;
+            delta_nrgs = calc.calculate(*(d.constData()->cljfunc),
+                                        changed_atoms, cljboxes);
+        }
         
         if (not d.constData()->fixed_atoms.isEmpty())
         {
@@ -589,9 +638,14 @@ void InterFF::recalculateEnergy()
     {
         //recalculate everything from scratch as this has been requested
         //calculate the energy from scratch
-        CLJCalculator calc;
-        tuple<double,double> nrgs = calc.calculate(*(d.constData()->cljfunc), cljboxes);
-        //tuple<double,double> nrgs = d.constData()->cljfunc->calculate(cljboxes);
+        tuple<double,double> nrgs(0,0);
+        
+        if (not d.constData()->fixed_only)
+        {
+            CLJCalculator calc;
+            nrgs = calc.calculate(*(d.constData()->cljfunc), cljboxes);
+            //tuple<double,double> nrgs = d.constData()->cljfunc->calculate(cljboxes);
+        }
 
         if (not d.constData()->fixed_atoms.isEmpty())
         {
