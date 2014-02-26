@@ -35,6 +35,8 @@
 
 using namespace boost::python;
 
+#include <QDebug>
+
 namespace SireError
 {
 
@@ -45,6 +47,8 @@ void out_of_range( const SireError::invalid_index &ex )
 
 void exception_translator( const SireError::exception &ex )
 {
+    qDebug() << "CONVERTING EXCEPTION TO PYTHON";
+    qDebug() << ex.toString();
     PyErr_SetString(PyExc_UserWarning,ex.toString().toUtf8());
 }
 
