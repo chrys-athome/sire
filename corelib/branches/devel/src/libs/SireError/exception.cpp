@@ -163,7 +163,7 @@ QString SIREERROR_EXPORT getPIDString()
 /** Construct a null exception */
 exception::exception()
 {
-    pidstr = getPIDString();
+    //pidstr = getPIDString();
 }
 
 /** Constructor.
@@ -173,9 +173,12 @@ exception::exception()
 */
 exception::exception(QString error, QString place) : err(error), plce(place)
 {
+    qDebug() << "EXCEPTION" << error;
+    qDebug() << "PLACE" << place;
+
     #ifdef SIRE_ENABLE_BACKTRACE
         bt = getBackTrace();
-        pidstr = getPIDString();
+        //pidstr = getPIDString();
     #endif
 }
 

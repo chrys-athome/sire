@@ -693,7 +693,6 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
     
     //either the grid is not used or something went wrong with the grid calculation
     //Do not use a grid
-    qDebug() << "WARNING: NOT ALL WITHIN GRID";
     CLJCalculator cljcalc;
     tuple<double,double> nrgs = cljcalc.calculate(cljfunc.read(), atoms, cljboxes);
         
