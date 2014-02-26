@@ -292,6 +292,102 @@ def test_sim(verbose = False):
         print("NEW SYS:  %s  %s  %s  : %s ms" % (r_newcnrg+r_newljnrg,r_newcnrg,r_newljnrg,
                                                  0.000001*newns))
 
+def test_fixed_sim(verbose = False):
+    oldsys = System()
+    newsys = System()
+
+    oldsys.add(cluster)
+    oldsys.add(old_fixedff)
+
+    newsys.add(cluster)
+    new_fixedff = new_clusterff.clone()
+    new_fixedff.setProperty("fixedOnly", BooleanProperty(True))
+    newsys.add(new_fixedff)
+
+    t = QElapsedTimer()
+    t.start()
+    old_total = oldsys.energy().value()
+    oldns = t.nsecsElapsed()
+
+    t.start()
+    new_total = newsys.energy().value()
+    newns = t.nsecsElapsed()
+
+    ff = newsys[FFName("new_clusterff")]
+    print(ff.grid())
+
+    old_cnrg = oldsys.energy( old_fixedff.components().coulomb() ).value()
+    old_ljnrg = oldsys.energy( old_fixedff.components().lj() ).value() 
+
+    new_cnrg = newsys.energy( new_clusterff.components().coulomb() ).value()
+    new_ljnrg = newsys.energy( new_clusterff.components().lj() ).value()
+
+    if verbose:
+        print("OLD:  %s  %s  %s  %s  : %s ms" % (old_total,old_cnrg+old_ljnrg,old_cnrg,old_ljnrg,
+                                             0.000001*oldns))
+        print("NEW:  %s  %s  %s  %s  : %s ms" % (new_total,new_cnrg+new_ljnrg,new_cnrg,new_ljnrg,
+                                             0.000001*newns))
+
+    moves = RigidBodyMC(cluster)                    
+    moves.setReflectionSphere( reflect_sphere_center, reflect_sphere_radius )
+    moves.setGenerator( RanGenerator( 42 ) )
+    
+    t.start()
+    moves.move(oldsys, 1000, False)
+    move_oldns = t.nsecsElapsed()
+
+    moves.setGenerator( RanGenerator( 42 ) )
+
+    t.start()
+    moves.move(newsys, 1000, False)
+    move_newns = t.nsecsElapsed()
+
+    t.start()
+    old_total = oldsys.energy().value()
+    old_ns = t.nsecsElapsed()
+
+    t.start()
+    new_total = newsys.energy().value()
+    new_ns = t.nsecsElapsed()
+
+    old_cnrg = oldsys.energy( old_fixedff.components().coulomb() ).value()    
+    old_ljnrg = oldsys.energy( old_fixedff.components().lj() ).value()    
+
+    new_cnrg = newsys.energy( new_clusterff.components().coulomb() ).value()
+    new_ljnrg = newsys.energy( new_clusterff.components().lj() ).value()
+
+    if verbose:
+        print("\nMoves: %s ms vs. %s ms" % (0.000001*move_oldns, 0.000001*move_newns))
+        print("OLD SYS:  %s  %s  %s  %s  : %s ms" % (old_total,old_cnrg+old_ljnrg,old_cnrg,old_ljnrg,
+                                                 0.000001*old_ns))
+        print("NEW SYS:  %s  %s  %s  %s  : %s ms" % (new_total,new_cnrg+new_ljnrg,new_cnrg,new_ljnrg,
+                                                 0.000001*new_ns))
+
+    newsys.mustNowRecalculateFromScratch()
+    oldsys.mustNowRecalculateFromScratch()
+
+    t.start()
+    old_total = oldsys.energy().value()
+    old_ns = t.nsecsElapsed()
+
+    t.start()
+    new_total = newsys.energy().value()
+    new_ns = t.nsecsElapsed()
+
+    old_cnrg = oldsys.energy( old_fixedff.components().coulomb() ).value()    
+    old_ljnrg = oldsys.energy( old_fixedff.components().lj() ).value()    
+    
+    new_cnrg = newsys.energy( new_clusterff.components().coulomb() ).value()
+    new_ljnrg = newsys.energy( new_clusterff.components().lj() ).value()
+
+    if verbose:
+        print("\nRecalculate energy")
+        print("OLD SYS:  %s  %s  %s  %s  : %s ms" % (old_total,old_cnrg+old_ljnrg,old_cnrg,old_ljnrg,
+                                                 0.000001*old_ns))
+        print("NEW SYS:  %s  %s  %s  %s  : %s ms" % (new_total,new_cnrg+new_ljnrg,new_cnrg,new_ljnrg,
+                                                 0.000001*new_ns))
+
+
 def test_grid_sim(verbose = False):
     oldsys = System()
     newsys = System()
@@ -397,3 +493,4 @@ if __name__ == "__main__":
     test_energy(True)
     test_sim(True)
     test_grid_sim(True)
+    test_fixed_sim(True)

@@ -263,7 +263,7 @@ void register_CLJBoxes_class(){
         }
         { //::SireMM::CLJBoxes::occupiedBoxes
         
-            typedef ::QHash< SireMM::CLJBoxIndex, SireMM::CLJBoxPtr > const & ( ::SireMM::CLJBoxes::*occupiedBoxes_function_type )(  ) const;
+            typedef ::SireMM::CLJBoxes::Container const & ( ::SireMM::CLJBoxes::*occupiedBoxes_function_type )(  ) const;
             occupiedBoxes_function_type occupiedBoxes_function_value( &::SireMM::CLJBoxes::occupiedBoxes );
             
             CLJBoxes_exposer.def( 
