@@ -83,11 +83,52 @@ void CLJDelta::buildFrom(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &indi
 
     const int nnew = new_atoms.nAtoms();
 
+    if (nnew > 0)
+    {
+        //box up each of the new atoms
+        const MultiFloat *x = new_atoms.x().constData();
+        const MultiFloat *y = new_atoms.y().constData();
+        const MultiFloat *z = new_atoms.z().constData();
+        const MultiInt *id = new_atoms.ID().constData();
+        
+        const qint32 id_of_dummy = CLJAtoms::idOfDummy()[0];
+        
+        const float inv_length = 1.0f / boxes.length().value();
+        
+        for (int i=0; i<new_atoms.x().count(); ++i)
+        {
+            for (int j=0; j<MultiFloat::count(); ++j)
+            {
+                if (id[i][j] != id_of_dummy)
+                {
+                    CLJBoxIndex idx = CLJBoxIndex::createWithInverseBoxLength(
+                                                x[i][j], y[i][j], z[i][j], inv_length);
+                    
+                    if (min_box.isNull())
+                    {
+                        min_box = idx;
+                        max_box = idx;
+                    }
+                    else
+                    {
+                        min_box = min_box.min(idx);
+                        max_box = max_box.max(idx);
+                    }
+                }
+            }
+        }
+    }
+
     changed_atoms.resize(nold + nnew);
     changed_atoms.copyIn(new_atoms);
 
+    //now grab a copy of all of the old atoms, putting the negative
+    //into changed_atoms and working out the range of boxes covered by
+    //these atoms
     if (not indicies.isEmpty())
     {
+        int old_idx = nnew;
+    
         //find the range of boxes occupied by the atoms and copy out the data
         const CLJBoxIndex *indicies_array = indicies.constData();
 
@@ -105,14 +146,41 @@ void CLJDelta::buildFrom(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &indi
                 min_box = min_box.min(index);
                 max_box = max_box.max(index);
             }
+            
+            //copy in the data from the ith old atom
+            CLJAtom old_atom = boxes[index];
+            
+            if (not old_atom.isDummy())
+            {
+                changed_atoms.set(old_idx, old_atom.negate());
+                old_idx += 1;
+            }
         }
     }
 
     old_indicies = indicies;
+    
+    //now work out the range of boxes covered by these atoms
+    if (min_box == max_box)
+    {
+        box_index = min_box;
+        nbox_x = 1;
+        nbox_y = 1;
+        nbox_z = 1;
+        is_single_box = 1;
+    }
+    else
+    {
+        box_index = min_box;
+        nbox_x = max_box.i() - min_box.i() + 1;
+        nbox_y = max_box.j() - min_box.j() + 1;
+        nbox_z = max_box.k() - min_box.k() + 1;
+        is_single_box = 0;
+    }
 }
 
 /** Null constructor */
-CLJDelta::CLJDelta() : nbox_x(0), nbox_y(0), nbox_z(0), is_single_box(0)
+CLJDelta::CLJDelta() : nbox_x(0), nbox_y(0), nbox_z(0), is_single_box(0), box_length(0)
 {}
 
 /** Construct the delta that changes from the atoms at indicies 'old_atoms' in the 
@@ -120,7 +188,7 @@ CLJDelta::CLJDelta() : nbox_x(0), nbox_y(0), nbox_z(0), is_single_box(0)
     property map to extract the necessary properties */
 CLJDelta::CLJDelta(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
                    const MoleculeView &new_atoms, const PropertyMap &map)
-         : nbox_x(0), nbox_y(0), nbox_z(0), is_single_box(0)
+         : nbox_x(0), nbox_y(0), nbox_z(0), is_single_box(0), box_length(0)
 {
     this->buildFrom(boxes, old_atoms, new_atoms, CLJAtoms::USE_MOLNUM, map);
 }
@@ -131,7 +199,7 @@ CLJDelta::CLJDelta(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
 CLJDelta::CLJDelta(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
                    const MoleculeView &new_atoms, CLJAtoms::ID_SOURCE source,
                    const PropertyMap &map)
-         : nbox_x(0), nbox_y(0), nbox_z(0), is_single_box(0)
+         : nbox_x(0), nbox_y(0), nbox_z(0), is_single_box(0), box_length(0)
 {
     this->buildFrom(boxes, old_atoms, new_atoms, source, map);
 }
@@ -141,7 +209,7 @@ CLJDelta::CLJDelta(const CLJDelta &other)
          : new_atoms(other.new_atoms), changed_atoms(other.changed_atoms),
            box_index(other.box_index), old_indicies(other.old_indicies),
            nbox_x(other.nbox_x), nbox_y(other.nbox_y), nbox_z(other.nbox_z),
-           is_single_box(other.is_single_box)
+           is_single_box(other.is_single_box), box_length(other.box_length)
 {}
 
 /** Destructor */
@@ -161,6 +229,7 @@ CLJDelta& CLJDelta::operator=(const CLJDelta &other)
         nbox_y = other.nbox_y;
         nbox_z = other.nbox_z;
         is_single_box = other.is_single_box;
+        box_length = other.box_length;
     }
     
     return *this;
@@ -173,7 +242,8 @@ bool CLJDelta::operator==(const CLJDelta &other) const
            (new_atoms == other.new_atoms and changed_atoms == other.changed_atoms and
             box_index == other.box_index and old_indicies == other.old_indicies and
             nbox_x == other.nbox_x and nbox_y == other.nbox_y and nbox_z == other.nbox_z and
-            is_single_box == other.is_single_box);
+            is_single_box == other.is_single_box and
+            box_length == other.box_length);
 }
 
 /** Comparison operator */

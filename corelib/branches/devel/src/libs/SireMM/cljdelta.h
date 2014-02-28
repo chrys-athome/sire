@@ -99,6 +99,8 @@ public:
     
     const CLJAtoms& newAtoms() const;
     
+    float boxLength() const;
+    
 private:
     friend class CLJBoxes;
     void buildFrom(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &indicies,
@@ -123,6 +125,9 @@ private:
     
     /** Whether or not the changed atoms fit into a single box */
     quint8 is_single_box;
+    
+    /** The box length used by this delta */
+    float box_length;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -180,6 +185,11 @@ inline const CLJAtoms& CLJDelta::newAtoms() const
     return new_atoms;
 }
 
+/** Return the length of the box (in angstroms) */
+inline float CLJDelta::boxLength() const
+{
+    return box_length;
+}
 
 #endif // SIRE_SKIP_INLINE_FUNCTIONS
 

@@ -1244,6 +1244,21 @@ CLJAtoms CLJBoxes::atoms() const
     return atms;
 }
 
+/** Return all of the atoms whose indicies are in 'idxs'. The atoms are returned
+    in the same order as they appear in 'idxs' */
+CLJAtoms CLJBoxes::atoms(const QVector<CLJBoxIndex> &idxs) const
+{
+    CLJAtoms ret;
+    ret.resize(idxs.count());
+    
+    for (int i=0; i<idxs.count(); ++i)
+    {
+        ret.set(i, this->at(idxs.constData()[i]));
+    }
+    
+    return ret;
+}
+
 /** Add a set of CLJAtoms to the box, returning the indicies of each added atom */
 QVector<CLJBoxIndex> CLJBoxes::add(const CLJAtoms &atoms)
 {

@@ -401,6 +401,7 @@ public:
     CLJAtoms takeNegative(const QVector<CLJBoxIndex> &atoms);
     
     CLJAtoms atoms() const;
+    CLJAtoms atoms(const QVector<CLJBoxIndex> &atoms) const;
     
     Length length() const;
     
