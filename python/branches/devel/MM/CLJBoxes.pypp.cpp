@@ -81,6 +81,17 @@ void register_CLJBoxes_class(){
                 , atoms_function_value );
         
         }
+        { //::SireMM::CLJBoxes::atoms
+        
+            typedef ::SireMM::CLJAtoms ( ::SireMM::CLJBoxes::*atoms_function_type )( ::QVector< SireMM::CLJBoxIndex > const & ) const;
+            atoms_function_type atoms_function_value( &::SireMM::CLJBoxes::atoms );
+            
+            CLJBoxes_exposer.def( 
+                "atoms"
+                , atoms_function_value
+                , ( bp::arg("atoms") ) );
+        
+        }
         { //::SireMM::CLJBoxes::boxAt
         
             typedef ::SireMM::CLJBox ( ::SireMM::CLJBoxes::*boxAt_function_type )( int ) const;

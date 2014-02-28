@@ -23,7 +23,7 @@ SireMM::CLJDelta __copy__(const SireMM::CLJDelta &other){ return SireMM::CLJDelt
 
 #include "Qt/qdatastream.hpp"
 
-const char* pvt_get_name(const SireMM::CLJDelta&){ return "SireMM::CLJDelta";}
+#include "Helpers/str.hpp"
 
 void register_CLJDelta_class(){
 
@@ -43,6 +43,16 @@ void register_CLJDelta_class(){
                 "boxIndex"
                 , boxIndex_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireMM::CLJDelta::boxLength
+        
+            typedef float ( ::SireMM::CLJDelta::*boxLength_function_type )(  ) const;
+            boxLength_function_type boxLength_function_value( &::SireMM::CLJDelta::boxLength );
+            
+            CLJDelta_exposer.def( 
+                "boxLength"
+                , boxLength_function_value );
         
         }
         { //::SireMM::CLJDelta::changedAtoms
@@ -96,6 +106,16 @@ void register_CLJDelta_class(){
                 , nBoxZ_function_value );
         
         }
+        { //::SireMM::CLJDelta::nBoxes
+        
+            typedef int ( ::SireMM::CLJDelta::*nBoxes_function_type )(  ) const;
+            nBoxes_function_type nBoxes_function_value( &::SireMM::CLJDelta::nBoxes );
+            
+            CLJDelta_exposer.def( 
+                "nBoxes"
+                , nBoxes_function_value );
+        
+        }
         { //::SireMM::CLJDelta::newAtoms
         
             typedef ::SireMM::CLJAtoms const & ( ::SireMM::CLJDelta::*newAtoms_function_type )(  ) const;
@@ -142,6 +162,37 @@ void register_CLJDelta_class(){
         
         }
         CLJDelta_exposer.def( bp::self == bp::self );
+        { //::SireMM::CLJDelta::toString
+        
+            typedef ::QString ( ::SireMM::CLJDelta::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireMM::CLJDelta::toString );
+            
+            CLJDelta_exposer.def( 
+                "toString"
+                , toString_function_value );
+        
+        }
+        { //::SireMM::CLJDelta::typeName
+        
+            typedef char const * ( *typeName_function_type )(  );
+            typeName_function_type typeName_function_value( &::SireMM::CLJDelta::typeName );
+            
+            CLJDelta_exposer.def( 
+                "typeName"
+                , typeName_function_value );
+        
+        }
+        { //::SireMM::CLJDelta::what
+        
+            typedef char const * ( ::SireMM::CLJDelta::*what_function_type )(  ) const;
+            what_function_type what_function_value( &::SireMM::CLJDelta::what );
+            
+            CLJDelta_exposer.def( 
+                "what"
+                , what_function_value );
+        
+        }
+        CLJDelta_exposer.staticmethod( "typeName" );
         CLJDelta_exposer.def( "__copy__", &__copy__);
         CLJDelta_exposer.def( "__deepcopy__", &__copy__);
         CLJDelta_exposer.def( "clone", &__copy__);
@@ -149,8 +200,8 @@ void register_CLJDelta_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CLJDelta_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireMM::CLJDelta >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-        CLJDelta_exposer.def( "__str__", &pvt_get_name);
-        CLJDelta_exposer.def( "__repr__", &pvt_get_name);
+        CLJDelta_exposer.def( "__str__", &__str__< ::SireMM::CLJDelta > );
+        CLJDelta_exposer.def( "__repr__", &__str__< ::SireMM::CLJDelta > );
     }
 
 }
