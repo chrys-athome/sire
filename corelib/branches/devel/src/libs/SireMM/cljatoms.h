@@ -241,6 +241,7 @@ public:
     CLJAtoms& operator+=(const CLJAtom &atom);
     CLJAtoms& operator+=(const QVector<CLJAtom> &atoms);
     
+    void append(const CLJAtom &atom);
     void append(const CLJAtoms &atoms, int n=-1);
     
     void set(int i, const CLJAtom &atom);

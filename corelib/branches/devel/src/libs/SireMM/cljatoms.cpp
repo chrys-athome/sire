@@ -1447,6 +1447,28 @@ const char* CLJAtoms::what() const
     return CLJAtoms::typeName();
 }
 
+/** Append the passed atom onto this array. Note that this is not space
+    efficient as the passed atom will be padded up to the size of the vector */
+CLJAtoms& CLJAtoms::operator+=(const CLJAtom &atom)
+{
+    const int idx = _x.count() * MultiFloat::count();
+
+    _x.append( MultiFloat(0) );
+    _y.append( MultiFloat(0) );
+    _z.append( MultiFloat(0) );
+    _q.append( MultiFloat(0) );
+    _sig.append( MultiFloat(0) );
+    _eps.append( MultiFloat(0) );
+    _id.append( MultiFloat(0) );
+    
+    if (not atom.isDummy())
+    {
+        this->set(idx, atom);
+    }
+    
+    return *this;
+}
+
 /** Append the passed array of CLJAtoms onto this array */
 CLJAtoms& CLJAtoms::operator+=(const CLJAtoms &other)
 {
@@ -1474,12 +1496,6 @@ CLJAtoms& CLJAtoms::operator+=(const QVector<CLJAtom> &atoms)
     return this->operator+=( CLJAtoms(atoms) );
 }
 
-/** Append the passed CLJAtom onto this array */
-CLJAtoms& CLJAtoms::operator+=(const CLJAtom &atom)
-{
-    return this->operator+=( QVector<CLJAtom>(1,atom) );
-}
-
 /** Return the combination of this CLJAtoms with 'other' pasted
     onto the end */
 CLJAtoms CLJAtoms::operator+(const CLJAtoms &other) const
@@ -1504,6 +1520,13 @@ CLJAtoms CLJAtoms::operator+(const QVector<CLJAtom> &atoms) const
     CLJAtoms ret(*this);
     ret += atoms;
     return ret;
+}
+
+/** Append the passed atom onto the end of this set. Note that this is not space efficient
+    as the atom will be added with a lot of padding */
+void CLJAtoms::append(const CLJAtom &atom)
+{
+    this->operator+=(atom);
 }
 
 /** Append the passed set of atoms onto the end of this set. If n is greater than or
@@ -1768,12 +1791,12 @@ void CLJAtoms::resize(int new_size)
         }
     }
     
-    if (this->nAtoms() != new_size)
+    if (this->count() < new_size)
     {
         throw SireError::program_bug( QObject::tr(
                 "Something went wrong resizing CLJAtoms from size %1 to size %2. "
                 "New size is %3.")
-                    .arg(old_natoms).arg(new_size).arg(this->nAtoms()), CODELOC );
+                    .arg(old_natoms).arg(new_size).arg(this->count()), CODELOC );
     }
 }
 

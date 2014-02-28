@@ -71,6 +71,8 @@ class Space;
 namespace SireMM
 {
 
+class CLJDelta;
+
 using SireUnits::Dimension::Length;
 using SireVol::Space;
 
@@ -118,6 +120,8 @@ public:
 
     CLJBoxIndex boxOnly() const;
 
+    bool sameBox(const CLJBoxIndex &other) const;
+
     uint hash() const;
 
     static CLJBoxIndex null();
@@ -126,6 +130,8 @@ public:
 
     CLJBoxIndex min(const CLJBoxIndex &other) const;
     CLJBoxIndex max(const CLJBoxIndex &other) const;
+
+    static int countNonDummies(const QVector<CLJBoxIndex> &indicies);
 
     static CLJBoxIndex createWithBoxLength(float x, float y, float z, Length box_length);
     static CLJBoxIndex createWithInverseBoxLength(float x, float y, float z, float inv_length);
@@ -163,6 +169,7 @@ friend QDataStream& ::operator>>(QDataStream&, CLJBox&);
 
 public:
     CLJBox();
+    CLJBox(const CLJBoxIndex &index, Length box_length);
     CLJBox(const CLJBoxIndex &index, Length box_length, const CLJAtoms &atoms);
     CLJBox(const CLJBox &other);
     
@@ -196,13 +203,17 @@ public:
 
     CLJBox squeeze() const;
 
-    QVector<int> add(const CLJAtoms &atoms);
+    CLJBoxIndex add(const CLJAtom &atom);
+    QVector<CLJBoxIndex> add(const CLJAtoms &atoms);
 
     void remove(int atom);
     void remove(const QList<int> &atoms);
+    void remove(const QVector<CLJBoxIndex> &atoms);
 
     CLJAtom take(int atom);
     CLJAtom takeNegative(int atom);
+
+    QVector<CLJBoxIndex> apply(const CLJDelta &delta);
 
     const CLJBoxIndex& index() const;
     float boxLength() const;
@@ -397,6 +408,8 @@ public:
 
     void remove(const QVector<CLJBoxIndex> &atoms);
     
+    QVector<CLJBoxIndex> apply(const CLJDelta &delta);
+    
     CLJAtoms take(const QVector<CLJBoxIndex> &atoms);
     CLJAtoms takeNegative(const QVector<CLJBoxIndex> &atoms);
     
@@ -456,6 +469,14 @@ inline qint16 CLJBoxIndex::k() const
 inline uint CLJBoxIndex::hash() const
 {
     return v.val;
+}
+
+/** Return whether or not this index refers to the same box as 'other' */
+inline bool CLJBoxIndex::sameBox(const CLJBoxIndex &other) const
+{
+    return v.index.ii == other.v.index.ii and
+           v.index.jj == other.v.index.jj and
+           v.index.kk == other.v.index.kk;
 }
 
 inline uint qHash(const CLJBoxIndex &index)

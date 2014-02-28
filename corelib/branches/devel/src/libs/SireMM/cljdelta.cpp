@@ -76,7 +76,7 @@ void CLJDelta::buildFrom(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &indi
     CLJBoxIndex max_box;
 
     //how many changed atoms are there?
-    const int nold = indicies.count();
+    const int nold = CLJBoxIndex::countNonDummies(indicies);
     
     //construct the new molecule
     new_atoms.reconstruct(new_molecule, source, map);
@@ -135,25 +135,29 @@ void CLJDelta::buildFrom(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &indi
         for (int i=0; i<indicies.count(); ++i)
         {
             const CLJBoxIndex &index = indicies_array[i];
-        
-            if (min_box.isNull())
-            {
-                min_box = index;
-                max_box = min_box;
-            }
-            else
-            {
-                min_box = min_box.min(index);
-                max_box = max_box.max(index);
-            }
             
-            //copy in the data from the ith old atom
-            CLJAtom old_atom = boxes[index];
-            
-            if (not old_atom.isDummy())
+            if (not index.isNull())
             {
-                changed_atoms.set(old_idx, old_atom.negate());
-                old_idx += 1;
+            
+                if (min_box.isNull())
+                {
+                    min_box = index;
+                    max_box = min_box;
+                }
+                else
+                {
+                    min_box = min_box.min(index);
+                    max_box = max_box.max(index);
+                }
+                
+                //copy in the data from the ith old atom
+                CLJAtom old_atom = boxes[index];
+                
+                if (not old_atom.isDummy())
+                {
+                    changed_atoms.set(old_idx, old_atom.negate());
+                    old_idx += 1;
+                }
             }
         }
     }
@@ -161,22 +165,13 @@ void CLJDelta::buildFrom(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &indi
     old_indicies = indicies;
     
     //now work out the range of boxes covered by these atoms
-    if (min_box == max_box)
-    {
-        box_index = min_box;
-        nbox_x = 1;
-        nbox_y = 1;
-        nbox_z = 1;
-        is_single_box = 1;
-    }
-    else
-    {
-        box_index = min_box;
-        nbox_x = max_box.i() - min_box.i() + 1;
-        nbox_y = max_box.j() - min_box.j() + 1;
-        nbox_z = max_box.k() - min_box.k() + 1;
-        is_single_box = 0;
-    }
+    box_index = min_box.boxOnly();
+    nbox_x = max_box.i() - min_box.i() + 1;
+    nbox_y = max_box.j() - min_box.j() + 1;
+    nbox_z = max_box.k() - min_box.k() + 1;
+    is_single_box = (max_box.i() == min_box.i()) and
+                    (max_box.j() == min_box.j()) and
+                    (max_box.k() == min_box.k());
 }
 
 /** Null constructor */
@@ -281,21 +276,27 @@ CLJAtoms CLJDelta::oldAtoms() const
     if (changed_atoms.isEmpty())
         return QVector<CLJAtom>();
     
-    QVector<CLJAtom> old_atoms( old_indicies.count() );
+    const int nold = CLJBoxIndex::countNonDummies(old_indicies);
     
-    if (changed_atoms.nAtoms() - new_atoms.count() != old_indicies.count())
+    if (nold == 0)
+        return QVector<CLJAtom>();
+    
+    const int nnew = new_atoms.nAtoms();
+    
+    if (changed_atoms.nAtoms() - nnew != nold)
         throw SireError::program_bug( QObject::tr(
                 "Something wrong? %1 - %2 != %3")
                     .arg(changed_atoms.nAtoms())
-                    .arg(new_atoms.count())
-                    .arg(old_indicies.count()), CODELOC );
+                    .arg(nnew)
+                    .arg(nold), CODELOC );
     
-    int idx = 0;
+    CLJAtoms old_atoms;
+    old_atoms.resize(nold);
     
-    for (int i=new_atoms.count(); i<changed_atoms.nAtoms(); ++i)
+    for (int i=0; i<nold; ++i)
     {
-        old_atoms[idx] = changed_atoms[i].negate();
+        old_atoms.set(i, changed_atoms[nnew + i].negate());
     }
 
-    return CLJAtoms(old_atoms);
+    return old_atoms;
 }

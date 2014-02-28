@@ -85,6 +85,8 @@ public:
     
     const CLJBoxIndex& boxIndex() const;
     
+    bool isNull() const;
+    
     quint8 nBoxX() const;
     quint8 nBoxY() const;
     quint8 nBoxZ() const;
@@ -142,6 +144,12 @@ inline bool CLJDelta::isSingleBox() const
 inline const CLJBoxIndex& CLJDelta::boxIndex() const
 {
     return box_index;
+}
+
+/** Return whether or not this delta is null */
+inline bool CLJDelta::isNull() const
+{
+    return nbox_x == 0;
 }
 
 /** Return the number of boxes along the X dimension that the changed

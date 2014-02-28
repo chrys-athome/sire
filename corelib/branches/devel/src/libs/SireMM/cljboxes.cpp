@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "SireMM/cljboxes.h"
+#include "SireMM/cljdelta.h"
 
 #include "SireVol/aabox.h"
 #include "SireVol/space.h"
@@ -81,6 +82,11 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJBox &box)
 
 /** Null constructor */
 CLJBox::CLJBox() : box_length(0)
+{}
+
+/** Construct an empty box at a specific location */
+CLJBox::CLJBox(const CLJBoxIndex &index, Length length)
+       : box_index(index), box_length(length.value())
 {}
 
 /** Construct a box that holds the passed atoms */
@@ -153,6 +159,18 @@ void CLJBox::remove(const QList<int> &atoms)
     }
 }
 
+/** Remove the atoms at the specified indicies */
+void CLJBox::remove(const QVector<CLJBoxIndex> &atoms)
+{
+    for (int i=0; i<atoms.count(); ++i)
+    {
+        const CLJBoxIndex &atom = atoms.constData()[i];
+        
+        if (atom.sameBox(box_index))
+            this->remove(atom.index());
+    }
+}
+
 /** Remove the atom at index 'atom', returning the atom removed */
 CLJAtom CLJBox::take(int atom)
 {
@@ -191,14 +209,44 @@ CLJAtom CLJBox::takeNegative(int atom)
         return CLJAtom();
 }
 
+/** Add a single passed atom into this box. This returns the index
+    of the added atom */
+CLJBoxIndex CLJBox::add(const CLJAtom &atom)
+{
+    if (atom.isDummy())
+        return CLJBoxIndex();
+    
+    if (not gaps.isEmpty())
+    {
+        //sort the list of gaps so that we add from the bottom first
+        qSort(gaps.begin(), gaps.end(), qGreater<int>());
+
+        int gap = gaps.pop();
+        
+        atms.set(gap, atom);
+        return CLJBoxIndex( box_index.i(), box_index.j(), box_index.k(), gap );
+    }
+    else
+    {
+        //we need to append a new vector onto the box
+        int idx = atms.count();
+        atms.append(atom);
+        
+        for (int i=1; i<MultiFloat::count(); ++i)
+        {
+            gaps.push(idx + i);
+        }
+        
+        return CLJBoxIndex( box_index.i(), box_index.j(), box_index.k(), idx );
+    }
+}
+
 /** Add the passed atoms into this box. This returns the indicies
     of each added atom (in the same order as they were added) */
-QVector<int> CLJBox::add(const CLJAtoms &atoms)
+QVector<CLJBoxIndex> CLJBox::add(const CLJAtoms &atoms)
 {
     if (atoms.isEmpty())
-        return QVector<int>();
-    
-    QVector<int> indicies(atoms.count(), -1);
+        return QVector<CLJBoxIndex>();
 
     //sort the list of gaps so that we add from the bottom first
     qSort(gaps.begin(), gaps.end(), qGreater<int>());
@@ -207,7 +255,9 @@ QVector<int> CLJBox::add(const CLJAtoms &atoms)
     
     if (n == 0)
         //nothing to add
-        return QVector<int>();
+        return QVector<CLJBoxIndex>();
+    
+    QVector<CLJBoxIndex> indicies(atoms.count(), CLJBoxIndex());
     
     //now we use 'n' as an index
     n -= 1;
@@ -228,7 +278,7 @@ QVector<int> CLJBox::add(const CLJAtoms &atoms)
         //this atom is not a dummy. Copy it and put it into the gap
         int gap = gaps.pop();
         atms.set(gap, atoms.at(n));
-        indicies[n] = gap;
+        indicies[n] = CLJBoxIndex(box_index.i(), box_index.j(), box_index.k(), gap);
         
         n -= 1;
         
@@ -259,10 +309,92 @@ QVector<int> CLJBox::add(const CLJAtoms &atoms)
 
     for (int i = 0; i<n; ++i)
     {
-        indicies[i] = start + i;
+        indicies[i] = CLJBoxIndex(box_index.i(), box_index.j(), box_index.k(), start + i);
     }
     
     return indicies;
+}
+
+/** Apply the delta that contains a change of atoms that are located entirely within
+    this box */
+QVector<CLJBoxIndex> CLJBox::apply(const CLJDelta &delta)
+{
+    if (not (delta.isSingleBox() and box_index.sameBox(delta.boxIndex())))
+    {
+        throw SireError::program_bug( QObject::tr(
+                "You can only apply a CLJDelta to a CLJBox if the change is contained "
+                "entirely within the box!"), CODELOC );
+    }
+    
+    const QVector<CLJBoxIndex> &old_idxs = delta.oldIndicies();
+    QVector<CLJBoxIndex> new_idxs = old_idxs;
+    
+    if (delta.newAtoms().count() != new_idxs.count())
+    {
+        new_idxs.resize(delta.newAtoms().count());
+    }
+    
+    QVarLengthArray<CLJBoxIndex> delta_gaps;
+    
+    for (int i=0; i<delta.newAtoms().count(); ++i)
+    {
+        const CLJAtom new_atom = delta.newAtoms()[i];
+        
+        if (new_atom.isDummy())
+        {
+            if (not old_idxs.constData()[i].isNull())
+            {
+                new_idxs[i] = CLJBoxIndex();
+                delta_gaps.push_back(old_idxs.constData()[i]);
+            }
+        }
+        else if (i >= old_idxs.count())
+        {
+            if (delta_gaps.isEmpty())
+            {
+                new_idxs[i] = this->add(new_atom);
+            }
+            else
+            {
+                CLJBoxIndex idx = delta_gaps.last();
+                delta_gaps.pop_back();
+                
+                atms.set(idx.index(), new_atom);
+                new_idxs[i] = idx;
+            }
+        }
+        else
+        {
+            if (not old_idxs.constData()[i].isNull())
+            {
+                atms.set(old_idxs.constData()[i].index(), new_atom);
+            }
+            else
+            {
+                if (delta_gaps.isEmpty())
+                {
+                    new_idxs[i] = this->add(new_atom);
+                }
+                else
+                {
+                    CLJBoxIndex idx = delta_gaps.last();
+                    delta_gaps.pop_back();
+                    
+                    atms.set(idx.index(), new_atom);
+                    new_idxs[i] = idx;
+                }
+            }
+        }
+    }
+
+    //remove any extra old atoms
+    while (not delta_gaps.isEmpty())
+    {
+        atms.makeDummy( delta_gaps.last().index() );
+        delta_gaps.pop_back();
+    }
+
+    return new_idxs;
 }
 
 /** Combine the atoms of the two passed boxes */
@@ -684,6 +816,20 @@ CLJBoxIndex CLJBoxIndex::createWithBoxLength(const Vector &coords, Length box_le
 {
     return CLJBoxIndex::createWithInverseBoxLength(coords.x(), coords.y(),
                                                    coords.z(), 1.0/box_length.value());
+}
+
+/** Return the number of non-dummy indicies in the passed array */
+int CLJBoxIndex::countNonDummies(const QVector<CLJBoxIndex> &indicies)
+{
+    int n = 0;
+    
+    for (int i=0; i<indicies.count(); ++i)
+    {
+        if (not indicies.constData()[i].isNull())
+            n += 1;
+    }
+    
+    return n;
 }
 
 ///////////
@@ -1295,13 +1441,12 @@ QVector<CLJBoxIndex> CLJBoxes::add(const CLJAtoms &atoms)
         
         if (idx >= 0)
         {
-            QVector<int> box_idxs = bxs[idx].write().add( CLJAtoms(it.value().get<0>()) );
+            QVector<CLJBoxIndex> box_idxs = bxs[idx].write().add( CLJAtoms(it.value().get<0>()) );
             const QList<int> &atom_idxs = it.value().get<1>();
 
             for (int i=0; i<atom_idxs.count(); ++i)
             {
-                indicies[ atom_idxs.at(i) ] = CLJBoxIndex( it.key().i(), it.key().j(),
-                                                           it.key().k(), box_idxs.at(i) );
+                indicies[ atom_idxs.at(i) ] = box_idxs.at(i);
             }
         }
         else
@@ -1395,6 +1540,54 @@ CLJAtoms CLJBoxes::takeNegative(const QVector<CLJBoxIndex> &atoms)
     }
     
     return CLJAtoms(atms);
+}
+
+/** Apply the passed delta - this will replace all of the old atoms with the 
+    new atoms in the passed delta, returning the indicies of the newly added atoms */
+QVector<CLJBoxIndex> CLJBoxes::apply(const CLJDelta &delta)
+{
+    if (delta.boxLength() != box_length)
+        throw SireError::incompatible_error( QObject::tr(
+                "You cannot apply a delta to a CLJBoxes object that was not used to create "
+                "that CLJDelta object! %1 vs. %2")
+                    .arg(delta.boxLength()).arg(box_length), CODELOC );
+    
+    else if (delta.isNull())
+        return QVector<CLJBoxIndex>();
+    
+    if (delta.isSingleBox())
+    {
+        //find the single box and replace the old atoms with new
+        int idx = box_to_idx.value(delta.boxIndex(), -1);
+        
+        if (idx == -1)
+        {
+            if (CLJBoxIndex::countNonDummies(delta.oldIndicies()) != 0)
+                throw SireError::program_bug( QObject::tr(
+                        "How can the CLJBoxes not have the box when the delta believes "
+                        "that there are still old atoms to remove? %1, %2, %3")
+                            .arg(delta.boxIndex().toString())
+                            .arg(Sire::toString(delta.oldIndicies()))
+                            .arg(Sire::toString(box_to_idx.keys())), CODELOC );
+
+            //we are adding new atoms to a completely new CLJBox. Nothing is being removed
+            bxs.append( new CLJBox(delta.boxIndex(), Length(box_length)) );
+            box_to_idx.insert( delta.boxIndex(), bxs.count() - 1 );
+            
+            return bxs.last().write().add(delta.newAtoms());
+        }
+        else
+        {
+            return bxs[idx].write().apply(delta);
+        }
+    }
+    else
+    {
+        //the delta runs over more than one box. It is quicker to remove the old
+        //atoms and then add the new ones
+        this->remove( delta.oldIndicies() );
+        return this->add( delta.newAtoms() );
+    }
 }
 
 /** Return a copy of the boxes where all of the CLJAtoms objects have been squeezed,
