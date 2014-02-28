@@ -75,6 +75,12 @@ public:
     bool operator==(const CLJDelta &other) const;
     bool operator!=(const CLJDelta &other) const;
     
+    static const char* typeName();
+    
+    const char* what() const;
+    
+    QString toString() const;
+    
     bool isSingleBox() const;
     
     const CLJBoxIndex& boxIndex() const;
@@ -82,6 +88,8 @@ public:
     quint8 nBoxX() const;
     quint8 nBoxY() const;
     quint8 nBoxZ() const;
+    
+    int nBoxes() const;
     
     const QVector<CLJBoxIndex>& oldIndicies() const;
     

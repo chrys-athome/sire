@@ -80,7 +80,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJBox &box)
 }
 
 /** Null constructor */
-CLJBox::CLJBox()
+CLJBox::CLJBox() : box_length(0)
 {}
 
 /** Construct a box that holds the passed atoms */
@@ -908,7 +908,7 @@ void CLJBoxes::constructFrom(const CLJAtoms &atoms0, const CLJAtoms &atoms1)
         {
             bxs.resize(1);
             box_to_idx.clear();
-            box_to_idx.insert(same_box, 0);
+            box_to_idx.insert(same_box.boxOnly(), 0);
         
             const Length l(box_length);
         
@@ -1052,7 +1052,7 @@ CLJBoxes::CLJBoxes(const CLJAtoms &atoms0, const CLJAtoms &atoms1, Length box_si
 
 /** Copy constructor */
 CLJBoxes::CLJBoxes(const CLJBoxes &other)
-         : bxs(other.bxs), box_length(other.box_length)
+         : box_to_idx(other.box_to_idx), bxs(other.bxs), box_length(other.box_length)
 {}
 
 /** Destructor */
@@ -1130,6 +1130,15 @@ QVector<CLJBoxIndex> CLJBoxes::occupiedBoxIndicies() const
     return box_to_idx.keys().toVector();
 }
 
+/** Return the ith box */
+CLJBox CLJBoxes::boxAt(int i) const
+{
+    if (i >= 0 and i < bxs.count())
+        return bxs.constData()[i].read();
+    else
+        return CLJBox();
+}
+
 /** Return the box at index 'index' */
 CLJBox CLJBoxes::boxAt(const CLJBoxIndex &index) const
 {
@@ -1139,6 +1148,12 @@ CLJBox CLJBoxes::boxAt(const CLJBoxIndex &index) const
         return bxs.constData()[idx].read();
     else
         return CLJBox();
+}
+
+/** Return the dimensions of the ith box */
+AABox CLJBoxes::boxDimensionsAt(int i) const
+{
+    return this->boxAt(i).dimensions();
 }
 
 /** Return the AABox that describes the boundary of the box at index 'index' */

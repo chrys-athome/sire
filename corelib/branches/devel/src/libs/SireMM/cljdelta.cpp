@@ -182,6 +182,28 @@ bool CLJDelta::operator!=(const CLJDelta &other) const
     return not operator==(other);
 }
 
+const char* CLJDelta::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CLJDelta>() );
+}
+
+const char* CLJDelta::what() const
+{
+    return CLJDelta::typeName();
+}
+
+QString CLJDelta::toString() const
+{
+    return QObject::tr("CLJDelta( nChanged() = %1, nBoxes() = %2 )")
+                .arg(changedAtoms().count()).arg(nBoxes());
+}
+
+/** Return the total number of boxes covered by these atoms */
+int CLJDelta::nBoxes() const
+{
+    return int(nbox_x) * int(nbox_y) * int(nbox_z);
+}
+
 /** Return the old version of the changed atoms */
 CLJAtoms CLJDelta::oldAtoms() const
 {
