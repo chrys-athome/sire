@@ -30,6 +30,7 @@
 
 #include "cljfunction.h"
 #include "cljboxes.h"
+#include "cljdelta.h"
 #include "gridinfo.h"
 #include "switchingfunction.h"
 
@@ -891,11 +892,80 @@ void CLJFunction::operator()(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
     }
 }
 
+/** Return the change in energy associated with the delta in 'delta' against the
+    other atoms in 'atoms', returning the coulomb part in 'cnrg' and the LJ part
+    in 'ljnrg' */
+void CLJFunction::operator()(const CLJDelta &delta, const CLJBoxes &atoms,
+                             double &cnrg, double &ljnrg) const
+{
+    if (this->hasCutoff() and delta.boxLength() == atoms.length().value())
+    {
+        if (delta.isSingleBox())
+        {
+            cnrg = 0;
+            ljnrg = 0;
+            const float min_cutoff = qMax(this->coulombCutoff(), this->ljCutoff());
+            
+            for (CLJBoxes::const_iterator it = atoms.constBegin();
+                 it != atoms.constEnd();
+                 ++it)
+            {
+                const CLJBoxIndex &idx = it->read().index();
+            
+                const float mindist = atoms.getDistance(spce.read(), delta.boxIndex(), idx);
+                
+                if (mindist < min_cutoff)
+                {
+                    double icnrg(0), iljnrg(0);
+                    
+                    this->operator()(delta.changedAtoms(), it->read().atoms(),
+                                     icnrg, iljnrg, mindist);
+                    
+                    cnrg += icnrg;
+                    ljnrg += iljnrg;
+                }
+            }
+        }
+        else
+        {
+            cnrg = 0;
+            ljnrg = 0;
+            const float min_cutoff = qMax(this->coulombCutoff(), this->ljCutoff());
+            
+            for (CLJBoxes::const_iterator it = atoms.constBegin();
+                 it != atoms.constEnd();
+                 ++it)
+            {
+                const CLJBoxIndex &idx = it->read().index();
+            
+                const float mindist = atoms.getDistance(spce.read(), delta.boxIndex(), idx,
+                                                        delta.nBoxX(), delta.nBoxY(),
+                                                        delta.nBoxZ());
+                
+                if (mindist < min_cutoff)
+                {
+                    double icnrg(0), iljnrg(0);
+                    
+                    this->operator()(delta.changedAtoms(), it->read().atoms(),
+                                     icnrg, iljnrg, mindist);
+                    
+                    cnrg += icnrg;
+                    ljnrg += iljnrg;
+                }
+            }
+        }
+    }
+    else
+    {
+        this->operator()(delta.changedAtoms(), atoms, cnrg, ljnrg);
+    }
+}
+
 /** Return the total energy between 'atoms', returning the coulomb part in 'cnrg'
     and the LJ part in 'ljnrg' */
 void CLJFunction::total(const CLJAtoms &atoms, double &cnrg, double &ljnrg) const
 {
-    return this->operator()(atoms, cnrg, ljnrg);
+    this->operator()(atoms, cnrg, ljnrg);
 }
 
 /** Return the total energy between 'atoms0' and 'atoms1', returning the coulomb part in 'cnrg'
@@ -903,14 +973,14 @@ void CLJFunction::total(const CLJAtoms &atoms, double &cnrg, double &ljnrg) cons
 void CLJFunction::total(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                         double &cnrg, double &ljnrg, float min_distance) const
 {
-    return this->operator()(atoms0, atoms1, cnrg, ljnrg, min_distance);
+    this->operator()(atoms0, atoms1, cnrg, ljnrg, min_distance);
 }
 
 /** Return the total energy between 'atoms', returning the coulomb part in 'cnrg'
     and the LJ part in 'ljnrg' */
 void CLJFunction::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
 {
-    return this->operator()(atoms, cnrg, ljnrg);
+    this->operator()(atoms, cnrg, ljnrg);
 }
 
 /** Return the total energy between 'atoms0' and 'atoms1', returning the coulomb part in 'cnrg'
@@ -918,7 +988,16 @@ void CLJFunction::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) cons
 void CLJFunction::total(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
                         double &cnrg, double &ljnrg) const
 {
-    return this->operator()(atoms0, atoms1, cnrg, ljnrg);
+    this->operator()(atoms0, atoms1, cnrg, ljnrg);
+}
+
+/** Return the change in energy associated with the delta in 'delta' against the
+    other atoms in 'atoms', returning the coulomb part in 'cnrg' and the LJ part
+    in 'ljnrg' */
+void CLJFunction::total(const CLJDelta &delta, const CLJBoxes &atoms,
+                        double &cnrg, double &ljnrg) const
+{
+    this->operator()(delta, atoms, cnrg, ljnrg);
 }
 
 /** Return the total energy between 'atoms', returning the coulomb part as the first
@@ -956,6 +1035,17 @@ boost::tuple<double,double> CLJFunction::calculate(const CLJBoxes &atoms0,
 {
     double cnrg, ljnrg;
     this->operator()(atoms0, atoms1, cnrg, ljnrg);
+    return boost::tuple<double,double>(cnrg, ljnrg);
+}
+
+/** Return the change in energy associated with the delta in 'delta' against the
+    other atoms in 'atoms', returning the coulomb part in 'cnrg' and the LJ part
+    in 'ljnrg' */
+boost::tuple<double,double> CLJFunction::calculate(const CLJDelta &delta,
+                                                   const CLJBoxes &atoms) const
+{
+    double cnrg, ljnrg;
+    this->operator()(delta, atoms, cnrg, ljnrg);
     return boost::tuple<double,double>(cnrg, ljnrg);
 }
 

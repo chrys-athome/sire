@@ -76,20 +76,29 @@ public:
     QString toString() const;
     
     boost::tuple<double,double> calculate(const CLJFunction &func,
-                                          const CLJBoxes &boxes);
+                                          const CLJBoxes &boxes) const;
     
     boost::tuple< QVector<double>, QVector<double> >
-            calculate( const QVector< boost::shared_ptr<CLJFunction> > &funcs,
-                       const CLJBoxes &boxes);
+            calculate( const QVector<CLJFunctionPtr> &funcs,
+                       const CLJBoxes &boxes) const;
 
     boost::tuple<double,double> calculate(const CLJFunction &func,
                                           const CLJBoxes &boxes0,
-                                          const CLJBoxes &boxes1);
+                                          const CLJBoxes &boxes1) const;
 
 
     boost::tuple< QVector<double>, QVector<double> >
-            calculate( const QVector< boost::shared_ptr<CLJFunction> > &funcs,
-                       const CLJBoxes &boxes0, const CLJBoxes &boxes1);
+            calculate( const QVector<CLJFunctionPtr> &funcs,
+                       const CLJBoxes &boxes0, const CLJBoxes &boxes1) const;
+
+    boost::tuple<double,double> calculate(const CLJFunction &func,
+                                          const CLJDelta &delta,
+                                          const CLJBoxes &boxes) const;
+
+    boost::tuple< QVector<double>, QVector<double> >
+            calculate( const QVector<CLJFunctionPtr> &funcs,
+                       const CLJDelta &delta, const CLJBoxes &boxes ) const;
+
 private:
     /** Whether or not the energy calculation should give the same
         result regardless of the order of summation (i.e. gives the same

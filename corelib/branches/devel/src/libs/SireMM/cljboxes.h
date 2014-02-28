@@ -393,6 +393,8 @@ public:
     
     float getDistance(const CLJBoxIndex &box0, const CLJBoxIndex &box1) const;
     float getDistance(const Space &space, const CLJBoxIndex &box0, const CLJBoxIndex &box1) const;
+    float getDistance(const Space &space, const CLJBoxIndex &box0, const CLJBoxIndex &box1,
+                      quint32 nx, quint32 ny, quint32 nz) const;
     
     static QVector<CLJBoxDistance> getDistances(const Space &space, const CLJBoxes &boxes);
     static QVector<CLJBoxDistance> getDistances(const Space &space,

@@ -1735,6 +1735,20 @@ float CLJBoxes::getDistance(const Space &space, const CLJBoxIndex &box0,
     }
 }
 
+/** Return the distance between the two boxes based on the space 'space', assuming that
+    one of the boxes covers a volume of nx,ny,nz box lengths above its minimum dimensions */
+float CLJBoxes::getDistance(const Space &space, const CLJBoxIndex &box0,
+                            const CLJBoxIndex &box1, quint32 nx, quint32 ny, quint32 nz) const
+{
+    const Length l(box_length);
+    
+    AABox min_box = box0.box(l);
+    AABox max_box = CLJBoxIndex(box0.i()+nx-1, box0.j()+ny-1, box0.k()+ny-1).box(l);
+    
+    return space.minimumDistance( AABox::from(min_box.minCoords(),max_box.maxCoords()),
+                                  box1.box(l));
+}
+
 /** Return the distances between all of the occupied boxes in 'boxes'
     based on the space 'space' */
 QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes)
