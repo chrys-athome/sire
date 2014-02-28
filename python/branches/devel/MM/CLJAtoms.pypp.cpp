@@ -96,6 +96,17 @@ void register_CLJAtoms_class(){
         }
         { //::SireMM::CLJAtoms::append
         
+            typedef void ( ::SireMM::CLJAtoms::*append_function_type )( ::SireMM::CLJAtom const & ) ;
+            append_function_type append_function_value( &::SireMM::CLJAtoms::append );
+            
+            CLJAtoms_exposer.def( 
+                "append"
+                , append_function_value
+                , ( bp::arg("atom") ) );
+        
+        }
+        { //::SireMM::CLJAtoms::append
+        
             typedef void ( ::SireMM::CLJAtoms::*append_function_type )( ::SireMM::CLJAtoms const &,int ) ;
             append_function_type append_function_value( &::SireMM::CLJAtoms::append );
             

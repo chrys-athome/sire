@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "SireMM/cljboxes.h"
 
+#include "SireMM/cljdelta.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
@@ -58,6 +60,17 @@ void register_CLJBoxes_class(){
                 "add"
                 , add_function_value
                 , ( bp::arg("atoms") ) );
+        
+        }
+        { //::SireMM::CLJBoxes::apply
+        
+            typedef ::QVector< SireMM::CLJBoxIndex > ( ::SireMM::CLJBoxes::*apply_function_type )( ::SireMM::CLJDelta const & ) ;
+            apply_function_type apply_function_value( &::SireMM::CLJBoxes::apply );
+            
+            CLJBoxes_exposer.def( 
+                "apply"
+                , apply_function_value
+                , ( bp::arg("delta") ) );
         
         }
         { //::SireMM::CLJBoxes::at

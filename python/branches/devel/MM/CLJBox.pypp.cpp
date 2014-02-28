@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "SireMM/cljboxes.h"
 
+#include "SireMM/cljdelta.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
@@ -45,17 +47,40 @@ void register_CLJBox_class(){
         typedef bp::class_< SireMM::CLJBox > CLJBox_exposer_t;
         CLJBox_exposer_t CLJBox_exposer = CLJBox_exposer_t( "CLJBox", bp::init< >() );
         bp::scope CLJBox_scope( CLJBox_exposer );
+        CLJBox_exposer.def( bp::init< SireMM::CLJBoxIndex const &, SireUnits::Dimension::Length >(( bp::arg("index"), bp::arg("box_length") )) );
         CLJBox_exposer.def( bp::init< SireMM::CLJBoxIndex const &, SireUnits::Dimension::Length, SireMM::CLJAtoms const & >(( bp::arg("index"), bp::arg("box_length"), bp::arg("atoms") )) );
         CLJBox_exposer.def( bp::init< SireMM::CLJBox const & >(( bp::arg("other") )) );
         { //::SireMM::CLJBox::add
         
-            typedef ::QVector< int > ( ::SireMM::CLJBox::*add_function_type )( ::SireMM::CLJAtoms const & ) ;
+            typedef ::SireMM::CLJBoxIndex ( ::SireMM::CLJBox::*add_function_type )( ::SireMM::CLJAtom const & ) ;
+            add_function_type add_function_value( &::SireMM::CLJBox::add );
+            
+            CLJBox_exposer.def( 
+                "add"
+                , add_function_value
+                , ( bp::arg("atom") ) );
+        
+        }
+        { //::SireMM::CLJBox::add
+        
+            typedef ::QVector< SireMM::CLJBoxIndex > ( ::SireMM::CLJBox::*add_function_type )( ::SireMM::CLJAtoms const & ) ;
             add_function_type add_function_value( &::SireMM::CLJBox::add );
             
             CLJBox_exposer.def( 
                 "add"
                 , add_function_value
                 , ( bp::arg("atoms") ) );
+        
+        }
+        { //::SireMM::CLJBox::apply
+        
+            typedef ::QVector< SireMM::CLJBoxIndex > ( ::SireMM::CLJBox::*apply_function_type )( ::SireMM::CLJDelta const & ) ;
+            apply_function_type apply_function_value( &::SireMM::CLJBox::apply );
+            
+            CLJBox_exposer.def( 
+                "apply"
+                , apply_function_value
+                , ( bp::arg("delta") ) );
         
         }
         { //::SireMM::CLJBox::at
@@ -192,6 +217,17 @@ void register_CLJBox_class(){
         { //::SireMM::CLJBox::remove
         
             typedef void ( ::SireMM::CLJBox::*remove_function_type )( ::QList< int > const & ) ;
+            remove_function_type remove_function_value( &::SireMM::CLJBox::remove );
+            
+            CLJBox_exposer.def( 
+                "remove"
+                , remove_function_value
+                , ( bp::arg("atoms") ) );
+        
+        }
+        { //::SireMM::CLJBox::remove
+        
+            typedef void ( ::SireMM::CLJBox::*remove_function_type )( ::QVector< SireMM::CLJBoxIndex > const & ) ;
             remove_function_type remove_function_value( &::SireMM::CLJBox::remove );
             
             CLJBox_exposer.def( 

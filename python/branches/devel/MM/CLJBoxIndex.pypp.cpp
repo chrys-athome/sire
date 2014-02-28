@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "SireMM/cljboxes.h"
 
+#include "SireMM/cljdelta.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
@@ -64,6 +66,17 @@ void register_CLJBoxIndex_class(){
             CLJBoxIndex_exposer.def( 
                 "boxOnly"
                 , boxOnly_function_value );
+        
+        }
+        { //::SireMM::CLJBoxIndex::countNonDummies
+        
+            typedef int ( *countNonDummies_function_type )( ::QVector< SireMM::CLJBoxIndex > const & );
+            countNonDummies_function_type countNonDummies_function_value( &::SireMM::CLJBoxIndex::countNonDummies );
+            
+            CLJBoxIndex_exposer.def( 
+                "countNonDummies"
+                , countNonDummies_function_value
+                , ( bp::arg("indicies") ) );
         
         }
         { //::SireMM::CLJBoxIndex::createWithBoxLength
@@ -230,6 +243,17 @@ void register_CLJBoxIndex_class(){
         CLJBoxIndex_exposer.def( bp::self == bp::self );
         CLJBoxIndex_exposer.def( bp::self > bp::self );
         CLJBoxIndex_exposer.def( bp::self >= bp::self );
+        { //::SireMM::CLJBoxIndex::sameBox
+        
+            typedef bool ( ::SireMM::CLJBoxIndex::*sameBox_function_type )( ::SireMM::CLJBoxIndex const & ) const;
+            sameBox_function_type sameBox_function_value( &::SireMM::CLJBoxIndex::sameBox );
+            
+            CLJBoxIndex_exposer.def( 
+                "sameBox"
+                , sameBox_function_value
+                , ( bp::arg("other") ) );
+        
+        }
         { //::SireMM::CLJBoxIndex::toString
         
             typedef ::QString ( ::SireMM::CLJBoxIndex::*toString_function_type )(  ) const;
@@ -260,6 +284,7 @@ void register_CLJBoxIndex_class(){
                 , what_function_value );
         
         }
+        CLJBoxIndex_exposer.staticmethod( "countNonDummies" );
         CLJBoxIndex_exposer.staticmethod( "createWithBoxLength" );
         CLJBoxIndex_exposer.staticmethod( "createWithInverseBoxLength" );
         CLJBoxIndex_exposer.staticmethod( "null" );

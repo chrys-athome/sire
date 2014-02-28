@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "SireMM/cljboxes.h"
 
+#include "SireMM/cljdelta.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"

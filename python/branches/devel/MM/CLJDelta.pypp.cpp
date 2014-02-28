@@ -66,6 +66,16 @@ void register_CLJDelta_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireMM::CLJDelta::isNull
+        
+            typedef bool ( ::SireMM::CLJDelta::*isNull_function_type )(  ) const;
+            isNull_function_type isNull_function_value( &::SireMM::CLJDelta::isNull );
+            
+            CLJDelta_exposer.def( 
+                "isNull"
+                , isNull_function_value );
+        
+        }
         { //::SireMM::CLJDelta::isSingleBox
         
             typedef bool ( ::SireMM::CLJDelta::*isSingleBox_function_type )(  ) const;
