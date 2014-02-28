@@ -112,6 +112,7 @@ set ( PYPP_SOURCES
        CLJSoftFunction.pypp.cpp
        IntraSoftCLJFF.pypp.cpp
        ScaledChargeParameterNames3D.pypp.cpp
+       CLJDelta.pypp.cpp
        AngleParameterName.pypp.cpp
        StretchBendSymbols.pypp.cpp
        NullCLJFunction.pypp.cpp

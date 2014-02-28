@@ -180,6 +180,28 @@ void register_CLJBoxIndex_class(){
                 , k_function_value );
         
         }
+        { //::SireMM::CLJBoxIndex::max
+        
+            typedef ::SireMM::CLJBoxIndex ( ::SireMM::CLJBoxIndex::*max_function_type )( ::SireMM::CLJBoxIndex const & ) const;
+            max_function_type max_function_value( &::SireMM::CLJBoxIndex::max );
+            
+            CLJBoxIndex_exposer.def( 
+                "max"
+                , max_function_value
+                , ( bp::arg("other") ) );
+        
+        }
+        { //::SireMM::CLJBoxIndex::min
+        
+            typedef ::SireMM::CLJBoxIndex ( ::SireMM::CLJBoxIndex::*min_function_type )( ::SireMM::CLJBoxIndex const & ) const;
+            min_function_type min_function_value( &::SireMM::CLJBoxIndex::min );
+            
+            CLJBoxIndex_exposer.def( 
+                "min"
+                , min_function_value
+                , ( bp::arg("other") ) );
+        
+        }
         { //::SireMM::CLJBoxIndex::null
         
             typedef ::SireMM::CLJBoxIndex ( *null_function_type )(  );

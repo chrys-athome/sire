@@ -19,6 +19,7 @@
 #include "intrasoftcljff.h"
 #include "switchingfunction.h"
 #include "cljfunction.h"
+#include "cljdelta.h"
 #include "threeatomfunctions.h"
 #include "cljparam.h"
 #include "cljcomponent.h"
@@ -88,6 +89,7 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::HarmonicSwitchingFunction >();
     ObjectRegistry::registerConverterFor< SireMM::CHARMMSwitchingFunction >();
     ObjectRegistry::registerConverterFor< SireMM::NullCLJFunction >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJDelta >();
     ObjectRegistry::registerConverterFor< SireMM::ThreeAtomFunctions >();
     ObjectRegistry::registerConverterFor< SireMM::CLJParams >();
     ObjectRegistry::registerConverterFor< SireMM::CLJParamsArray >();

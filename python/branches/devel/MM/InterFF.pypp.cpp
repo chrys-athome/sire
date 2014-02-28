@@ -138,6 +138,16 @@ void register_InterFF_class(){
                 , enableGrid_function_value );
         
         }
+        { //::SireMM::InterFF::fixedOnly
+        
+            typedef bool ( ::SireMM::InterFF::*fixedOnly_function_type )(  ) const;
+            fixedOnly_function_type fixedOnly_function_value( &::SireMM::InterFF::fixedOnly );
+            
+            InterFF_exposer.def( 
+                "fixedOnly"
+                , fixedOnly_function_value );
+        
+        }
         { //::SireMM::InterFF::grid
         
             typedef ::SireMM::GridInfo ( ::SireMM::InterFF::*grid_function_type )(  ) const;
@@ -257,6 +267,17 @@ void register_InterFF_class(){
                 "setFixedAtoms"
                 , setFixedAtoms_function_value
                 , ( bp::arg("atoms") ) );
+        
+        }
+        { //::SireMM::InterFF::setFixedOnly
+        
+            typedef void ( ::SireMM::InterFF::*setFixedOnly_function_type )( bool ) ;
+            setFixedOnly_function_type setFixedOnly_function_value( &::SireMM::InterFF::setFixedOnly );
+            
+            InterFF_exposer.def( 
+                "setFixedOnly"
+                , setFixedOnly_function_value
+                , ( bp::arg("on") ) );
         
         }
         { //::SireMM::InterFF::setGridBuffer

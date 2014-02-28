@@ -10,6 +10,7 @@
 #include "cljboxes.h"
 #include "cljcalculator.h"
 #include "cljcomponent.h"
+#include "cljdelta.h"
 #include "cljfunction.h"
 #include "cljgrid.h"
 #include "cljnbpairs.h"

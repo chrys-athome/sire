@@ -13,6 +13,8 @@ namespace bp = boost::python;
 
 #include "multifloat.h"
 
+#include "multiint.h"
+
 #include "multiuint.h"
 
 #include <QDebug>
@@ -39,6 +41,7 @@ void register_MultiFloat_class(){
         bp::scope MultiFloat_scope( MultiFloat_exposer );
         MultiFloat_exposer.def( bp::init< float >(( bp::arg("value") )) );
         MultiFloat_exposer.def( bp::init< float const *, int >(( bp::arg("array"), bp::arg("size") )) );
+        MultiFloat_exposer.def( bp::init< float const *, SireMaths::MultiInt const & >(( bp::arg("array"), bp::arg("indicies") )) );
         MultiFloat_exposer.def( bp::init< QVector< float > const & >(( bp::arg("array") )) );
         MultiFloat_exposer.def( bp::init< QVector< double > const & >(( bp::arg("array") )) );
         MultiFloat_exposer.def( bp::init< SireMaths::MultiDouble const & >(( bp::arg("other") )) );

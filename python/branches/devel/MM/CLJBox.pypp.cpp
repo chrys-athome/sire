@@ -45,7 +45,7 @@ void register_CLJBox_class(){
         typedef bp::class_< SireMM::CLJBox > CLJBox_exposer_t;
         CLJBox_exposer_t CLJBox_exposer = CLJBox_exposer_t( "CLJBox", bp::init< >() );
         bp::scope CLJBox_scope( CLJBox_exposer );
-        CLJBox_exposer.def( bp::init< SireMM::CLJAtoms const & >(( bp::arg("atoms") )) );
+        CLJBox_exposer.def( bp::init< SireMM::CLJBoxIndex const &, SireUnits::Dimension::Length, SireMM::CLJAtoms const & >(( bp::arg("index"), bp::arg("box_length"), bp::arg("atoms") )) );
         CLJBox_exposer.def( bp::init< SireMM::CLJBox const & >(( bp::arg("other") )) );
         { //::SireMM::CLJBox::add
         
@@ -80,6 +80,16 @@ void register_CLJBox_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireMM::CLJBox::boxLength
+        
+            typedef float ( ::SireMM::CLJBox::*boxLength_function_type )(  ) const;
+            boxLength_function_type boxLength_function_value( &::SireMM::CLJBox::boxLength );
+            
+            CLJBox_exposer.def( 
+                "boxLength"
+                , boxLength_function_value );
+        
+        }
         { //::SireMM::CLJBox::count
         
             typedef int ( ::SireMM::CLJBox::*count_function_type )(  ) const;
@@ -88,6 +98,16 @@ void register_CLJBox_class(){
             CLJBox_exposer.def( 
                 "count"
                 , count_function_value );
+        
+        }
+        { //::SireMM::CLJBox::dimensions
+        
+            typedef ::SireVol::AABox ( ::SireMM::CLJBox::*dimensions_function_type )(  ) const;
+            dimensions_function_type dimensions_function_value( &::SireMM::CLJBox::dimensions );
+            
+            CLJBox_exposer.def( 
+                "dimensions"
+                , dimensions_function_value );
         
         }
         { //::SireMM::CLJBox::getitem
@@ -99,6 +119,17 @@ void register_CLJBox_class(){
                 "getitem"
                 , getitem_function_value
                 , ( bp::arg("i") ) );
+        
+        }
+        { //::SireMM::CLJBox::index
+        
+            typedef ::SireMM::CLJBoxIndex const & ( ::SireMM::CLJBox::*index_function_type )(  ) const;
+            index_function_type index_function_value( &::SireMM::CLJBox::index );
+            
+            CLJBox_exposer.def( 
+                "index"
+                , index_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
         { //::SireMM::CLJBox::isEmpty

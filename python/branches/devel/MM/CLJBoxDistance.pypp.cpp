@@ -43,28 +43,26 @@ void register_CLJBoxDistance_class(){
         typedef bp::class_< SireMM::CLJBoxDistance > CLJBoxDistance_exposer_t;
         CLJBoxDistance_exposer_t CLJBoxDistance_exposer = CLJBoxDistance_exposer_t( "CLJBoxDistance", bp::init< >() );
         bp::scope CLJBoxDistance_scope( CLJBoxDistance_exposer );
-        CLJBoxDistance_exposer.def( bp::init< SireMM::CLJBoxIndex const &, SireMM::CLJBoxIndex const &, float >(( bp::arg("box0"), bp::arg("box1"), bp::arg("distance") )) );
+        CLJBoxDistance_exposer.def( bp::init< quint32, quint32, float >(( bp::arg("box0"), bp::arg("box1"), bp::arg("distance") )) );
         CLJBoxDistance_exposer.def( bp::init< SireMM::CLJBoxDistance const & >(( bp::arg("other") )) );
         { //::SireMM::CLJBoxDistance::box0
         
-            typedef ::SireMM::CLJBoxIndex const & ( ::SireMM::CLJBoxDistance::*box0_function_type )(  ) const;
+            typedef ::quint32 ( ::SireMM::CLJBoxDistance::*box0_function_type )(  ) const;
             box0_function_type box0_function_value( &::SireMM::CLJBoxDistance::box0 );
             
             CLJBoxDistance_exposer.def( 
                 "box0"
-                , box0_function_value
-                , bp::return_value_policy< bp::copy_const_reference >() );
+                , box0_function_value );
         
         }
         { //::SireMM::CLJBoxDistance::box1
         
-            typedef ::SireMM::CLJBoxIndex const & ( ::SireMM::CLJBoxDistance::*box1_function_type )(  ) const;
+            typedef ::quint32 ( ::SireMM::CLJBoxDistance::*box1_function_type )(  ) const;
             box1_function_type box1_function_value( &::SireMM::CLJBoxDistance::box1 );
             
             CLJBoxDistance_exposer.def( 
                 "box1"
-                , box1_function_value
-                , bp::return_value_policy< bp::copy_const_reference >() );
+                , box1_function_value );
         
         }
         { //::SireMM::CLJBoxDistance::distance

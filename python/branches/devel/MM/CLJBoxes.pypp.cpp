@@ -83,6 +83,17 @@ void register_CLJBoxes_class(){
         }
         { //::SireMM::CLJBoxes::boxAt
         
+            typedef ::SireMM::CLJBox ( ::SireMM::CLJBoxes::*boxAt_function_type )( int ) const;
+            boxAt_function_type boxAt_function_value( &::SireMM::CLJBoxes::boxAt );
+            
+            CLJBoxes_exposer.def( 
+                "boxAt"
+                , boxAt_function_value
+                , ( bp::arg("i") ) );
+        
+        }
+        { //::SireMM::CLJBoxes::boxAt
+        
             typedef ::SireMM::CLJBox ( ::SireMM::CLJBoxes::*boxAt_function_type )( ::SireMM::CLJBoxIndex const & ) const;
             boxAt_function_type boxAt_function_value( &::SireMM::CLJBoxes::boxAt );
             
@@ -115,6 +126,17 @@ void register_CLJBoxes_class(){
         }
         { //::SireMM::CLJBoxes::boxDimensionsAt
         
+            typedef ::SireVol::AABox ( ::SireMM::CLJBoxes::*boxDimensionsAt_function_type )( int ) const;
+            boxDimensionsAt_function_type boxDimensionsAt_function_value( &::SireMM::CLJBoxes::boxDimensionsAt );
+            
+            CLJBoxes_exposer.def( 
+                "boxDimensionsAt"
+                , boxDimensionsAt_function_value
+                , ( bp::arg("i") ) );
+        
+        }
+        { //::SireMM::CLJBoxes::boxDimensionsAt
+        
             typedef ::SireVol::AABox ( ::SireMM::CLJBoxes::*boxDimensionsAt_function_type )( ::SireMM::CLJBoxIndex const & ) const;
             boxDimensionsAt_function_type boxDimensionsAt_function_value( &::SireMM::CLJBoxes::boxDimensionsAt );
             
@@ -143,6 +165,17 @@ void register_CLJBoxes_class(){
             CLJBoxes_exposer.def( 
                 "boxes"
                 , boxes_function_value );
+        
+        }
+        { //::SireMM::CLJBoxes::getDistance
+        
+            typedef float ( ::SireMM::CLJBoxes::*getDistance_function_type )( ::SireMM::CLJBoxIndex const &,::SireMM::CLJBoxIndex const & ) const;
+            getDistance_function_type getDistance_function_value( &::SireMM::CLJBoxes::getDistance );
+            
+            CLJBoxes_exposer.def( 
+                "getDistance"
+                , getDistance_function_value
+                , ( bp::arg("box0"), bp::arg("box1") ) );
         
         }
         { //::SireMM::CLJBoxes::getDistance
@@ -263,7 +296,7 @@ void register_CLJBoxes_class(){
         }
         { //::SireMM::CLJBoxes::occupiedBoxes
         
-            typedef ::SireMM::CLJBoxes::Container const & ( ::SireMM::CLJBoxes::*occupiedBoxes_function_type )(  ) const;
+            typedef ::QVector< SireMM::CLJBoxPtr > const & ( ::SireMM::CLJBoxes::*occupiedBoxes_function_type )(  ) const;
             occupiedBoxes_function_type occupiedBoxes_function_value( &::SireMM::CLJBoxes::occupiedBoxes );
             
             CLJBoxes_exposer.def( 

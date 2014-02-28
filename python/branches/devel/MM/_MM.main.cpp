@@ -59,6 +59,8 @@
 
 #include "CLJCutoffFunction.pypp.hpp"
 
+#include "CLJDelta.pypp.hpp"
+
 #include "CLJFunction.pypp.hpp"
 
 #include "CLJGrid.pypp.hpp"
@@ -473,6 +475,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_CLJFunction_class();
 
     register_CLJCutoffFunction_class();
+
+    register_CLJDelta_class();
 
     register_CLJGrid_class();
 

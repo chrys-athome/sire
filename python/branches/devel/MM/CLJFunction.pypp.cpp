@@ -554,15 +554,15 @@ void register_CLJFunction_class(){
         bp::register_ptr_to_python< boost::shared_ptr< SireMM::CLJFunction > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJFunction >, boost::shared_ptr< SireBase::Property > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJFunction >, boost::shared_ptr< QSharedData > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireBase::ConcreteProperty< SireMM::NullCLJFunction, SireMM::CLJFunction > >, boost::shared_ptr< SireMM::CLJFunction > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireMM::NullCLJFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJCutoffFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
-        bp::implicitly_convertible< boost::shared_ptr< SireBase::ConcreteProperty< SireMM::CLJShiftFunction, SireMM::CLJCutoffFunction > >, boost::shared_ptr< SireMM::CLJFunction > >();
-        bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJShiftFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
-        bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJSoftFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJIntraFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
         bp::implicitly_convertible< boost::shared_ptr< SireBase::ConcreteProperty< SireMM::CLJIntraShiftFunction, SireMM::CLJIntraFunction > >, boost::shared_ptr< SireMM::CLJFunction > >();
         bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJIntraShiftFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
-        bp::implicitly_convertible< boost::shared_ptr< SireBase::ConcreteProperty< SireMM::NullCLJFunction, SireMM::CLJFunction > >, boost::shared_ptr< SireMM::CLJFunction > >();
-        bp::implicitly_convertible< boost::shared_ptr< SireMM::NullCLJFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJSoftFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireBase::ConcreteProperty< SireMM::CLJShiftFunction, SireMM::CLJCutoffFunction > >, boost::shared_ptr< SireMM::CLJFunction > >();
+        bp::implicitly_convertible< boost::shared_ptr< SireMM::CLJShiftFunction >, boost::shared_ptr< SireMM::CLJFunction > >();
         CLJFunction_exposer.def( "__rlshift__", &__rlshift__QDataStream< ::SireMM::CLJFunction >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CLJFunction_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireMM::CLJFunction >,

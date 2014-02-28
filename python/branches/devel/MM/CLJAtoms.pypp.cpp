@@ -146,6 +146,17 @@ void register_CLJAtoms_class(){
                 , coordinates_function_value );
         
         }
+        { //::SireMM::CLJAtoms::copyIn
+        
+            typedef void ( ::SireMM::CLJAtoms::*copyIn_function_type )( ::SireMM::CLJAtoms const & ) ;
+            copyIn_function_type copyIn_function_value( &::SireMM::CLJAtoms::copyIn );
+            
+            CLJAtoms_exposer.def( 
+                "copyIn"
+                , copyIn_function_value
+                , ( bp::arg("other") ) );
+        
+        }
         { //::SireMM::CLJAtoms::count
         
             typedef int ( ::SireMM::CLJAtoms::*count_function_type )(  ) const;
@@ -307,6 +318,39 @@ void register_CLJAtoms_class(){
                 "q"
                 , q_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireMM::CLJAtoms::reconstruct
+        
+            typedef void ( ::SireMM::CLJAtoms::*reconstruct_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) ;
+            reconstruct_function_type reconstruct_function_value( &::SireMM::CLJAtoms::reconstruct );
+            
+            CLJAtoms_exposer.def( 
+                "reconstruct"
+                , reconstruct_function_value
+                , ( bp::arg("molecule"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMM::CLJAtoms::reconstruct
+        
+            typedef void ( ::SireMM::CLJAtoms::*reconstruct_function_type )( ::SireMol::MoleculeView const &,::SireMM::CLJAtoms::ID_SOURCE,::SireBase::PropertyMap const & ) ;
+            reconstruct_function_type reconstruct_function_value( &::SireMM::CLJAtoms::reconstruct );
+            
+            CLJAtoms_exposer.def( 
+                "reconstruct"
+                , reconstruct_function_value
+                , ( bp::arg("molecule"), bp::arg("id_source"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMM::CLJAtoms::resize
+        
+            typedef void ( ::SireMM::CLJAtoms::*resize_function_type )( int ) ;
+            resize_function_type resize_function_value( &::SireMM::CLJAtoms::resize );
+            
+            CLJAtoms_exposer.def( 
+                "resize"
+                , resize_function_value
+                , ( bp::arg("new_size") ) );
         
         }
         { //::SireMM::CLJAtoms::set
