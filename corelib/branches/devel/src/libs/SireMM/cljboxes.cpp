@@ -58,7 +58,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJBox &box)
     writeHeader(ds, r_cljbox, 1);
     
     SharedDataStream sds(ds);
-    sds << box.atms;
+    sds << box.atms << box.box_index << box.box_length;
     
     return ds;
 }
@@ -70,7 +70,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJBox &box)
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        sds >> box.atms;
+        sds >> box.atms >> box.box_index >> box.box_length;
         box.findGaps();
     }
     else
@@ -84,13 +84,16 @@ CLJBox::CLJBox()
 {}
 
 /** Construct a box that holds the passed atoms */
-CLJBox::CLJBox(const CLJAtoms &atoms) : atms(atoms)
+CLJBox::CLJBox(const CLJBoxIndex &index, Length length, const CLJAtoms &atoms)
+       : atms(atoms), box_index(index), box_length(length.value())
 {
     findGaps();
 }
 
 /** Copy constructor */
-CLJBox::CLJBox(const CLJBox &other) : atms(other.atms), gaps(other.gaps)
+CLJBox::CLJBox(const CLJBox &other)
+       : atms(other.atms), gaps(other.gaps),
+         box_index(other.box_index), box_length(other.box_length)
 {}
 
 /** Destructor */
@@ -265,6 +268,14 @@ QVector<int> CLJBox::add(const CLJAtoms &atoms)
 /** Combine the atoms of the two passed boxes */
 CLJBox CLJBox::operator+(const CLJBox &other) const
 {
+    if (box_index != other.box_index or box_length != other.box_length)
+        throw SireError::incompatible_error( QObject::tr(
+                "You cannot add together two boxes that are at different points in space! "
+                "Box0 = %1, dimensions %2, while Box1 = %3, dimensions %4.")
+                    .arg(index().toString()).arg(dimensions().toString())
+                    .arg(other.index().toString()).arg(other.dimensions().toString()),
+                        CODELOC );
+
     if (this->isEmpty())
         return other;
     else if (other.isEmpty())
@@ -282,13 +293,15 @@ CLJBox CLJBox::operator+(const CLJBox &other) const
 CLJBox& CLJBox::operator=(const CLJBox &other)
 {
     atms = other.atms;
+    box_index = other.box_index;
+    box_length = other.box_length;
     return *this;
 }
 
 /** Comparison operator */
 bool CLJBox::operator==(const CLJBox &other) const
 {
-    return atms == other.atms;
+    return box_length == other.box_length and box_index == other.box_index and atms == other.atms;
 }
 
 /** Comparison operator */
@@ -345,6 +358,44 @@ const char* CLJBox::typeName()
 const char* CLJBox::what() const
 {
     return CLJBox::typeName();
+}
+
+/** Return the dimensions of this box */
+AABox CLJBox::dimensions() const
+{
+    return box_index.box( Length(box_length) );
+}
+
+/** Return a copy of this box where the CLJAtoms are squeezed */
+CLJBox CLJBox::squeeze() const
+{
+    if (gaps.isEmpty())
+        return *this;
+
+    //see if all of the gaps are at the end of the vector
+    //(because of padding the MultiFloat values)
+    const int natoms = atms.count() - atms.nPadded();
+    
+    bool all_padding = true;
+    
+    foreach (const int gap, gaps)
+    {
+        if (gap < natoms)
+        {
+            all_padding = false;
+            break;
+        }
+    }
+
+    if (all_padding)
+        //nothing needs to be done
+        return *this;
+
+    //we need to squeeze out the gaps
+    CLJBox ret(*this);
+    ret.atms = atms.squeeze();
+    ret.findGaps();
+    return ret;
 }
 
 ///////////
@@ -418,6 +469,27 @@ CLJBoxPtr& CLJBoxPtr::operator=(const CLJBoxPtr &other)
     d = other.d;
     return *this;
 }
+
+/** Copy assignment operator */
+CLJBoxPtr& CLJBoxPtr::operator=(const CLJBox &other)
+{
+    if (d.constData() == &other)
+    {
+        return *this;
+    }
+    
+    if (d.constData() == 0)
+    {
+        d = new CLJBox(other);
+    }
+    else
+    {
+        d.data()->operator=(other);
+    }
+    
+    return *this;
+}
+
 
 /** Comparison operator */
 bool CLJBoxPtr::operator==(const CLJBoxPtr &other) const
@@ -518,7 +590,23 @@ const char* CLJBoxIndex::what() const
     return CLJBoxIndex::typeName();
 }
 
-/** Return the AABox that describes this box (for a given box length of 'box_length') */
+/** Return the minimum box indicies of the two passed boxes */
+CLJBoxIndex CLJBoxIndex::min(const CLJBoxIndex &other) const
+{
+    return CLJBoxIndex( qMin(i(), other.i()), qMin(j(), other.j()),
+                        qMin(k(), other.k()), qMin(index(), other.index()) );
+}
+
+/** Return the maximum box indicies of the two passed boxes */
+CLJBoxIndex CLJBoxIndex::max(const CLJBoxIndex &other) const
+{
+    return CLJBoxIndex( qMax(i(), other.i()), qMax(j(), other.j()),
+                        qMax(k(), other.k()), qMax(index(), other.index()) );
+}
+
+/** Return the AABox that describes this box (for a given box length of 'box_length').
+    The boxes are arranged so that the box at (0,0,0) has its center at (0,0,0) and
+    extends to (-0.5*length,-0.5*length,-0.5*length) to (0.5*length,0.5*length,0.5*length) */
 AABox CLJBoxIndex::box(Length box_length) const
 {
     Vector length(box_length.value());
@@ -633,13 +721,13 @@ CLJBoxDistance::CLJBoxDistance() : dist(0)
 
 /** Construct saying that the minimum distance between the box with index 'box0'
     and the box with index 'box1' is 'distance' */
-CLJBoxDistance::CLJBoxDistance(const CLJBoxIndex &box0, const CLJBoxIndex &box1, float distance)
-               : b0(box0), b1(box1), dist(distance)
+CLJBoxDistance::CLJBoxDistance(quint32 box0, quint32 box1, float distance)
+               : dist(distance), b0(box0), b1(box1)
 {}
 
 /** Copy constructor */
 CLJBoxDistance::CLJBoxDistance(const CLJBoxDistance &other)
-               : b0(other.b0), b1(other.b1), dist(other.dist)
+               : dist(other.dist), b0(other.b0), b1(other.b1)
 {}
 
 /** Destructor */
@@ -690,38 +778,6 @@ bool CLJBoxDistance::operator>(const CLJBoxDistance &other) const
     return dist > other.dist;
 }
 
-/** Return a copy of this box where the CLJAtoms are squeezed */
-CLJBox CLJBox::squeeze() const
-{
-    if (gaps.isEmpty())
-        return *this;
-
-    //see if all of the gaps are at the end of the vector
-    //(because of padding the MultiFloat values)
-    const int natoms = atms.count() - atms.nPadded();
-    
-    bool all_padding = true;
-    
-    foreach (const int gap, gaps)
-    {
-        if (gap < natoms)
-        {
-            all_padding = false;
-            break;
-        }
-    }
-
-    if (all_padding)
-        //nothing needs to be done
-        return *this;
-
-    //we need to squeeze out the gaps
-    CLJBox ret(*this);
-    ret.atms = atms.squeeze();
-    ret.findGaps();
-    return ret;
-}
-
 const char* CLJBoxDistance::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<CLJBoxDistance>() );
@@ -730,8 +786,7 @@ const char* CLJBoxDistance::typeName()
 QString CLJBoxDistance::toString() const
 {
     return QObject::tr("CLJBoxDistance( %1->%2, %3 A )")
-                .arg(b0.toString(), b1.toString())
-                .arg(dist);
+                .arg(b0).arg(b1).arg(dist);
 }
 
 const char* CLJBoxDistance::what() const
@@ -765,6 +820,14 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJBoxes &boxes)
     {
         SharedDataStream sds(ds);
         sds >> boxes.bxs >> boxes.box_length;
+        
+        //reconstruct the index of box_index to integer
+        boxes.box_to_idx.clear();
+        
+        for (int i=0; i<boxes.bxs.count(); ++i)
+        {
+            boxes.box_to_idx.insert( boxes.bxs.constData()[i].read().index(), i );
+        }
     }
     else
         throw version_error(v, "1", r_cljboxes, CODELOC);
@@ -843,13 +906,19 @@ void CLJBoxes::constructFrom(const CLJAtoms &atoms0, const CLJAtoms &atoms1)
         
         if (in_same_box)
         {
+            bxs.resize(1);
+            box_to_idx.clear();
+            box_to_idx.insert(same_box, 0);
+        
+            const Length l(box_length);
+        
             //just copy both sets of atoms into the same box
             if (atoms1.isEmpty())
-                bxs.insert( same_box, CLJBox(atoms0) );
+                bxs[0] = CLJBox(same_box, l, atoms0);
             else if (atoms0.isEmpty())
-                bxs.insert( same_box, CLJBox(atoms1) );
+                bxs[0] = CLJBox(same_box, l, atoms1);
             else
-                bxs.insert( same_box, CLJBox(atoms0+atoms1) );
+                bxs[0] = CLJBox(same_box, l, atoms0+atoms1);
         
             return;
         }
@@ -884,12 +953,20 @@ void CLJBoxes::constructFrom(const CLJAtoms &atoms0, const CLJAtoms &atoms1)
     }
 
     //now build the CLJAtoms for each box
+    box_to_idx.clear();
+    bxs.resize(boxed_atoms.count());
+    int i = 0;
+    
+    const Length l(box_length);
+    
     for (QHash< CLJBoxIndex,QList<CLJAtom> >::const_iterator it = boxed_atoms.constBegin();
          it != boxed_atoms.constEnd();
          ++it)
     {
         //qDebug() << "Box" << it.key().box(Length(box_length)).toString() << it.value().count();
-        bxs.insert( it.key(), new CLJBox(CLJAtoms(it.value())) );
+        bxs[i] = CLJBox( it.key(), l, CLJAtoms(it.value()) );
+        box_to_idx.insert( it.key(), i );
+        i += 1;
     }
     
     /*quint64 ns = t.nsecsElapsed();
@@ -917,17 +994,20 @@ CLJBoxes CLJBoxes::operator+(const CLJBoxes &other) const
     
     CLJBoxes ret(*this);
     
-    for (const_iterator it = other.bxs.constBegin();
-         it != other.bxs.constEnd();
+    for (ContainerMap::const_iterator it = other.box_to_idx.constBegin();
+         it != other.box_to_idx.constEnd();
          ++it)
     {
-        if (ret.bxs.contains(it.key()))
+        int idx = box_to_idx.value(it.key(), -1);
+    
+        if (idx >= 0)
         {
-            ret.bxs[it.key()] = new CLJBox(bxs[it.key()].read() + it.value().read());
+            ret.bxs[idx] = bxs[idx].read() + other.bxs[it.value()].read();
         }
         else
         {
-            ret.bxs.insert( it.key(), it.value() );
+            ret.bxs.append( other.bxs[it.value()] );
+            ret.box_to_idx.insert( it.key(), ret.bxs.count()-1 );
         }
     }
     
@@ -984,6 +1064,7 @@ CLJBoxes& CLJBoxes::operator=(const CLJBoxes &other)
 {
     if (this != &other)
     {
+        box_to_idx = other.box_to_idx;
         bxs = other.bxs;
         box_length = other.box_length;
     }
@@ -1010,15 +1091,17 @@ CLJAtom CLJBoxes::operator[](const CLJBoxIndex &idx) const
     if (idx.isNull())
         return CLJAtom();
     
-    const_iterator it = bxs.constFind(idx.boxOnly());
+    ContainerMap::const_iterator it = box_to_idx.constFind(idx.boxOnly());
     
-    if (it == bxs.constEnd())
+    if (it == box_to_idx.constEnd())
         return CLJAtom();
     
-    if (idx.index() < 0 or idx.index() >= it.value().read().count())
+    const CLJBox &box = bxs.constData()[it.value()].read();
+    
+    if (idx.index() < 0 or idx.index() >= box.count())
         return CLJAtom();
     else
-        return it.value().read().at( idx.index() );
+        return box.at( idx.index() );
 }
 
 /** Return the atom at the specified index, or a null atom if
@@ -1044,13 +1127,18 @@ QString CLJBoxes::toString() const
 /** Return the indicies of all occupied boxes */
 QVector<CLJBoxIndex> CLJBoxes::occupiedBoxIndicies() const
 {
-    return bxs.keys().toVector();
+    return box_to_idx.keys().toVector();
 }
 
 /** Return the box at index 'index' */
 CLJBox CLJBoxes::boxAt(const CLJBoxIndex &index) const
 {
-    return bxs.value( index.boxOnly() ).read();
+    int idx = box_to_idx.value(index.boxOnly());
+    
+    if (idx >= 0)
+        return bxs.constData()[idx].read();
+    else
+        return CLJBox();
 }
 
 /** Return the AABox that describes the boundary of the box at index 'index' */
@@ -1075,20 +1163,12 @@ AABox CLJBoxes::boxDimensionsAt(const Vector &coords) const
     as the box dimensions returned by 'boxDimensions' */
 QVector<CLJBox> CLJBoxes::boxes() const
 {
-    if (bxs.isEmpty())
-        return QVector<CLJBox>();
-
-    QVector<CLJBox> b( bxs.count() );
-    CLJBox *ba = b.data();
+    QVector<CLJBox> b;
+    b.reserve(bxs.count());
     
-    int idx = 0;
-    
-    for (const_iterator it = bxs.constBegin();
-         it != bxs.constEnd();
-         ++it)
+    for (int i=0; i<bxs.count(); ++i)
     {
-        ba[idx] = it.value().read();
-        idx += 1;
+        b.append( bxs.constData()[i].read() );
     }
     
     return b;
@@ -1104,14 +1184,9 @@ QVector<AABox> CLJBoxes::boxDimensions() const
     QVector<AABox> b( bxs.count() );
     AABox *ba = b.data();
     
-    int idx = 0;
-    
-    for (const_iterator it = bxs.constBegin();
-         it != bxs.constEnd();
-         ++it)
+    for (int i=0; i<bxs.count(); ++i)
     {
-        ba[idx] = it.key().box(Length(box_length));
-        idx += 1;
+        ba[i] = bxs.constData()[i].read().dimensions();
     }
     
     return b;
@@ -1132,7 +1207,7 @@ int CLJBoxes::nAtoms() const
          it != bxs.constEnd();
          ++it)
     {
-        n += it.value().read().nAtoms();
+        n += it->read().nAtoms();
     }
     
     return n;
@@ -1148,7 +1223,7 @@ CLJAtoms CLJBoxes::atoms() const
          it != bxs.constEnd();
          ++it)
     {
-        atms += it.value().read().atoms();
+        atms += it->read().atoms();
     }
     
     return atms;
@@ -1186,27 +1261,29 @@ QVector<CLJBoxIndex> CLJBoxes::add(const CLJAtoms &atoms)
          it != boxed_atoms.end();
          ++it)
     {
-        const CLJBoxIndex &idx = it.key();
+        int idx = box_to_idx.value(it.key(), -1);
         
-        if (bxs.contains(idx))
+        if (idx >= 0)
         {
             QVector<int> box_idxs = bxs[idx].write().add( CLJAtoms(it.value().get<0>()) );
             const QList<int> &atom_idxs = it.value().get<1>();
 
             for (int i=0; i<atom_idxs.count(); ++i)
             {
-                indicies[ atom_idxs.at(i) ] = CLJBoxIndex( idx.i(), idx.j(), idx.k(),
-                                                           box_idxs.at(i) );
+                indicies[ atom_idxs.at(i) ] = CLJBoxIndex( it.key().i(), it.key().j(),
+                                                           it.key().k(), box_idxs.at(i) );
             }
         }
         else
         {
             const QList<int> &atom_idxs = it.value().get<1>();
-            bxs.insert( idx, new CLJBox(CLJAtoms(it.value().get<0>())) );
+            bxs.append( new CLJBox(it.key(), Length(box_length), CLJAtoms(it.value().get<0>())) );
+            box_to_idx.insert( it.key(), bxs.count() - 1 );
             
             for (int i=0; i<atom_idxs.count(); ++i)
             {
-                indicies[ atom_idxs.at(i) ] = CLJBoxIndex( idx.i(), idx.j(), idx.k(), i );
+                indicies[ atom_idxs.at(i) ] = CLJBoxIndex( it.key().i(), it.key().j(),
+                                                           it.key().k(), i );
             }
         }
     }
@@ -1225,11 +1302,11 @@ void CLJBoxes::remove(const QVector<CLJBoxIndex> &atoms)
     {
         if (atom.hasAtomIndex())
         {
-            Container::iterator it = bxs.find( atom.boxOnly() );
+            int idx = box_to_idx.value( atom.boxOnly(), -1 );
             
-            if (it != bxs.constEnd())
+            if (idx >= 0)
             {
-                it.value().write().remove(atom.index());
+                bxs[idx].write().remove(atom.index());
             }
         }
     }
@@ -1247,11 +1324,11 @@ CLJAtoms CLJBoxes::take(const QVector<CLJBoxIndex> &atoms)
     {
         if (atom.hasAtomIndex())
         {
-            Container::iterator it = bxs.find( atom.boxOnly() );
+            int idx = box_to_idx.value(atom.boxOnly(), -1);
             
-            if (it != bxs.end())
+            if (idx >= 0)
             {
-                CLJAtom cljatom = it.value().write().take(atom.index());
+                CLJAtom cljatom = bxs[idx].write().take(atom.index());
                 
                 if (not cljatom.isDummy())
                     atms.append(cljatom);
@@ -1275,11 +1352,11 @@ CLJAtoms CLJBoxes::takeNegative(const QVector<CLJBoxIndex> &atoms)
     {
         if (atom.hasAtomIndex())
         {
-            Container::iterator it = bxs.find( atom.boxOnly() );
+            int idx = box_to_idx.value(atom.boxOnly(), -1);
             
-            if (it != bxs.end())
+            if (idx >= 0)
             {
-                CLJAtom cljatom = it.value().write().takeNegative(atom.index());
+                CLJAtom cljatom = bxs[idx].write().takeNegative(atom.index());
                 
                 if (not cljatom.isDummy())
                     atms.append(cljatom);
@@ -1290,16 +1367,24 @@ CLJAtoms CLJBoxes::takeNegative(const QVector<CLJBoxIndex> &atoms)
     return CLJAtoms(atms);
 }
 
-/** Return a copy of the boxes where all of the CLJAtoms objects have been squeezed */
+/** Return a copy of the boxes where all of the CLJAtoms objects have been squeezed,
+    and all empty boxes have been removed */
 CLJBoxes CLJBoxes::squeeze() const
 {
     CLJBoxes ret(*this);
-    
+
+    ret.bxs.clear();
+    ret.box_to_idx.clear();
+
     for (const_iterator it = bxs.constBegin();
          it != bxs.constEnd();
          ++it)
     {
-        ret.bxs[it.key()] = it.value().read().squeeze();
+        if (not it->read().nAtoms() == 0)
+        {
+            ret.bxs.append( it->read().squeeze() );
+            ret.box_to_idx.insert( ret.bxs.last().read().index(), ret.bxs.count() - 1 );
+        }
     }
     
     return ret;
@@ -1432,45 +1517,39 @@ float CLJBoxes::getDistance(const Space &space, const CLJBoxIndex &box0,
 QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxes &boxes)
 {
     QVector<CLJBoxDistance> dists;
-    dists.reserve(1024);
+
+    const quint32 nboxes = boxes.bxs.count();
+    const CLJBoxPtr *b = boxes.bxs.constData();
+
+    dists.reserve((nboxes*nboxes) / 2);
     
     if (space.isCartesian() and not space.isPeriodic())
     {
-        for (const_iterator it = boxes.bxs.constBegin();
-             it != boxes.bxs.constEnd();
-             ++it)
+    
+        for (quint32 i=0; i<nboxes; ++i)
         {
-            const CLJBoxIndex &box0 = it.key();
+            const CLJBoxIndex &box0 = b[i].read().index();
             
-            for (const_iterator it2 = it;
-                 it2 != boxes.bxs.constEnd();
-                 ++it2)
+            for (quint32 j=i; j<nboxes; ++j)
             {
-                const CLJBoxIndex &box1 = it2.key();
+                const CLJBoxIndex &box1 = b[j].read().index();
                 
                 const float dist = square_root( getDelta2(box0,box1) );
-                dists.append( CLJBoxDistance(box0, box1, dist*boxes.box_length) );
+                dists.append( CLJBoxDistance(i, j, dist*boxes.box_length) );
             }
         }
     }
     else
     {
-        const Length l(boxes.box_length);
-        
-        for (const_iterator it = boxes.bxs.constBegin();
-             it != boxes.bxs.constEnd();
-             ++it)
+        for (quint32 i=0; i<nboxes; ++i)
         {
-            const AABox box0 = it.key().box(l);
+            const AABox box0 = b[i].read().dimensions();
         
-            for (const_iterator it2 = it;
-                 it2 != boxes.bxs.constEnd();
-                 ++it2)
+            for (quint32 j=i; j<nboxes; ++j)
             {
-                const AABox box1 = it2.key().box(l);
+                const AABox box1 = b[j].read().dimensions();
                 
-                dists.append( CLJBoxDistance(it.key(), it2.key(),
-                                             space.minimumDistance(box0,box1)) );
+                dists.append( CLJBoxDistance(i, j, space.minimumDistance(box0,box1)) );
             }
         }
     }
@@ -1488,7 +1567,11 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
     //t.start();
 
     QVector<CLJBoxDistance> dists;
-    dists.reserve(1024);
+
+    const quint32 nboxes = boxes.bxs.count();
+    const CLJBoxPtr *b = boxes.bxs.constData();
+
+    dists.reserve((nboxes*nboxes) / 2);
 
     if (space.isCartesian())
     {
@@ -1507,17 +1590,13 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
             const float box_cutoff = cutoff.value() / boxes.box_length;
             const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
             
-            for (const_iterator it = boxes.bxs.constBegin();
-                 it != boxes.bxs.constEnd();
-                 ++it)
+            for (quint32 i=0; i<nboxes; ++i)
             {
-                const CLJBoxIndex &box0 = it.key();
+                const CLJBoxIndex &box0 = b[i].read().index();
                 
-                for (const_iterator it2 = it;
-                     it2 != boxes.bxs.constEnd();
-                     ++it2)
+                for (quint32 j=i; j<nboxes; ++j)
                 {
-                    const CLJBoxIndex &box1 = it2.key();
+                    const CLJBoxIndex &box1 = b[j].read().index();
 
                     int idx = getBoxDelta(box0.i(), box1.i());
                     int idy = getBoxDelta(box0.j(), box1.j());
@@ -1549,7 +1628,7 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
                         const float dist = std::sqrt(dx*dx + dy*dy + dz*dz);
                         
                         if (dist < box_cutoff)
-                            dists.append( CLJBoxDistance(box0, box1, dist*boxes.box_length) );
+                            dists.append( CLJBoxDistance(i, j, dist*boxes.box_length) );
                     }
                     else
                     {
@@ -1565,7 +1644,7 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
                             const float dist = square_root(d2);
                             
                             if (dist < box_cutoff)
-                                dists.append( CLJBoxDistance(box0, box1, dist*boxes.box_length) );
+                                dists.append( CLJBoxDistance(i, j, dist*boxes.box_length) );
                         }
                     }
                 }
@@ -1576,17 +1655,13 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
             const float box_cutoff = cutoff.value() / boxes.box_length;
             const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
             
-            for (const_iterator it = boxes.bxs.constBegin();
-                 it != boxes.bxs.constEnd();
-                 ++it)
+            for (quint32 i=0; i<nboxes; ++i)
             {
-                const CLJBoxIndex &box0 = it.key();
+                const CLJBoxIndex &box0 = b[i].read().index();
                 
-                for (const_iterator it2 = it;
-                     it2 != boxes.bxs.constEnd();
-                     ++it2)
+                for (quint32 j=i; j<nboxes; ++j)
                 {
-                    const CLJBoxIndex &box1 = it2.key();
+                    const CLJBoxIndex &box1 = b[j].read().index();
                     
                     const int d2 = getDelta2(box0, box1);
                     
@@ -1596,7 +1671,7 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
                         const float dist = square_root(d2);
                         
                         if (dist < box_cutoff)
-                            dists.append( CLJBoxDistance(box0, box1, dist*boxes.box_length) );
+                            dists.append( CLJBoxDistance(i, j, dist*boxes.box_length) );
                     }
                 }
             }
@@ -1604,24 +1679,18 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
     }
     else
     {
-        const Length l(boxes.box_length);
-        
-        for (const_iterator it = boxes.bxs.constBegin();
-             it != boxes.bxs.constEnd();
-             ++it)
+        for (quint32 i=0; i<nboxes; ++i)
         {
-            const AABox box0 = it.key().box(l);
+            const AABox box0 = b[i].read().dimensions();
         
-            for (const_iterator it2 = it;
-                 it2 != boxes.bxs.constEnd();
-                 ++it2)
+            for (quint32 j=i; j<nboxes; ++j)
             {
-                const AABox box1 = it2.key().box(l);
+                const AABox box1 = b[j].read().dimensions();
                 
                 const float dist = space.minimumDistance(box0,box1);
                 
                 if (dist < cutoff.value())
-                    dists.append( CLJBoxDistance(it.key(), it2.key(), dist) );
+                    dists.append( CLJBoxDistance(i, j, dist) );
             }
         }
     }
@@ -1638,47 +1707,41 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
                                                const CLJBoxes &boxes1)
 {
     QVector<CLJBoxDistance> dists;
-    dists.reserve(1024);
+    
+    const quint32 n0 = boxes0.bxs.count();
+    const quint32 n1 = boxes1.bxs.count();
+    const CLJBoxPtr *b0 = boxes0.bxs.constData();
+    const CLJBoxPtr *b1 = boxes1.bxs.constData();
+    
+    dists.reserve((n0*n1)/2);
     
     if (space.isCartesian() and (boxes0.box_length == boxes1.box_length)
         and not space.isPeriodic())
     {
-        for (const_iterator it = boxes0.bxs.constBegin();
-             it != boxes0.bxs.constEnd();
-             ++it)
+        for (quint32 i=0; i<n0; ++i)
         {
-            const CLJBoxIndex &box0 = it.key();
+            const CLJBoxIndex &box0 = b0[i].read().index();
             
-            for (const_iterator it2 = boxes1.bxs.constBegin();
-                 it2 != boxes1.bxs.constEnd();
-                 ++it2)
+            for (quint32 j=0; j<n1; ++j)
             {
-                const CLJBoxIndex &box1 = it2.key();
+                const CLJBoxIndex &box1 = b1[j].read().index();
                 
                 const float dist = square_root( getDelta2(box0,box1) );
-                dists.append( CLJBoxDistance(box0, box1, dist*boxes0.box_length) );
+                dists.append( CLJBoxDistance(i, j, dist*boxes0.box_length) );
             }
         }
     }
     else
     {
-        const Length l0(boxes0.box_length);
-        const Length l1(boxes1.box_length);
-        
-        for (const_iterator it = boxes0.bxs.constBegin();
-             it != boxes0.bxs.constEnd();
-             ++it)
+        for (quint32 i=0; i<n0; ++i)
         {
-            const AABox box0 = it.key().box(l0);
+            const AABox box0 = b0[i].read().dimensions();
             
-            for (const_iterator it2 = boxes1.bxs.constBegin();
-                 it2 != boxes1.bxs.constEnd();
-                 ++it2)
+            for (quint32 j=0; j<n1; ++j)
             {
-                const AABox box1 = it2.key().box(l1);
+                const AABox box1 = b1[j].read().dimensions();
                 
-                dists.append( CLJBoxDistance(it.key(), it2.key(),
-                                             space.minimumDistance(box0,box1)) );
+                dists.append( CLJBoxDistance(i, j, space.minimumDistance(box0,box1)) );
             }
         }
     }
@@ -1695,7 +1758,13 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
     //t.start();
 
     QVector<CLJBoxDistance> dists;
-    dists.reserve( 1024 );
+    
+    const quint32 n0 = boxes0.bxs.count();
+    const quint32 n1 = boxes1.bxs.count();
+    const CLJBoxPtr *b0 = boxes0.bxs.constData();
+    const CLJBoxPtr *b1 = boxes1.bxs.constData();
+    
+    dists.reserve((n0*n1)/2);
 
     if (space.isCartesian() and (boxes0.box_length == boxes1.box_length))
     {
@@ -1714,17 +1783,13 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
             const float half_box_y = 0.5 * box_y;
             const float half_box_z = 0.5 * box_z;
             
-            for (const_iterator it = boxes0.bxs.constBegin();
-                 it != boxes0.bxs.constEnd();
-                 ++it)
+            for (quint32 i=0; i<n0; ++i)
             {
-                const CLJBoxIndex &box0 = it.key();
+                const CLJBoxIndex &box0 = b0[i].read().index();
                 
-                for (const_iterator it2 = boxes1.bxs.constBegin();
-                     it2 != boxes1.bxs.constEnd();
-                     ++it2)
+                for (quint32 j=0; j<n1; ++j)
                 {
-                    const CLJBoxIndex &box1 = it2.key();
+                    const CLJBoxIndex &box1 = b1[j].read().index();
 
                     int idx = getBoxDelta(box0.i(), box1.i());
                     int idy = getBoxDelta(box0.j(), box1.j());
@@ -1756,7 +1821,7 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
                         const float dist = std::sqrt(dx*dx + dy*dy + dz*dz);
 
                         if (dist < box_cutoff)
-                            dists.append( CLJBoxDistance(box0, box1, dist*boxes0.box_length) );
+                            dists.append( CLJBoxDistance(i, j, dist*boxes0.box_length) );
                     }
                     else
                     {
@@ -1772,7 +1837,7 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
                             const float dist = square_root(d2);
                             
                             if (dist < box_cutoff)
-                                dists.append( CLJBoxDistance(box0, box1, dist*boxes0.box_length) );
+                                dists.append( CLJBoxDistance(i, j, dist*boxes0.box_length) );
                         }
                     }
                 }
@@ -1783,17 +1848,13 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
             const float box_cutoff = cutoff.value() / boxes0.box_length;
             const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
             
-            for (const_iterator it = boxes0.bxs.constBegin();
-                 it != boxes0.bxs.constEnd();
-                 ++it)
+            for (quint32 i=0; i<n0; ++i)
             {
-                const CLJBoxIndex &box0 = it.key();
+                const CLJBoxIndex &box0 = b0[i].read().index();
                 
-                for (const_iterator it2 = boxes1.bxs.constBegin();
-                     it2 != boxes1.bxs.constEnd();
-                     ++it2)
+                for (quint32 j=0; j<n1; ++j)
                 {
-                    const CLJBoxIndex &box1 = it2.key();
+                    const CLJBoxIndex &box1 = b1[j].read().index();
                     
                     int d2 = getDelta2(box0,box1);
                     
@@ -1803,7 +1864,7 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
                         const float dist = square_root(d2);
                         
                         if (dist < box_cutoff)
-                            dists.append( CLJBoxDistance(box0, box1, dist*boxes0.box_length) );
+                            dists.append( CLJBoxDistance(i, j, dist*boxes0.box_length) );
                     }
                 }
             }
@@ -1811,25 +1872,18 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
     }
     else
     {
-        const Length l0(boxes0.box_length);
-        const Length l1(boxes1.box_length);
-        
-        for (const_iterator it = boxes0.bxs.constBegin();
-             it != boxes0.bxs.constEnd();
-             ++it)
+        for (quint32 i=0; i<n0; ++i)
         {
-            const AABox box0 = it.key().box(l0);
+            const AABox box0 = b0[i].read().dimensions();
             
-            for (const_iterator it2 = boxes1.bxs.constBegin();
-                 it2 != boxes1.bxs.constEnd();
-                 ++it2)
+            for (quint32 j=0; j<n1; ++j)
             {
-                const AABox box1 = it2.key().box(l1);
+                const AABox box1 = b1[j].read().dimensions();
                 
                 const float dist = space.minimumDistance(box0, box1);
                 
                 if (dist < cutoff.value())
-                    dists.append( CLJBoxDistance(it.key(), it2.key(), dist) );
+                    dists.append( CLJBoxDistance(i, j, dist) );
             }
         }
     }

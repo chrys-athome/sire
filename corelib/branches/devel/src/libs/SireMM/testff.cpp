@@ -106,18 +106,19 @@ public:
     void operator()(const tbb::blocked_range<int> &range) const
     {
         const CLJBoxDistance* ptr = dists + range.begin();
+        const CLJBoxPtr* const b = boxes->constData();
     
         for (int i = range.begin(); i != range.end(); ++i)
         {
             if (ptr->box0() == ptr->box1())
             {
-                (*func)(boxes->constFind(ptr->box0()).value().read().atoms(),
+                (*func)(b[ptr->box0()].read().atoms(),
                         coul_nrg[i], lj_nrg[i]);
             }
             else
             {
-                (*func)(boxes->constFind(ptr->box0()).value().read().atoms(),
-                        boxes->constFind(ptr->box1()).value().read().atoms(),
+                (*func)(b[ptr->box0()].read().atoms(),
+                        b[ptr->box1()].read().atoms(),
                         coul_nrg[i], lj_nrg[i]);
             }
             

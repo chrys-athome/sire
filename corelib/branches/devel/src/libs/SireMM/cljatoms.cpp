@@ -950,6 +950,17 @@ void CLJAtoms::constructFrom(const MoleculeView &molecule,
     //         << (0.000001*ns) << "ms";
 }
 
+void CLJAtoms::reconstruct(const MoleculeView &molecule, const PropertyMap &map)
+{
+    this->constructFrom(molecule, USE_MOLNUM, map);
+}
+
+void CLJAtoms::reconstruct(const MoleculeView &molecule, ID_SOURCE source,
+                           const PropertyMap &map)
+{
+    this->constructFrom(molecule, source, map);
+}
+
 /** Construct from the parameters in the passed set of Molecules */
 void CLJAtoms::constructFrom(const Molecules &molecules,
                              ID_SOURCE id_source, const PropertyMap &map)
@@ -1709,6 +1720,83 @@ void CLJAtoms::setAllID(qint32 idnum)
             }
         }
     }
+}
+
+/** Resize this collection to hold 'n' atoms. This will add dummy atoms (and padding)
+    if necessary, or will delete elements (but keeping dummy padding) if needed */
+void CLJAtoms::resize(int new_size)
+{
+    if (new_size == 0)
+    {
+        _x.resize(0);
+        _y.resize(0);
+        _z.resize(0);
+        _q.resize(0);
+        _sig.resize(0);
+        _eps.resize(0);
+        _id.resize(0);
+        return;
+    }
+
+    const int old_natoms = this->nAtoms();
+
+    if (new_size == old_natoms)
+        //nothing needs to be done
+        return;
+
+    const int new_remainder = new_size % MultiFloat::count();
+    const int new_nvectors = new_size / MultiFloat::count() + (new_remainder == 0 ? 0 : 1);
+
+    //resize the actual vectors
+    if (new_nvectors != _x.count())
+    {
+        _x.resize(new_nvectors);
+        _y.resize(new_nvectors);
+        _z.resize(new_nvectors);
+        _q.resize(new_nvectors);
+        _sig.resize(new_nvectors);
+        _eps.resize(new_nvectors);
+        _id.resize(new_nvectors);
+    }
+    
+    //padd with dummies (if needed)
+    if (new_remainder != 0)
+    {
+        for (int i=new_remainder; i<MultiFloat::count(); ++i)
+        {
+            _id.last().set(i, id_of_dummy);
+        }
+    }
+    
+    if (this->nAtoms() != new_size)
+    {
+        throw SireError::program_bug( QObject::tr(
+                "Something went wrong resizing CLJAtoms from size %1 to size %2. "
+                "New size is %3.")
+                    .arg(old_natoms).arg(new_size).arg(this->nAtoms()), CODELOC );
+    }
+}
+
+/** Copy the contents of 'other' into this vectors, starting at index 0,
+    and copying all elements of 'other' */
+void CLJAtoms::copyIn(const CLJAtoms &other)
+{
+    //straight copy
+    if (other._x.count() >= _x.count())
+    {
+        this->operator=(other);
+        return;
+    }
+    
+    const int nelements = other._x.count();
+    
+    std::memcpy( _x.data(), other._x.constData(), nelements * sizeof(MultiFloat) );
+    std::memcpy( _y.data(), other._y.constData(), nelements * sizeof(MultiFloat) );
+    std::memcpy( _z.data(), other._z.constData(), nelements * sizeof(MultiFloat) );
+    std::memcpy( _q.data(), other._q.constData(), nelements * sizeof(MultiFloat) );
+    std::memcpy( _sig.data(), other._sig.constData(), nelements * sizeof(MultiFloat) );
+    std::memcpy( _eps.data(), other._eps.constData(), nelements * sizeof(MultiFloat) );
+    std::memcpy( _id.data(), other._id.constData(), nelements * sizeof(MultiInt) );
 }
 
 /** Return a copy of these CLJAtoms where the charge and LJ epsilon parameters

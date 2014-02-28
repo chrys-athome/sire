@@ -20,6 +20,7 @@ set ( SIREMM_HEADERS
       cljboxes.h
       cljcalculator.h
       cljcomponent.h
+      cljdelta.h
       cljfunction.h
       cljgrid.h
       cljparam.h
@@ -81,6 +82,7 @@ set ( SIREMM_SOURCES
       cljboxes.cpp
       cljcalculator.cpp
       cljcomponent.cpp
+      cljdelta.cpp
       cljfunction.cpp
       cljgrid.cpp
       cljparam.cpp

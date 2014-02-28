@@ -199,6 +199,13 @@ public:
 
     ~CLJAtoms();
     
+    void reconstruct(const MoleculeView &molecule,
+                     const PropertyMap &map = PropertyMap());
+    
+    void reconstruct(const MoleculeView &molecule,
+                     ID_SOURCE id_source,
+                     const PropertyMap &map = PropertyMap());
+    
     CLJAtoms& operator=(const CLJAtoms &other);
     
     bool operator==(const CLJAtoms &other) const;
@@ -220,6 +227,9 @@ public:
     
     CLJAtom at(int i) const;
     CLJAtom getitem(int i) const;
+    
+    void resize(int new_size);
+    void copyIn(const CLJAtoms &other);
     
     CLJAtoms operator+(const CLJAtoms &other) const;
     

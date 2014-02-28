@@ -136,25 +136,26 @@ namespace SireMM
             void operator()(const tbb::blocked_range<int> &range) const
             {
                 const CLJBoxDistance* ptr = dists + range.begin();
+                const CLJBoxPtr* const b = boxes->constData();
             
                 for (int i = range.begin(); i != range.end(); ++i)
                 {
                     if (ptr->box0() == ptr->box1())
                     {
-                        func->total(boxes->constFind(ptr->box0()).value().read().atoms(),
+                        func->total(b[ptr->box0()].read().atoms(),
                                     coul_nrg[i], lj_nrg[i]);
                     }
                     else if (ptr->distance() < coul_cutoff and ptr->distance() < lj_cutoff)
                     {
-                        func->total(boxes->constFind(ptr->box0()).value().read().atoms(),
-                                    boxes->constFind(ptr->box1()).value().read().atoms(),
+                        func->total(b[ptr->box0()].read().atoms(),
+                                    b[ptr->box1()].read().atoms(),
                                     coul_nrg[i], lj_nrg[i], ptr->distance());
                     }
                     else if (ptr->distance() < coul_cutoff)
                     {
                         coul_nrg[i]
-                            = func->coulomb(boxes->constFind(ptr->box0()).value().read().atoms(),
-                                            boxes->constFind(ptr->box1()).value().read().atoms(),
+                            = func->coulomb(b[ptr->box0()].read().atoms(),
+                                            b[ptr->box1()].read().atoms(),
                                             ptr->distance());
                         
                         lj_nrg[i] = 0;
@@ -162,8 +163,8 @@ namespace SireMM
                     else if (ptr->distance() < lj_cutoff)
                     {
                         lj_nrg[i]
-                            = func->lj(boxes->constFind(ptr->box0()).value().read().atoms(),
-                                       boxes->constFind(ptr->box1()).value().read().atoms(),
+                            = func->lj(b[ptr->box0()].read().atoms(),
+                                       b[ptr->box1()].read().atoms(),
                                        ptr->distance());
                         
                         coul_nrg[i] = 0;
@@ -207,18 +208,19 @@ namespace SireMM
             void operator()(const tbb::blocked_range<int> &range) const
             {
                 const CLJBoxDistance* ptr = dists + range.begin();
+                const CLJBoxPtr* const b = boxes->constData();
             
                 for (int i = range.begin(); i != range.end(); ++i)
                 {
                     if (ptr->box0() == ptr->box1())
                     {
-                        func->total(boxes->constFind(ptr->box0()).value().read().atoms(),
+                        func->total(b[ptr->box0()].read().atoms(),
                                     coul_nrg[i], lj_nrg[i]);
                     }
                     else
                     {
-                        func->total(boxes->constFind(ptr->box0()).value().read().atoms(),
-                                    boxes->constFind(ptr->box1()).value().read().atoms(),
+                        func->total(b[ptr->box0()].read().atoms(),
+                                    b[ptr->box1()].read().atoms(),
                                     coul_nrg[i], lj_nrg[i], ptr->distance());
                     }
                     
@@ -261,20 +263,22 @@ namespace SireMM
             void operator()(const tbb::blocked_range<int> &range) const
             {
                 const CLJBoxDistance* ptr = dists + range.begin();
+                const CLJBoxPtr* const b0 = boxes0->constData();
+                const CLJBoxPtr* const b1 = boxes1->constData();
             
                 for (int i = range.begin(); i != range.end(); ++i)
                 {
                     if (ptr->distance() < coul_cutoff and ptr->distance() < lj_cutoff)
                     {
-                        func->total(boxes0->constFind(ptr->box0()).value().read().atoms(),
-                                    boxes1->constFind(ptr->box1()).value().read().atoms(),
+                        func->total(b0[ptr->box0()].read().atoms(),
+                                    b1[ptr->box1()].read().atoms(),
                                     coul_nrg[i], lj_nrg[i], ptr->distance());
                     }
                     else if (ptr->distance() < coul_cutoff)
                     {
                         coul_nrg[i]
-                            = func->coulomb(boxes0->constFind(ptr->box0()).value().read().atoms(),
-                                            boxes1->constFind(ptr->box1()).value().read().atoms(),
+                            = func->coulomb(b0[ptr->box0()].read().atoms(),
+                                            b1[ptr->box1()].read().atoms(),
                                             ptr->distance());
                         
                         lj_nrg[i] = 0;
@@ -282,8 +286,8 @@ namespace SireMM
                     else if (ptr->distance() < lj_cutoff)
                     {
                         lj_nrg[i]
-                            = func->lj(boxes0->constFind(ptr->box0()).value().read().atoms(),
-                                       boxes1->constFind(ptr->box1()).value().read().atoms(),
+                            = func->lj(b0[ptr->box0()].read().atoms(),
+                                       b1[ptr->box1()].read().atoms(),
                                        ptr->distance());
                         
                         coul_nrg[i] = 0;
@@ -329,11 +333,13 @@ namespace SireMM
             void operator()(const tbb::blocked_range<int> &range) const
             {
                 const CLJBoxDistance* ptr = dists + range.begin();
+                const CLJBoxPtr* const b0 = boxes0->constData();
+                const CLJBoxPtr* const b1 = boxes1->constData();
             
                 for (int i = range.begin(); i != range.end(); ++i)
                 {
-                    func->total(boxes0->constFind(ptr->box0()).value().read().atoms(),
-                                boxes1->constFind(ptr->box1()).value().read().atoms(),
+                    func->total(b0[ptr->box0()].read().atoms(),
+                                b1[ptr->box1()].read().atoms(),
                                 coul_nrg[i], lj_nrg[i], ptr->distance());
                     
                     ptr += 1;
@@ -462,8 +468,12 @@ tuple<double,double> CLJCalculator::calculate(const CLJFunction &func,
     if (boxes0.nOccupiedBoxes() == 1 and boxes0.length() == boxes1.length())
     {
         //there is only a single box, so use a different parallelisation strategy
-        const CLJBoxIndex &idx0 = boxes0.occupiedBoxes().constBegin().key();
-        const CLJBox &box0 = boxes0.occupiedBoxes().constBegin().value().read();
+        const CLJBoxPtr* const b0 = boxes0.constData();
+        const CLJBoxPtr* const b1 = boxes1.constData();
+        
+        const CLJBoxIndex &idx0 = b0[0].read().index();
+        const CLJAtoms &atoms0 = b0[0].read().atoms();
+        const int n1 = boxes1.nOccupiedBoxes();
         
         const float coul_cutoff = func.coulombCutoff().value();
         const float lj_cutoff = func.ljCutoff().value();
@@ -472,16 +482,14 @@ tuple<double,double> CLJCalculator::calculate(const CLJFunction &func,
         
         double cnrg(0), ljnrg(0);
         
-        for (CLJBoxes::const_iterator it = boxes1.constBegin();
-             it != boxes1.constEnd();
-             ++it)
+        for (int j=0; j<n1; ++j)
         {
-            const float mindist = boxes0.getDistance(func.space(), idx0, it.key());
+            const float mindist = boxes0.getDistance(func.space(), idx0, b1[j].read().index());
             
             if (mindist < max_cutoff)
             {
                 double icnrg(0), iljnrg(0);
-                func(box0.atoms(), it.value().read().atoms(), icnrg, iljnrg, mindist);
+                func(atoms0, b1[j].read().atoms(), icnrg, iljnrg, mindist);
                 cnrg += icnrg;
                 ljnrg += iljnrg;
             }

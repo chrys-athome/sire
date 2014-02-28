@@ -525,7 +525,7 @@ void CLJGrid::calculateGrid()
              it != cljboxes.constEnd();
              ++it)
         {
-            const CLJAtoms &atoms = it.value().read().atoms();
+            const CLJAtoms &atoms = it->read().atoms();
             
             for (int i=0; i<atoms.count(); ++i)
             {
@@ -612,7 +612,7 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
              it != atoms.constEnd();
              ++it)
         {
-            const CLJAtoms &atms = it.value().read().atoms();
+            const CLJAtoms &atms = it->read().atoms();
         
             const MultiFloat *x = atms.x().constData();
             const MultiFloat *y = atms.y().constData();

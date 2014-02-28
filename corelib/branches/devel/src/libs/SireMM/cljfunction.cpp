@@ -767,7 +767,7 @@ void CLJFunction::operator()(const CLJBoxes &atoms, double &cnrg, double &ljnrg)
             double icnrg(0), iljnrg(0);
 
             //calculate the self-energy of the box
-            this->total(it0.value().read().atoms(), icnrg, iljnrg);
+            this->total(it0->read().atoms(), icnrg, iljnrg);
         
             cnrg += icnrg;
             ljnrg += iljnrg;
@@ -775,13 +775,17 @@ void CLJFunction::operator()(const CLJBoxes &atoms, double &cnrg, double &ljnrg)
             //now calculate its interaction with all other boxes
             CLJBoxes::const_iterator it1 = it0;
         
+            const CLJBoxIndex &idx0 = it0->read().index();
+        
             for (++it1; it1 != boxes.constEnd(); ++it1)
             {
-                float mindist = atoms.getDistance(spce.read(), it0.key(), it1.key());
+                const CLJBoxIndex &idx1 = it1->read().index();
+            
+                float mindist = atoms.getDistance(spce.read(), idx0, idx1);
             
                 if (mindist < min_cutoff)
                 {
-                    this->total(it0.value().read().atoms(), it1.value().read().atoms(),
+                    this->total(it0->read().atoms(), it1->read().atoms(),
                                 icnrg, iljnrg, mindist);
                     
                     cnrg += icnrg;
@@ -801,7 +805,7 @@ void CLJFunction::operator()(const CLJBoxes &atoms, double &cnrg, double &ljnrg)
             double icnrg(0), iljnrg(0);
 
             //calculate the self-energy of the box
-            this->total(it0.value().read().atoms(), icnrg, iljnrg);
+            this->total(it0->read().atoms(), icnrg, iljnrg);
         
             cnrg += icnrg;
             ljnrg += iljnrg;
@@ -811,7 +815,7 @@ void CLJFunction::operator()(const CLJBoxes &atoms, double &cnrg, double &ljnrg)
         
             for (++it1; it1 != boxes.constEnd(); ++it1)
             {
-                this->total(it0.value().read().atoms(), it1.value().read().atoms(),
+                this->total(it0->read().atoms(), it1->read().atoms(),
                             icnrg, iljnrg);
                 
                 cnrg += icnrg;
@@ -840,17 +844,20 @@ void CLJFunction::operator()(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
              it0 != boxes0.constEnd();
              ++it0)
         {
+            const CLJBoxIndex &idx0 = it0->read().index();
+        
             for (CLJBoxes::const_iterator it1 = boxes1.constBegin();
                  it1 != boxes1.constEnd();
                  ++it1)
             {
                 double icnrg(0), iljnrg(0);
+                const CLJBoxIndex &idx1 = it1->read().index();
                 
-                const float mindist = atoms0.getDistance(spce.read(), it0.key(), it1.key());
+                const float mindist = atoms0.getDistance(spce.read(), idx0, idx1);
                 
                 if (mindist < min_cutoff)
                 {
-                    this->operator()(it0.value().read().atoms(), it1.value().read().atoms(),
+                    this->operator()(it0->read().atoms(), it1->read().atoms(),
                                      icnrg, iljnrg, mindist);
                 }
                 
@@ -874,7 +881,7 @@ void CLJFunction::operator()(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
             {
                 double icnrg(0), iljnrg(0);
                 
-                this->operator()(it0.value().read().atoms(), it1.value().read().atoms(),
+                this->operator()(it0->read().atoms(), it1->read().atoms(),
                                  icnrg, iljnrg);
                 
                 cnrg += icnrg;
