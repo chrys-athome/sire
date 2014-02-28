@@ -172,6 +172,9 @@ void CLJDelta::buildFrom(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &indi
     is_single_box = (max_box.i() == min_box.i()) and
                     (max_box.j() == min_box.j()) and
                     (max_box.k() == min_box.k());
+    
+    //save the box length
+    box_length = boxes.length().value();
 }
 
 /** Null constructor */
