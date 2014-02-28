@@ -9,7 +9,11 @@ namespace bp = boost::python;
 
 #include "cljatoms.h"
 
+#include "cljboxes.h"
+
 #include "cljcalculator.h"
+
+#include "cljdelta.h"
 
 #include "cljfunction.h"
 
@@ -34,7 +38,7 @@ void register_CLJCalculator_class(){
         CLJCalculator_exposer.def( bp::init< SireMM::CLJCalculator const & >(( bp::arg("other") )) );
         { //::SireMM::CLJCalculator::calculate
         
-            typedef ::boost::tuples::tuple< double, double, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJCalculator::*calculate_function_type )( ::SireMM::CLJFunction const &,::SireMM::CLJBoxes const & ) ;
+            typedef ::boost::tuples::tuple< double, double, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJCalculator::*calculate_function_type )( ::SireMM::CLJFunction const &,::SireMM::CLJBoxes const & ) const;
             calculate_function_type calculate_function_value( &::SireMM::CLJCalculator::calculate );
             
             CLJCalculator_exposer.def( 
@@ -45,7 +49,7 @@ void register_CLJCalculator_class(){
         }
         { //::SireMM::CLJCalculator::calculate
         
-            typedef ::boost::tuples::tuple< QVector< double >, QVector< double >, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJCalculator::*calculate_function_type )( ::QVector< boost::shared_ptr< SireMM::CLJFunction > > const &,::SireMM::CLJBoxes const & ) ;
+            typedef ::boost::tuples::tuple< QVector< double >, QVector< double >, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJCalculator::*calculate_function_type )( ::QVector< SireBase::PropPtr< SireMM::CLJFunction > > const &,::SireMM::CLJBoxes const & ) const;
             calculate_function_type calculate_function_value( &::SireMM::CLJCalculator::calculate );
             
             CLJCalculator_exposer.def( 
@@ -56,7 +60,7 @@ void register_CLJCalculator_class(){
         }
         { //::SireMM::CLJCalculator::calculate
         
-            typedef ::boost::tuples::tuple< double, double, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJCalculator::*calculate_function_type )( ::SireMM::CLJFunction const &,::SireMM::CLJBoxes const &,::SireMM::CLJBoxes const & ) ;
+            typedef ::boost::tuples::tuple< double, double, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJCalculator::*calculate_function_type )( ::SireMM::CLJFunction const &,::SireMM::CLJBoxes const &,::SireMM::CLJBoxes const & ) const;
             calculate_function_type calculate_function_value( &::SireMM::CLJCalculator::calculate );
             
             CLJCalculator_exposer.def( 
@@ -67,13 +71,35 @@ void register_CLJCalculator_class(){
         }
         { //::SireMM::CLJCalculator::calculate
         
-            typedef ::boost::tuples::tuple< QVector< double >, QVector< double >, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJCalculator::*calculate_function_type )( ::QVector< boost::shared_ptr< SireMM::CLJFunction > > const &,::SireMM::CLJBoxes const &,::SireMM::CLJBoxes const & ) ;
+            typedef ::boost::tuples::tuple< QVector< double >, QVector< double >, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJCalculator::*calculate_function_type )( ::QVector< SireBase::PropPtr< SireMM::CLJFunction > > const &,::SireMM::CLJBoxes const &,::SireMM::CLJBoxes const & ) const;
             calculate_function_type calculate_function_value( &::SireMM::CLJCalculator::calculate );
             
             CLJCalculator_exposer.def( 
                 "calculate"
                 , calculate_function_value
                 , ( bp::arg("funcs"), bp::arg("boxes0"), bp::arg("boxes1") ) );
+        
+        }
+        { //::SireMM::CLJCalculator::calculate
+        
+            typedef ::boost::tuples::tuple< double, double, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJCalculator::*calculate_function_type )( ::SireMM::CLJFunction const &,::SireMM::CLJDelta const &,::SireMM::CLJBoxes const & ) const;
+            calculate_function_type calculate_function_value( &::SireMM::CLJCalculator::calculate );
+            
+            CLJCalculator_exposer.def( 
+                "calculate"
+                , calculate_function_value
+                , ( bp::arg("func"), bp::arg("delta"), bp::arg("boxes") ) );
+        
+        }
+        { //::SireMM::CLJCalculator::calculate
+        
+            typedef ::boost::tuples::tuple< QVector< double >, QVector< double >, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJCalculator::*calculate_function_type )( ::QVector< SireBase::PropPtr< SireMM::CLJFunction > > const &,::SireMM::CLJDelta const &,::SireMM::CLJBoxes const & ) const;
+            calculate_function_type calculate_function_value( &::SireMM::CLJCalculator::calculate );
+            
+            CLJCalculator_exposer.def( 
+                "calculate"
+                , calculate_function_value
+                , ( bp::arg("funcs"), bp::arg("delta"), bp::arg("boxes") ) );
         
         }
         CLJCalculator_exposer.def( bp::self != bp::self );

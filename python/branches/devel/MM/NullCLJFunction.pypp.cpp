@@ -31,6 +31,8 @@ namespace bp = boost::python;
 
 #include "cljboxes.h"
 
+#include "cljdelta.h"
+
 #include "cljfunction.h"
 
 #include "gridinfo.h"

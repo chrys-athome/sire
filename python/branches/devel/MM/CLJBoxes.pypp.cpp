@@ -213,6 +213,17 @@ void register_CLJBoxes_class(){
                 , ( bp::arg("space"), bp::arg("box0"), bp::arg("box1") ) );
         
         }
+        { //::SireMM::CLJBoxes::getDistance
+        
+            typedef float ( ::SireMM::CLJBoxes::*getDistance_function_type )( ::SireVol::Space const &,::SireMM::CLJBoxIndex const &,::SireMM::CLJBoxIndex const &,::quint32,::quint32,::quint32 ) const;
+            getDistance_function_type getDistance_function_value( &::SireMM::CLJBoxes::getDistance );
+            
+            CLJBoxes_exposer.def( 
+                "getDistance"
+                , getDistance_function_value
+                , ( bp::arg("space"), bp::arg("box0"), bp::arg("box1"), bp::arg("nx"), bp::arg("ny"), bp::arg("nz") ) );
+        
+        }
         { //::SireMM::CLJBoxes::getDistances
         
             typedef ::QVector< SireMM::CLJBoxDistance > ( *getDistances_function_type )( ::SireVol::Space const &,::SireMM::CLJBoxes const & );
