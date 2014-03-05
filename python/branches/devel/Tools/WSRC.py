@@ -65,6 +65,12 @@ use_fixed_points = Parameter("fixed points", False,
                              """Whether or not to use fixed identity points based on looking at
                                 the overlap with the atoms""")
 
+use_fixed_ligand = Parameter("fixed ligand", False,
+                             """Whether or not to completely fix the ligand during the simulation.""")
+
+use_rot_trans_ligand = Parameter("ligand rot-trans", False,
+                                 """Whether or not the ligand is free to translate and rotate.""")
+
 use_overlap_waters = Parameter("overlap waters", False,
                                """Whether or not to generate the identity points based on looking
                                   at which water molecules overlap with the ligand""")
@@ -364,28 +370,30 @@ def createWSRCMoves(system):
         bb_moves.setMaximumRotation(1.0*degrees)
         moves.add( bb_moves, mobile_backbones.nViews() )
 
-    if mobile_ligand.nViews() > 0:
-        scale_moves = 10
+    if not use_fixed_ligand.val:
+        if mobile_ligand.nViews() > 0:
+            scale_moves = 10
 
-        # get the amount to translate and rotate from the ligand's flexibility object
-        flex = mobile_ligand.moleculeAt(0).molecule().property("flexibility")
+            # get the amount to translate and rotate from the ligand's flexibility object
+            flex = mobile_ligand.moleculeAt(0).molecule().property("flexibility")
 
-        if (flex.translation().value() != 0 or flex.rotation().value() != 0):
-            rb_moves = RigidBodyMC(mobile_ligand)
-            rb_moves.setMaximumTranslation(flex.translation())
-            rb_moves.setMaximumRotation(flex.rotation())
+            if use_rot_trans_ligand.val:
+                if (flex.translation().value() != 0 or flex.rotation().value() != 0):
+                    rb_moves = RigidBodyMC(mobile_ligand)
+                    rb_moves.setMaximumTranslation(flex.translation())
+                    rb_moves.setMaximumRotation(flex.rotation())
 
-            # the ligand is not allowed to move away from its original position,
-            # as we don't want to sample "unbound" states
-            if not ligand_reflection_radius.val is None:
-                rb_moves.setReflectionSphere(mobile_ligand.moleculeAt(0).molecule().evaluate().center(), 
-                                             ligand_reflection_radius.val)
+                    # the ligand is not allowed to move away from its original position,
+                    # as we don't want to sample "unbound" states
+                    if not ligand_reflection_radius.val is None:
+                        rb_moves.setReflectionSphere(mobile_ligand.moleculeAt(0).molecule().evaluate().center(), 
+                                                     ligand_reflection_radius.val)
 
-            scale_moves = scale_moves / 2
-            moves.add( rb_moves, scale_moves * mobile_ligand.nViews() )
+                    scale_moves = scale_moves / 2
+                    moves.add( rb_moves, scale_moves * mobile_ligand.nViews() )
 
-        intra_moves = InternalMove(mobile_ligand)
-        moves.add( intra_moves, scale_moves * mobile_ligand.nViews() )
+            intra_moves = InternalMove(mobile_ligand)
+            moves.add( intra_moves, scale_moves * mobile_ligand.nViews() )
 
     if mobile_solutes.nViews() > 0:
         rb_moves = RigidBodyMC(mobile_solutes)

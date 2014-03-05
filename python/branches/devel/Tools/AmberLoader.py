@@ -43,8 +43,8 @@ BASE_DIHEDRALH_FLEX = Parameter("h dihedral flex", 30*degrees, "Base dihedral ro
 BASE_DIHEDRAL_FLEX = Parameter("dihedral flex", 20*degrees, "Base dihedral rotation")
 BASE_ANGLE_FLEX = Parameter("angle flex", 0.25*degrees, "Base angle rotation")
 BASE_BOND_FLEX = Parameter("bond flex", 0.025*angstroms, "Base bond stretch amount")
-BASE_TRANSLATION = Parameter("translation", 0*angstroms, "Base translation delta amount")
-BASE_ROTATION = Parameter("rotation", 0*degrees, "Base rigid body rotation")
+BASE_TRANSLATION = Parameter("translation", 0.75*angstroms, "Base translation delta amount")
+BASE_ROTATION = Parameter("rotation", 30*degrees, "Base rigid body rotation")
 BASE_MAXVAR = Parameter("maxvar", 10, "Maximum number of degrees of freedom to move at once")
 BASE_MAXVAR_B = Parameter("maxvar bonds", 2, "Maximum number of bonds to move at once")
 BASE_MAXVAR_A = Parameter("maxvar angles", 4, "Maximum number of angles to move at once")
@@ -575,17 +575,18 @@ def addFlexibility(system, reflection_center=None, reflection_radius=None, \
     # create a group for the fixed residues that are bonded to the mobile residues
     boundary_group = MoleculeGroup( naming_scheme.boundaryMoleculesGroupName().value() )
 
-    if reflection_center and reflection_radius:
+    if reflection_center is None or reflection_radius is None:
+        print ("No reflection radius or reflection molecule specified, so moving all "
+               "molecules and residues in the system.")
+        reflection_radius = None
+        reflection_center = None
+
+    else:
         print(("Only moving molecules/residues that are within a distance %s A "
                "of the point %s.") % (reflection_radius.value(), reflection_center))
 
         system.setProperty("reflection center", AtomCoords(CoordGroup(1,reflection_center)))
         system.setProperty("reflection sphere radius", VariantProperty(reflection_radius.to(angstroms)))
-    else:
-        print ("No reflection radius or reflection molecule specified, so moving all "
-               "molecules and residues in the system.")
-        reflection_radius = None
-        reflection_center = None
 
     # fit the protein z-matrix templates to all of the protein molecules and add the mobile
     # residues to the mobile_sc_group and mobile_bb_group for mobile sidechains and backbones
