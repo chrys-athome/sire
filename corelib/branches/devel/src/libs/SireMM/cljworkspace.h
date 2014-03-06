@@ -31,6 +31,8 @@
 
 #include "cljdelta.h"
 
+#include "SireMol/moleculeview.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMM
@@ -77,7 +79,8 @@ public:
     const CLJDelta& operator[](int i) const;
 
     const CLJDelta& at(int i) const;
-    const CLJDelta& getitem(int i) const;
+    
+    CLJDelta getitem(int i) const;
     
     int count() const;
     int size() const;

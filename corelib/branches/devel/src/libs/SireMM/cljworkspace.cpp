@@ -298,7 +298,7 @@ const CLJDelta& CLJWorkspace::at(int i) const
 }
 
 /** Return the ith delta */
-const CLJDelta& CLJWorkspace::getitem(int i) const
+CLJDelta CLJWorkspace::getitem(int i) const
 {
     return operator[](i);
 }
