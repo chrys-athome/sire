@@ -65,7 +65,7 @@ void register_SireMaths_containers()
     register_list< QVector<MultiDouble> >();
     register_list< QVector<MultiUInt> >();
 
-    register_list< QVector<AverageAndStdDev> >();
+    register_list< QVector<AverageAndStddev> >();
     register_list< QVector<FreeEnergyAverage> >();
 
     register_list< QVector<HistogramValue> >();

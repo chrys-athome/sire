@@ -59,6 +59,6 @@ void register_SireAnalysis_containers()
 
     register_dict< QMap<double,FreeEnergyAverage> >();
     register_dict< QMap<double,BennettsFreeEnergyAverage> >();
-    register_dict< QMap<double,AverageAndStdDev>();
+    register_dict< QMap<double,AverageAndStddev> >();
 }
 

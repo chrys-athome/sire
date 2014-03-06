@@ -961,9 +961,6 @@ def analyseQMMM(replicas, iteration, ti_freenrgs):
 
     ti_freenrgs.set( iteration, dg )
 
-    print("\nTOTAL BINDING FREE ENERGY\n", file=FILE)
-    printFreeEnergy(ti_freenrgs[iteration], FILE)
-
     print("\n=============", file=FILE)
     print("Correction free energy for iteration %d equals %s" % (iteration, \
                         ti_freenrgs[iteration].integrate().values()[-1].y()), file=FILE)
