@@ -108,6 +108,7 @@ set ( PYPP_SOURCES
        CLJParameterNames3D.pypp.cpp
        LJPotentialInterface_InterLJPotential_.pypp.cpp
        CLJBoxIndex.pypp.cpp
+       CLJWorkspace.pypp.cpp
        FourAtomFunction.pypp.cpp
        CLJSoftFunction.pypp.cpp
        IntraSoftCLJFF.pypp.cpp

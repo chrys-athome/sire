@@ -33,6 +33,7 @@
 #include "internalparameters.h"
 #include "internalcomponent.h"
 #include "restraintff.h"
+#include "cljworkspace.h"
 #include "intercoulombff.h"
 #include "cljatoms.h"
 #include "intraljff.h"
@@ -122,6 +123,7 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::StretchBendTorsionComponent >();
     ObjectRegistry::registerConverterFor< SireMM::InternalComponent >();
     ObjectRegistry::registerConverterFor< SireMM::RestraintFF >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJWorkspace >();
     ObjectRegistry::registerConverterFor< SireMM::InterCoulombFFBase >();
     ObjectRegistry::registerConverterFor< SireMM::InterCoulombFF >();
     ObjectRegistry::registerConverterFor< SireMM::InterGroupCoulombFFBase >();

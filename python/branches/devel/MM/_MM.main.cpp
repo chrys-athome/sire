@@ -91,6 +91,8 @@
 
 #include "CLJSoftFunction.pypp.hpp"
 
+#include "CLJWorkspace.pypp.hpp"
+
 #include "ChargeParameterName.pypp.hpp"
 
 #include "ChargeParameterName3D.pypp.hpp"
@@ -499,6 +501,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_CLJShiftFunction_class();
 
     register_CLJSoftFunction_class();
+
+    register_CLJWorkspace_class();
 
     register_ChargeParameterName3D_class();
 

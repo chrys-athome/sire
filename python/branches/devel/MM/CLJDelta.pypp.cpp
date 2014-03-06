@@ -31,9 +31,19 @@ void register_CLJDelta_class(){
         typedef bp::class_< SireMM::CLJDelta > CLJDelta_exposer_t;
         CLJDelta_exposer_t CLJDelta_exposer = CLJDelta_exposer_t( "CLJDelta", bp::init< >() );
         bp::scope CLJDelta_scope( CLJDelta_exposer );
-        CLJDelta_exposer.def( bp::init< SireMM::CLJBoxes const &, QVector< SireMM::CLJBoxIndex > const &, SireMol::MoleculeView const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("boxes"), bp::arg("old_atoms"), bp::arg("new_atoms"), bp::arg("map")=SireBase::PropertyMap() )) );
-        CLJDelta_exposer.def( bp::init< SireMM::CLJBoxes const &, QVector< SireMM::CLJBoxIndex > const &, SireMol::MoleculeView const &, SireMM::CLJAtoms::ID_SOURCE, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("boxes"), bp::arg("old_atoms"), bp::arg("new_atoms"), bp::arg("source"), bp::arg("map")=SireBase::PropertyMap() )) );
+        CLJDelta_exposer.def( bp::init< quint32, SireMM::CLJBoxes const &, QVector< SireMM::CLJBoxIndex > const &, SireMol::MoleculeView const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("idnum"), bp::arg("boxes"), bp::arg("old_atoms"), bp::arg("new_atoms"), bp::arg("map")=SireBase::PropertyMap() )) );
+        CLJDelta_exposer.def( bp::init< quint32, SireMM::CLJBoxes const &, QVector< SireMM::CLJBoxIndex > const &, SireMol::MoleculeView const &, SireMM::CLJAtoms::ID_SOURCE, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("idnum"), bp::arg("boxes"), bp::arg("old_atoms"), bp::arg("new_atoms"), bp::arg("source"), bp::arg("map")=SireBase::PropertyMap() )) );
         CLJDelta_exposer.def( bp::init< SireMM::CLJDelta const & >(( bp::arg("other") )) );
+        { //::SireMM::CLJDelta::ID
+        
+            typedef ::quint32 ( ::SireMM::CLJDelta::*ID_function_type )(  ) const;
+            ID_function_type ID_function_value( &::SireMM::CLJDelta::ID );
+            
+            CLJDelta_exposer.def( 
+                "ID"
+                , ID_function_value );
+        
+        }
         { //::SireMM::CLJDelta::boxIndex
         
             typedef ::SireMM::CLJBoxIndex const & ( ::SireMM::CLJDelta::*boxIndex_function_type )(  ) const;
@@ -84,6 +94,37 @@ void register_CLJDelta_class(){
             CLJDelta_exposer.def( 
                 "isSingleBox"
                 , isSingleBox_function_value );
+        
+        }
+        { //::SireMM::CLJDelta::maxBox
+        
+            typedef ::SireMM::CLJBoxIndex ( ::SireMM::CLJDelta::*maxBox_function_type )(  ) const;
+            maxBox_function_type maxBox_function_value( &::SireMM::CLJDelta::maxBox );
+            
+            CLJDelta_exposer.def( 
+                "maxBox"
+                , maxBox_function_value );
+        
+        }
+        { //::SireMM::CLJDelta::merge
+        
+            typedef ::SireMM::CLJDelta ( *merge_function_type )( ::SireMM::CLJDelta const *,int,bool );
+            merge_function_type merge_function_value( &::SireMM::CLJDelta::merge );
+            
+            CLJDelta_exposer.def( 
+                "merge"
+                , merge_function_value
+                , ( bp::arg("deltas"), bp::arg("count"), bp::arg("changes_only")=(bool)(false) ) );
+        
+        }
+        { //::SireMM::CLJDelta::minBox
+        
+            typedef ::SireMM::CLJBoxIndex ( ::SireMM::CLJDelta::*minBox_function_type )(  ) const;
+            minBox_function_type minBox_function_value( &::SireMM::CLJDelta::minBox );
+            
+            CLJDelta_exposer.def( 
+                "minBox"
+                , minBox_function_value );
         
         }
         { //::SireMM::CLJDelta::nBoxX
@@ -172,6 +213,28 @@ void register_CLJDelta_class(){
         
         }
         CLJDelta_exposer.def( bp::self == bp::self );
+        { //::SireMM::CLJDelta::reconstruct
+        
+            typedef void ( ::SireMM::CLJDelta::*reconstruct_function_type )( ::quint32,::SireMM::CLJBoxes const &,::QVector< SireMM::CLJBoxIndex > const &,::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) ;
+            reconstruct_function_type reconstruct_function_value( &::SireMM::CLJDelta::reconstruct );
+            
+            CLJDelta_exposer.def( 
+                "reconstruct"
+                , reconstruct_function_value
+                , ( bp::arg("idnum"), bp::arg("boxes"), bp::arg("old_atoms"), bp::arg("new_atoms"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMM::CLJDelta::reconstruct
+        
+            typedef void ( ::SireMM::CLJDelta::*reconstruct_function_type )( ::quint32,::SireMM::CLJBoxes const &,::QVector< SireMM::CLJBoxIndex > const &,::SireMol::MoleculeView const &,::SireMM::CLJAtoms::ID_SOURCE,::SireBase::PropertyMap const & ) ;
+            reconstruct_function_type reconstruct_function_value( &::SireMM::CLJDelta::reconstruct );
+            
+            CLJDelta_exposer.def( 
+                "reconstruct"
+                , reconstruct_function_value
+                , ( bp::arg("idnum"), bp::arg("boxes"), bp::arg("old_atoms"), bp::arg("new_atoms"), bp::arg("source"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
         { //::SireMM::CLJDelta::toString
         
             typedef ::QString ( ::SireMM::CLJDelta::*toString_function_type )(  ) const;
@@ -202,6 +265,7 @@ void register_CLJDelta_class(){
                 , what_function_value );
         
         }
+        CLJDelta_exposer.staticmethod( "merge" );
         CLJDelta_exposer.staticmethod( "typeName" );
         CLJDelta_exposer.def( "__copy__", &__copy__);
         CLJDelta_exposer.def( "__deepcopy__", &__copy__);
