@@ -60,9 +60,9 @@ friend QDataStream& ::operator>>(QDataStream&, CLJDelta&);
 
 public:
     CLJDelta();
-    CLJDelta(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
+    CLJDelta(quint32 idnum, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
              const MoleculeView &new_atoms, const PropertyMap &map = PropertyMap());
-    CLJDelta(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
+    CLJDelta(quint32 idnum, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
              const MoleculeView &new_atoms, CLJAtoms::ID_SOURCE source,
              const PropertyMap &map = PropertyMap());
     
@@ -79,13 +79,25 @@ public:
     
     const char* what() const;
     
+    void reconstruct(quint32 idnum, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
+                     const MoleculeView &new_atoms, const PropertyMap &map = PropertyMap());
+    
+    void reconstruct(quint32 idnum, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
+                     const MoleculeView &new_atoms, CLJAtoms::ID_SOURCE source,
+                     const PropertyMap &map = PropertyMap());
+
     QString toString() const;
     
     bool isSingleBox() const;
     
     const CLJBoxIndex& boxIndex() const;
     
+    CLJBoxIndex minBox() const;
+    CLJBoxIndex maxBox() const;
+    
     bool isNull() const;
+    
+    quint32 ID() const;
     
     quint8 nBoxX() const;
     quint8 nBoxY() const;
@@ -102,6 +114,8 @@ public:
     const CLJAtoms& newAtoms() const;
     
     float boxLength() const;
+    
+    static CLJDelta merge(const CLJDelta *deltas, int count, bool changes_only=false);
     
 private:
     friend class CLJBoxes;
@@ -128,6 +142,10 @@ private:
     /** Whether or not the changed atoms fit into a single box */
     quint8 is_single_box;
     
+    /** The ID number of the molecule or part of molecule that this
+        delta represents. This is used for book-keeping */
+    quint32 idnum;
+    
     /** The box length used by this delta */
     float box_length;
 };
@@ -150,6 +168,13 @@ inline const CLJBoxIndex& CLJDelta::boxIndex() const
 inline bool CLJDelta::isNull() const
 {
     return nbox_x == 0;
+}
+
+/** Return the ID number of this delta. This can be used for book-keeping
+    by the object that created this delta */
+inline quint32 CLJDelta::ID() const
+{
+    return idnum;
 }
 
 /** Return the number of boxes along the X dimension that the changed

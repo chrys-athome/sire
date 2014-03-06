@@ -63,6 +63,7 @@ namespace SireMM
             
             InterFFData(const InterFFData &other)
                  : maps_for_mol(other.maps_for_mol),
+                   mol_to_idx(other.mol_to_idx),
                    cljfunc(other.cljfunc),
                    fixed_atoms(other.fixed_atoms),
                    cljcomps(other.cljcomps),
@@ -75,6 +76,10 @@ namespace SireMM
             
             /** The property map used to add each molecule */
             QHash<SireMol::MolNum,PropertyMap> maps_for_mol;
+
+            /** The index of each molecule into the array. This is fixed
+                throughout the lifetime of the forcefield */
+            QHash<SireMol::MolNum,quint32> mol_to_idx;
 
             /** The function used to calculate energies */
             CLJFunctionPtr cljfunc;
@@ -125,7 +130,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, InterFF &interff)
 }
 
 /** Constructor */
-InterFF::InterFF() : ConcreteProperty<InterFF,G1FF>()
+InterFF::InterFF() : ConcreteProperty<InterFF,G1FF>(), needs_reboxing(false)
 {
     d = new detail::InterFFData();
     this->_pvt_updateName();
@@ -133,7 +138,7 @@ InterFF::InterFF() : ConcreteProperty<InterFF,G1FF>()
 }
 
 /** Construct, specifying the name of the forcefield */
-InterFF::InterFF(const QString &name) : ConcreteProperty<InterFF, G1FF>()
+InterFF::InterFF(const QString &name) : ConcreteProperty<InterFF, G1FF>(), needs_reboxing(false)
 {
     d = new detail::InterFFData();
     G1FF::setName(name);
@@ -143,8 +148,9 @@ InterFF::InterFF(const QString &name) : ConcreteProperty<InterFF, G1FF>()
 /** Copy constructor */
 InterFF::InterFF(const InterFF &other)
         : ConcreteProperty<InterFF,G1FF>(other),
-          atom_locs(other.atom_locs), changed_atoms(other.changed_atoms),
-          changed_mols(other.changed_mols), cljboxes(other.cljboxes), d(other.d)
+          atom_locs(other.atom_locs), wspace(other.wspace),
+          cljboxes(other.cljboxes), d(other.d),
+          needs_reboxing(other.needs_reboxing)
 {}
 
 /** Destructor */
@@ -194,10 +200,10 @@ InterFF& InterFF::operator=(const InterFF &other)
     if (this != &other)
     {
         atom_locs = other.atom_locs;
-        changed_atoms = other.changed_atoms;
-        changed_mols = other.changed_mols;
+        wspace = other.wspace;
         cljboxes = other.cljboxes;
         d = other.d;
+        needs_reboxing = other.needs_reboxing;
         G1FF::operator=(other);
     }
     
@@ -486,22 +492,15 @@ GridInfo InterFF::grid() const
 /** Internal function used to rebox changed atoms */
 void InterFF::reboxChangedAtoms()
 {
-    for (QHash<MolNum,CLJAtoms>::const_iterator it = changed_mols.constBegin();
-         it != changed_mols.constEnd();
-         ++it)
+    const CLJDelta *deltas = wspace.constData();
+
+    for (int i=0; i<wspace.nDeltas(); ++i)
     {
-        ChunkedHash< MolNum,QVector<CLJBoxIndex> >::iterator it2 = atom_locs.find(it.key());
-        
-        if (it2 == atom_locs.end())
-            throw SireError::program_bug( QObject::tr(
-                    "How can the changed molecule %1 be missing from cljatoms?")
-                        .arg(it.key()), CODELOC );
-        
-        it2.value() = cljboxes.add(it.value());
+        atom_locs[ deltas[i].ID() ] = cljboxes.apply( deltas[i] );
     }
-    
-    changed_atoms = CLJBoxes();
-    changed_mols.clear();
+
+    wspace.clear();
+    needs_reboxing = false;
 }
 
 /** Internal function used to regrid the atoms */
@@ -516,7 +515,7 @@ void InterFF::regridAtoms()
 /** Signal that this forcefield must now be recalculated from scratch */
 void InterFF::mustNowRecalculateFromScratch()
 {
-    if (not changed_mols.isEmpty())
+    if (not wspace.isEmpty())
     {
         reboxChangedAtoms();
     }
@@ -528,8 +527,9 @@ void InterFF::mustNowRecalculateFromScratch()
 void InterFF::mustNowReallyRecalculateFromScratch()
 {
     atom_locs.clear();
-    changed_atoms = CLJBoxes();
-    changed_mols.clear();
+    d->mol_to_idx.clear();
+    wspace = CLJWorkspace();
+    needs_reboxing = false;
     mustNowRecalculateFromScratch();
 }
 
@@ -539,14 +539,20 @@ void InterFF::reextractAtoms()
     QElapsedTimer t;
     t.start();
 
-    mustNowRecalculateFromScratch();
+    mustNowReallyRecalculateFromScratch();
     
     //we know that we are only a single molecule group
     const Molecules &mols = this->group( MGIdx(0) ).molecules();
     
-    atom_locs.clear();
-    atom_locs.reserve(mols.nMolecules());
+    if (mols.isEmpty())
+        return;
+    
+    atom_locs.resize(mols.nMolecules());
+    d->mol_to_idx.clear();
+    d->mol_to_idx.reserve(mols.nMolecules());
     cljboxes = CLJBoxes();
+    
+    quint32 i = 0;
     
     for (Molecules::const_iterator it = mols.constBegin();
          it != mols.constEnd();
@@ -556,7 +562,9 @@ void InterFF::reextractAtoms()
         
         QVector<CLJBoxIndex> idxs = cljboxes.add(mol);
         
-        atom_locs.insert(it.key(), idxs);
+        atom_locs[i] = idxs;
+        d->mol_to_idx.insert(it.key(), i);
+        i += 1;
     }
     
     qint64 ns = t.nsecsElapsed();
@@ -567,6 +575,9 @@ void InterFF::reextractAtoms()
 /** Recalculate the energy of this forcefield */
 void InterFF::recalculateEnergy()
 {
+    if (needs_reboxing)
+        this->reboxChangedAtoms();
+
     if (atom_locs.isEmpty())
     {
         //everything needs to be recalculated from scratch
@@ -607,28 +618,32 @@ void InterFF::recalculateEnergy()
         d.constData()->cljcomps.setEnergy(*this, CLJEnergy(nrgs.get<0>(), nrgs.get<1>()));
         this->setClean();
     }
-    else if (not changed_mols.isEmpty())
+    else if (not wspace.isEmpty())
     {
         tuple<double,double> delta_nrgs(0,0);
+        
+        CLJDelta delta = wspace.merge();
         
         if (not d.constData()->fixed_only)
         {
             //calculate the change in energy using the molecules in changed_atoms
             CLJCalculator calc;
             delta_nrgs = calc.calculate(*(d.constData()->cljfunc),
-                                        changed_atoms, cljboxes);
+                                        delta, cljboxes);
         }
         
         if (not d.constData()->fixed_atoms.isEmpty())
         {
-            tuple<double,double> grid_deltas = d.constData()->fixed_atoms.calculate(changed_atoms);
+            tuple<double,double> grid_deltas = d.constData()
+                                                    ->fixed_atoms.calculate(delta.changedAtoms());
             
             delta_nrgs.get<0>() += grid_deltas.get<0>();
             delta_nrgs.get<1>() += grid_deltas.get<1>();
         }
         
-        //now rebox the changed molecules
-        this->reboxChangedAtoms();
+        //changed molecules will need reboxing. We will defer this, in case
+        //the move that caused this change is rejected
+        needs_reboxing = true;
         
         d.constData()->cljcomps.changeEnergy(*this,
                                     CLJEnergy(delta_nrgs.get<0>(), delta_nrgs.get<1>()));
@@ -663,6 +678,9 @@ void InterFF::recalculateEnergy()
 /** Function called to add a molecule to this forcefield */
 void InterFF::_pvt_added(const SireMol::PartialMolecule &mol, const SireBase::PropertyMap &map)
 {
+    if (needs_reboxing)
+        reboxChangedAtoms();
+
     //be lazy for the moment - recalculate everything!
     mustNowReallyRecalculateFromScratch();
     
@@ -683,6 +701,9 @@ void InterFF::_pvt_added(const SireMol::PartialMolecule &mol, const SireBase::Pr
 /** Function called to remove a molecule from this forcefield */
 void InterFF::_pvt_removed(const SireMol::PartialMolecule &mol)
 {
+    if (needs_reboxing)
+        reboxChangedAtoms();
+
     //be lazy for the moment - recalculate everything!
     mustNowReallyRecalculateFromScratch();
     
@@ -700,43 +721,38 @@ void InterFF::_pvt_removed(const SireMol::PartialMolecule &mol)
 /** Function called to indicate that a molecule in this forcefield has changed */
 void InterFF::_pvt_changed(const SireMol::Molecule &molecule)
 {
+    if (needs_reboxing)
+        reboxChangedAtoms();
+
+    //for now, only allow one thing to change at once...
+    if (not wspace.isEmpty())
+    {
+        mustNowReallyRecalculateFromScratch();
+        this->setDirty();
+        return;
+    }
+
+    //get the ID number of this molecule in the forcefield
     MolNum molnum = molecule.number();
 
-    if (changed_mols.contains(molnum))
-    {
-        //we are trying to change the same molecule twice in a row. This is too
-        //complicated to sort out, so we will have to do everything from scratch
-        mustNowReallyRecalculateFromScratch();
-        return;
-    }
-
-    ChunkedHash< MolNum,QVector<CLJBoxIndex> >::const_iterator it = atom_locs.constFind(molnum);
+    if (not d.constData()->mol_to_idx.contains(molnum))
+        throw SireError::program_bug( QObject::tr(
+                "It should not be possible that the molecule %1 is not in the forcefield already?")
+                    .arg(molnum.value()), CODELOC );
     
-    if (it == atom_locs.constEnd())
-    {
-        //this molecule doesn't exist? - see if recalculating from scratch will be ok
-        mustNowReallyRecalculateFromScratch();
-        return;
-    }
+    quint32 id = d.constData()->mol_to_idx.value(molnum);
 
-    //create the new atoms
-    CLJAtoms new_atoms(this->group(MGIdx(0)).molecules()[molnum],
-                       d.constData()->maps_for_mol.value(molnum, PropertyMap()));
-    
-    //remove the old atoms from the grid
-    CLJAtoms old_atoms = cljboxes.takeNegative(it.value());
+    wspace.push( id, cljboxes, atom_locs.at(id),
+                 this->group(MGIdx(0)).molecules()[molnum],
+                 d.constData()->maps_for_mol.value(molnum,PropertyMap()) );
 
-    if (changed_atoms.isEmpty())
+    if (not wspace.isSingleID())
     {
-        changed_atoms = CLJBoxes(old_atoms, new_atoms);
+        //we need to remove the old atoms from the cljboxes, or the delta energy
+        //calculate won't work
+        cljboxes.remove( atom_locs.at(id) );
+        atom_locs[id] = QVector<CLJBoxIndex>();
     }
-    else
-    {
-        changed_atoms.add(old_atoms);
-        changed_atoms.add(new_atoms);
-    }
-
-    changed_mols.insert(molnum, new_atoms);
     
     this->setDirty();
 }
@@ -744,6 +760,9 @@ void InterFF::_pvt_changed(const SireMol::Molecule &molecule)
 /** Function called to indicate that a list of molecules in this forcefield have changed */
 void InterFF::_pvt_changed(const QList<SireMol::Molecule> &molecules)
 {
+    if (needs_reboxing)
+        reboxChangedAtoms();
+
     //be lazy for the moment - recalculate everything!
     mustNowReallyRecalculateFromScratch();
     
@@ -753,10 +772,14 @@ void InterFF::_pvt_changed(const QList<SireMol::Molecule> &molecules)
 /** Function called to indicate that all molecules in this forcefield have been removed */
 void InterFF::_pvt_removedAll()
 {
+    if (needs_reboxing)
+        reboxChangedAtoms();
+
     atom_locs.clear();
     cljboxes = CLJBoxes();
-    changed_atoms = CLJBoxes();
+    wspace = CLJWorkspace();
     d->maps_for_mol.clear();
+    d->mol_to_idx.clear();
 
     mustNowReallyRecalculateFromScratch();
     

@@ -178,15 +178,15 @@ void CLJDelta::buildFrom(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &indi
 }
 
 /** Null constructor */
-CLJDelta::CLJDelta() : nbox_x(0), nbox_y(0), nbox_z(0), is_single_box(0), box_length(0)
+CLJDelta::CLJDelta() : nbox_x(0), nbox_y(0), nbox_z(0), is_single_box(0), idnum(0), box_length(0)
 {}
 
 /** Construct the delta that changes from the atoms at indicies 'old_atoms' in the 
     CLJBoxes 'boxes' to the atoms in view 'new_atoms', using the optionally supplied
     property map to extract the necessary properties */
-CLJDelta::CLJDelta(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
+CLJDelta::CLJDelta(quint32 id, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
                    const MoleculeView &new_atoms, const PropertyMap &map)
-         : nbox_x(0), nbox_y(0), nbox_z(0), is_single_box(0), box_length(0)
+         : nbox_x(0), nbox_y(0), nbox_z(0), is_single_box(0), idnum(id), box_length(0)
 {
     this->buildFrom(boxes, old_atoms, new_atoms, CLJAtoms::USE_MOLNUM, map);
 }
@@ -194,11 +194,42 @@ CLJDelta::CLJDelta(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
 /** Construct the delta that changes from the atoms at indicies 'old_atoms' in the 
     CLJBoxes 'boxes' to the atoms in view 'new_atoms', using the optionally supplied
     property map to extract the necessary properties */
-CLJDelta::CLJDelta(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
+void CLJDelta::reconstruct(quint32 id, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
+                           const MoleculeView &new_atoms, const PropertyMap &map)
+{
+    nbox_x = 0;
+    nbox_y = 0;
+    nbox_z = 0;
+    is_single_box = 0;
+    idnum = id;
+    box_length = 0;
+    this->buildFrom(boxes, old_atoms, new_atoms, CLJAtoms::USE_MOLNUM, map);
+}
+
+/** Construct the delta that changes from the atoms at indicies 'old_atoms' in the 
+    CLJBoxes 'boxes' to the atoms in view 'new_atoms', using the optionally supplied
+    property map to extract the necessary properties */
+CLJDelta::CLJDelta(quint32 id, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
                    const MoleculeView &new_atoms, CLJAtoms::ID_SOURCE source,
                    const PropertyMap &map)
-         : nbox_x(0), nbox_y(0), nbox_z(0), is_single_box(0), box_length(0)
+         : nbox_x(0), nbox_y(0), nbox_z(0), is_single_box(0), idnum(id), box_length(0)
 {
+    this->buildFrom(boxes, old_atoms, new_atoms, source, map);
+}
+
+/** Construct the delta that changes from the atoms at indicies 'old_atoms' in the 
+    CLJBoxes 'boxes' to the atoms in view 'new_atoms', using the optionally supplied
+    property map to extract the necessary properties */
+void CLJDelta::reconstruct(quint32 id, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
+                           const MoleculeView &new_atoms, CLJAtoms::ID_SOURCE source,
+                           const PropertyMap &map)
+{
+    nbox_x = 0;
+    nbox_y = 0;
+    nbox_z = 0;
+    is_single_box = 0;
+    idnum = id;
+    box_length = 0;
     this->buildFrom(boxes, old_atoms, new_atoms, source, map);
 }
 
@@ -207,7 +238,7 @@ CLJDelta::CLJDelta(const CLJDelta &other)
          : new_atoms(other.new_atoms), changed_atoms(other.changed_atoms),
            box_index(other.box_index), old_indicies(other.old_indicies),
            nbox_x(other.nbox_x), nbox_y(other.nbox_y), nbox_z(other.nbox_z),
-           is_single_box(other.is_single_box), box_length(other.box_length)
+           is_single_box(other.is_single_box), idnum(other.idnum), box_length(other.box_length)
 {}
 
 /** Destructor */
@@ -227,6 +258,7 @@ CLJDelta& CLJDelta::operator=(const CLJDelta &other)
         nbox_y = other.nbox_y;
         nbox_z = other.nbox_z;
         is_single_box = other.is_single_box;
+        idnum = other.idnum;
         box_length = other.box_length;
     }
     
@@ -240,7 +272,7 @@ bool CLJDelta::operator==(const CLJDelta &other) const
            (new_atoms == other.new_atoms and changed_atoms == other.changed_atoms and
             box_index == other.box_index and old_indicies == other.old_indicies and
             nbox_x == other.nbox_x and nbox_y == other.nbox_y and nbox_z == other.nbox_z and
-            is_single_box == other.is_single_box and
+            is_single_box == other.is_single_box and idnum == other.idnum and
             box_length == other.box_length);
 }
 
@@ -270,6 +302,20 @@ QString CLJDelta::toString() const
 int CLJDelta::nBoxes() const
 {
     return int(nbox_x) * int(nbox_y) * int(nbox_z);
+}
+
+/** Return the index of the minimum box occupied by atoms of this delta */
+CLJBoxIndex CLJDelta::minBox() const
+{
+    return box_index.boxOnly();
+}
+
+/** Return the index of the maximum box occupied by atoms of this delta */
+CLJBoxIndex CLJDelta::maxBox() const
+{
+    return CLJBoxIndex( box_index.i() + nbox_x - 1,
+                        box_index.j() + nbox_y - 1,
+                        box_index.k() + nbox_z - 1 );
 }
 
 /** Return the old version of the changed atoms */
@@ -302,4 +348,91 @@ CLJAtoms CLJDelta::oldAtoms() const
     }
 
     return old_atoms;
+}
+
+/** Merge together 'n' deltas from the passed array into a single delta.
+    If 'changes_only' is true, then this will only merge together the changed
+    atoms with box and will ignore the bookkeeping data. The resulting delta
+    would thus only be useful for delta energy calculations */
+CLJDelta CLJDelta::merge(const CLJDelta *deltas, int n, bool changes_only)
+{
+    if (n == 0)
+        return CLJDelta();
+    
+    else if (n == 1)
+        return deltas[0];
+
+    else if (changes_only)
+    {
+        CLJDelta ret = deltas[0];
+        ret.new_atoms = CLJAtoms();
+        ret.old_indicies = QVector<CLJBoxIndex>();
+        ret.idnum = 0;
+        
+        CLJBoxIndex min_box = ret.minBox();
+        CLJBoxIndex max_box = ret.maxBox();
+        
+        for (int i=1; i<n; ++i)
+        {
+            const CLJDelta &delta = deltas[i];
+            
+            if (delta.box_length != ret.box_length)
+                throw SireError::incompatible_error( QObject::tr(
+                        "You cannot merge together deltas that have different box lengths! "
+                        "%1 A vs. %2 A").arg(ret.box_length).arg(delta.box_length), CODELOC );
+            
+            ret.changed_atoms += delta.changed_atoms;
+            min_box = min_box.min( delta.minBox() );
+            max_box = max_box.max( delta.maxBox() );
+        }
+        
+        ret.box_index = min_box.boxOnly();
+        ret.nbox_x = max_box.i() - min_box.i() + 1;
+        ret.nbox_y = max_box.j() - min_box.j() + 1;
+        ret.nbox_z = max_box.k() - min_box.k() + 1;
+        ret.is_single_box = (max_box.i() == min_box.i()) and
+                            (max_box.j() == min_box.j()) and
+                            (max_box.k() == min_box.k());
+        
+        return ret;
+    }
+    else
+    {
+        CLJDelta ret = deltas[0];
+        
+        CLJBoxIndex min_box = ret.minBox();
+        CLJBoxIndex max_box = ret.maxBox();
+        
+        for (int i=1; i<n; ++i)
+        {
+            const CLJDelta &delta = deltas[i];
+            
+            if (delta.box_length != ret.box_length)
+                throw SireError::incompatible_error( QObject::tr(
+                        "You cannot merge together deltas that have different box lengths! "
+                        "%1 A vs. %2 A").arg(ret.box_length).arg(delta.box_length), CODELOC );
+
+            if (delta.ID() != ret.idnum)
+                throw SireError::incompatible_error( QObject::tr(
+                        "You cannot merge together deltas that have different ID numbers! "
+                        "%1 vs. %2.").arg(ret.ID()).arg(delta.ID()), CODELOC );
+            
+            ret.new_atoms += delta.new_atoms;
+            ret.changed_atoms += delta.changed_atoms;
+            ret.old_indicies += delta.old_indicies;
+            
+            min_box = min_box.min( delta.minBox() );
+            max_box = max_box.max( delta.maxBox() );
+        }
+        
+        ret.box_index = min_box.boxOnly();
+        ret.nbox_x = max_box.i() - min_box.i() + 1;
+        ret.nbox_y = max_box.j() - min_box.j() + 1;
+        ret.nbox_z = max_box.k() - min_box.k() + 1;
+        ret.is_single_box = (max_box.i() == min_box.i()) and
+                            (max_box.j() == min_box.j()) and
+                            (max_box.k() == min_box.k());
+        
+        return ret;
+    }
 }
