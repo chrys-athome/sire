@@ -68,14 +68,13 @@ void register_CLJWorkspace_class(){
         }
         { //::SireMM::CLJWorkspace::getitem
         
-            typedef ::SireMM::CLJDelta const & ( ::SireMM::CLJWorkspace::*getitem_function_type )( int ) const;
+            typedef ::SireMM::CLJDelta ( ::SireMM::CLJWorkspace::*getitem_function_type )( int ) const;
             getitem_function_type getitem_function_value( &::SireMM::CLJWorkspace::getitem );
             
             CLJWorkspace_exposer.def( 
                 "getitem"
                 , getitem_function_value
-                , ( bp::arg("i") )
-                , bp::return_value_policy< bp::copy_const_reference >() );
+                , ( bp::arg("i") ) );
         
         }
         { //::SireMM::CLJWorkspace::isEmpty
