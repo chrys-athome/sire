@@ -48,19 +48,12 @@ grid_buffer = Parameter("grid buffer", 2*angstrom,
 
 disable_grid = Parameter("disable grid", False, """Whether or not to disable use of the grid""")
 
-coul_power = Parameter("coulomb power", 0, """Soft-core coulomb power parameter""") 
-shift_delta = Parameter("shift delta", 1.2, """Soft-core LJ shift delta parameter""")
-
 temperature = Parameter("temperature", 25*celsius, """Simulation temperature""")
 pressure = Parameter("pressure", 1*atm, """Simulation pressure. Ignored if a reflection sphere
                                            is used.""")
 
 random_seed = Parameter("random seed", None, """Random number seed. Set this if you
                          want to have reproducible simulations.""")
-
-delta_lambda = Parameter("delta_lambda", 0.001,
-                         """Value of delta lambda used in the finite difference thermodynamic
-                            integration algorithm used to calculate the free energy""")
 
 lambda_values = Parameter("lambda values", [ 0.0, 0.142, 0.285, 0.429, 0.571, 0.714, 0.857, 1.0 ],
                           """The values of lambda to use in the RETI free energy simulation.""")
@@ -101,20 +94,16 @@ save_all_pdbs = Parameter("save all pdbs", False,
                           """Whether or not to write all of the PDBs. If not, only PDBs at the two 
                              end points of the simulation will be written.""")
 
-pdb_frequency = Parameter("pdb frequency", 100,
+pdb_frequency = Parameter("pdb frequency", 10,
                           """The frequency (number of iterations between) saving PDBs""")
 
-binwidth = Parameter("free energy bin width", 1 * kcal_per_mol,
-                     """The size of the bins used in the histogram of energies collected
-                        as part of creating the free energy average, in multiples of delta lambda""")
-
-restart_frequency = Parameter("restart frequency", 10,
+restart_frequency = Parameter("restart frequency", 1,
                               """The frequency (number of iterations between) saving the restart file for the simulation.""")
 
-nslow = Parameter("nslow", 100,
+nslow = Parameter("nslow", 50,
                   """The number of 'slow' moves to perform per RETI iteration.""")
 
-nfast = Parameter("nfast", 500,
+nfast = Parameter("nfast", 1000,
                   """The number of 'fast' moves to perform per slow move.""")
 
 scale_charges = Parameter("scale charges", 1.0,
@@ -1010,7 +999,7 @@ def run():
     if not os.path.exists(freenrgs_file):
         ti_freenrgs = TI()
     else:
-        [ti_freenrgs] = Sire.Stream.load(freenrgs_file)
+        ti_freenrgs = Sire.Stream.load(freenrgs_file)
 
     print("Initialising / loading the free energy files took %d ms" % t.elapsed())
 
@@ -1053,7 +1042,7 @@ def run():
             except:
                 pass
 
-            Sire.Stream.save( [ti_freenrgs], freenrgs_file )
+            Sire.Stream.save( ti_freenrgs, freenrgs_file )
 
             print("...save complete (took %d ms)" % t.elapsed())
 
