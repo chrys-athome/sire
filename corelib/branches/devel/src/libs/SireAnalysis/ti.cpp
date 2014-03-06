@@ -775,7 +775,7 @@ Gradients::~Gradients()
 /** Return whether or not this is empty */
 bool Gradients::isEmpty() const
 {
-    return (fwds.isEmpty() and bwds.isEmpty());
+    return (analytic.isEmpty() and fwds.isEmpty() and bwds.isEmpty());
 }
 
 /** Copy assignment operator */
