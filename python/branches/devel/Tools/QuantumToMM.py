@@ -679,8 +679,8 @@ def loadQMMMSystem():
         qm_intra = qm_ligand.energy().value()
         print("QM energy = %s kcal mol-1 (took %s ms)" % (qm_intra, t.elapsed()))
 
-        print("\nSetting the QM zero energy to %s kcal mol-1" % (mm_intra - qm_intra))
-        qm_ligand.setZeroEnergy( (mm_intra-qm_intra) * kcal_per_mol )
+        print("\nSetting the QM zero energy to %s kcal mol-1" % (qm_intra - mm_intra))
+        qm_ligand.setZeroEnergy( (qm_intra-mm_intra) * kcal_per_mol )
     else:
         print("\nManually setting the QM zero energy to %s" % qm_zero_energy.val)
         qm_ligand.setZeroEnergy( qm_zero_energy.val )
