@@ -923,6 +923,7 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
         qint64 nrg_ns = 0;
         qint64 move_ns = 0;
         qint64 test_ns = 0;
+        qint64 accept_ns = 0;
     
         const PropertyMap &map = Move::propertyMap();
         
@@ -943,7 +944,8 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
             //save the old system
             if (nmoves > 1)
                 t.start();
-            System old_system(system);
+            
+            System old_system = system;
 
             if (nmoves > 1)
                 copy_ns += t.nsecsElapsed();
@@ -973,10 +975,33 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
             if (nmoves > 1)
                 t.start();
 
-            if (not this->test(new_nrg, old_nrg, new_bias, old_bias))
+            const bool accept_move = this->test(new_nrg, old_nrg, new_bias, old_bias);
+            
+            if (nmoves > 1)
+                test_ns += t.nsecsElapsed();
+
+            if (accept_move)
+            {
+                //the move has been rejected. Destroy the old state and accept the move
+                if (nmoves > 1)
+                    t.start();
+                
+                old_system = System();
+                system.accept();
+                
+                if (nmoves > 1)
+                    accept_ns += t.nsecsElapsed();
+            }
+            else
             {
                 //the move has been rejected - reset the state
+                if (nmoves > 1)
+                    t.start();
+                
                 system = old_system;
+                
+                if (nmoves > 1)
+                    copy_ns += t.nsecsElapsed();
             }
 
             if (record_stats)

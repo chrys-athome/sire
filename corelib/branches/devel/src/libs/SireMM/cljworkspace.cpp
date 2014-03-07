@@ -231,12 +231,7 @@ CLJWorkspace::CLJWorkspace(const CLJWorkspace &other)
 
 /** Destructor */
 CLJWorkspace::~CLJWorkspace()
-{
-    if (d.constData() != 0)
-    {
-        qDebug() << "Deleting CLJWorkspace" << quintptr(d.constData());
-    }
-}
+{}
 
 /** Copy assignment operator. The new copy will get the memory of an empty workspace */
 CLJWorkspace& CLJWorkspace::operator=(const CLJWorkspace &other)
@@ -349,18 +344,9 @@ void CLJWorkspace::push(const CLJDelta &delta)
     if (d.constData() == 0)
     {
         d = new detail::CLJWorkspaceData();
-        qDebug() << "Created workspace" << quintptr(d.constData());
     }
-    
-    const void *oldptr = d.constData();
     
     d->push(delta);
-    
-    if (oldptr != d.constData())
-    {
-        qDebug() << "Detached workspace" << quintptr(oldptr) << "created workspace"
-                 << quintptr(d.constData());
-    }
 }
 
 /** Push a new delta onto the set. This is used to bypass the CLJDelta constructor,
@@ -371,18 +357,9 @@ void CLJWorkspace::push(quint32 idnum, const CLJBoxes &boxes, const QVector<CLJB
     if (d.constData() == 0)
     {
         d = new detail::CLJWorkspaceData();
-        qDebug() << "Created workspace" << quintptr(d.constData());
     }
-    
-    const void *oldptr = d.constData();
     
     d->push(idnum, boxes, old_atoms, new_atoms, CLJAtoms::USE_MOLNUM, map);
-    
-    if (oldptr != d.constData())
-    {
-        qDebug() << "Detached workspace" << quintptr(oldptr) << "created workspace"
-                 << quintptr(d.constData());
-    }
 }
 
 /** Push a new delta onto the set. This is used to bypass the CLJDelta constructor,
@@ -394,18 +371,9 @@ void CLJWorkspace::push(quint32 idnum, const CLJBoxes &boxes, const QVector<CLJB
     if (d.constData() == 0)
     {
         d = new detail::CLJWorkspaceData();
-        qDebug() << "Created workspace" << quintptr(d.constData());
     }
-    
-    const void *oldptr = d.constData();
     
     d->push(idnum, boxes, old_atoms, new_atoms, source, map);
-    
-    if (oldptr != d.constData())
-    {
-        qDebug() << "Detached workspace" << quintptr(oldptr) << "created workspace"
-                 << quintptr(d.constData());
-    }
 }
 
 /** Return the number of deltas in this workspace */
@@ -448,14 +416,6 @@ void CLJWorkspace::clear()
 {
     if (d.constData() != 0)
     {
-        const void *oldptr = d.constData();
-        
         d->clear();
-        
-        if (oldptr != d.constData())
-        {
-            qDebug() << "Clearing has detached workspace" << quintptr(oldptr)
-                     << "creating workspace" << quintptr(d.constData());
-        }
     }
 }

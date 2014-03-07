@@ -309,6 +309,8 @@ public:
     
     void mustNowRecalculateFromScratch();
     
+    void accept();
+    
     bool isDirty() const;
     bool isClean() const;
     

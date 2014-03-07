@@ -800,3 +800,14 @@ bool InterFF::_pvt_wouldChangeProperties(SireMol::MolNum molnum,
         return not d->maps_for_mol.contains(molnum);
     }
 }
+
+/** Tell the forcefield that the last move was accepted. This tells the
+    forcefield to make permanent any temporary changes that were used a workspace
+    to avoid memory allocation during a move */
+void InterFF::accept()
+{
+    if (needs_reboxing)
+        this->reboxChangedAtoms();
+    
+    G1FF::accept();
+}

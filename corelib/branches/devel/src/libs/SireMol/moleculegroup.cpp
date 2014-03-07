@@ -2185,6 +2185,12 @@ bool MoleculeGroup::setContents(const MoleculeGroup &MoleculeGroup)
     return true;
 }
 
+/** Tell the molecule group that the last move was accepted. This tells the
+    group to make permanent any temporary changes that were used a workspace
+    to avoid memory allocation during a move */
+void MoleculeGroup::accept()
+{}
+
 const char* MoleculeGroup::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<MoleculeGroup>() );

@@ -1437,6 +1437,14 @@ void System::mustNowRecalculateFromScratch()
     this->_pvt_forceFields().mustNowRecalculateFromScratch();
 }
 
+/** Tell all of the forcefields that the last move was accepted. This allows
+    any cacheing or use of temporary workspaces to be committed */
+void System::accept()
+{
+    this->_pvt_forceFields().accept();
+    this->_pvt_moleculeGroups().accept();
+}
+
 /** Return whether or not any of the forcefields are dirty */
 bool System::isDirty() const
 {

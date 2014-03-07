@@ -296,6 +296,8 @@ public:
     virtual bool setContents(const Molecules &molecules);
     virtual bool setContents(const MoleculeGroup &MoleculeGroup);
 
+    virtual void accept();
+
     static const MoleculeGroup& null();
 
 private:

@@ -127,6 +127,8 @@ public:
 
     void mustNowRecalculateFromScratch();    
 
+    void accept();
+
 private:
     void mustNowReallyRecalculateFromScratch();
 

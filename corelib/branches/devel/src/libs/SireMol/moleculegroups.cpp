@@ -240,6 +240,12 @@ Atom MolGroupsBase::operator[](const AtomID &atomid) const
     return this->at(atomid);
 }
 
+/** Tell the molecule group that the last move was accepted. This tells the 
+    group to make permanent any temporary changes that were used a workspace
+    to avoid memory allocation during a move */
+void MolGroupsBase::accept()
+{}
+
 /** Get the number of the molecule group whose number is 'mgnum'.
     This is an obvious function, only provided as a shortcut
     to prevent the MGID function being called if an MGNum is passed.
@@ -2929,6 +2935,19 @@ void MoleculeGroups::update(const Molecules &molecules)
         //something went wrong...
         this->operator=(*old_state);
         throw;
+    }
+}
+
+/** Tell the molecule group that the last move was accepted. This tells the 
+    group to make permanent any temporary changes that were used a workspace
+    to avoid memory allocation during a move */
+void MoleculeGroups::accept()
+{
+    for (QHash<MGNum,MolGroupPtr>::iterator it = mgroups.begin();
+         it != mgroups.end();
+         ++it)
+    {
+        it->edit().accept();
     }
 }
 

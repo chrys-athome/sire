@@ -1194,3 +1194,12 @@ bool G2FF::group_setContents(quint32 i, const MoleculeGroup &new_group,
     
     return false;
 }
+
+/** Tell the forcefield that the last move was accepted. This tells the
+    forcefield to make permanent any temporary changes that were used a workspace
+    to avoid memory allocation during a move */
+void G2FF::accept()
+{
+    molgroup[0].accept();
+    molgroup[1].accept();
+}

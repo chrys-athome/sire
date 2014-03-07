@@ -1290,3 +1290,11 @@ void G1FF::setContents(const MoleculeGroup &group, const PropertyMap &map)
 {
     FF::setContents(MGIdx(0), group, map);
 }
+
+/** Tell the forcefield that the last move was accepted. This tells the
+    forcefield to make permanent any temporary changes that were used a workspace
+    to avoid memory allocation during a move */
+void G1FF::accept()
+{
+    molgroup.accept();
+}
