@@ -898,6 +898,16 @@ void register_MoleculeGroup_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireMol::MoleculeGroup::needsAccepting
+        
+            typedef bool ( ::SireMol::MoleculeGroup::*needsAccepting_function_type )(  ) const;
+            needsAccepting_function_type needsAccepting_function_value( &::SireMol::MoleculeGroup::needsAccepting );
+            
+            MoleculeGroup_exposer.def( 
+                "needsAccepting"
+                , needsAccepting_function_value );
+        
+        }
         { //::SireMol::MoleculeGroup::null
         
             typedef ::SireMol::MoleculeGroup const & ( *null_function_type )(  );

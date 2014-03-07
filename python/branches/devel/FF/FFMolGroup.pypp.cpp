@@ -53,6 +53,16 @@ void register_FFMolGroup_class(){
         FFMolGroup_exposer.def( bp::init< SireFF::detail::FFMolGroupPvt const & >(( bp::arg("ffmolgroup") )) );
         FFMolGroup_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("other") )) );
         FFMolGroup_exposer.def( bp::init< SireFF::FFMolGroup const & >(( bp::arg("other") )) );
+        { //::SireFF::FFMolGroup::accept
+        
+            typedef void ( ::SireFF::FFMolGroup::*accept_function_type )(  ) ;
+            accept_function_type accept_function_value( &::SireFF::FFMolGroup::accept );
+            
+            FFMolGroup_exposer.def( 
+                "accept"
+                , accept_function_value );
+        
+        }
         { //::SireFF::FFMolGroup::add
         
             typedef void ( ::SireFF::FFMolGroup::*add_function_type )( ::SireMol::MoleculeView const & ) ;
@@ -248,6 +258,16 @@ void register_FFMolGroup_class(){
             FFMolGroup_exposer.def( 
                 "index"
                 , index_function_value );
+        
+        }
+        { //::SireFF::FFMolGroup::needsAccepting
+        
+            typedef bool ( ::SireFF::FFMolGroup::*needsAccepting_function_type )(  ) const;
+            needsAccepting_function_type needsAccepting_function_value( &::SireFF::FFMolGroup::needsAccepting );
+            
+            FFMolGroup_exposer.def( 
+                "needsAccepting"
+                , needsAccepting_function_value );
         
         }
         { //::SireFF::FFMolGroup::operator=

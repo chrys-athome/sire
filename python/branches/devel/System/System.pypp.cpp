@@ -1119,6 +1119,16 @@ void register_System_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireSystem::System::needsAccepting
+        
+            typedef bool ( ::SireSystem::System::*needsAccepting_function_type )(  ) const;
+            needsAccepting_function_type needsAccepting_function_value( &::SireSystem::System::needsAccepting );
+            
+            System_exposer.def( 
+                "needsAccepting"
+                , needsAccepting_function_value );
+        
+        }
         { //::SireSystem::System::null
         
             typedef ::SireSystem::System const & ( *null_function_type )(  );

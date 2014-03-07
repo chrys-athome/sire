@@ -81,6 +81,16 @@ void register_G2FF_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireFF::G2FF::needsAccepting
+        
+            typedef bool ( ::SireFF::G2FF::*needsAccepting_function_type )(  ) const;
+            needsAccepting_function_type needsAccepting_function_value( &::SireFF::G2FF::needsAccepting );
+            
+            G2FF_exposer.def( 
+                "needsAccepting"
+                , needsAccepting_function_value );
+        
+        }
         G2FF_exposer.def( "__rlshift__", &__rlshift__QDataStream< ::SireFF::G2FF >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         G2FF_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireFF::G2FF >,

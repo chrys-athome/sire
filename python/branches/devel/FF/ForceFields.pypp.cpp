@@ -88,6 +88,16 @@ void register_ForceFields_class(){
         ForceFields_exposer.def( bp::init< QList< SireBase::PropPtr< SireFF::FF > > const & >(( bp::arg("forcefields") )) );
         ForceFields_exposer.def( bp::init< QVector< SireBase::PropPtr< SireFF::FF > > const & >(( bp::arg("forcefields") )) );
         ForceFields_exposer.def( bp::init< SireFF::ForceFields const & >(( bp::arg("other") )) );
+        { //::SireFF::ForceFields::accept
+        
+            typedef void ( ::SireFF::ForceFields::*accept_function_type )(  ) ;
+            accept_function_type accept_function_value( &::SireFF::ForceFields::accept );
+            
+            ForceFields_exposer.def( 
+                "accept"
+                , accept_function_value );
+        
+        }
         { //::SireFF::ForceFields::add
         
             typedef void ( ::SireFF::ForceFields::*add_function_type )( ::SireFF::FF const & ) ;
@@ -1081,6 +1091,16 @@ void register_ForceFields_class(){
             ForceFields_exposer.def( 
                 "names"
                 , names_function_value );
+        
+        }
+        { //::SireFF::ForceFields::needsAccepting
+        
+            typedef bool ( ::SireFF::ForceFields::*needsAccepting_function_type )(  ) const;
+            needsAccepting_function_type needsAccepting_function_value( &::SireFF::ForceFields::needsAccepting );
+            
+            ForceFields_exposer.def( 
+                "needsAccepting"
+                , needsAccepting_function_value );
         
         }
         ForceFields_exposer.def( bp::self != bp::self );

@@ -257,6 +257,16 @@ void register_G1FF_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireFF::G1FF::needsAccepting
+        
+            typedef bool ( ::SireFF::G1FF::*needsAccepting_function_type )(  ) const;
+            needsAccepting_function_type needsAccepting_function_value( &::SireFF::G1FF::needsAccepting );
+            
+            G1FF_exposer.def( 
+                "needsAccepting"
+                , needsAccepting_function_value );
+        
+        }
         { //::SireFF::G1FF::remove
         
             typedef bool ( ::SireFF::G1FF::*remove_function_type )( ::SireMol::MoleculeView const & ) ;

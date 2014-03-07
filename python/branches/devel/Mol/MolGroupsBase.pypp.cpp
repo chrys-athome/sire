@@ -1014,6 +1014,16 @@ void register_MolGroupsBase_class(){
                 , ( bp::arg("molnum") ) );
         
         }
+        { //::SireMol::MolGroupsBase::needsAccepting
+        
+            typedef bool ( ::SireMol::MolGroupsBase::*needsAccepting_function_type )(  ) const;
+            needsAccepting_function_type needsAccepting_function_value( &::SireMol::MolGroupsBase::needsAccepting );
+            
+            MolGroupsBase_exposer.def( 
+                "needsAccepting"
+                , needsAccepting_function_value );
+        
+        }
         { //::SireMol::MolGroupsBase::null
         
             typedef ::SireMol::MoleculeGroups const & ( *null_function_type )(  );

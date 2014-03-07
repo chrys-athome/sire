@@ -198,6 +198,16 @@ void register_InterFF_class(){
                 , mustNowRecalculateFromScratch_function_value );
         
         }
+        { //::SireMM::InterFF::needsAccepting
+        
+            typedef bool ( ::SireMM::InterFF::*needsAccepting_function_type )(  ) const;
+            needsAccepting_function_type needsAccepting_function_value( &::SireMM::InterFF::needsAccepting );
+            
+            InterFF_exposer.def( 
+                "needsAccepting"
+                , needsAccepting_function_value );
+        
+        }
         InterFF_exposer.def( bp::self != bp::self );
         { //::SireMM::InterFF::operator=
         
