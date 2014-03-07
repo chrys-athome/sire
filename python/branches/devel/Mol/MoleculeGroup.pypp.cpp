@@ -74,6 +74,16 @@ void register_MoleculeGroup_class(){
         MoleculeGroup_exposer.def( bp::init< QString const &, SireMol::Molecules const & >(( bp::arg("name"), bp::arg("molecules") )) );
         MoleculeGroup_exposer.def( bp::init< QString const &, SireMol::MoleculeGroup const & >(( bp::arg("name"), bp::arg("other") )) );
         MoleculeGroup_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("other") )) );
+        { //::SireMol::MoleculeGroup::accept
+        
+            typedef void ( ::SireMol::MoleculeGroup::*accept_function_type )(  ) ;
+            accept_function_type accept_function_value( &::SireMol::MoleculeGroup::accept );
+            
+            MoleculeGroup_exposer.def( 
+                "accept"
+                , accept_function_value );
+        
+        }
         { //::SireMol::MoleculeGroup::add
         
             typedef void ( ::SireMol::MoleculeGroup::*add_function_type )( ::SireMol::MoleculeView const & ) ;

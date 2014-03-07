@@ -52,6 +52,16 @@ void register_InterFF_class(){
         bp::scope InterFF_scope( InterFF_exposer );
         InterFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         InterFF_exposer.def( bp::init< SireMM::InterFF const & >(( bp::arg("other") )) );
+        { //::SireMM::InterFF::accept
+        
+            typedef void ( ::SireMM::InterFF::*accept_function_type )(  ) ;
+            accept_function_type accept_function_value( &::SireMM::InterFF::accept );
+            
+            InterFF_exposer.def( 
+                "accept"
+                , accept_function_value );
+        
+        }
         { //::SireMM::InterFF::addFixedAtoms
         
             typedef void ( ::SireMM::InterFF::*addFixedAtoms_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) ;

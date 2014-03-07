@@ -48,6 +48,16 @@ void register_G2FF_class(){
         typedef bp::class_< SireFF::G2FF, bp::bases< SireFF::FF, SireMol::MolGroupsBase, SireBase::Property >, boost::noncopyable > G2FF_exposer_t;
         G2FF_exposer_t G2FF_exposer = G2FF_exposer_t( "G2FF", bp::no_init );
         bp::scope G2FF_scope( G2FF_exposer );
+        { //::SireFF::G2FF::accept
+        
+            typedef void ( ::SireFF::G2FF::*accept_function_type )(  ) ;
+            accept_function_type accept_function_value( &::SireFF::G2FF::accept );
+            
+            G2FF_exposer.def( 
+                "accept"
+                , accept_function_value );
+        
+        }
         { //::SireFF::G2FF::assertContains
         
             typedef void ( ::SireFF::G2FF::*assertContains_function_type )( ::SireMol::MGNum ) const;

@@ -84,6 +84,16 @@ void register_MolGroupsBase_class(){
         typedef bp::class_< SireMol::MolGroupsBase, bp::bases< SireBase::Property >, boost::noncopyable > MolGroupsBase_exposer_t;
         MolGroupsBase_exposer_t MolGroupsBase_exposer = MolGroupsBase_exposer_t( "MolGroupsBase", bp::no_init );
         bp::scope MolGroupsBase_scope( MolGroupsBase_exposer );
+        { //::SireMol::MolGroupsBase::accept
+        
+            typedef void ( ::SireMol::MolGroupsBase::*accept_function_type )(  ) ;
+            accept_function_type accept_function_value( &::SireMol::MolGroupsBase::accept );
+            
+            MolGroupsBase_exposer.def( 
+                "accept"
+                , accept_function_value );
+        
+        }
         { //::SireMol::MolGroupsBase::add
         
             typedef void ( ::SireMol::MolGroupsBase::*add_function_type )( ::SireMol::MoleculeView const &,::SireMol::MGID const & ) ;

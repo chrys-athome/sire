@@ -89,6 +89,16 @@ void register_MoleculeGroups_class(){
         MoleculeGroups_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         MoleculeGroups_exposer.def( bp::init< QList< SireBase::PropPtr< SireMol::MoleculeGroup > > const & >(( bp::arg("molgroups") )) );
         MoleculeGroups_exposer.def( bp::init< SireMol::MoleculeGroups const & >(( bp::arg("other") )) );
+        { //::SireMol::MoleculeGroups::accept
+        
+            typedef void ( ::SireMol::MoleculeGroups::*accept_function_type )(  ) ;
+            accept_function_type accept_function_value( &::SireMol::MoleculeGroups::accept );
+            
+            MoleculeGroups_exposer.def( 
+                "accept"
+                , accept_function_value );
+        
+        }
         { //::SireMol::MoleculeGroups::add
         
             typedef void ( ::SireMol::MoleculeGroups::*add_function_type )( ::SireMol::MoleculeGroup const & ) ;

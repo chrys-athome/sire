@@ -89,6 +89,16 @@ void register_System_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireSystem::System::accept
+        
+            typedef void ( ::SireSystem::System::*accept_function_type )(  ) ;
+            accept_function_type accept_function_value( &::SireSystem::System::accept );
+            
+            System_exposer.def( 
+                "accept"
+                , accept_function_value );
+        
+        }
         { //::SireSystem::System::add
         
             typedef void ( ::SireSystem::System::*add_function_type )( ::QString const &,::SireSystem::SystemMonitor const &,int ) ;

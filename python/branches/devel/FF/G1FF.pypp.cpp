@@ -48,6 +48,16 @@ void register_G1FF_class(){
         typedef bp::class_< SireFF::G1FF, bp::bases< SireFF::FF, SireMol::MolGroupsBase, SireBase::Property >, boost::noncopyable > G1FF_exposer_t;
         G1FF_exposer_t G1FF_exposer = G1FF_exposer_t( "G1FF", bp::no_init );
         bp::scope G1FF_scope( G1FF_exposer );
+        { //::SireFF::G1FF::accept
+        
+            typedef void ( ::SireFF::G1FF::*accept_function_type )(  ) ;
+            accept_function_type accept_function_value( &::SireFF::G1FF::accept );
+            
+            G1FF_exposer.def( 
+                "accept"
+                , accept_function_value );
+        
+        }
         { //::SireFF::G1FF::add
         
             typedef void ( ::SireFF::G1FF::*add_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) ;
