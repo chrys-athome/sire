@@ -18,6 +18,7 @@
 #include "moleditor.h"
 #include "evaluator.h"
 #include "chainresid.h"
+#include "molresid.h"
 #include "geometryperturbation.h"
 #include "specifymol.h"
 #include "cgidx.h"
@@ -132,6 +133,8 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::MolStructureEditor >();
     ObjectRegistry::registerConverterFor< SireMol::Evaluator >();
     ObjectRegistry::registerConverterFor< SireMol::ChainResID >();
+    ObjectRegistry::registerConverterFor< SireMol::MolResID >();
+    ObjectRegistry::registerConverterFor< SireMol::MolResNum >();
     ObjectRegistry::registerConverterFor< SireMol::NullGeometryPerturbation >();
     ObjectRegistry::registerConverterFor< SireMol::GeometryPerturbations >();
     ObjectRegistry::registerConverterFor< SireMol::BondPerturbation >();

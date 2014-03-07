@@ -138,6 +138,7 @@ set ( PYPP_SOURCES
        AbsFromNumber.pypp.cpp
        MGNum.pypp.cpp
        MolEditorBase.pypp.cpp
+       MolResNum.pypp.cpp
        Specify_AtomID_.pypp.cpp
        Mover_Chain_.pypp.cpp
        MolViewProperty.pypp.cpp
@@ -171,6 +172,7 @@ set ( PYPP_SOURCES
        ChainFloatProperty.pypp.cpp
        SegName.pypp.cpp
        IDAndSet_MGID_.pypp.cpp
+       MolResID.pypp.cpp
        AtomCoords.pypp.cpp
        IDAndSet_SegID_.pypp.cpp
        DihedralID.pypp.cpp

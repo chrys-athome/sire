@@ -14,11 +14,19 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "SireMol/atomselection.h"
+
 #include "SireMol/molecule.h"
 
 #include "SireMol/molecules.h"
 
+#include "SireMol/molresid.h"
+
 #include "SireMol/partialmolecule.h"
+
+#include "SireMol/residue.h"
+
+#include "SireMol/selector.hpp"
 
 #include "SireStream/datastream.h"
 

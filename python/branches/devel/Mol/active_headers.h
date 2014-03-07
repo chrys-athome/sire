@@ -82,6 +82,7 @@
 #include "molinfo.h"
 #include "molname.h"
 #include "molnum.h"
+#include "molresid.h"
 #include "molviewproperty.h"
 #include "mover.h"
 #include "mover_metaid.h"

@@ -267,6 +267,10 @@
 
 #include "MolNum.pypp.hpp"
 
+#include "MolResID.pypp.hpp"
+
+#include "MolResNum.pypp.hpp"
+
 #include "MolStructureEditor.pypp.hpp"
 
 #include "MolViewProperty.pypp.hpp"
@@ -771,6 +775,10 @@ BOOST_PYTHON_MODULE(_Mol){
     register_MolName_class();
 
     register_MolNum_class();
+
+    register_MolResID_class();
+
+    register_MolResNum_class();
 
     register_MolStructureEditor_class();
 
