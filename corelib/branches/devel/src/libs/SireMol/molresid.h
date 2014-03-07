@@ -27,6 +27,7 @@
 \*********************************************/
 
 #ifndef SIREMOL_MOLRESID_H
+#define SIREMOL_MOLRESID_H
 
 #include "residentifier.h"
 #include "molidentifier.h"
