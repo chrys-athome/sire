@@ -38,6 +38,10 @@
 #include "SireMol/partialmolecule.h"
 #include "SireMol/molecule.h"
 #include "SireMol/molecules.h"
+#include "SireMol/molresid.h"
+#include "SireMol/residue.h"
+#include "SireMol/atomselection.h"
+#include "SireMol/selector.hpp"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -64,6 +68,8 @@ namespace SireMM
             InterFFData(const InterFFData &other)
                  : maps_for_mol(other.maps_for_mol),
                    mol_to_idx(other.mol_to_idx),
+                   molres_to_idx(other.molres_to_idx),
+                   atom_selections(other.atom_selections),
                    cljfunc(other.cljfunc),
                    fixed_atoms(other.fixed_atoms),
                    cljcomps(other.cljcomps),
@@ -80,6 +86,16 @@ namespace SireMM
             /** The index of each molecule into the array. This is fixed
                 throughout the lifetime of the forcefield */
             QHash<SireMol::MolNum,quint32> mol_to_idx;
+
+            /** The index of each molecule/residue combination into the 
+                array. This used for molecules that contain more than
+                one residue, and is fixed throughout the lifetime of the forcefield */
+            QHash<SireMol::MolResNum,quint32> molres_to_idx;
+
+            /** The atom selections of each molecule/residue in the system. If the entry
+                is empty, then this means that the whole molecule/residue is in the 
+                forcefield */
+            ChunkedVector<AtomSelection> atom_selections;
 
             /** The function used to calculate energies */
             CLJFunctionPtr cljfunc;
@@ -528,9 +544,135 @@ void InterFF::mustNowReallyRecalculateFromScratch()
 {
     atom_locs.clear();
     d->mol_to_idx.clear();
+    d->molres_to_idx.clear();
+    d->atom_selections.clear();
     wspace = CLJWorkspace();
     needs_reboxing = false;
     mustNowRecalculateFromScratch();
+}
+
+void InterFF::reextractAtoms(const PartialMolecule &pmol)
+{
+    if (pmol.selectedAll())
+    {
+        Molecule m = pmol.molecule();
+        
+        if (m.nResidues() == 1)
+        {
+            //this is a single-residue molecule, e.g. a solvent or ligand
+            CLJAtoms mol( m, d.constData()->maps_for_mol.value(m.number(),PropertyMap()) );
+            
+            QVector<CLJBoxIndex> idxs = cljboxes.add(mol);
+            
+            const quint32 id = atom_locs.count();
+            
+            atom_locs.append(idxs);
+            d->atom_selections.append( AtomSelection() );
+            
+            d->mol_to_idx.insert(m.number(), id);
+        }
+        else
+        {
+            //add each residue individually. This is to optimise memory
+            //access and the energy calculation when only one residue is moved
+            //at a time
+            PropertyMap map = d.constData()->maps_for_mol.value(m.number(), PropertyMap());
+            
+            for (int i=0; i<m.nResidues(); ++i)
+            {
+                Residue r = m.residue(ResIdx(i));
+                
+                CLJAtoms res( r, map );
+                
+                QVector<CLJBoxIndex> idxs = cljboxes.add(res);
+                
+                const quint32 id = atom_locs.count();
+                
+                atom_locs.append(idxs);
+                d->atom_selections.append( AtomSelection() );
+                
+                if (i == 0)
+                    //save the index to the first residue's atoms
+                    d->mol_to_idx.insert(m.number(), id);
+                
+                d->molres_to_idx.insert( MolResNum(m.number(),r.number()), id );
+            }
+        }
+    }
+    else
+    {
+        if (pmol.molecule().nResidues() == 1)
+        {
+            //we have selected part of a single-residue molecule
+            //this is a single-residue molecule, e.g. a solvent or ligand
+            CLJAtoms mol( pmol, d.constData()->maps_for_mol.value(pmol.number(),PropertyMap()) );
+            
+            QVector<CLJBoxIndex> idxs = cljboxes.add(mol);
+            
+            const quint32 id = atom_locs.count();
+            
+            atom_locs.append(idxs);
+            d->atom_selections.append(pmol.selection());
+            
+            d->mol_to_idx.insert(pmol.number(), id);
+        }
+        else
+        {
+            //loop through and add all of the selected residues
+            AtomSelection selected_atoms = pmol.selection();
+            PropertyMap map = d.constData()->maps_for_mol.value(pmol.number(), PropertyMap());
+
+            bool have_first = false;
+
+            foreach (ResIdx residx, selected_atoms.selectedResidues())
+            {
+                if (selected_atoms.selectedAll(residx))
+                {
+                    Residue r = pmol.residue(residx);
+                
+                    CLJAtoms res( r, map );
+                    
+                    QVector<CLJBoxIndex> idxs = cljboxes.add(res);
+                    
+                    const quint32 id = atom_locs.count();
+                    
+                    atom_locs.append(idxs);
+                    d->atom_selections.append( AtomSelection() );
+                    
+                    d->molres_to_idx.insert( MolResNum(pmol.number(),r.number()), id );
+                    
+                    if (not have_first)
+                    {
+                        d->mol_to_idx.insert(pmol.number(), id);
+                        have_first = false;
+                    }
+                }
+                else
+                {
+                    AtomSelection res_selection(selected_atoms);
+                    res_selection = res_selection.mask(residx);
+                    
+                    CLJAtoms res( PartialMolecule(pmol.data(),res_selection), map );
+                    
+                    QVector<CLJBoxIndex> idxs = cljboxes.add(res);
+                    
+                    const quint32 id = atom_locs.count();
+                    
+                    atom_locs.append(idxs);
+                    d->atom_selections.append( res_selection );
+                    
+                    d->molres_to_idx.insert( MolResNum(pmol.number(),
+                                                       pmol.data().info().number(residx)), id );
+
+                    if (not have_first)
+                    {
+                        d->mol_to_idx.insert(pmol.number(), id);
+                        have_first = false;
+                    }
+                }
+            }
+        }
+    }
 }
 
 /** Re-extract all of the atoms - this also reboxes them all */
@@ -547,24 +689,20 @@ void InterFF::reextractAtoms()
     if (mols.isEmpty())
         return;
     
-    atom_locs.resize(mols.nMolecules());
+    atom_locs.clear();
+    atom_locs.reserve(mols.nMolecules());
     d->mol_to_idx.clear();
     d->mol_to_idx.reserve(mols.nMolecules());
+    d->molres_to_idx.clear();
+    d->atom_selections.clear();
+    d->atom_selections.reserve(mols.nMolecules());
     cljboxes = CLJBoxes();
-    
-    quint32 i = 0;
     
     for (Molecules::const_iterator it = mols.constBegin();
          it != mols.constEnd();
          ++it)
     {
-        CLJAtoms mol( it.value(), d.constData()->maps_for_mol.value(it.key(),PropertyMap()) );
-        
-        QVector<CLJBoxIndex> idxs = cljboxes.add(mol);
-        
-        atom_locs[i] = idxs;
-        d->mol_to_idx.insert(it.key(), i);
-        i += 1;
+        reextractAtoms(*it);
     }
     
     qint64 ns = t.nsecsElapsed();
@@ -681,21 +819,76 @@ void InterFF::_pvt_added(const SireMol::PartialMolecule &mol, const SireBase::Pr
     if (needs_reboxing)
         reboxChangedAtoms();
 
-    //be lazy for the moment - recalculate everything!
-    mustNowReallyRecalculateFromScratch();
-    
-    //store the map used to get properties
-    if (map.isDefault())
+    if (atom_locs.isEmpty())
     {
-        if (d.constData()->maps_for_mol.contains(mol.number()))
-            d->maps_for_mol.remove(mol.number());
+        //we can wait until everything is reboxed
+        mustNowReallyRecalculateFromScratch();
+        setDirty();
+        return;
+    }
+
+    //do we already contain part of this molecule?
+    if (d.constData()->mol_to_idx.contains(mol.number()))
+    {
+        //we cannot easily cope with adding new parts of a molecule that already
+        //exists in this forcefield. Let give up and do everything from scratch
+        if (d.constData()->maps_for_mol.value(mol.number(), PropertyMap()) != map)
+            throw SireError::incompatible_error( QObject::tr(
+                    "Trying to add a molecule with a new PropertyMap (%1) when it already "
+                    "exists in the forcefield %2 with a different PropertyMap (%3)")
+                        .arg(map.toString())
+                        .arg(this->toString())
+                        .arg(d.constData()->maps_for_mol.value(mol.number(),PropertyMap())
+                                .toString()), CODELOC );
+        
+        mustNowReallyRecalculateFromScratch();
+        setDirty();
+        return;
+    }
+    else if (mol.molecule().nResidues() > 1)
+    {
+        //adding in multiple-residue molecules is too difficult to debug at the moment
+        //do it the slow way
+        mustNowReallyRecalculateFromScratch();
+        setDirty();
+        return;
     }
     else
     {
-        d->maps_for_mol.insert(mol.number(),map);
+        //we are adding a new single-residue molecule. Just add this and box it with the rest
+        if (not map.isDefault())
+            d->maps_for_mol.insert(mol.number(), map);
+        
+        if (mol.selectedAll())
+            d->atom_selections.append( AtomSelection() );
+        else
+            d->atom_selections.append( mol.selection() );
+        
+        atom_locs.append( QVector<CLJBoxIndex>() );
+        const quint32 id = atom_locs.count() - 1;
+        d->mol_to_idx.insert(mol.number(), id);
+        
+        const bool was_single_id = wspace.isSingleID();
+
+        wspace.push( id, cljboxes, QVector<CLJBoxIndex>(),
+                     this->group(MGIdx(0)).molecules()[mol.number()], map );
+
+        if (was_single_id)
+        {
+            if (not wspace.isSingleID())
+            {
+                //we need to remove all old atoms in the delta from cljboxes, or the
+                //delta energy calculation won't work
+                for (int i=0; i<wspace.nDeltas(); ++i)
+                {
+                    cljboxes.remove( wspace.constData()[i].oldIndicies() );
+                    atom_locs[ wspace.constData()[i].ID() ] = QVector<CLJBoxIndex>();
+                }
+            }
+        }
+        
+        this->setDirty();
     }
-    
-    this->setDirty();
 }
 
 /** Function called to remove a molecule from this forcefield */
@@ -724,14 +917,6 @@ void InterFF::_pvt_changed(const SireMol::Molecule &molecule)
     if (needs_reboxing)
         reboxChangedAtoms();
 
-    //for now, only allow one thing to change at once...
-    if (not wspace.isEmpty())
-    {
-        mustNowReallyRecalculateFromScratch();
-        this->setDirty();
-        return;
-    }
-
     //get the ID number of this molecule in the forcefield
     MolNum molnum = molecule.number();
 
@@ -740,33 +925,88 @@ void InterFF::_pvt_changed(const SireMol::Molecule &molecule)
                 "It should not be possible that the molecule %1 is not in the forcefield already?")
                     .arg(molnum.value()), CODELOC );
     
-    quint32 id = d.constData()->mol_to_idx.value(molnum);
-
-    wspace.push( id, cljboxes, atom_locs.at(id),
-                 this->group(MGIdx(0)).molecules()[molnum],
-                 d.constData()->maps_for_mol.value(molnum,PropertyMap()) );
-
-    if (not wspace.isSingleID())
+    //is this a multi-residue molecule?
+    if (molecule.nResidues() > 1)
     {
-        //we need to remove the old atoms from the cljboxes, or the delta energy
-        //calculate won't work
-        cljboxes.remove( atom_locs.at(id) );
-        atom_locs[id] = QVector<CLJBoxIndex>();
+        //for now, do this the painful way!
+        mustNowReallyRecalculateFromScratch();
+        setDirty();
+        return;
     }
+    else
+    {
+        const bool was_single_id = wspace.isSingleID();
     
-    this->setDirty();
+        //does this forcefield contain the whole molecule
+        const quint32 id = d.constData()->mol_to_idx.value(molnum);
+        
+        //have we changed this molecule before? If so, then it is safest that
+        //we redo everything from scratch
+        for (int i=0; i<wspace.nDeltas(); ++i)
+        {
+            if (wspace.constData()[i].ID() == id)
+            {
+                //yes, we have done this before
+                mustNowReallyRecalculateFromScratch();
+                setDirty();
+                return;
+            }
+        }
+        
+        if (d.constData()->atom_selections[id].isEmpty())
+        {
+            //we have the whole molecule
+            wspace.push( id, cljboxes, atom_locs.at(id), molecule,
+                         d.constData()->maps_for_mol.value(molnum,PropertyMap()) );
+        }
+        else
+        {
+            //we have only a part of the molecule
+            wspace.push( id, cljboxes, atom_locs.at(id),
+                         PartialMolecule(molecule.data(), d.constData()->atom_selections[id]),
+                         d.constData()->maps_for_mol.value(molnum,PropertyMap()) );
+        }
+
+        if (was_single_id)
+        {
+            if (not wspace.isSingleID())
+            {
+                //we need to remove all old atoms in the delta from cljboxes, or the
+                //delta energy calculation won't work
+                for (int i=0; i<wspace.nDeltas(); ++i)
+                {
+                    cljboxes.remove( wspace.constData()[i].oldIndicies() );
+                    atom_locs[ wspace.constData()[i].ID() ] = QVector<CLJBoxIndex>();
+                }
+            }
+        }
+        else
+        {
+            //we need to remove the old atoms from the cljboxes, or the delta energy
+            //calculation won't work
+            cljboxes.remove( atom_locs.at(id) );
+            atom_locs[id] = QVector<CLJBoxIndex>();
+        }
+    
+        this->setDirty();
+    }
 }
 
 /** Function called to indicate that a list of molecules in this forcefield have changed */
 void InterFF::_pvt_changed(const QList<SireMol::Molecule> &molecules)
 {
-    if (needs_reboxing)
-        reboxChangedAtoms();
-
-    //be lazy for the moment - recalculate everything!
-    mustNowReallyRecalculateFromScratch();
+    if (not atom_locs.isEmpty())
+    {
+        foreach (const Molecule &molecule, molecules)
+        {
+            this->_pvt_changed(molecule);
+            
+            if (atom_locs.isEmpty())
+                break;
+        }
+    }
     
-    this->setDirty();
+    setDirty();
 }
 
 /** Function called to indicate that all molecules in this forcefield have been removed */

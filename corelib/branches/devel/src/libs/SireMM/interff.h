@@ -138,6 +138,7 @@ private:
     
     void reboxChangedAtoms();
     
+    void reextractAtoms(const SireMol::PartialMolecule &mol);
     void reextractAtoms();
     
     void regridAtoms();

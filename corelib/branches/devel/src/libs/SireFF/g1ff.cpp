@@ -865,26 +865,16 @@ bool G1FF::group_update(quint32 i, const MoleculeData &moldata)
 {
     assertValidGroup(i);
 
-    FFMolGroupPvt old_state = molgroup;
-    
-    try
+    if (molgroup.update(moldata))
     {
-        if (molgroup.update(moldata))
-        {
-            this->_pvt_changed( Molecule(moldata) );
-            
-            FF::incrementVersion();
-            
-            return true;
-        }
+        this->_pvt_changed( Molecule(moldata) );
+        
+        FF::incrementVersion();
+        
+        return true;
     }
-    catch(...)
-    {
-        molgroup = old_state;
-        throw;
-    }
-    
-    return false;
+    else
+        return false;
 }
 
 /** Update this forcefield so that it uses the same version of the

@@ -63,6 +63,12 @@ namespace detail
         ~CLJWorkspaceData()
         {}
         
+        CLJWorkspaceData& operator=(const CLJWorkspaceData &other)
+        {
+            deltas = other.deltas;
+            return *this;
+        }
+        
         void clear()
         {
             deltas.resize(0);
@@ -102,7 +108,7 @@ namespace detail
                 }
             }
             
-            return false;
+            return true;
         }
         
         void push(const CLJDelta &delta)
@@ -212,20 +218,15 @@ CLJWorkspace::CLJWorkspace()
 /** Copy constructor */
 CLJWorkspace::CLJWorkspace(const CLJWorkspace &other)
 {
-    if (other.isEmpty())
+    if (not other.isEmpty())
     {
-        if (other.d.constData() != 0)
-        {
-            //we have copied an empty workspace - we will keep the workspace
-            //while we reset the pointer of 'other' so that it has a null pointer.
-            //This will prevent unnecessary duplication of memory when detaching an
-            //empty workspace
-            d.swap( const_cast<CLJWorkspace*>(&other)->d );
-        }
+        d = other.d;
     }
     else
     {
+        //take over ownership as we want the new pointer :-)
         d = other.d;
+        const_cast<CLJWorkspace*>(&other)->d = 0;
     }
 }
 
@@ -243,10 +244,6 @@ CLJWorkspace& CLJWorkspace::operator=(const CLJWorkspace &other)
             if (d.constData() != 0)
             {
                 d->clear();
-            }
-            else if (other.d.constData() != 0)
-            {
-                d.swap( const_cast<CLJWorkspace*>(&other)->d );
             }
         }
         else

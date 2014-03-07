@@ -981,8 +981,6 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
             if (nmoves > 1)
                 test_ns += t.nsecsElapsed();
 
-            System test_system = system;
-
             if (accept_move)
             {
                 //the move has been rejected. Destroy the old state and accept the move
@@ -1002,19 +1000,10 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
                     t.start();
                 
                 system = old_system;
-                test_system = old_system;
                 
                 if (nmoves > 1)
                     reject_ns += t.nsecsElapsed();
             }
-
-            test_system.mustNowRecalculateFromScratch();
-            System test_system2 = system;
-            test_system2.mustNowRecalculateFromScratch();
-            
-            qDebug() << "Accept?" << accept_move << system.energy().value()
-                                  << test_system.energy().value()
-                                  << test_system2.energy().value();
 
             if (record_stats)
             {

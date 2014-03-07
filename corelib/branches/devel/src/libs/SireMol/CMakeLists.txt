@@ -98,6 +98,7 @@ set ( SIREMOL_HEADERS
       molinfo.h
       molname.h
       molnum.h
+      molresid.h
       molviewproperty.h
       mover.h
       mover.hpp
@@ -193,6 +194,7 @@ set ( SIREMOL_SOURCES
       moleditor.cpp
       molid.cpp
       molidentifier.cpp
+      molresid.cpp
       molviewproperty.cpp
       mover.cpp
       partialmolecule.cpp
