@@ -18,6 +18,8 @@ from nose.tools import assert_almost_equal
 grid_spacing = 0.5 * angstrom
 grid_buffer = 2.0 * angstrom
 
+nmoves = 1000
+
 #space = Cartesian()
 
 reflect_sphere_center = Vector(10)
@@ -238,14 +240,21 @@ def test_sim(verbose = False):
     moves.setGenerator( RanGenerator( 42 ) )
 
     t.start()
-    moves.move(oldsys, 1000, False)
+    moves.move(oldsys, nmoves, False)
     move_oldns = t.nsecsElapsed()
 
+    old_naccepted = moves.nAccepted()
+    old_nrejected = moves.nRejected()
+
     moves.setGenerator( RanGenerator( 42 ) )
+    moves.clearStatistics()
 
     t.start()
-    moves.move(newsys, 1000, False)
+    moves.move(newsys, nmoves, False)
     move_newns = t.nsecsElapsed()
+
+    new_naccepted = moves.nAccepted()
+    new_nrejected = moves.nRejected()
 
     t.start()
     nrgs = oldsys.energies()
@@ -265,8 +274,10 @@ def test_sim(verbose = False):
         print("\nMoves: %s ms vs. %s ms" % (0.000001*move_oldns, 0.000001*move_newns))
         print("OLD SYS:  %s  %s  %s  : %s ms" % (oldcnrg+oldljnrg,oldcnrg,oldljnrg,
                                                  0.000001*oldns))
+        print("nAccepted() = %s, nRejected() = %s" % (old_naccepted, old_nrejected))
         print("NEW SYS:  %s  %s  %s  : %s ms" % (newcnrg+newljnrg,newcnrg,newljnrg,
                                                  0.000001*newns))
+        print("nAccepted() = %s, nRejected() = %s" % (new_naccepted, new_nrejected))
     
     oldsys.mustNowRecalculateFromScratch()
     newsys.mustNowRecalculateFromScratch()

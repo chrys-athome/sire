@@ -36,7 +36,7 @@ def test_cljdelta(verbose = False):
     new_water = old_water.move().translate( Vector(1) ).commit()
     new_cljatoms = CLJAtoms(new_water)
 
-    cljdelta = CLJDelta(cljboxes, idxs[0], new_water)
+    cljdelta = CLJDelta(1, cljboxes, idxs[0], new_water)
 
     test_cljatoms = cljdelta.newAtoms()
 
