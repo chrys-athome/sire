@@ -1195,11 +1195,21 @@ bool G2FF::group_setContents(quint32 i, const MoleculeGroup &new_group,
     return false;
 }
 
+/** Return whether or not this forcefield is using any temporary workspace
+    that needs to be accepted */
+bool G2FF::needsAccepting() const
+{
+    return molgroup[0].needsAccepting() or molgroup[1].needsAccepting();
+}
+
 /** Tell the forcefield that the last move was accepted. This tells the
     forcefield to make permanent any temporary changes that were used a workspace
     to avoid memory allocation during a move */
 void G2FF::accept()
 {
-    molgroup[0].accept();
-    molgroup[1].accept();
+    if (molgroup[0].needsAccepting())
+        molgroup[0].accept();
+    
+    if (molgroup[1].needsAccepting())
+        molgroup[1].accept();
 }

@@ -1291,10 +1291,18 @@ void G1FF::setContents(const MoleculeGroup &group, const PropertyMap &map)
     FF::setContents(MGIdx(0), group, map);
 }
 
+/** Return whether or not this forcefield is using temporary workspace that needs 
+    to be accepted */
+bool G1FF::needsAccepting() const
+{
+    return molgroup.needsAccepting();
+}
+
 /** Tell the forcefield that the last move was accepted. This tells the
     forcefield to make permanent any temporary changes that were used a workspace
     to avoid memory allocation during a move */
 void G1FF::accept()
 {
-    molgroup.accept();
+    if (molgroup.needsAccepting())
+        molgroup.accept();
 }

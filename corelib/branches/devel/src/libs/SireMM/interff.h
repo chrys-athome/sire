@@ -128,6 +128,7 @@ public:
     void mustNowRecalculateFromScratch();    
 
     void accept();
+    bool needsAccepting() const;
 
 private:
     void mustNowReallyRecalculateFromScratch();

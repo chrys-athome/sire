@@ -5357,6 +5357,33 @@ void ForceFields::setContents(const MGID &mgid, const MoleculeGroup &molgroup)
     this->setContents(mgid, molgroup, PropertyMap());
 }
 
+/** Return whether or not these forcefields are using any temporary workspace that needs
+    to be accepted */
+bool ForceFields::needsAccepting() const
+{
+    for (int i=0; i<ffields_by_idx.count(); ++i)
+    {
+        if (ffields_by_idx.constData()[i].read().needsAccepting())
+            return true;
+    }
+    
+    return false;
+}
+
+/** Ensure that any forcefields that are using temporary workspace have that accepted */
+void ForceFields::accept()
+{
+    FFPtr *ffs = ffields_by_idx.data();
+
+    for (int i=0; i<ffields_by_idx.count(); ++i)
+    {
+        if (ffs[i].read().needsAccepting())
+        {
+            ffs[i].edit().accept();
+        }
+    }
+}
+
 const char* ForceFields::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<ForceFields>() );

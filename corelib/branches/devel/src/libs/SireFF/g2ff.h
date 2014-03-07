@@ -74,6 +74,7 @@ public:
     void assertContains(MGNum mgnum) const;
     
     void accept();
+    bool needsAccepting() const;
     
 protected:
     G2FF(bool allow_overlap_of_atoms=false);

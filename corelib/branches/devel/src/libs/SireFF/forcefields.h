@@ -334,6 +334,9 @@ public:
     void setContents(const MGID &mgid, const Molecules &molecules);
     void setContents(const MGID &mgid, const MoleculeGroup &molgroup);    
 
+    bool needsAccepting() const;
+    void accept();
+
 protected:
     const MoleculeGroup& getGroup(MGNum mgnum) const;
     

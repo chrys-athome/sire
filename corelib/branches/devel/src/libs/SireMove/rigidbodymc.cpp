@@ -923,6 +923,7 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
         qint64 nrg_ns = 0;
         qint64 move_ns = 0;
         qint64 test_ns = 0;
+        qint64 reject_ns = 0;
         qint64 accept_ns = 0;
     
         const PropertyMap &map = Move::propertyMap();
@@ -980,6 +981,8 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
             if (nmoves > 1)
                 test_ns += t.nsecsElapsed();
 
+            System test_system = system;
+
             if (accept_move)
             {
                 //the move has been rejected. Destroy the old state and accept the move
@@ -999,10 +1002,19 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
                     t.start();
                 
                 system = old_system;
+                test_system = old_system;
                 
                 if (nmoves > 1)
-                    copy_ns += t.nsecsElapsed();
+                    reject_ns += t.nsecsElapsed();
             }
+
+            test_system.mustNowRecalculateFromScratch();
+            System test_system2 = system;
+            test_system2.mustNowRecalculateFromScratch();
+            
+            qDebug() << "Accept?" << accept_move << system.energy().value()
+                                  << test_system.energy().value()
+                                  << test_system2.energy().value();
 
             if (record_stats)
             {
@@ -1020,7 +1032,8 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
             qDebug() << "Timing for" << nmoves << "(" << (0.000001*ns) << ")";
             qDebug() << "OLD:" << (0.000001*old_ns) << "COPY:" << (0.000001*copy_ns)
                      << "MOVE:" << (0.000001*move_ns) << "ENERGY:" << (0.000001*nrg_ns)
-                     << "TEST:" << (0.000001*test_ns);
+                     << "TEST:" << (0.000001*test_ns) << "ACCEPT:" << (0.000001*accept_ns)
+                     << "REJECT:" << (0.000001*reject_ns);
         }
     }
     catch(...)

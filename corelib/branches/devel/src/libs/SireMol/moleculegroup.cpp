@@ -2191,6 +2191,12 @@ bool MoleculeGroup::setContents(const MoleculeGroup &MoleculeGroup)
 void MoleculeGroup::accept()
 {}
 
+/** Return whether or not this molecule group has a temporary workspace that needs accepting */
+bool MoleculeGroup::needsAccepting() const
+{
+    return false;
+}
+
 const char* MoleculeGroup::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<MoleculeGroup>() );

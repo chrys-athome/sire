@@ -121,6 +121,7 @@ public:
     void setContents(const Molecules &molecules, const PropertyMap &map);
     void setContents(const MoleculeGroup &molgroup, const PropertyMap &map);
 
+    bool needsAccepting() const;
     void accept();
 
 protected:

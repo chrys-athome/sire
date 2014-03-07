@@ -801,6 +801,13 @@ bool InterFF::_pvt_wouldChangeProperties(SireMol::MolNum molnum,
     }
 }
 
+/** Return whether or not this forcefield is using a temporary workspace that 
+    needs to be accepted */
+bool InterFF::needsAccepting() const
+{
+    return needs_reboxing or G1FF::needsAccepting();
+}
+
 /** Tell the forcefield that the last move was accepted. This tells the
     forcefield to make permanent any temporary changes that were used a workspace
     to avoid memory allocation during a move */

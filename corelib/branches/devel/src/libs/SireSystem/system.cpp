@@ -1437,6 +1437,14 @@ void System::mustNowRecalculateFromScratch()
     this->_pvt_forceFields().mustNowRecalculateFromScratch();
 }
 
+/** Return whether or not any part of the forcefield is using temporary
+    workspaces that need to be accepted */
+bool System::needsAccepting() const
+{
+    return this->_pvt_forceFields().needsAccepting() or
+           this->_pvt_moleculeGroups().needsAccepting();
+}
+
 /** Tell all of the forcefields that the last move was accepted. This allows
     any cacheing or use of temporary workspaces to be committed */
 void System::accept()

@@ -785,6 +785,19 @@ const char* FFMolGroup::typeName()
     return QMetaType::typeName( qMetaTypeId<FFMolGroup>() );
 }
 
+bool FFMolGroup::needsAccepting() const
+{
+    return MoleculeGroup::needsAccepting() or ffield.read().needsAccepting();
+}
+
+void FFMolGroup::accept()
+{
+    MoleculeGroup::accept();
+    
+    if (ffield.read().needsAccepting())
+        ffield.edit().accept();
+}
+
 FFMolGroup* FFMolGroup::clone() const
 {
     return new FFMolGroup(*this);

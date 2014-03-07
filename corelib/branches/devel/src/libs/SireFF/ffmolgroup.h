@@ -165,6 +165,9 @@ public:
     bool setContents(const Molecules &molecules, const PropertyMap &map);
     bool setContents(const MoleculeGroup &molgroup, const PropertyMap &map);
     
+    bool needsAccepting() const;
+    void accept();
+    
 private:
     void assertNotNull() const;
     void updateGroup();

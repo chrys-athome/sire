@@ -240,12 +240,6 @@ Atom MolGroupsBase::operator[](const AtomID &atomid) const
     return this->at(atomid);
 }
 
-/** Tell the molecule group that the last move was accepted. This tells the 
-    group to make permanent any temporary changes that were used a workspace
-    to avoid memory allocation during a move */
-void MolGroupsBase::accept()
-{}
-
 /** Get the number of the molecule group whose number is 'mgnum'.
     This is an obvious function, only provided as a shortcut
     to prevent the MGID function being called if an MGNum is passed.
@@ -2938,16 +2932,35 @@ void MoleculeGroups::update(const Molecules &molecules)
     }
 }
 
+/** Return whether or not this set of molecule groups is using a temporary
+    workspace and needs accepting */
+bool MoleculeGroups::needsAccepting() const
+{
+    for (QHash<MGNum,MolGroupPtr>::const_iterator it = mgroups.constBegin();
+         it != mgroups.constEnd();
+         ++it)
+    {
+        if (it->read().needsAccepting())
+            return true;
+    }
+    
+    return false;
+}
+
 /** Tell the molecule group that the last move was accepted. This tells the 
     group to make permanent any temporary changes that were used a workspace
     to avoid memory allocation during a move */
 void MoleculeGroups::accept()
 {
-    for (QHash<MGNum,MolGroupPtr>::iterator it = mgroups.begin();
-         it != mgroups.end();
-         ++it)
+    if (needsAccepting())
     {
-        it->edit().accept();
+        for (QHash<MGNum,MolGroupPtr>::iterator it = mgroups.begin();
+             it != mgroups.end();
+             ++it)
+        {
+            if (it->read().needsAccepting())
+                it->edit().accept();
+        }
     }
 }
 

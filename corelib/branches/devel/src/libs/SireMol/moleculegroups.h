@@ -249,7 +249,8 @@ public:
 
     bool isEmpty() const;
 
-    virtual void accept();
+    virtual void accept()=0;
+    virtual bool needsAccepting() const=0;
 
     Molecules molecules() const;
     Molecules molecules(const MGID &mgid) const;
@@ -485,6 +486,7 @@ public:
     void setContents(const MGID &mgid, const Molecules &molecules);
     void setContents(const MGID &mgid, const MoleculeGroup &molgroup);
  
+    bool needsAccepting() const;
     void accept();
  
 protected:
