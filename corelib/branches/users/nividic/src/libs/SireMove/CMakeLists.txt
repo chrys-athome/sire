@@ -119,6 +119,22 @@ set ( SIREMOVE_SOURCES
       ${SIREMOVE_HEADERS}
     )
 
+set ( SIREMOVE_OPENMM_HEADERS
+      openmmmdintegrator.h
+      openmmfrenergydt.h
+      openmmfrenergyst.h
+      openmmacceleratedmdintegrator.h
+      dcd_writer.h
+    )
+
+set ( SIREMOVE_OPENMM_SOURCES
+      openmmmdintegrator.cpp
+      openmmfrenergydt.cpp
+      openmmfrenergyst.cpp
+      openmmacceleratedmdintegrator.cpp
+      dcd_writer.cpp
+    )
+
 if ( ${OpenMM_FOUND} )
     message ( STATUS "Adding in OpenMM support to SireMove using OpenMM ${OpenMM_ROOT_DIR}" )
     set ( SIREMOVE_SOURCES  ${SIREMOVE_SOURCES} ${SIREMOVE_OPENMM_SOURCES} )
