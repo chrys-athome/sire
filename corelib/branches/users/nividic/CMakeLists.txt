@@ -557,6 +557,7 @@ option( SIRE_BUNDLE_CPUID "Whether Sire should use its bundled copy of libcpuid"
 option( SIRE_BUNDLE_BOOST "Whether Sire should use its bundled copy of Boost" ON )
 option( SIRE_BUNDLE_BLASLAPACK "Whether Sire should use its bundled copy of BLAS and LAPACK" ON )
 option( SIRE_BUNDLE_QT "Whether Sire should use its bundled copy of Qt" ON )
+option( SIRE_BUNDLE_OPENMM "Whether Sire should use its bundled copy of OpenMM" OFF )
 
 save_sire_variable( "SIRE_ENABLE_BUNDLING" "${SIRE_ENABLE_BUNDLING}" )
 save_sire_variable( "SIRE_BUNDLE_TBB" "${SIRE_BUNDLE_TBB}" )
@@ -565,12 +566,14 @@ save_sire_variable( "SIRE_BUNDLE_GSL" "${SIRE_BUNDLE_GSL}" )
 save_sire_variable( "SIRE_BUNDLE_BOOST" "${SIRE_BUNDLE_BOOST}" )
 save_sire_variable( "SIRE_BUNDLE_BLASLAPACK" "${SIRE_BUNDLE_BLASLAPACK}" )
 save_sire_variable( "SIRE_BUNDLE_QT" "${SIRE_BUNDLE_QT}" )
+save_sire_variable( "SIRE_BUNDLE_OPENMM" "${SIRE_BUNDLE_OPENMM}" )
 
 set (SIRE_FOUND_TBB FALSE)
 set (SIRE_FOUND_GSL FALSE)
 set (SIRE_FOUND_BOOST FALSE)
 set (SIRE_FOUND_BLASLAPACK FALSE)
 set (SIRE_FOUND_QT FALSE)
+set (SIRE_FOUND_OPENMM FALSE)
 
 if ( ${SIRE_ENABLE_BUNDLING} )
     message( STATUS "Sire will be compiled to use its own copy of bundled libraries." )
@@ -632,6 +635,25 @@ endif()
 if ( NOT ${SIRE_FOUND_QT} )
     # look for Qt5 in the system
     find_package( Qt5Core REQUIRED )
+endif()
+
+if ( NOT ${SIRE_FOUND_OPENMM} )
+    # look for OpenMM in the system
+    # Now look for OpenMM
+    option (OPENMM_HOME "The location of the OpenMM installation" "/usr/local/openmm")
+    set(OpenMM_ROOT_DIR "${OPENMM_HOME}")
+    FIND_PACKAGE( OpenMM )
+
+    save_sire_variable( "SIRE_OpenMM_FOUND" "${OpenMM_FOUND}" )
+
+    if ( ${OpenMM_FOUND} )
+       message( STATUS "Found OpenMM at ${OpenMM_ROOT_DIR}" )
+       save_sire_variable( "SIRE_OpenMM_INCLUDE_DIR" "${OpenMM_INCLUDE_DIR}" )
+       save_sire_variable( "SIRE_OpenMM_LIBRARIES" "${OpenMM_LIBRARIES}" )
+       save_sire_variable( "SIRE_OpenMM_LIBRARY_DIR" "${OpenMM_LIBRARY_DIR}" )
+    else()
+       message( STATUS "Could not find OpenMM. OpenMM support is disabled." )
+    endif()
 endif()
 
 get_target_property(QT5_LOCATION Qt5::Core LOCATION)
