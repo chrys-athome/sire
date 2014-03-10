@@ -2,6 +2,7 @@
 set ( PYPP_SOURCES
        FieldTable.pypp.cpp
        CenterOfGeometry.pypp.cpp
+       EnergyTable.pypp.cpp
        CenterOfMass.pypp.cpp
        PotentialTable.pypp.cpp
        Center.pypp.cpp
@@ -25,6 +26,7 @@ set ( PYPP_SOURCES
        FFIdx.pypp.cpp
        Point.pypp.cpp
        FF.pypp.cpp
+       MolEnergyTable.pypp.cpp
        VectorPoint.pypp.cpp
        SingleComponent.pypp.cpp
        G1FF.pypp.cpp

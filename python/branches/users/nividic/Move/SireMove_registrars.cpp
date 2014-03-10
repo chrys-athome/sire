@@ -13,15 +13,18 @@
 #include "integrator.h"
 #include "suprasubsystem.h"
 #include "prefsampler.h"
+#include "openmmfrenergydt.h"
 #include "zmatmove.h"
 #include "weightedmoves.h"
 #include "supramove.h"
 #include "replicas.h"
 #include "zmatrix.h"
 #include "suprasystem.h"
+#include "openmmmdintegrator.h"
 #include "moves.h"
 #include "velocitygenerator.h"
 #include "internalmovesingle.h"
+#include "openmmfrenergyst.h"
 #include "supramoves.h"
 #include "rigidbodymc.h"
 #include "titrationmove.h"
@@ -30,6 +33,7 @@
 #include "suprasubmoves.h"
 #include "integratorworkspace.h"
 #include "repexmove.h"
+#include "openmmintegrator.h"
 #include "titrator.h"
 #include "uniformsampler.h"
 #include "internalmove.h"
@@ -38,8 +42,9 @@
 #include "simpacket.h"
 #include "volumechanger.h"
 #include "suprasubsimpacket.h"
-#include "velocityverlet.h"
+#include "openmmacceleratedmdintegrator.h"
 #include "ensemble.h"
+#include "velocityverlet.h"
 #include "getpoint.h"
 #include "moldeleter.h"
 #include "simstore.h"
@@ -61,6 +66,8 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::NullIntegrator >();
     ObjectRegistry::registerConverterFor< SireMove::SupraSubSystem >();
     ObjectRegistry::registerConverterFor< SireMove::PrefSampler >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMFrEnergyDT >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMFrEnergyDT >();
     ObjectRegistry::registerConverterFor< SireMove::ZMatMove >();
     ObjectRegistry::registerConverterFor< SireMove::WeightedMoves >();
     ObjectRegistry::registerConverterFor< SireMove::NullSupraMove >();
@@ -70,11 +77,15 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::ZMatrixCoords >();
     ObjectRegistry::registerConverterFor< SireMove::ZMatrixCoordsLine >();
     ObjectRegistry::registerConverterFor< SireMove::SupraSystem >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMMDIntegrator >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMMDIntegrator >();
     ObjectRegistry::registerConverterFor< SireMove::SameMoves >();
     ObjectRegistry::registerConverterFor< SireMove::NullVelocityGenerator >();
     ObjectRegistry::registerConverterFor< SireMove::VelocitiesFromProperty >();
     ObjectRegistry::registerConverterFor< SireMove::MaxwellBoltzmann >();
     ObjectRegistry::registerConverterFor< SireMove::InternalMoveSingle >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMFrEnergyST >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMFrEnergyST >();
     ObjectRegistry::registerConverterFor< SireMove::SameSupraMoves >();
     ObjectRegistry::registerConverterFor< SireMove::RigidBodyMC >();
     ObjectRegistry::registerConverterFor< SireMove::TitrationMove >();
@@ -86,6 +97,8 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::AtomicVelocityWorkspace >();
     ObjectRegistry::registerConverterFor< SireMove::RepExMove >();
     ObjectRegistry::registerConverterFor< SireMove::RepExSubMove >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMIntegrator >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMIntegrator >();
     ObjectRegistry::registerConverterFor< SireMove::Titrator >();
     ObjectRegistry::registerConverterFor< SireMove::UniformSampler >();
     ObjectRegistry::registerConverterFor< SireMove::InternalMove >();
@@ -96,8 +109,10 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::NullVolumeChanger >();
     ObjectRegistry::registerConverterFor< SireMove::ScaleVolumeFromCenter >();
     ObjectRegistry::registerConverterFor< SireMove::SupraSubSimPacket >();
-    ObjectRegistry::registerConverterFor< SireMove::VelocityVerlet >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMAMDIntegrator >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMAMDIntegrator >();
     ObjectRegistry::registerConverterFor< SireMove::Ensemble >();
+    ObjectRegistry::registerConverterFor< SireMove::VelocityVerlet >();
     ObjectRegistry::registerConverterFor< SireMove::NullGetPoint >();
     ObjectRegistry::registerConverterFor< SireMove::GetCOMPoint >();
     ObjectRegistry::registerConverterFor< SireMove::GetCOGPoint >();

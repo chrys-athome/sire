@@ -189,6 +189,16 @@ void register_SingleFunc_class(){
                 , symbols_function_value );
         
         }
+        { //::SireCAS::SingleFunc::toOpenMMString
+        
+            typedef ::QString ( ::SireCAS::SingleFunc::*toOpenMMString_function_type )(  ) const;
+            toOpenMMString_function_type toOpenMMString_function_value( &::SireCAS::SingleFunc::toOpenMMString );
+            
+            SingleFunc_exposer.def( 
+                "toOpenMMString"
+                , toOpenMMString_function_value );
+        
+        }
         { //::SireCAS::SingleFunc::toString
         
             typedef ::QString ( ::SireCAS::SingleFunc::*toString_function_type )(  ) const;

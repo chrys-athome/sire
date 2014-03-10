@@ -15,6 +15,8 @@
 
 #include "CenterOfMass.pypp.hpp"
 
+#include "EnergyTable.pypp.hpp"
+
 #include "FF.pypp.hpp"
 
 #include "FF3D.pypp.hpp"
@@ -46,6 +48,8 @@
 #include "IDAndSet_FFID_.pypp.hpp"
 
 #include "IDOrSet_FFID_.pypp.hpp"
+
+#include "MolEnergyTable.pypp.hpp"
 
 #include "MolFieldTable.pypp.hpp"
 
@@ -102,6 +106,8 @@ BOOST_PYTHON_MODULE(_FF){
 
     register_CenterOfMass_class();
 
+    register_EnergyTable_class();
+
     register_FF_class();
 
     register_FF3D_class();
@@ -129,6 +135,8 @@ BOOST_PYTHON_MODULE(_FF){
     register_GridFieldTable_class();
 
     register_GridPotentialTable_class();
+
+    register_MolEnergyTable_class();
 
     register_MolFieldTable_class();
 

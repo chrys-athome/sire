@@ -6,6 +6,7 @@
 #include "amberparameters.h"
 #include "angleid.h"
 #include "atom.h"
+#include "atombeading.h"
 #include "atombeads.h"
 #include "atomcharges.h"
 #include "atomcoords.h"

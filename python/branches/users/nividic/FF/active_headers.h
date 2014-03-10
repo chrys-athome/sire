@@ -3,6 +3,7 @@
 
 #ifdef GCCXML_PARSE
 
+#include "energytable.h"
 #include "ff.h"
 #include "ff3d.h"
 #include "ffcomponent.h"

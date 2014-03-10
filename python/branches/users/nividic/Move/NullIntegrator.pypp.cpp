@@ -78,7 +78,7 @@ void register_NullIntegrator_class(){
         }
         { //::SireMove::NullIntegrator::integrate
         
-            typedef void ( ::SireMove::NullIntegrator::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) const;
+            typedef void ( ::SireMove::NullIntegrator::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) ;
             integrate_function_type integrate_function_value( &::SireMove::NullIntegrator::integrate );
             
             NullIntegrator_exposer.def( 

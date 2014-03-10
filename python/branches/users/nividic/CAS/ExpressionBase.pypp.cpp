@@ -248,6 +248,16 @@ void register_ExpressionBase_class(){
                 , symbols_function_value );
         
         }
+        { //::SireCAS::ExpressionBase::toOpenMMString
+        
+            typedef ::QString ( ::SireCAS::ExpressionBase::*toOpenMMString_function_type )(  ) const;
+            toOpenMMString_function_type toOpenMMString_function_value( &::SireCAS::ExpressionBase::toOpenMMString );
+            
+            ExpressionBase_exposer.def( 
+                "toOpenMMString"
+                , toOpenMMString_function_value );
+        
+        }
         { //::SireCAS::ExpressionBase::toString
         
             typedef ::QString ( ::SireCAS::ExpressionBase::*toString_function_type )(  ) const;

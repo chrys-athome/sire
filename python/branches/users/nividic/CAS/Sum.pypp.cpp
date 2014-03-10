@@ -238,6 +238,16 @@ void register_Sum_class(){
                 , symbols_function_value );
         
         }
+        { //::SireCAS::Sum::toOpenMMString
+        
+            typedef ::QString ( ::SireCAS::Sum::*toOpenMMString_function_type )(  ) const;
+            toOpenMMString_function_type toOpenMMString_function_value( &::SireCAS::Sum::toOpenMMString );
+            
+            Sum_exposer.def( 
+                "toOpenMMString"
+                , toOpenMMString_function_value );
+        
+        }
         { //::SireCAS::Sum::toString
         
             typedef ::QString ( ::SireCAS::Sum::*toString_function_type )(  ) const;
