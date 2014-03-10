@@ -120,6 +120,7 @@ set ( SIREMOVE_SOURCES
     )
 
 set ( SIREMOVE_OPENMM_HEADERS
+      openmmintegrator.h
       openmmmdintegrator.h
       openmmfrenergydt.h
       openmmfrenergyst.h
@@ -128,6 +129,7 @@ set ( SIREMOVE_OPENMM_HEADERS
     )
 
 set ( SIREMOVE_OPENMM_SOURCES
+      openmmintegrator.cpp
       openmmmdintegrator.cpp
       openmmfrenergydt.cpp
       openmmfrenergyst.cpp
