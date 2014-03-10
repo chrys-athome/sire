@@ -13,6 +13,18 @@ include_directories( ${BOOST_INCLUDE_DIR}
 include_directories( BEFORE ${SIRE_INCLUDE_DIR}/SireMove
                             ${SIRE_INCLUDE_DIR} )
 
+if (${SIRE_OpenMM_FOUND})
+    include_directories( ${SIRE_OpenMM_INCLUDE_DIR} )
+    add_definitions( "-DSIRE_USE_OPENMM" )
+    set( SIRE_OPENMM_LIBRARIES ${SIRE_OpenMM_LIBRARIES} )
+    set( SIRE_OPENMM_WRAPPERS 
+              OpenMMIntegrator.pypp.cpp 
+       )
+
+else()
+    set( SIRE_OPENMM_LIBRARIES "" )
+endif()
+
 # Other python wrapping directories
 include_directories(${CMAKE_SOURCE_DIR})
 
@@ -26,6 +38,7 @@ set ( WRAPMOVE_SOURCES
      
       ${PYPP_SOURCES}
 
+      ${SIRE_OPENMM_WRAPPERS}
     )
 
 # Create the library that holds all of the class wrappers
@@ -45,6 +58,7 @@ target_link_libraries (Move
                        SIRE_SireMove
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}
+                       ${SIRE_OPENMM_LIBRARIES}
                       )
 
 include( LimitSirePythonExportSymbols )
