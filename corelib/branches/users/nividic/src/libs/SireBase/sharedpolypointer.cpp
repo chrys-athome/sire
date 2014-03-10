@@ -99,7 +99,7 @@ void* SharedPolyPointerBase::read(QDataStream &ds, void *ptr, const char *objnam
         if ( ptr == 0 or type_name != QLatin1String(objname) )
         {
             //create a default-constructed object of this type
-            ptr = QMetaType::construct(id,0);
+            ptr = QMetaType::create(id,0);
 
             if (not ptr)
                 throw SireError::program_bug( QObject::tr(

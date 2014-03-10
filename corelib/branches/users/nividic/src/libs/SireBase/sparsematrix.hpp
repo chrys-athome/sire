@@ -30,6 +30,7 @@
 #define SIREBASE_SPARSEMATRIX_HPP
 
 #include <QHash>
+#include <QDataStream>
 
 #include "sireglobal.h"
 
@@ -148,11 +149,19 @@ public:
 
     bool operator==(const SparseMatrix<T> &other) const;
     bool operator!=(const SparseMatrix<T> &other) const;
-    
+
+    T& operator()(quint32 i, quint32 j);
     const T& operator()(quint32 i, quint32 j) const;
 
     void set(quint32 i, quint32 j, const T &value);
     const T& get(quint32 i, quint32 j) const;
+
+    T& edit(quint32 i, quint32 j);
+
+    void commit();
+
+    void reserve(int dim_x, int dim_y);
+    int capacity() const;
 
     bool isEmpty() const;
     bool isSymmetric() const;
@@ -296,6 +305,71 @@ const T& SparseMatrix<T>::operator()(quint32 i, quint32 j) const
         return *it;
     else
         return def;
+}
+
+/** Return the value at element (i,j) for editing. Only use this
+    function if you will be editing things a lot. After you have finished
+    editing, you should "commit" the matrix to optimise memory usage */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T& SparseMatrix<T>::edit(quint32 i, quint32 j)
+{
+    detail::Index idx;
+
+    if ( current_state == TRANSPOSE or
+         (current_state == SYMMETRIC and j < i) )
+    {
+        idx = detail::Index(j,i);
+    }
+    else
+    {
+        idx = detail::Index(i,j);
+    }
+
+    typename QHash<detail::Index,T>::iterator it = data.find(idx);
+
+    if (it != data.end())
+        return *it;
+    else
+    {
+        data.insert(idx, def);
+        return *(data.find(idx));
+    }
+}
+
+/** Reserve space to hold the matrix */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void SparseMatrix<T>::reserve(int dim_x, int dim_y)
+{
+    data.reserve( dim_x*dim_y );
+}
+
+/** Return the capacity of the sparsematrix */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+int SparseMatrix<T>::capacity() const
+{
+    return data.capacity();
+}
+
+/** Commit the sparse matrix. This will consolidate the memory
+    usage of all entries that are equal to the default value */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void SparseMatrix<T>::commit()
+{
+    QMutableHashIterator<detail::Index,T> it(data);
+    
+    while (it.hasNext())
+    {
+        it.next();
+    
+        if (it.value() == def)
+            it.remove();
+    }
+    
+    data.squeeze();
 }
 
 /** Set the element at (i,j) to equal 'value' */

@@ -28,8 +28,34 @@
 
 #include "majorminorversion.h"
 
+#include "SireStream/datastream.h"
+
 using namespace SireBase;
 using namespace SireBase::detail;
+using namespace SireStream;
+
+static const RegisterMetaType<Version> r_version(NO_ROOT);
+
+QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const Version &version)
+{
+    writeHeader(ds, r_version, 1);
+    ds << version.maj << version.min;
+    return ds;
+}
+
+QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, Version &version)
+{
+    VersionID v = readHeader(ds, r_version);
+    
+    if (v == 1)
+    {
+        ds >> version.maj >> version.min;
+    }
+    else
+        throw version_error(v, "1", r_version, CODELOC);
+    
+    return ds;
+}
 
 /** Constructor */
 Version::Version(quint64 major, quint64 minor)
@@ -44,6 +70,11 @@ Version::Version(const Version &other)
 /** Destructor */
 Version::~Version()
 {}
+
+const char* Version::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Version>() );
+}
 
 /** Return a string representation of this version number */
 QString Version::toString() const

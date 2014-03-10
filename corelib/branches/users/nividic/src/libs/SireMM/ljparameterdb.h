@@ -37,13 +37,46 @@
 #include <QHash>
 #include <QReadWriteLock>
 
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
+
 SIRE_BEGIN_HEADER
+
+namespace SireStream
+{
+class SharedDataStream;
+}
 
 namespace SireMM
 {
 
 class LJPair;
 typedef SireBase::Array2D<LJPair> LJPairMatrix;
+
+namespace detail
+{
+    class LJDBIOLockData : public boost::noncopyable
+    {
+    public:
+        LJDBIOLockData();
+        ~LJDBIOLockData();
+    };
+}
+
+/** Class used to help the serialisation of the LJParameterDB */
+class SIREMM_EXPORT LJDBIOLock
+{
+public:
+    LJDBIOLock();
+    LJDBIOLock(const LJDBIOLock &other);
+    ~LJDBIOLock();
+    
+private:
+    friend class LJParameterDB;
+    LJDBIOLock( const boost::shared_ptr<detail::LJDBIOLockData> &p );
+
+    boost::shared_ptr<detail::LJDBIOLockData> d;
+};
 
 /** This static singleton class holds a complete database of 
     all of the LJ parameters used during the simulation. This
@@ -64,6 +97,9 @@ class SIREMM_EXPORT LJParameterDB
 public:
     enum CombiningRules { ARITHMETIC, GEOMETRIC };
 
+    static LJDBIOLock saveParameters(SireStream::SharedDataStream &sds);
+    static LJDBIOLock loadParameters(SireStream::SharedDataStream &sds);
+
     static LJPairMatrix getLJPairs(CombiningRules type);
     static quint32 addLJParameter(const LJParameter &ljparam);
     static LJParameter getLJParameter(quint32 id);
@@ -79,6 +115,9 @@ public:
     static void unlock();
 
 private:
+    friend class ::SireMM::detail::LJDBIOLockData;
+    static void finishedIO();
+
     class LJParameterDBData
     {
     public:
@@ -98,6 +137,8 @@ private:
         LJPairMatrix combineArithmetic() const;
         LJPairMatrix combineGeometric() const;
     
+        friend class LJParameterDB;
+    
         /** Read-write lock used to control access to shared resources */
         QReadWriteLock db_lock;
     
@@ -109,6 +150,9 @@ private:
     
         /** Index allowing reverse lookup of a LJParameter's ID number */
         QHash<LJParameter,quint32> ljparams_by_value;
+        
+        /** Whether or not we are in the process of saving or loading the data */
+        int dbio_count;
     };
     
     static LJParameterDBData ljdb;

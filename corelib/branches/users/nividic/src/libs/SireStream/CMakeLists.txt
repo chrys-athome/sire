@@ -11,6 +11,8 @@ set ( SIRESTREAM_HEADERS
       errors.h
       magic_error.h
       md5sum.h
+      metatype.h
+      registeralternativename.h
       shareddatastream.h
       sharestrings.h
       streamdata.hpp
@@ -26,6 +28,7 @@ set ( SIRESTREAM_SOURCES
       getmagic.cpp
       magic_error.cpp
       md5sum.cpp
+      metatype.cpp
       shareddatastream.cpp
       sharestrings.cpp
       streamdata.cpp

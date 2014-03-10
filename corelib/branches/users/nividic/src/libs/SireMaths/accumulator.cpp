@@ -31,6 +31,8 @@
 #include <cmath>
 
 #include "accumulator.h"
+#include "histogram.h"
+
 #include "SireMaths/maths.h"
 
 #include "SireError/errors.h"
@@ -123,6 +125,12 @@ void Accumulator::accumulate(const QList<double> &values)
 void Accumulator::clear()
 {
     nvalues = 0;
+}
+
+/** Internal function used to increment the number of samples */
+void Accumulator::add(int nsteps)
+{
+    nvalues += nsteps;
 }
 
 /** Internal copy assignment operator */
@@ -302,6 +310,35 @@ bool Average::operator!=(const Average &other) const
     return not this->operator==(other);
 }
 
+/** Self-addition operator */
+Average& Average::operator+=(const Average &other)
+{
+    if (nSamples() == 0)
+        this->operator=(other);
+    
+    else if (other.nSamples() > 0)
+    {
+        double nsteps = nSamples() + other.nSamples();
+        
+        double my_ratio = nSamples() / nsteps;
+        double other_ratio = other.nSamples() / nsteps;
+        
+        avgval = avgval * my_ratio + other.avgval * other_ratio;
+        
+        Accumulator::add(other.nSamples());
+    }
+    
+    return *this;
+}
+
+/** Addition operator */
+Average Average::operator+(const Average &other) const
+{
+    Average ret(*this);
+    ret += other;
+    return ret;
+}
+
 /** Completely clear the statistics in this accumulator */
 void Average::clear()
 {
@@ -415,6 +452,35 @@ bool AverageAndStddev::operator!=(const AverageAndStddev &other) const
     return not this->operator==(other);
 }
 
+/** Self-addition operator */
+AverageAndStddev& AverageAndStddev::operator+=(const AverageAndStddev &other)
+{
+    if (nSamples() == 0)
+        this->operator=(other);
+
+    else if (other.nSamples() > 0)
+    {
+        Average::operator+=(other);
+        
+        double nsteps = nSamples() + other.nSamples();
+        
+        double my_ratio = nSamples() / nsteps;
+        double other_ratio = other.nSamples() / nsteps;
+        
+        avgval2 = avgval2 * my_ratio + other.avgval2 * other_ratio;
+    }
+    
+    return *this;
+}
+
+/** Addition operator */
+AverageAndStddev AverageAndStddev::operator+(const AverageAndStddev &other) const
+{
+    AverageAndStddev ret(*this);
+    ret += other;
+    return ret;
+}
+
 /** Completely clear the statistics in this accumulator */
 void AverageAndStddev::clear()
 {
@@ -454,6 +520,22 @@ double AverageAndStddev::standardDeviation() const
     return this->stddev();
 }
 
+/** Return the standard error on the average */
+double AverageAndStddev::standardError() const
+{
+    if (nSamples() == 0)
+        return 0;
+    else
+        return standardDeviation() / sqrt(nSamples());
+}
+
+/** Return the standard error calculated to the passed level 
+    (66, 90, 95 or 99%) */
+double AverageAndStddev::standardError(int level) const
+{
+    return Histogram::tValue(nSamples(), level) * standardError();
+}
+
 /** Return the mean average of the squares */
 double AverageAndStddev::meanOfSquares() const
 {
@@ -474,9 +556,9 @@ static const RegisterMetaType<ExpAverage> r_expavg;
 /** Serialise to a binary datastream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const ExpAverage &expavg)
 {
-    writeHeader(ds, r_expavg, 1);
+    writeHeader(ds, r_expavg, 2);
     
-    ds << expavg.avgval << expavg.sclfac
+    ds << expavg.avgval << expavg.avgval2 << expavg.sclfac
        << static_cast<const Accumulator&>(expavg);
     
     return ds;
@@ -487,13 +569,20 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, ExpAverage &expavg)
 {
     VersionID v = readHeader(ds, r_expavg);
     
-    if (v == 1)
+    if (v == 2)
+    {
+        ds >> expavg.avgval >> expavg.avgval2 >> expavg.sclfac
+           >> static_cast<Accumulator&>(expavg);
+    }
+    else if (v == 1)
     {
         ds >> expavg.avgval >> expavg.sclfac
            >> static_cast<Accumulator&>(expavg);
+        
+        expavg.avgval2 = expavg.avgval * expavg.avgval;;
     }
     else
-        throw version_error(v, "1", r_expavg, CODELOC);
+        throw version_error(v, "1,2", r_expavg, CODELOC);
         
     return ds;
 }
@@ -505,15 +594,7 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, ExpAverage &expavg)
 ExpAverage::ExpAverage(double scale_factor) 
            : ConcreteProperty<ExpAverage,Accumulator>(), 
              avgval(0), sclfac(scale_factor)
-{
-    if (scale_factor == 0)
-        throw SireError::invalid_arg( QObject::tr(
-            "You cannot construct an exponential average using a scale "
-            "factor of zero."), CODELOC );
-            
-    //take the inverse of the scale factor
-    sclfac = 1.0 / sclfac;
-}
+{}
 
 /** Copy constructor */
 ExpAverage::ExpAverage(const ExpAverage &other)
@@ -552,6 +633,41 @@ bool ExpAverage::operator!=(const ExpAverage &other) const
     return not this->operator==(other);
 }
 
+/** Self-addition operator */
+ExpAverage& ExpAverage::operator+=(const ExpAverage &other)
+{
+    if (sclfac != other.sclfac)
+        throw SireError::incompatible_error( QObject::tr(
+                "Cannot add together these two ExpAverage objects as their scale "
+                "factors are different. %1 vs. %2.")
+                    .arg(sclfac).arg(other.sclfac), CODELOC );
+    
+    if (nSamples() == 0)
+        this->operator=(other);
+    
+    else if (other.nSamples() > 0)
+    {
+        double nsteps = nSamples() + other.nSamples();
+        
+        double my_ratio = nSamples() / nsteps;
+        double other_ratio = other.nSamples() / nsteps;
+        
+        avgval = avgval * my_ratio + other.avgval * other_ratio;
+
+        Accumulator::add(other.nSamples());
+    }
+    
+    return *this;
+}
+
+/** Addition operator */
+ExpAverage ExpAverage::operator+(const ExpAverage &other) const
+{
+    ExpAverage ret(*this);
+    ret += other;
+    return ret;
+}
+
 /** Completely clear the statistics in this accumulator */
 void ExpAverage::clear()
 {
@@ -573,6 +689,8 @@ void ExpAverage::accumulate(double value)
     double small_ratio = 1.0 / nsteps;
     
     avgval = (big_ratio * avgval) + (small_ratio * expvalue);
+    avgval2 = (big_ratio * avgval) + (small_ratio * expvalue*expvalue);
+    
     Accumulator::accumulate(value);
 }
 
@@ -580,6 +698,12 @@ void ExpAverage::accumulate(double value)
 double ExpAverage::average() const
 {
     return ( 1.0 / sclfac ) * std::log(avgval);
+}
+
+/** Return the average of the squared value */
+double ExpAverage::average2() const
+{
+    return ( 1.0 / sclfac ) * std::log(std::sqrt(avgval2));
 }
 
 /** Allow automatic casting to a double to retrieve the average value */
@@ -591,7 +715,7 @@ ExpAverage::operator double() const
 /** Internal function used to return the scale factor */
 double ExpAverage::scaleFactor() const
 {
-    return 1.0 / sclfac;
+    return sclfac;
 }
 
 const char* ExpAverage::typeName()

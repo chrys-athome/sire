@@ -38,10 +38,11 @@
 #include "SireFF/ff.h"
 #include "SireFF/ffmolgroup.h"
 #include "SireFF/forcetable.h"
-#include "SireFF/energytable.h"
 #include "SireFF/fieldtable.h"
 #include "SireFF/potentialtable.h"
 #include "SireFF/probe.h"
+
+#include "SireMM/ljparameterdb.h"
 
 #include "SireMol/partialmolecule.h"
 #include "SireMol/molecule.h"
@@ -150,7 +151,7 @@ static const RegisterMetaType<System> r_system;
 /** Serialise to a binary datastream */
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const System &system)
 {
-    writeHeader(ds, r_system, 2);
+    writeHeader(ds, r_system, 3);
     
     if (system.subversion != 0)
         throw SireError::program_bug( QObject::tr(
@@ -160,6 +161,11 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const System &system)
                     .arg(system.toString()).arg(system.subversion), CODELOC );
     
     SharedDataStream sds(ds);
+    
+    //first try to save all of the loaded LJ parameter types. This will
+    //help ensure that the LJID of parameters don't change too much between
+    //save and loads, which will help with memory consumption...
+    SireMM::LJDBIOLock dblock = SireMM::LJParameterDB::saveParameters(sds);
     
     sds << system.uid << system.sysname
         << system.molgroups[0] << system.molgroups[1] 
@@ -175,7 +181,24 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, System &system)
 {
     VersionID v = readHeader(ds, r_system);
     
-    if (v == 2)
+    if (v == 3)
+    {
+        SharedDataStream sds(ds);
+        
+        SireMM::LJDBIOLock dblock = SireMM::LJParameterDB::loadParameters(sds);
+        
+        sds >> system.uid >> system.sysname
+            >> system.molgroups[0] >> system.molgroups[1] 
+            >> system.sysmonitors
+            >> system.cons
+            >> static_cast<MolGroupsBase&>(system);
+
+        system.rebuildIndex();
+            
+        system.sysversion = systemRegistry().registerObject(system.uid);
+        system.subversion = 0;
+    }
+    else if (v == 2)
     {
         SharedDataStream sds(ds);
         
@@ -749,18 +772,6 @@ MolarEnergy System::energy(const Symbol &component)
     return this->_pvt_forceFields().energy(component);
 }
 
-void System::energy(EnergyTable &energytable, double scale_energy)
-{
-    this->_pvt_forceFields().energy(energytable, scale_energy);
-}
-
-void System::energy(EnergyTable &energytable, const Symbol &component,
-                   double scale_energy)
-{
-    this->_pvt_forceFields().energy(energytable, component, scale_energy);
-}
-
-
 /** Return the energies of the energy components of this system whose
     symbols are in 'components'
     
@@ -1083,7 +1094,6 @@ void System::force(ForceTable &forcetable, double scale_force)
 void System::force(ForceTable &forcetable, const Symbol &component,
                    double scale_force)
 {
-  //qDebug() << " calling _pvt_forceFields system.cpp line 1291";
     this->_pvt_forceFields().force(forcetable, component, scale_force);
 }
 
@@ -1427,6 +1437,22 @@ void System::mustNowRecalculateFromScratch()
     this->_pvt_forceFields().mustNowRecalculateFromScratch();
 }
 
+/** Return whether or not any part of the forcefield is using temporary
+    workspaces that need to be accepted */
+bool System::needsAccepting() const
+{
+    return this->_pvt_forceFields().needsAccepting() or
+           this->_pvt_moleculeGroups().needsAccepting();
+}
+
+/** Tell all of the forcefields that the last move was accepted. This allows
+    any cacheing or use of temporary workspaces to be committed */
+void System::accept()
+{
+    this->_pvt_forceFields().accept();
+    this->_pvt_moleculeGroups().accept();
+}
+
 /** Return whether or not any of the forcefields are dirty */
 bool System::isDirty() const
 {
@@ -1670,7 +1696,7 @@ void System::remove(const FF &ff)
     \throw SireError::invalid_index
     \throw SireError::invalid_arg
 */
-void System::remove(const MGID &mgid)
+bool System::remove(const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
@@ -1678,6 +1704,8 @@ void System::remove(const MGID &mgid)
     
     try
     {
+        bool removed = false;
+    
         foreach (MGNum mgnum, mgnums)
         {
             if (mgroups_by_num.value(mgnum) == 0)
@@ -1698,16 +1726,21 @@ void System::remove(const MGID &mgid)
             this->_pvt_moleculeGroups().remove(mgnum);
             this->removeFromIndex(mgnum);
             mgroups_by_num.remove(mgnum);
+            removed = true;
         }
         
         sysversion.incrementMajor();
         this->applyAllConstraints();
+        
+        return true;
     }
     catch(...)
     {
         old_state.restore(*this);
         throw;
     }
+    
+    return false;
 }
 
 /** Remove the molecules contained in the molecule group 'molgroup'.
@@ -2772,6 +2805,9 @@ bool System::remove(const QSet<MolNum> &molnums, const MGID &mgid)
 void System::update(const MoleculeData &moldata)
 {
     Delta delta(*this);
+    //this ensures that only a single copy of System is used - prevents
+    //unnecessary copying
+    this->operator=( System() );
     delta.update(moldata);
     this->operator=( delta.apply() );
 }
@@ -2786,6 +2822,9 @@ void System::update(const MoleculeData &moldata)
 void System::update(const Molecules &molecules)
 {
     Delta delta(*this);
+    //this ensures that only a single copy of System is used - prevents
+    //unnecessary copying
+    this->operator=( System() );
     delta.update(molecules);
     this->operator=( delta.apply() );
 }
@@ -3108,20 +3147,11 @@ bool System::deltaUpdate(const MoleculeData &moldata)
 
     if (in_molgroup or in_ffields)
     {
-        SaveState old_state = SaveState::save(*this);
-        
-        try
-        {
-            if (in_molgroup)
-                this->_pvt_moleculeGroups().update(moldata);
-                
-            if (in_ffields)
-                this->_pvt_forceFields().update(moldata);
-        }
-        catch(...)
-        {
-            old_state.restore(*this);
-        }
+        if (in_molgroup)
+            this->_pvt_moleculeGroups().update(moldata);
+            
+        if (in_ffields)
+            this->_pvt_forceFields().update(moldata);
 
         ++subversion;
         
@@ -3167,21 +3197,11 @@ QList<MolNum> System::deltaUpdate(const Molecules &molecules)
     
     if (in_molgroup or in_ffields)
     {
-        SaveState old_state = SaveState::save(*this);
+        if (in_ffields)
+            this->_pvt_forceFields().update(molecules);
         
-        try
-        {
-            if (in_ffields)
-                this->_pvt_forceFields().update(molecules);
-            
-            if (in_molgroup)
-                this->_pvt_moleculeGroups().update(molecules);
-        }
-        catch(...)
-        {
-            old_state.restore(*this);
-            throw;
-        }
+        if (in_molgroup)
+            this->_pvt_moleculeGroups().update(molecules);
 
         ++subversion;
         

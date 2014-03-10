@@ -118,6 +118,7 @@ friend QDataStream& ::operator>>(QDataStream&, NullPatching&);
 
 public:
     NullPatching();
+    NullPatching(const Space &space);
     NullPatching(const NullPatching &other);
     
     ~NullPatching();

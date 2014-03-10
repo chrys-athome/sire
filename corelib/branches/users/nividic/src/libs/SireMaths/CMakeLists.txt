@@ -180,6 +180,11 @@ set ( SIREMATHS_HEADERS
       linearap.h
       maths.h
       matrix.h
+      multidouble.h
+      multifixed.h
+      multifloat.h
+      multiint.h
+      multiuint.h
       nmatrix.h
       nvector.h
       n4matrix.h
@@ -194,6 +199,7 @@ set ( SIREMATHS_HEADERS
       trigmatrix.h
       vector.h
       vector3d.hpp
+      vectorproperty.h
 
       sire_blas.h
       sire_lapack.h
@@ -219,6 +225,11 @@ set ( SIREMATHS_SOURCES
       line.cpp
       linearap.cpp
       matrix.cpp
+      multidouble.cpp
+      multifixed.cpp
+      multifloat.cpp
+      multiint.cpp
+      multiuint.cpp
       nmatrix.cpp
       nvector.cpp
       n4matrix.cpp
@@ -231,6 +242,7 @@ set ( SIREMATHS_SOURCES
       triangle.cpp
       trigmatrix.cpp
       vector.cpp
+      vectorproperty.cpp
 
       sire_blas.cpp
       sire_lapack.cpp

@@ -83,6 +83,9 @@ public:
     const Properties& properties() const;
     void mustNowRecalculateFromScratch();
 
+    bool needsAccepting() const;
+    void accept();
+
 protected:
     void recalculateEnergy();
     void group_add(quint32 i, const MoleculeView &molview,

@@ -121,6 +121,9 @@ public:
     void setContents(const Molecules &molecules, const PropertyMap &map);
     void setContents(const MoleculeGroup &molgroup, const PropertyMap &map);
 
+    bool needsAccepting() const;
+    void accept();
+
 protected:
     G1FF(bool allow_overlap_of_atoms=false);
     G1FF(const G1FF &other);

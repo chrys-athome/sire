@@ -80,7 +80,7 @@ SireFF::detail::assertCompatible(const FFMoleculeBase &mol0,
 ///////// Implementation of FFMoleculeBase
 /////////
 
-static const RegisterMetaType<FFMoleculeBase> r_ffmolbase(MAGIC_ONLY,
+static const RegisterMetaType<FFMoleculeBase> r_ffmolbase(MAGIC_ONLY, NO_ROOT,
                                                   "SireFF::detail::FFMoleculeBase");
 
 /** Serialise to a binary datastream */
@@ -243,8 +243,8 @@ bool FFMoleculeBase::change(const SireMol::Molecule &molecule)
                 "Cannot change the molecule %1 as its molecule layout "
                 "ID has changed (%2 to %3), and only part of the molecule "
                 "exists in the forcefield.")
-                    .arg(mol.number()).arg(mol.data().info().UID())
-                    .arg(molecule.data().info().UID()), CODELOC );
+                    .arg(mol.number()).arg(mol.data().info().UID().toString())
+                    .arg(molecule.data().info().UID().toString()), CODELOC );
         }
     
         mol = PartialMolecule(molecule.data(), mol.selection());
@@ -267,6 +267,12 @@ bool FFMoleculeBase::add(const AtomSelection &added_atoms)
         return false;
         
     mol = PartialMolecule(mol.data(), mol.selection() + added_atoms);
+
+    if (mol.selection().selectedAllCutGroups())
+        idx_to_cgidx = QList<CGIdx>();
+    else
+        idx_to_cgidx = mol.selection().selectedCutGroups();
+
     return true;
 }
 
@@ -287,11 +293,18 @@ bool FFMoleculeBase::remove(const AtomSelection &removed_atoms)
     {
         //we are removing the entire molecule
         mol = PartialMolecule();
+        idx_to_cgidx = QList<CGIdx>();
         return true;
     }
     else
     {
         mol = PartialMolecule(mol.data(), mol.selection() - removed_atoms);
+
+        if (mol.selection().selectedAllCutGroups())
+            idx_to_cgidx = QList<CGIdx>();
+        else
+            idx_to_cgidx = mol.selection().selectedCutGroups();
+
         return true;
     }
 }
@@ -307,7 +320,7 @@ void FFMoleculeBase::restore(const PartialMolecule &oldmol)
 //////// Implementation of FFMoleculesBase
 ////////
 
-static const RegisterMetaType<FFMoleculesBase> r_ffmolsbase( MAGIC_ONLY,
+static const RegisterMetaType<FFMoleculesBase> r_ffmolsbase( MAGIC_ONLY, NO_ROOT,
                                                 "SireFF::detail::FFMoleculesBase" );
                                                 
 /** Serialise to a binary datastream */

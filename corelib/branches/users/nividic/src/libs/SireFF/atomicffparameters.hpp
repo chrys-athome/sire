@@ -77,6 +77,8 @@ friend QDataStream& ::operator<<<>(QDataStream&, const AtomicFFParameters<T>&);
 friend QDataStream& ::operator>><>(QDataStream&, AtomicFFParameters<T>&);
 
 public:
+    typedef typename SireBase::PackedArray2D<T>::Array Array;
+
     AtomicFFParameters();
     AtomicFFParameters(const QVector<T> &params);
     AtomicFFParameters(const typename SireBase::PackedArray2D<T>::Array &params);
@@ -91,6 +93,12 @@ public:
     
     bool operator==(const AtomicFFParameters<T> &other) const;
     bool operator!=(const AtomicFFParameters<T> &other) const;
+    
+    FFParametersArrayPtr toArray() const;
+    
+    const T* constData() const;
+    
+    int count() const;
     
     const typename SireBase::PackedArray2D<T>::Array& array() const;
     
@@ -114,10 +122,15 @@ friend QDataStream& ::operator<<<>(QDataStream&, const AtomicFFParametersArray<T
 friend QDataStream& ::operator>><>(QDataStream&, AtomicFFParametersArray<T>&);
 
 public:
+    typedef typename SireBase::PackedArray2D<T>::Array Array;
+
     AtomicFFParametersArray();
     AtomicFFParametersArray(const SireBase::PackedArray2D<T> &params);
     AtomicFFParametersArray(const QVector<T> &params);
     AtomicFFParametersArray(const QVector< QVector<T> > &params);
+    AtomicFFParametersArray(const AtomicFFParameters<T> &params);
+    
+    AtomicFFParametersArray(const AtomicFFParametersArray<T> &other);
     
     ~AtomicFFParametersArray();
     
@@ -128,9 +141,17 @@ public:
     bool operator==(const AtomicFFParametersArray<T> &other) const;
     bool operator!=(const AtomicFFParametersArray<T> &other) const;
     
+    FFParametersPtr operator[](int i) const;
+    
+    int count() const;
+    
+    bool isEmpty() const;
+    
     const SireBase::PackedArray2D<T>& array() const;
     
     operator SireBase::PackedArray2D<T>() const;
+    
+    const Array* constData() const;
     
     void append(const QVector<T> &params);
     void append(const QVector< QVector<T> > &params);
@@ -142,16 +163,19 @@ public:
     void append(const FFParametersArray &params);
     
     void update(int idx, const QVector<T> &params);
-    void update(const QVector<int> &idxs, const QVector< QVector<T> > &params);
+    void update(const QVarLengthArray<int> &idxs, const QVector< QVector<T> > &params);
     
     void update(int idx, const AtomicFFParameters<T> &params);
-    void update(const QVector<int> &idxs, const AtomicFFParametersArray<T> &params);
+    void update(const QVarLengthArray<int> &idxs, 
+                const AtomicFFParametersArray<T> &params);
     
     void update(int idx, const FFParameters &params);
-    void update(const QVector<int> &idxs, const FFParametersArray &params);
+    void update(const QVarLengthArray<int> &idxs, const FFParametersArray &params);
     
     void remove(int idx);
-    void remove(const QVector<int> &idxs);
+    void remove(const QVarLengthArray<int> &idxs);
+    
+    void removeAll();
     
 private:
     /** The packed array of all of the bead's parameters */
@@ -234,6 +258,30 @@ bool AtomicFFParameters<T>::operator!=(const AtomicFFParameters<T> &other) const
     return not AtomicFFParameters<T>::operator==(other);
 }
 
+/** Return these parameters in an FFParameterArray */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+FFParametersArrayPtr AtomicFFParameters<T>::toArray() const
+{
+    return AtomicFFParametersArray<T>(*this);
+}
+
+/** Return the number of parameters in the array */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+int AtomicFFParameters<T>::count() const
+{
+    return params.count();
+}
+
+/** Return a raw pointer to the parameters */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const T* AtomicFFParameters<T>::constData() const
+{
+    return params.constData();
+}
+
 /** Return the raw array of parameters */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -287,6 +335,23 @@ AtomicFFParametersArray<T>::AtomicFFParametersArray(
       params(parameters)
 {}
 
+/** Construct from the passed AtomicFFParameters */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicFFParametersArray<T>::AtomicFFParametersArray(const AtomicFFParameters<T> &prms)
+    : SireBase::ConcreteProperty<AtomicFFParametersArray<T>,FFParametersArray>(),
+      params(prms)
+{}
+
+/** Copy constructor */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicFFParametersArray<T>::AtomicFFParametersArray(
+                                    const AtomicFFParametersArray<T> &other)
+    : SireBase::ConcreteProperty<AtomicFFParametersArray<T>,FFParametersArray>(other),
+      params(other.params)
+{}
+
 /** Destructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -327,12 +392,48 @@ bool AtomicFFParametersArray<T>::operator!=(const AtomicFFParametersArray<T> &ot
     return not FFParametersArray::operator==(other);
 }
 
+/** Return the ith group of atomic parameters
+
+    \throw SireError::invalid_index
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+FFParametersPtr AtomicFFParametersArray<T>::operator[](int i) const
+{
+    return FFParametersPtr( AtomicFFParameters<T>(params[i]) );
+}
+
 /** Return the raw parameter array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 const SireBase::PackedArray2D<T>& AtomicFFParametersArray<T>::array() const
 {
     return params;
+}
+
+/** Return the raw pointer to the array of parameters for a bead */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const typename SireBase::PackedArray2D<T>::Array*
+AtomicFFParametersArray<T>::constData() const
+{
+    return params.constData();
+}
+
+/** Return the number of arrays of parameters */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+int AtomicFFParametersArray<T>::count() const
+{
+    return params.count();
+}
+
+/** Return whether or not this array is empty */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool AtomicFFParametersArray<T>::isEmpty() const
+{
+    return params.isEmpty();
 }
 
 /** Allow for automatic casting to a raw parameter array */
@@ -415,10 +516,10 @@ void AtomicFFParametersArray<T>::update(int idx, const QVector<T> &parameters)
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void AtomicFFParametersArray<T>::update(const QVector<int> &idxs, 
+void AtomicFFParametersArray<T>::update(const QVarLengthArray<int> &idxs, 
                                         const QVector< QVector<T> > &parameters)
 {
-    params.updateAll(idxs, parameters);
+    params.updateAll(idxs, AtomicFFParametersArray<T>(parameters));
 }
 
 /** Update the parameters at index 'idx' with the passed values
@@ -440,7 +541,7 @@ void AtomicFFParametersArray<T>::update(int idx, const AtomicFFParameters<T> &pa
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void AtomicFFParametersArray<T>::update(const QVector<int> &idxs, 
+void AtomicFFParametersArray<T>::update(const QVarLengthArray<int> &idxs, 
                                         const AtomicFFParametersArray<T> &parameters)
 {
     params.updateAll(idxs, parameters.array());
@@ -467,7 +568,7 @@ void AtomicFFParametersArray<T>::update(int idx, const FFParameters &parameters)
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void AtomicFFParametersArray<T>::update(const QVector<int> &idxs, 
+void AtomicFFParametersArray<T>::update(const QVarLengthArray<int> &idxs, 
                                         const FFParametersArray &parameters)
 {
     AtomicFFParametersArray<T>::update(idxs, 
@@ -491,9 +592,17 @@ void AtomicFFParametersArray<T>::remove(int idx)
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void AtomicFFParametersArray<T>::remove(const QVector<int> &idxs)
+void AtomicFFParametersArray<T>::remove(const QVarLengthArray<int> &idxs)
 {
     params.removeAll(idxs);
+}
+
+/** Remove all of the parameters */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicFFParametersArray<T>::removeAll()
+{
+    params = SireBase::PackedArray2D<T>();
 }
 
 /////////

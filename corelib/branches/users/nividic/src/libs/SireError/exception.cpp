@@ -44,6 +44,59 @@ using namespace SireStream;
 Q_GLOBAL_STATIC( QThreadStorage<QString*>, pidStrings );
 Q_GLOBAL_STATIC( QString, processString );
 
+namespace Sire
+{
+namespace detail
+{
+    QHash< QString, QSet<QString> > branch_classes;
+    QHash< QString, QSet<QString> > leaf_classes;
+    QSet<QString> rootless_classes;
+
+    const QHash< QString, QSet<QString> > SIRE_EXPORT branchClasses()
+    {
+        return branch_classes;
+    }
+
+    const QHash< QString, QSet<QString> > SIRE_EXPORT leafClasses()
+    {
+        return leaf_classes;
+    }
+
+    const QSet<QString> SIRE_EXPORT rootlessClasses()
+    {
+        return rootless_classes;
+    }
+
+    void SIRE_EXPORT registerLeaf(const QString &type_name, const char *root)
+    {
+        QLatin1String r(root);
+        if (not leaf_classes.contains(r))
+        {
+            leaf_classes.insert(r, QSet<QString>());
+        }
+        
+        leaf_classes[r].insert(type_name);
+    }
+    
+    void SIRE_EXPORT registerBranch(const QString &type_name, const char *root)
+    {
+        QLatin1String r(root);
+        if (not branch_classes.contains(r))
+        {
+            branch_classes.insert(r, QSet<QString>());
+        }
+        
+        branch_classes[r].insert(type_name);
+    }
+    
+    void SIRE_EXPORT registerRootless(const QString &type_name)
+    {
+        rootless_classes.insert(type_name);
+    }
+
+} // end of namespace detail
+} // end of namespace Sire
+
 namespace SireError
 {
 
@@ -110,7 +163,7 @@ QString SIREERROR_EXPORT getPIDString()
 /** Construct a null exception */
 exception::exception()
 {
-    pidstr = getPIDString();
+    //pidstr = getPIDString();
 }
 
 /** Constructor.
@@ -120,8 +173,10 @@ exception::exception()
 */
 exception::exception(QString error, QString place) : err(error), plce(place)
 {
-    bt = getBackTrace();
-    pidstr = getPIDString();
+    #ifdef SIRE_ENABLE_BACKTRACE
+        bt = getBackTrace();
+        //pidstr = getPIDString();
+    #endif
 }
 
 /** Copy constructor */
@@ -146,7 +201,7 @@ exception* exception::clone() const
             "registered with QMetaType. It cannot be cloned! (%2, %3)")
                 .arg(this->what()).arg(id).arg(QMetaType::isRegistered(id)), CODELOC);
 
-    return static_cast<exception*>( QMetaType::construct(id,this) );
+    return static_cast<exception*>( QMetaType::create(id,this) );
 }
 
 /** Pack this exception into a binary QByteArray - this packs the exception
@@ -205,7 +260,7 @@ boost::shared_ptr<SireError::exception> exception::unpack(const QByteArray &data
     
     //construct an exception of this type
     boost::shared_ptr<exception> ptr(  
-                        static_cast<exception*>(QMetaType::construct(id,0)) );
+                        static_cast<exception*>(QMetaType::create(id,0)) );
                         
     //load the object from the datastream
     if ( not QMetaType::load(ds, id, ptr.get()) )
@@ -237,7 +292,7 @@ QString exception::toString() const throw()
                        "Exception '%1' thrown by the thread '%2'.\n"
                        "%3\n"
                        "Thrown from %4")
-             .arg(what()).arg(pid()).arg(why()).arg(where()).arg(bt.join("\n"));
+             .arg(what()).arg(pid()).arg(why()).arg(where()).arg(trace().join("\n"));
 }
 
 /** Return the error message associated with this exception.
@@ -262,7 +317,16 @@ QString exception::from() const throw()
 /** Return the function backtrace when the exception was constructed */
 QStringList exception::trace() const throw()
 {
-    return bt;
+    #ifdef SIRE_ENABLE_BACKTRACE
+        return bt;
+    #else
+        QStringList btrace;
+        btrace.append( QObject::tr("No backtrace available. "
+                "Recompile the SireError library with -DSIRE_ENABLE_BACKTRACE "
+                "to enable backtraces.") );
+    
+        return btrace;
+    #endif
 }
 
 /** Overloaded functions to give logical names... */

@@ -40,12 +40,16 @@ namespace SireMol
 {
 class BondHunter;
 
+class NullBondHunter;
 class CovalentBondHunter;
 class ChemicalBondHunter;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMol::BondHunter&);
 QDataStream& operator>>(QDataStream&, SireMol::BondHunter&);
+
+QDataStream& operator<<(QDataStream&, const SireMol::NullBondHunter&);
+QDataStream& operator>>(QDataStream&, SireMol::NullBondHunter&);
 
 QDataStream& operator<<(QDataStream&, const SireMol::CovalentBondHunter&);
 QDataStream& operator>>(QDataStream&, SireMol::CovalentBondHunter&);
@@ -87,7 +91,7 @@ public:
     virtual Connectivity operator()(const MoleculeView &molview,
                                     const PropertyMap &map = PropertyMap()) const=0;
 
-    static const CovalentBondHunter& null();
+    static const NullBondHunter& null();
 };
 
 class SIREMOL_EXPORT CovalentBondHunterParameters
@@ -156,6 +160,28 @@ private:
     double tol;
 };
 
+/** This is a null bond hunter. This finds no bonds in a molecule and is used
+    when you want to create an empty connectivity object for a molecule
+    
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT NullBondHunter
+           : public SireBase::ConcreteProperty<NullBondHunter,BondHunter>
+{
+public:
+    NullBondHunter();
+    NullBondHunter(const NullBondHunter &other);
+    
+    ~NullBondHunter();
+    
+    static const char* typeName();
+
+    const char* what() const;
+    
+    Connectivity operator()(const MoleculeView &molview,
+                            const PropertyMap &map = PropertyMap()) const;
+};
+
 /** This is a bond hunter that hunts for bonds using the distance between
     atoms (and comparing that distance against the sum of atomic covalent
     radii), but then it runs over each atom and ensures that the atom does
@@ -184,10 +210,12 @@ typedef SireBase::PropPtr<BondHunter> BondHunterPtr;
 
 }
 
+Q_DECLARE_METATYPE( SireMol::NullBondHunter )
 Q_DECLARE_METATYPE( SireMol::CovalentBondHunter )
 Q_DECLARE_METATYPE( SireMol::ChemicalBondHunter )
 
 SIRE_EXPOSE_CLASS( SireMol::BondHunter )
+SIRE_EXPOSE_CLASS( SireMol::NullBondHunter )
 SIRE_EXPOSE_CLASS( SireMol::CovalentBondHunter )
 SIRE_EXPOSE_CLASS( SireMol::ChemicalBondHunter )
 SIRE_EXPOSE_CLASS( SireMol::CovalentBondHunterParameters )

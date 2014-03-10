@@ -90,27 +90,33 @@ QString LJParameterName::lj_param( "LJ" );
 
 namespace SireFF
 {
-    template class AtomicParameters3D<LJParamID>;
+    namespace detail
+    {
+        template class AtomicParameters3D<LJParamID>;
 
-    template class FFMolecule3D<InterLJPotential>;
+        template class FFMolecule3D<InterLJPotential>;
 
-    template class FFMolecules3D<InterLJPotential>;
+        template class FFMolecules3D<InterLJPotential>;
 
-    template class ChangedMolecule<InterLJPotential::Molecule>;
+        template class ChangedMolecule<InterLJPotential::Molecule>;
 
-    template class FFMolecule3D<IntraLJPotential>;
+        template class FFMolecule3D<IntraLJPotential>;
 
-    template class FFMolecules3D<IntraLJPotential>;
+        template class FFMolecules3D<IntraLJPotential>;
 
-    template class ChangedMolecule<IntraLJPotential::Molecule>;
+        template class ChangedMolecule<IntraLJPotential::Molecule>;
+    }
 }
 
 namespace SireMM
 {
-    template class IntraScaledParameters<LJNBPairs>;
+    namespace detail
+    {
+        template class IntraScaledParameters<LJNBPairs>;
 
-    template class IntraScaledAtomicParameters< AtomicParameters3D<LJParamID>,
-                                                IntraScaledParameters<LJNBPairs> >;
+        template class IntraScaledAtomicParameters< AtomicParameters3D<LJParamID>,
+                                                    IntraScaledParameters<LJNBPairs> >;
+    }
 }
 
 /** Streaming functions for LJParamID - these must convert the 
@@ -242,7 +248,7 @@ static PackedArray2D<LJParamID> getLJParamIDs(const PartialMolecule &molecule,
 ///////////// Implementation of LJPotential
 /////////////
 
-static const RegisterMetaType<LJPotential> r_ljpot( MAGIC_ONLY,
+static const RegisterMetaType<LJPotential> r_ljpot( MAGIC_ONLY, NO_ROOT,
                                                     "SireMM::LJPotential" );
 
 /** Serialise to a binary datastream */
@@ -464,7 +470,7 @@ const QString& LJPotential::combiningRules() const
 ///////////// Implementation of InterLJPotential
 /////////////
 
-static const RegisterMetaType<InterLJPotential> r_interlj( MAGIC_ONLY,
+static const RegisterMetaType<InterLJPotential> r_interlj( MAGIC_ONLY, NO_ROOT,
                                             InterLJPotential::typeName() );
 
 /** Serialise to a binary datastream */
@@ -1696,7 +1702,7 @@ void InterLJPotential::_pvt_calculateLJField(
 ///////////// Implementation of IntraLJPotential
 /////////////
 
-static const RegisterMetaType<IntraLJPotential> r_intralj( MAGIC_ONLY,
+static const RegisterMetaType<IntraLJPotential> r_intralj( MAGIC_ONLY, NO_ROOT,
                                             IntraLJPotential::typeName() );
 
 /** Serialise to a binary datastream */

@@ -26,7 +26,7 @@ set ( SIRE_RCCS
       sire.qrc
     )
 
-QT4_ADD_RESOURCES( SIRE_RCC_SRCS ${SIRE_RCCS} )
+qt5_add_resources( SIRE_RCC_SRCS ${SIRE_RCCS} )
 
 set ( SIRE_SOURCES
 
@@ -37,11 +37,6 @@ set ( SIRE_SOURCES
 
 # generate the application
 add_executable ( sire ${SIRE_SOURCES} ${SIRE_RCC_SRCS} )
-
-set_target_properties (sire PROPERTIES
-                       VERSION ${SIRE_VERSION}
-                       SOVERSION ${SIRE_VERSION_MAJOR}
-                      )
 
 # Link to other Sire libraries
 target_link_libraries (sire
@@ -60,3 +55,10 @@ install( TARGETS sire
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
+
+if (APPLE)
+  add_custom_command(TARGET sire
+      POST_BUILD
+      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../${SIRE_LIBS}" sire
+      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../${SIRE_BUNDLED_LIBS}" sire)
+endif()

@@ -61,30 +61,6 @@ set ( SIREMOVE_HEADERS
       zmatrix.h
     )
 
-set ( SIREMOVE_OPENMM_HEADERS
-      openmmintegrator.h
-      openmmmdintegrator.h
-      openmmfrenergydt.h
-      openmmfrenergyst.h
-      openmmacceleratedmdintegrator.h
-      dcd_writer.h
-    )
-
-set ( SIREMOVE_OPENMM_SOURCES
-      openmmintegrator.cpp
-      openmmmdintegrator.cpp
-      openmmfrenergydt.cpp
-      openmmfrenergyst.cpp
-      openmmacceleratedmdintegrator.cpp
-      dcd_writer.cpp
-    )
-
-set ( SIREMOVE_DEPRECATED_HEADERS
-
-      deprecated/replicas.h
-      deprecated/repexreplicas.h
-    )
-
 # Define the sources in SireMove
 set ( SIREMOVE_SOURCES
 
@@ -138,11 +114,7 @@ set ( SIREMOVE_SOURCES
       zmatmove.cpp
       zmatrix.cpp   
 
-      deprecated/replicas.cpp
-      deprecated/repexreplicas.cpp
-
       ${SIREMOVE_HEADERS}
-      ${SIREMOVE_DEPRECATED_HEADERS}
     )
 
 if ( ${OpenMM_FOUND} )

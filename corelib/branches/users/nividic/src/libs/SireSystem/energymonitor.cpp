@@ -40,6 +40,8 @@
 
 #include "SireUnits/units.h"
 
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -338,6 +340,58 @@ QVector<SireMol::PartialMolecule> EnergyMonitor::views1() const
     {
         return asgn1.read().asA<IDAssigner>().identifiedMolecules();
     }
+}
+
+/** Return the molecule group from which "views0" are drawn. Note that this
+    will return the molecule group used by "assigner0" if an assigner is
+    used to choose views */
+const SireMol::MoleculeGroup& EnergyMonitor::group0() const
+{
+    if (asgn0.isNull())
+        return grp0.read();
+    else
+        return asgn0.read().asA<IDAssigner>().moleculeGroup();
+}
+
+/** Return the molecule group from which "views1" are drawn. Note that this
+    will return the molecule group used by "assigner1" if an assigner is
+    used to choose views */
+const SireMol::MoleculeGroup& EnergyMonitor::group1() const
+{
+    if (asgn1.isNull())
+        return grp1.read();
+    else
+        return asgn1.read().asA<IDAssigner>().moleculeGroup();
+}
+
+/** Return the assigner used to select "views0". Note that this will
+    raise an exception if an assigner is not used to choose these views 
+    
+    \throw SireError::unavailable_resource
+*/
+const IDAssigner& EnergyMonitor::assigner0() const
+{
+    if (asgn0.isNull())
+        throw SireError::unavailable_resource( QObject::tr(
+                "An IDAssigner is not used to select the views for \"views0\"."),
+                    CODELOC );
+                    
+    return asgn0.read().asA<IDAssigner>();
+}
+
+/** Return the assigner used to select "views1". Note that this will
+    raise an exception if an assigner is not used to choose these views 
+    
+    \throw SireError::unavailable_resource
+*/
+const IDAssigner& EnergyMonitor::assigner1() const
+{
+    if (asgn1.isNull())
+        throw SireError::unavailable_resource( QObject::tr(
+                "An IDAssigner is not used to select the views for \"views1\"."),
+                    CODELOC );
+                    
+    return asgn1.read().asA<IDAssigner>();
 }
 
 /** Clear all statistics */

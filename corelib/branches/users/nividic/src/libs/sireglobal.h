@@ -40,6 +40,7 @@
 #define SIRE_EXPOSE_RESIDUE_PROPERTY(c,a) /* Exposing residue property #1 with alias #2 */
 #define SIRE_EXPOSE_CHAIN_PROPERTY(c,a) /* Exposing chain property #1 with alias #2 */
 #define SIRE_EXPOSE_SEGMENT_PROPERTY(c,a) /* Exposing segment property #1 with alias #2 */
+#define SIRE_EXPOSE_BEAD_PROPERTY(c,a)  /* Exposing bead property #1 with alias #2 */
 
 //create the keyword used to export a symbol - this
 //is a copy of Q_DECL_EXPORT, which will definitely
@@ -99,16 +100,6 @@
 #ifdef QT_NO_TEXTSTREAM
 #error Sire requires that Qt was built with QTextStream enabled \
        Please recompile Qt with QTextStream enabled.
-#endif
-
-//sire requires that at least the QtCore and QtSql modules
-//are available
-#if  !(QT_EDITION & QT_MODULE_CORE)
-#error Sire requires that the QtCore module is enabled.
-#endif
-
-#if !(QT_EDITION & QT_MODULE_SQL)
-#error Sire requires that the QtSql module is enabled.
 #endif
 
 /** These functions convert a pointer into an integer.
@@ -220,6 +211,8 @@ MagicID getMagic(const char *type_name);
 enum MagicOnlyEnum{ MAGIC_ONLY = 1 };
 /** Enum used to register without using the streaming operators */
 enum NoStreamEnum{ NO_STREAM = 2 };
+/** Enum used to register a class without a root class */
+enum NoRootEnum{ NO_ROOT = 3 };
 
 class RegisterMetaTypeBase
 {
@@ -252,6 +245,14 @@ private:
     int id;
 };
 
+namespace detail
+{
+    void registerLeaf(const QString &type_name, const char *root_class);
+    void registerBranch(const QString &type_name, const char *root_class);
+
+    void registerRootless(const QString &type_name);
+}
+
 /** This is used to register the type 'T' - this
     needs to be called once for each public type.
 
@@ -270,12 +271,33 @@ public:
     {
         qRegisterMetaType<T>(this->typeName());
         qRegisterMetaTypeStreamOperators<T>(this->typeName());
+        detail::registerLeaf(this->typeName(), T::ROOT::typeName());
+    }
+
+    /** Use this constructor to register a concrete class with no root */
+    RegisterMetaType(NoRootEnum )
+        : RegisterMetaTypeBase( getMagic( QMetaType::typeName( qMetaTypeId<T>() ) ),
+                                QMetaType::typeName( qMetaTypeId<T>() ),
+                                qMetaTypeId<T>() )
+    {
+        qRegisterMetaType<T>(this->typeName());
+        qRegisterMetaTypeStreamOperators<T>(this->typeName());
+        detail::registerRootless(this->typeName());
     }
 
     /** Use this construct to register a pure-virtual class */
     RegisterMetaType(MagicOnlyEnum, const char *type_name)
         : RegisterMetaTypeBase( getMagic(type_name), type_name, 0 )
-    {}
+    {
+        detail::registerBranch(this->typeName(), T::ROOT::typeName());
+    }
+
+    /** Use this construct to register a pure-virtual class with no registered root */
+    RegisterMetaType(MagicOnlyEnum, NoRootEnum, const char *type_name)
+        : RegisterMetaTypeBase( getMagic(type_name), type_name, 0 )
+    {
+        detail::registerRootless(this->typeName());
+    }
 
     /** Use this constructor to register a class that cannot be streamed */
     RegisterMetaType(NoStreamEnum )
@@ -284,6 +306,18 @@ public:
                                 qMetaTypeId<T>() )
     {
         qRegisterMetaType<T>(this->typeName());
+        detail::registerLeaf(this->typeName(), T::ROOT::typeName());
+    }
+
+    /** Use this constructor to register a class that cannot be streamed
+        and that has no registered root */
+    RegisterMetaType(NoStreamEnum, NoRootEnum )
+        : RegisterMetaTypeBase( getMagic( QMetaType::typeName( qMetaTypeId<T>() ) ),
+                                QMetaType::typeName( qMetaTypeId<T>() ),
+                                qMetaTypeId<T>() )
+    {
+        qRegisterMetaType<T>(this->typeName());
+        detail::registerRootless(this->typeName());
     }
 
     /** Destructor */
@@ -303,6 +337,7 @@ using Sire::RegisterMetaTypeBase;
 using Sire::RegisterMetaType;
 using Sire::MAGIC_ONLY;
 using Sire::NO_STREAM;
+using Sire::NO_ROOT;
 using Sire::MagicID;
 using Sire::getMagic;
 using SireStream::XMLStream;
@@ -360,15 +395,15 @@ class QTextStream;
 #define SIREMPI_EXPORT SIRE_EXPORT
 #define SIREPY_EXPORT SIRE_EXPORT
 #define SIREQT_EXPORT SIRE_EXPORT
+#define SIRESIM_EXPORT SIRE_EXPORT
 #define SIRESTREAM_EXPORT SIRE_EXPORT
 #define SIRESYSTEM_EXPORT SIRE_EXPORT
 #define SIRETEST_EXPORT SIRE_EXPORT
 #define SIREUNITTEST_EXPORT SIRE_EXPORT
 #define SIREUNITS_EXPORT SIRE_EXPORT
 #define SIREVOL_EXPORT SIRE_EXPORT
-#define SOIREE_EXPORT SIRE_EXPORT
+#define SIREANALYSIS_EXPORT SIRE_EXPORT
 #define SPIER_EXPORT SIRE_EXPORT
 #define SQUIRE_EXPORT SIRE_EXPORT
 
 #endif // SIREGLOBAL_H
-

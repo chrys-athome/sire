@@ -166,6 +166,10 @@ public:
     void copyFrom(const QVector<Vector> &values);
     void copyFrom(const QVector<Vector> &values, const AtomSelection &selection);
 
+    PropertyPtr merge(const MoleculeInfoData &molinfo) const;
+    PropertyPtr divide(const QVector<AtomSelection> &beads) const;
+    PropertyPtr divideByResidue(const MoleculeInfoData &molinfo) const;
+
     void assertCanConvert(const QVariant &value) const;
 
 private:

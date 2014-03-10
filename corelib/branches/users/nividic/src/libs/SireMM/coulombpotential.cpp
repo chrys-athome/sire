@@ -83,33 +83,45 @@ QString ChargeParameterName::chg_param( "charge" );
 /////// Completely instantiate the CoulombPotential ancillary classes
 ///////
 
-template
-class AtomicParameters3D<ChargeParameter>;
+namespace SireMM
+{
+    namespace detail
+    {
+        template
+        class IntraScaledParameters<CoulombNBPairs>;
 
-template
-class IntraScaledParameters<CoulombNBPairs>;
+        template
+        class IntraScaledAtomicParameters< AtomicParameters3D<ChargeParameter>,
+                                           IntraScaledParameters<CoulombNBPairs> >;
+    }
+}
 
-template
-class IntraScaledAtomicParameters< AtomicParameters3D<ChargeParameter>,
-                                   IntraScaledParameters<CoulombNBPairs> >;
+namespace SireFF
+{
+    namespace detail
+    {
+        template
+        class AtomicParameters3D<ChargeParameter>;
 
-template
-class FFMolecule3D<InterCoulombPotential>;
+        template
+        class FFMolecule3D<InterCoulombPotential>;
 
-template
-class FFMolecules3D<InterCoulombPotential>;
+        template
+        class FFMolecules3D<InterCoulombPotential>;
 
-template
-class ChangedMolecule<InterCoulombPotential::Molecule>;
+        template
+        class ChangedMolecule<InterCoulombPotential::Molecule>;
 
-template
-class FFMolecule3D<IntraCoulombPotential>;
+        template
+        class FFMolecule3D<IntraCoulombPotential>;
 
-template
-class FFMolecules3D<IntraCoulombPotential>;
+        template
+        class FFMolecules3D<IntraCoulombPotential>;
 
-template
-class ChangedMolecule<IntraCoulombPotential::Molecule>;
+        template
+        class ChangedMolecule<IntraCoulombPotential::Molecule>;
+    }
+}
 
 /** Streaming functions for ChargeParameter */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, 
@@ -220,7 +232,7 @@ getChargeParameters(const PartialMolecule &molecule,
 ///////////// Implementation of CoulombPotential
 /////////////
 
-static const RegisterMetaType<CoulombPotential> r_coulpot( MAGIC_ONLY,
+static const RegisterMetaType<CoulombPotential> r_coulpot( MAGIC_ONLY, NO_ROOT,
                                                            "SireMM::CoulombPotential" );
 
 /** Serialise to a binary datastream */
@@ -427,7 +439,7 @@ bool CoulombPotential::shiftElectrostatics() const
 ///////////// Implementation of InterCoulombPotential
 /////////////
 
-static const RegisterMetaType<InterCoulombPotential> r_intercoul( MAGIC_ONLY,
+static const RegisterMetaType<InterCoulombPotential> r_intercoul( MAGIC_ONLY, NO_ROOT,
                                             InterCoulombPotential::typeName() );
 
 /** Serialise to a binary datastream */
@@ -1622,7 +1634,7 @@ void InterCoulombPotential::_pvt_calculateCoulombField(
 ///////////// Implementation of IntraCoulombPotential
 /////////////
 
-static const RegisterMetaType<IntraCoulombPotential> r_intracoul( MAGIC_ONLY,
+static const RegisterMetaType<IntraCoulombPotential> r_intracoul( MAGIC_ONLY, NO_ROOT,
                                             IntraCoulombPotential::typeName() );
 
 /** Serialise to a binary datastream */

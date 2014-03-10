@@ -454,6 +454,9 @@ public:
     template<class C>
     void updateAll(const C &idxs, const PackedArray2D<T> &arrays);
     
+    void updateAll(const QVarLengthArray<int> &idxs,    
+                   const PackedArray2D<T> &arrays);
+    
     template<class C>
     void updateAll(const C &idxs, const QVector< QVector<T> > &arrays);
     
@@ -467,6 +470,8 @@ public:
     
     template<class C>
     void removeAll(const C &idxs);
+
+    void removeAll(const QVarLengthArray<int> &idxs);
 
     void assertValidIndex(quint32 i) const;
 
@@ -703,7 +708,7 @@ char* PackedArray2DMemory<T>::detach(char *this_ptr, quint32 this_idx)
     //The PackedArray2DData object is at the beginning of this storage array
     PackedArray2DData<T> *arraydata = (PackedArray2DData<T>*) storage;
     
-    if (arraydata->ref != 1)
+    if (not arraydata->ref.testAndSetRelaxed(1,1))
     {
         //there is more than one reference to this data - it will have to 
         //be cloned - get the size of memory to be cloned
@@ -717,8 +722,7 @@ char* PackedArray2DMemory<T>::detach(char *this_ptr, quint32 this_idx)
         char *new_storage = new char[sz];
         
         //copy the data
-        char *output = quickCopy<char>( new_storage, storage, sz );
-        BOOST_ASSERT(output == new_storage);
+        quickCopy<char>( new_storage, storage, sz );
 
         //the first part of the data is the PackedArray2DData object
         PackedArray2DData<T> *new_arraydata = (PackedArray2DData<T>*) new_storage;
@@ -741,7 +745,7 @@ char* PackedArray2DMemory<T>::detach(char *this_ptr, quint32 this_idx)
         }
         
         //set the reference count of this copy to 1
-        new_arraydata->ref = 1;
+        new_arraydata->ref = QAtomicInt(1);
 
         //now loose a reference to the original
         PackedArray2DMemory<T>::decref(this_ptr, this_idx);
@@ -1019,10 +1023,8 @@ PackedArray2DData<T>* PackedArray2D_ArrayData<T>::extract() const
     new_array->close();
     
     //copy the objects
-    T *output = quickCopy<T>(new_array->valueData(), 
-                             this->valueData(), this->nValues());
-                       
-    BOOST_ASSERT( output == new_array->valueData() );
+    quickCopy<T>(new_array->valueData(),
+                 this->valueData(), this->nValues());
 
     return new_array;
 
@@ -1331,9 +1333,7 @@ QVector<T> PackedArray2D_Array<T>::toQVector() const
         
     QVector<T> ret( this->count() );
     
-    T *output = quickCopy<T>(ret.data(), this->data(), this->count());
-    
-    BOOST_ASSERT(output == ret.data());
+    quickCopy<T>(ret.data(), this->data(), this->count());
     
     return ret;
 }
@@ -1360,9 +1360,7 @@ void PackedArray2D_Array<T>::update(const PackedArray2D_Array<T> &other)
     if (this->size() == 0)
         return;
 
-    T *output = quickCopy<T>(this->data(), other.data(), this->size());
-                            
-    BOOST_ASSERT( output == this->data() );
+    quickCopy<T>(this->data(), other.data(), this->size());
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
@@ -1439,9 +1437,7 @@ PackedArray2D<T>::PackedArray2D(const QVector<T> &values)
     dptr->close();
     
     //now copy all of the data
-    T *output = quickCopy(new_values, values.constData(), nvals);
-
-    BOOST_ASSERT( output == new_values );
+    quickCopy(new_values, values.constData(), nvals);
 }
 
 /** Construct from an array of arrays */
@@ -1490,9 +1486,7 @@ PackedArray2D<T>::PackedArray2D(const QVector<typename PackedArray2D<T>::Array> 
         const Array &array = arrays_data[i];
         const T *array_values = array.constData();
         
-        T *output = quickCopy<T>(values, array_values, array.count());
-        
-        BOOST_ASSERT( output == values );
+        quickCopy<T>(values, array_values, array.count());
         
         values += array.count();
     }
@@ -1546,9 +1540,7 @@ PackedArray2D<T>::PackedArray2D(const QVector< QVector<T> > &values)
 
         const T *array_values = array.constData();
         
-        T *output = quickCopy(values_array, array_values, array.count());
-        
-        BOOST_ASSERT( output == values_array );
+        quickCopy(values_array, array_values, array.count());
         
         values_array += array.count();
     }
@@ -1599,13 +1591,11 @@ PackedArray2D<T>::PackedArray2D(const PackedArray2D<T> &array0,
     //now copy all of the data
     T *values_array = dptr->valueData();
 
-    T *output = quickCopy(values_array, array0.constValueData(), array0.nValues());
-    BOOST_ASSERT( output == values_array );
+    quickCopy(values_array, array0.constValueData(), array0.nValues());
     
     values_array += array0.nValues();
     
-    output = quickCopy(values_array, array1.constValueData(), array1.nValues());
-    BOOST_ASSERT( output == values_array );
+    quickCopy(values_array, array1.constValueData(), array1.nValues());
 }
 
 /** Copy constructor */
@@ -1863,9 +1853,7 @@ QVector<T> PackedArray2D<T>::toQVector() const
         
     QVector<T> ret( this->nValues() );
     
-    T *output = quickCopy<T>(ret.data(), this->valueData(), this->nValues());
-    
-    BOOST_ASSERT(output == ret.data());
+    quickCopy<T>(ret.data(), this->valueData(), this->nValues());
     
     return ret;
 }
@@ -2106,6 +2094,38 @@ void PackedArray2D<T>::updateAll(const C &idxs, const PackedArray2D<T> &arrays)
     \throw SireError::incompatible_error
 */
 template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void PackedArray2D<T>::updateAll(const QVarLengthArray<int> &idxs, 
+                                 const PackedArray2D<T> &arrays)
+{
+    if (idxs.count() != arrays.count())
+        throw SireError::incompatible_error( QObject::tr(
+                "You cannot update the arrays because the number of indicies (%1) "
+                "is not equal to the number of arrays (%2).")
+                    .arg(idxs.count()).arg(arrays.count()), CODELOC );
+                
+    PackedArray2D<T> other(*this);
+    
+    const typename PackedArray2D<T>::Array *array = arrays.constData();
+    
+    for (int i=0; i<idxs.count(); ++i)
+    {
+        int idx = idxs.constData()[i];
+    
+        other.assertValidIndex(idx);
+        other.d->arrayData()[idx].update(array[i]);
+    }
+    
+    this->operator=(other);
+}
+
+/** Update the arrays whose indicies are in 'idxs' so that they have the
+    same contents as the passed arrays
+    
+    \throw SireError::invalid_index
+    \throw SireError::incompatible_error
+*/
+template<class T>
 template<class C>
 SIRE_OUTOFLINE_TEMPLATE
 void PackedArray2D<T>::updateAll(const C &idxs, const QVector< QVector<T> > &arrays)
@@ -2210,9 +2230,8 @@ void PackedArray2D<T>::remove(quint32 idx)
     {
         if (i != int_idx)
         {
-            T *output = quickCopy(values_array, array_data[i].constData(),
-                                  array_data[i].count());
-            BOOST_ASSERT( output == values_array );
+            quickCopy(values_array, array_data[i].constData(),
+                      array_data[i].count());
             
             values_array += array_data[i].count();
         }
@@ -2309,9 +2328,103 @@ void PackedArray2D<T>::removeAll(const C &idxs)
     {
         if (to_keep.constData()[i])
         {
-            T *output = quickCopy(values_array, array_data[i].constData(),
-                                  array_data[i].count());
-            BOOST_ASSERT( output == values_array );
+            quickCopy(values_array, array_data[i].constData(),
+                      array_data[i].count());
+            
+            values_array += array_data[i].count();
+        }
+    }
+    
+    d = new_d;
+}
+
+/** Remove all of the arrays at the specified indicies
+
+    \throw SireError::invalid_index
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void PackedArray2D<T>::removeAll(const QVarLengthArray<int> &idxs)
+{
+    if (idxs.isEmpty())
+        return;
+    
+    else if (idxs.count() == 1)
+    {
+        this->remove( idxs.constData()[0] );
+        return;
+    }
+    
+    QVector<bool> to_keep(this->nArrays(), true);
+    
+    for (int i=0; i<idxs.count(); ++i)
+    {
+        this->assertValidIndex( idxs.constData()[i] );
+        to_keep[ idxs.constData()[i] ] = false;
+    }
+    
+    quint32 narrays = 0;
+    
+    for (QVector<bool>::const_iterator it = to_keep.constBegin();
+         it != to_keep.constEnd();
+         ++it)
+    {
+        if (*it)
+            narrays += 1;
+    }
+    
+    if (narrays == 0)
+    {
+        this->operator=( PackedArray2D<T>() );
+        return;
+    }
+    
+    quint32 nvals = 0;
+    
+    const typename PackedArray2D<T>::Array *array_data = this->constData();
+    
+    for (int i=0; i<this->nArrays(); ++i)
+    {
+        if (to_keep.constData()[i])
+        {
+            nvals += array_data[i].count();
+        }
+    }
+    
+    if (nvals == 0)
+    {
+        this->operator=( PackedArray2D<T>() );
+        return;
+    }
+    
+    detail::SharedArray2DPtr< detail::PackedArray2DData<T> > new_d
+                                     = SireBase::detail::createArray<T>(narrays, nvals);
+    
+    detail::PackedArray2DData<T> *dptr = new_d.data();
+
+    int idx = 0;
+    
+    //dimension each packed array
+    for (int i=0; i<this->nArrays(); ++i)
+    {
+        if (to_keep.constData()[i])
+        {
+            dptr->setNValuesInArray(idx, array_data[i].count());
+            ++idx;
+        }
+    }
+    
+    dptr->close();
+    
+    //now copy all of the data
+    T *values_array = dptr->valueData();
+
+    for (int i=0; i<this->nArrays(); ++i)
+    {
+        if (to_keep.constData()[i])
+        {
+            quickCopy(values_array, array_data[i].constData(),
+                      array_data[i].count());
             
             values_array += array_data[i].count();
         }

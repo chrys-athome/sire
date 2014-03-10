@@ -80,7 +80,7 @@ using namespace SireUnits;
 // Implementation of PerturbationsTemplate
 //
 
-static RegisterMetaType<PerturbationsTemplate> r_pertstemplate;
+static RegisterMetaType<PerturbationsTemplate> r_pertstemplate(NO_ROOT);
 
 QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds,
                                       const PerturbationsTemplate &pertstemplate)
@@ -701,7 +701,7 @@ static int processVersionLine( QString& line)
 //
 // Implementation of PerturbationsLibrary
 //
-static const RegisterMetaType<PerturbationsLibrary> r_pertslibrary;
+static const RegisterMetaType<PerturbationsLibrary> r_pertslibrary(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds, 
@@ -896,188 +896,188 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
         line = ts.readLine();
 	line = line.simplified();
         QStringList words = line.split(" ", QString::SkipEmptyParts);
-	//qDebug() << line;
-	//qDebug() << words;
-	if ( words.length() < 1 )
-	  continue;
-	if ( line.startsWith("molecule") )
-	  {
-	    // create a new perturbations template
-	    PerturbationsTemplate pertstemplate = PerturbationsTemplate( words[1] );
-	    current = pertstemplate.getName();
-	    new_templates[current] = pertstemplate;
-	    continue;
-	  }
-	// atom data not using startswith to avoid catching up atomX when dealing with dofs
-	if ( words[0] == "atom")
-	  {
-	    atname = "";
-	    atchargeinit = 0 * mod_electron;
-	    atchargefinal = 0 * mod_electron;
-	    atsigmainit = 0 * angstrom;
-	    atsigmafinal = 0 * angstrom;
-	    atepsiloninit = 0 * kcal_per_mol;
-	    atepsilonfinal = 0 * kcal_per_mol;
-	    attypeinit = " ";
-	    attypefinal = " ";
-	    inatom = true;
-	    continue;
-	  }
-	if (line.startsWith("name") and inatom)
-	  {
-	    atname = words[1];
-	    continue;
-	  }
-	if (line.startsWith("initial_charge") and inatom)
-	  {
-	    atchargeinit = words[1].toDouble() * mod_electron;
-	    continue;
-	  }
-	if (line.startsWith("final_charge") and inatom)
-	  {
-	    atchargefinal = words[1].toDouble() * mod_electron;
-	    continue;
-	  }
-	if (line.startsWith("initial_LJ") and inatom)
-	  {
-	    atsigmainit = words[1].toDouble() * angstrom;
-	    atepsiloninit = words[2].toDouble() * kcal_per_mol;
-	    continue;
-	  }
-	if (line.startsWith("final_LJ") and inatom)
-	  {
-	    atsigmafinal = words[1].toDouble() * angstrom;
-	    atepsilonfinal = words[2].toDouble() * kcal_per_mol;
-	    continue;
-	  }	
-	if (line.startsWith("initial_type") and inatom)
-	  {
-	    attypeinit = words[1];
-	    continue;
-	  }
-	if (line.startsWith("final_type") and inatom)
-	  {
-	    attypefinal = words[1];
-	    continue;
-	  }
-	if (line.startsWith("endatom") )
-	  {
-	    inatom = false;
-	    //qDebug() << atname << atchargeinit.toString() << atchargefinal.toString() << atsigmainit.toString();
-	    new_templates[current].setInitCharge(atname, atchargeinit);
-	    new_templates[current].setFinalCharge(atname, atchargefinal);
-	    LJParameter ljinit = LJParameter(atsigmainit, atepsiloninit);
-	    new_templates[current].setInitLJ(atname, ljinit);
-	    LJParameter ljfinal = LJParameter(atsigmafinal, atepsilonfinal);
-	    new_templates[current].setFinalLJ(atname, ljfinal);
-	    new_templates[current].setInitType(atname, attypeinit);
-	    new_templates[current].setFinalType(atname, attypefinal);
-	    continue;
-	  }
-	// bond data
-	if ( line.startsWith("bond") )
-	  {
-	    inbond = true;
-	    atom0 = " ";
-	    atom1 = " ";
-	    ki = 0.0;
-	    ri = 0.0;
-	    kf = 0.0;
-	    rf = 0.0;
-	    continue;
-	  }
-	// angle data
-	if ( line.startsWith("angle") )
-	  {
-	    inangle = true;
-	    atom0 = " ";
-	    atom1 = " ";
-	    atom2 = " ";
-	    ki = 0.0;
-	    ri = 0.0;
-	    kf = 0.0;
-	    rf = 0.0;
-	    continue;
-	  }
-	// dihedral and improper are the same since we only deal with force field parameters
-	if ( line.startsWith("dihedral") or line.startsWith("improper") )
-	  {
-	    indihedral = true;
-	    atom0 = " ";
-	    atom1 = " " ;
-	    atom2 = " ";
-	    atom3 = " ";
-	    
-	    init_form.clear();
-	    final_form.clear();
+        //qDebug() << line;
+        //qDebug() << words;
+        if ( words.count() < 1 )
+            continue;
+        if ( line.startsWith("molecule") )
+        {
+            // create a new perturbations template
+            PerturbationsTemplate pertstemplate = PerturbationsTemplate( words[1] );
+            current = pertstemplate.getName();
+            new_templates[current] = pertstemplate;
+            continue;
+        }
+        // atom data not using startswith to avoid catching up atomX when dealing with dofs
+        if ( words[0] == "atom")
+        {
+            atname = "";
+            atchargeinit = 0 * mod_electron;
+            atchargefinal = 0 * mod_electron;
+            atsigmainit = 0 * angstrom;
+            atsigmafinal = 0 * angstrom;
+            atepsiloninit = 0 * kcal_per_mol;
+            atepsilonfinal = 0 * kcal_per_mol;
+            attypeinit = " ";
+            attypefinal = " ";
+            inatom = true;
+            continue;
+        }
+        if (line.startsWith("name") and inatom)
+        {
+            atname = words[1];
+            continue;
+        }
+        if (line.startsWith("initial_charge") and inatom)
+        {
+            atchargeinit = words[1].toDouble() * mod_electron;
+            continue;
+        }
+        if (line.startsWith("final_charge") and inatom)
+        {
+            atchargefinal = words[1].toDouble() * mod_electron;
+            continue;
+        }
+        if (line.startsWith("initial_LJ") and inatom)
+        {
+            atsigmainit = words[1].toDouble() * angstrom;
+            atepsiloninit = words[2].toDouble() * kcal_per_mol;
+            continue;
+        }
+        if (line.startsWith("final_LJ") and inatom)
+        {
+            atsigmafinal = words[1].toDouble() * angstrom;
+            atepsilonfinal = words[2].toDouble() * kcal_per_mol;
+            continue;
+        }
+        if (line.startsWith("initial_type") and inatom)
+        {
+            attypeinit = words[1];
+            continue;
+        }
+        if (line.startsWith("final_type") and inatom)
+        {
+            attypefinal = words[1];
+            continue;
+        }
+        if (line.startsWith("endatom") )
+        {
+            inatom = false;
+            //qDebug() << atname << atchargeinit.toString() << atchargefinal.toString() << atsigmainit.toString();
+            new_templates[current].setInitCharge(atname, atchargeinit);
+            new_templates[current].setFinalCharge(atname, atchargefinal);
+            LJParameter ljinit = LJParameter(atsigmainit, atepsiloninit);
+            new_templates[current].setInitLJ(atname, ljinit);
+            LJParameter ljfinal = LJParameter(atsigmafinal, atepsilonfinal);
+            new_templates[current].setFinalLJ(atname, ljfinal);
+            new_templates[current].setInitType(atname, attypeinit);
+            new_templates[current].setFinalType(atname, attypefinal);
+            continue;
+        }
+        // bond data
+        if ( line.startsWith("bond") )
+        {
+            inbond = true;
+            atom0 = " ";
+            atom1 = " ";
+            ki = 0.0;
+            ri = 0.0;
+            kf = 0.0;
+            rf = 0.0;
+            continue;
+        }
+        // angle data
+        if ( line.startsWith("angle") )
+        {
+            inangle = true;
+            atom0 = " ";
+            atom1 = " ";
+            atom2 = " ";
+            ki = 0.0;
+            ri = 0.0;
+            kf = 0.0;
+            rf = 0.0;
+            continue;
+        }
+        // dihedral and improper are the same since we only deal with force field parameters
+        if ( line.startsWith("dihedral") or line.startsWith("improper") )
+        {
+            indihedral = true;
+            atom0 = " ";
+            atom1 = " " ;
+            atom2 = " ";
+            atom3 = " ";
+
+            init_form.clear();
+            final_form.clear();
             init_pot = Expression(0);
             final_pot = Expression(0);
 
-	    continue;
-	  }
-	if ( line.startsWith("atom0") and ( inbond or inangle or indihedral) )
-	  {
-	    atom0 = words[1];
-	    continue;
-	  }
-	if ( line.startsWith("atom1") and ( inbond or inangle or indihedral) )
-	  {
-	    atom1 = words[1];
-	    continue;
-	  }
-	if ( line.startsWith("atom2") and ( inangle or indihedral) )
-	  {
-	    atom2 = words[1];
-	    continue;
-	  }
-	if ( line.startsWith("atom3") and indihedral )
-	  {
-	    atom3 = words[1];
-	    continue;
-	  }
-	if ( line.startsWith("initial_force") and ( inbond or inangle ) )
-	  {
-	    ki = words[1].toDouble();
-	    continue;
-	  }
-	if ( line.startsWith("final_force") and ( inbond or inangle ) )
-	  {
-	    kf = words[1].toDouble();
-	    continue;
-	  }
-	if ( line.startsWith("initial_equil") and ( inbond or inangle ) )
-	  {
-	    ri = words[1].toDouble();
-	    continue;
-	  }
-	if ( line.startsWith("final_equil") and ( inbond or inangle ) )
-	  {
-	    rf = words[1].toDouble();
-	    continue;
-	  }
-	if ( line.startsWith("initial_form") and indihedral )
-	  {
-	    for (int i=1 ; i < words.length() ; i++)
-	      {
-		double parameter = words[i].toDouble();
-		init_form.append(parameter);
-	      }
-	    continue;
-	  }
-	if ( line.startsWith("final_form") and indihedral )
-	  {
-	    for (int i=1 ; i < words.length() ; i++)
-	      {
-		double parameter = words[i].toDouble();
-		final_form.append(parameter);
-	      }
-	    continue;
-	  }	
-	// IMPROPERS NOT PARSED FROM THE PERT FILE
-	if ( line.startsWith("initial_expression") and indihedral )
-	  {
-	    QByteArray b = words[1].toAscii();
-	    QByteArray b2 = QByteArray::fromBase64(b);
+            continue;
+        }
+        if ( line.startsWith("atom0") and ( inbond or inangle or indihedral) )
+        {
+            atom0 = words[1];
+            continue;
+        }
+        if ( line.startsWith("atom1") and ( inbond or inangle or indihedral) )
+        {
+            atom1 = words[1];
+            continue;
+        }
+        if ( line.startsWith("atom2") and ( inangle or indihedral) )
+        {
+            atom2 = words[1];
+            continue;
+        }
+        if ( line.startsWith("atom3") and indihedral )
+        {
+            atom3 = words[1];
+            continue;
+        }
+        if ( line.startsWith("initial_force") and ( inbond or inangle ) )
+        {
+            ki = words[1].toDouble();
+            continue;
+        }
+        if ( line.startsWith("final_force") and ( inbond or inangle ) )
+        {
+            kf = words[1].toDouble();
+            continue;
+        }
+        if ( line.startsWith("initial_equil") and ( inbond or inangle ) )
+        {
+            ri = words[1].toDouble();
+            continue;
+        }
+        if ( line.startsWith("final_equil") and ( inbond or inangle ) )
+        {
+            rf = words[1].toDouble();
+            continue;
+        }
+        if ( line.startsWith("initial_form") and indihedral )
+        {
+            for (int i=1 ; i < words.count() ; i++)
+            {
+                double parameter = words[i].toDouble();
+                init_form.append(parameter);
+            }
+            continue;
+        }
+        if ( line.startsWith("final_form") and indihedral )
+        {
+            for (int i=1 ; i < words.count() ; i++)
+            {
+                double parameter = words[i].toDouble();
+                final_form.append(parameter);
+            }
+            continue;
+        }
+        // IMPROPERS NOT PARSED FROM THE PERT FILE
+        if ( line.startsWith("initial_expression") and indihedral )
+        {
+            QByteArray b = words[1].toUtf8();
+            QByteArray b2 = QByteArray::fromBase64(b);
 
 	    init_pot = SireStream::loadType<Expression>(b2);
 
@@ -1085,7 +1085,7 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	  }
 	if ( line.startsWith("final_expression") and indihedral )
 	  {
-            QByteArray b = words[1].toAscii();
+            QByteArray b = words[1].toUtf8();
             QByteArray b2 = QByteArray::fromBase64(b);
 
             final_pot = SireStream::loadType<Expression>(b2);

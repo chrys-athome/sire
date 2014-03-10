@@ -44,7 +44,7 @@ using namespace SireMol;
 using namespace SireVol;
 using namespace SireStream;
 
-static const RegisterMetaType<CloseMols> r_closemols;
+static const RegisterMetaType<CloseMols> r_closemols(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const CloseMols &closemols)
@@ -394,7 +394,7 @@ CloseMols::CloseMols(const PointRef &point, const MoleculeGroup &mgroup,
           : p(point), molgroup(mgroup), nclosest(nclose), 
             map(propmap), cutoff_dist2(0)
 {
-    if (nclosest < 0)
+    if (nclose < 0)
         nclosest = 0;
     
     if (p.read().usesMoleculesIn(mgroup))
@@ -412,7 +412,7 @@ CloseMols::CloseMols(const PointRef &point, const MoleculeGroup &mgroup,
           : p(point), molgroup(mgroup), spce(space), nclosest(nclose), 
             map(propmap), cutoff_dist2(0)
 {
-    if (nclosest < 0)
+    if (nclose < 0)
         nclosest = 0;
     
     if (p.read().usesMoleculesIn(mgroup))

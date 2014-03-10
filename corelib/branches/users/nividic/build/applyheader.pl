@@ -2,7 +2,7 @@
 
 $tmpdir = "/tmp";
 
-$templatefile = "templates/header";
+$templatefile = "build/templates/header";
 
 sub readTemplate
 {

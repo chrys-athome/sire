@@ -251,18 +251,6 @@ void QMMMFF::mustNowRecalculateFromScratch()
 {
     G2FF::setDirty();
 }
-void QMMMFF::energy(EnergyTable &energytable, double scale_energy)
-{
-    throw SireError::incomplete_code( QObject::tr(
-            "QMMMFF does not yet support energy calculations!"), CODELOC );
-}
-
-void QMMMFF::energy(EnergyTable &energytable, const Symbol &symbol,
-                           double scale_energy)
-{
-    throw SireError::incomplete_code( QObject::tr(
-            "QMMMFF does not yet support energy calculations!"), CODELOC );
-}
 
 /** Calculate the QM/MM forces on the molecules in this forcefield
     and add the results to the forces for the molecules contained

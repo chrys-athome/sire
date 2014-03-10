@@ -36,6 +36,7 @@
 #include <QList>
 #include <QSet>
 #include <QHash>
+#include <QMultiHash>
 #include <QMap>
 
 #ifndef GCCXML_PARSE
@@ -178,6 +179,22 @@ QString qstr(const QHash<S,T> &objs)
     QStringList strngs;
     
     for (typename QHash<S,T>::const_iterator it = objs.begin();
+         it != objs.end();
+         ++it)
+    {
+        strngs.append( QString(" %1 : %2").arg( qstr(it.key()), qstr(it.value()) ) );
+    }
+    
+    return QString("{ %1 }").arg( strngs.join(","));
+}
+
+/** Used to return a string representation of a QMultiHash */
+template<class S, class T>
+QString qstr(const QMultiHash<S,T> &objs)
+{
+    QStringList strngs;
+    
+    for (typename QMultiHash<S,T>::const_iterator it = objs.begin();
          it != objs.end();
          ++it)
     {

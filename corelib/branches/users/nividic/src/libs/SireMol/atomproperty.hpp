@@ -72,6 +72,7 @@ typedef AtomProperty<double>   AtomFloatProperty;
 typedef AtomProperty<QVariant> AtomVariantProperty;
 
 using SireBase::Property;
+using SireBase::PropertyPtr;
 using SireBase::PackedArray2D;
 
 /** Small class used to give a common base to all
@@ -97,6 +98,10 @@ public:
     virtual AtomVariantProperty toVariant() const=0;
     
     virtual void assertCanConvert(const QVariant &value) const=0;
+
+    virtual PropertyPtr merge(const MoleculeInfoData &molinfo) const=0;
+    virtual PropertyPtr divide(const QVector<AtomSelection> &beads) const=0;
+    virtual PropertyPtr divideByResidue(const MoleculeInfoData &molinfo) const=0;
 
 protected:
     void throwIncorrectNumberOfAtoms(int nats, int ntotal) const;
@@ -191,6 +196,10 @@ public:
 
     QVector<T> toVector() const;
     QVector<T> toVector(const AtomSelection &selection) const;
+
+    PropertyPtr merge(const MoleculeInfoData &molinfo) const;
+    PropertyPtr divide(const QVector<AtomSelection> &beads) const;
+    PropertyPtr divideByResidue(const MoleculeInfoData &molinfo) const;
     
     void copyFrom(const QVector<T> &values);
     void copyFrom(const QVector<T> &values, const AtomSelection &selection);
@@ -928,6 +937,107 @@ AtomProperty<T> AtomProperty<T>::matchToSelection(
         
         return AtomProperty<T>(new_props);
     }
+}
+
+/** Merge all of the atomic properties into a single array, with 
+    the properties arranged in AtomIdx order */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+PropertyPtr AtomProperty<T>::merge(const MoleculeInfoData &moldata) const
+{
+    this->assertCompatibleWith(moldata);
+
+    QVector<T> vals( moldata.nAtoms() );
+    
+    T *vals_array = vals.data();
+    
+    for (AtomIdx i(0); i<moldata.nAtoms(); ++i)
+    {
+        vals_array[i] = this->at( moldata.cgAtomIdx(i) );
+    }
+    
+    return AtomProperty<T>(vals);
+}
+
+/** Divide the AtomProperty into beads according to the passed atom selections,
+    and returning the properties in AtomIdx order within each bead
+    
+    \throw SireError::incompatible_error
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+PropertyPtr AtomProperty<T>::divide(const QVector<AtomSelection> &beads) const
+{
+    if (beads.isEmpty())
+        return PropertyPtr();
+
+    const int nbeads = beads.count();
+    const AtomSelection *beads_array = beads.constData();
+
+    QVector< QVector<T> > bead_vals(nbeads);
+    QVector<T> *bead_vals_array = bead_vals.data();
+    
+    for (int i=0; i<nbeads; ++i)
+    {
+        const AtomSelection &bead = beads_array[i];
+        
+        bead.assertCompatibleWith<T>(*this);
+        
+        QVector<T> vals( bead.nSelected() );
+        T *vals_array = vals.data();
+        
+        if (bead.selectedAll())
+        {
+            for (AtomIdx j(0); j<bead.nSelected(); ++j)
+            {
+                vals_array[j] = this->at( bead.info().cgAtomIdx(j) );
+            }
+        }
+        else
+        {
+            foreach (const AtomIdx &j, bead.selectedAtoms())
+            {
+                *vals_array = this->at( bead.info().cgAtomIdx(j) );
+                ++vals_array;
+            }
+        }
+        
+        bead_vals_array[i] = vals;
+    }
+    
+    return AtomProperty<T>(bead_vals);
+}
+
+/** Divide the properties into residues. This returns the values in 
+    Residue/Index order
+
+    \throw SireError::incompatible_error
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+PropertyPtr AtomProperty<T>::divideByResidue(const MoleculeInfoData &molinfo) const
+{
+    this->assertCompatibleWith(molinfo);
+    
+    QVector< QVector<T> > res_vals( molinfo.nResidues() );
+    QVector<T> *res_vals_array = res_vals.data();
+    
+    for (ResIdx i(0); i<molinfo.nResidues(); ++i)
+    {
+        const int nats = molinfo.nAtoms(i);
+        
+        QVector<T> vals(nats);
+        T *vals_array = vals.data();
+        
+        for (int j=0; j<nats; ++j)
+        {
+            vals_array[j] = this->at( molinfo.cgAtomIdx(molinfo.getAtom(i,j)) );
+        }
+        
+        res_vals_array[i] = vals;
+    }
+    
+    return AtomProperty<T>(res_vals);
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS

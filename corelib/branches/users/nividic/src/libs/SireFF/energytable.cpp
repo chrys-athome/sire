@@ -50,7 +50,7 @@ using namespace SireStream;
 ///////// Implementation of MolEnergyTable
 /////////
 
-static const RegisterMetaType<MolEnergyTable> r_molenergytable;
+static const RegisterMetaType<MolEnergyTable> r_molenergytable(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
@@ -894,7 +894,7 @@ const char* MolEnergyTable::typeName()
 //////// Implementation of EnergyTable
 ////////
 
-static const RegisterMetaType<EnergyTable> r_forcetable;
+static const RegisterMetaType<EnergyTable> r_forcetable(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,

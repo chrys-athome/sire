@@ -313,7 +313,7 @@ Promise Node::startJob(const WorkPacket &workpacket, bool autodelete)
             "You cannot start a new job on a homeless Node (%1). "
             "Add this node to a Nodes scheduler object before you "
             "try to run this job again.")
-                .arg(this->UID()), CODELOC );
+                .arg(this->UID().toString()), CODELOC );
         
     //start the job
     d->frontend.startJob(workpacket);

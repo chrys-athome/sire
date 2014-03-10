@@ -54,17 +54,20 @@ using namespace SireStream;
 
 namespace SireFF
 {
-    template class AtomicParameters3D<Element>;
-    template class FFMolecule3D<QMPotential>;
-    template class FFMolecules3D<QMPotential>;
-    template class ChangedMolecule<QMPotential::Molecule>;
+    namespace detail
+    {
+        template class AtomicParameters3D<Element>;
+        template class FFMolecule3D<QMPotential>;
+        template class FFMolecules3D<QMPotential>;
+        template class ChangedMolecule<QMPotential::Molecule>;
+    }
 }
 
 /////////
 ///////// Implementation of QMComponent
 /////////
 
-static const RegisterMetaType<QMComponent> r_qmcomp;
+static const RegisterMetaType<QMComponent> r_qmcomp(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const QMComponent &qmcomp)
@@ -138,7 +141,7 @@ QString ElementParameterName::element_param("element");
 ///////// Implementation of QMPotential
 /////////
 
-static const RegisterMetaType<QMPotential> r_qmpot( MAGIC_ONLY,
+static const RegisterMetaType<QMPotential> r_qmpot( MAGIC_ONLY, NO_ROOT,
                                                     "Squire::QMPotential" );
                                                     
 /** Serialise to a binary datastream */

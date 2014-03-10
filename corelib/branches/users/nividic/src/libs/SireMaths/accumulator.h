@@ -114,6 +114,8 @@ protected:
     bool operator==(const Accumulator &other) const;
     bool operator!=(const Accumulator &other) const;
 
+    void add(int nsteps);
+
 private:
     /** The number of values that have been accumulated */
     quint32 nvalues;
@@ -173,6 +175,9 @@ public:
     bool operator==(const Average &other) const;
     bool operator!=(const Average &other) const;
     
+    Average operator+(const Average &other) const;
+    Average& operator+=(const Average &other);
+    
     void clear();
     
     void accumulate(double value);
@@ -207,6 +212,9 @@ public:
     
     AverageAndStddev& operator=(const AverageAndStddev &other);
     
+    AverageAndStddev operator+(const AverageAndStddev &other) const;
+    AverageAndStddev& operator+=(const AverageAndStddev &other);
+    
     static const char* typeName();
     
     bool operator==(const AverageAndStddev &other) const;
@@ -220,6 +228,9 @@ public:
     double standardDeviation() const;
 
     double meanOfSquares() const;
+    
+    double standardError() const;
+    double standardError(int level) const;
     
 private:
     /** The current average of the squares */
@@ -253,6 +264,9 @@ public:
     
     ExpAverage& operator=(const ExpAverage &other);
     
+    ExpAverage operator+(const ExpAverage &other) const;
+    ExpAverage& operator+=(const ExpAverage &other);
+    
     static const char* typeName();
     
     bool operator==(const ExpAverage &other) const;
@@ -263,6 +277,7 @@ public:
     void accumulate(double value);
 
     double average() const;
+    double average2() const;
 
     operator double() const;
 
@@ -272,6 +287,9 @@ protected:
 private:
     /** The intermediate in the average calculation */
     double avgval;
+    
+    /** The average of the squared value in the calculation */
+    double avgval2;
     
     /** The scaling factor */
     double sclfac;
@@ -406,6 +424,14 @@ SIRE_EXPOSE_CLASS( SireMaths::Median )
 SIRE_EXPOSE_CLASS( SireMaths::RecordValues )
 
 SIRE_EXPOSE_PROPERTY( SireMaths::AccumulatorPtr, SireMaths::Accumulator )
+
+SIRE_EXPOSE_ALIAS( SireBase::Array2D<SireBase::PropPtr<SireMaths::Accumulator> >, 
+                   SireBase::Array2D_SireMaths_AccumulatorPtr_ )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+#include "SireBase/array2d.hpp"
+template class SireBase::Array2D<SireMaths::AccumulatorPtr>;
+#endif
 
 SIRE_END_HEADER
 

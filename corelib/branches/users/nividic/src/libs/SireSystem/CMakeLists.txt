@@ -20,8 +20,11 @@ set ( SIRESYSTEM_HEADERS
       delta.h
       dihedralcomponent.h
       distancecomponent.h
+      energymonitor.h
       errors.h
+      freeenergymonitor.h
       geometrycomponent.h
+      idassigner.h
       identityconstraint.h
       moleculeconstraint.h
       monitorcomponent.h
@@ -34,7 +37,6 @@ set ( SIRESYSTEM_HEADERS
       monitorproperty.h
       perturbationconstraint.h
       polarisecharges.h
-      rdfmonitor.h
       spacewrapper.h
       sysid.h
       sysidentifier.h
@@ -59,8 +61,11 @@ set ( SIRESYSTEM_SOURCES
       delta.cpp
       dihedralcomponent.cpp
       distancecomponent.cpp
+      energymonitor.cpp
       errors.cpp
+      freeenergymonitor.cpp
       geometrycomponent.cpp
+      idassigner.cpp
       identityconstraint.cpp
       moleculeconstraint.cpp
       monitorcomponent.cpp
@@ -71,7 +76,6 @@ set ( SIRESYSTEM_SOURCES
       monitorproperty.cpp
       perturbationconstraint.cpp
       polarisecharges.cpp
-      rdfmonitor.cpp
       spacewrapper.cpp
       sysid.cpp
       sysidentifier.cpp

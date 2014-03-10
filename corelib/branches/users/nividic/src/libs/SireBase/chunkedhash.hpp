@@ -248,7 +248,7 @@ private:
     QVector< QHash<Key,T> > _chunks;
     
     /** The index of the chunk that contains a particular key */
-    QHash<Key,quint32> key_to_chunkidx;
+    QHash<Key,qint32> key_to_chunkidx;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -889,10 +889,10 @@ typename ChunkedHash<Key,T,N>::iterator ChunkedHash<Key,T,N>::begin()
     it.chunks = &_chunks;
     it.current_chunk = 0;
 
-    quint32 nchunks = _chunks.count();
+    qint32 nchunks = _chunks.count();
     QHash<Key,T> *chunks_array = _chunks.data();
 
-    for (quint32 i=0; i<nchunks; ++i)
+    for (qint32 i=0; i<nchunks; ++i)
     {
         if (chunks_array[i].count() != 0)
         {
@@ -918,10 +918,10 @@ typename ChunkedHash<Key,T,N>::const_iterator ChunkedHash<Key,T,N>::begin() cons
     it.chunks = &_chunks;
     it.current_chunk = 0;
 
-    quint32 nchunks = _chunks.count();
+    qint32 nchunks = _chunks.count();
     const QHash<Key,T> *chunks_array = _chunks.constData();
    
-    for (quint32 i=0; i<nchunks; ++i)
+    for (qint32 i=0; i<nchunks; ++i)
     {
         if (chunks_array[i].count() != 0)
         {
@@ -1352,7 +1352,7 @@ template<class Key, class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 const T ChunkedHash<Key,T,N>::value(const Key &key) const
 {
-    int idx = key_to_chunkidx.value(-1);
+    int idx = key_to_chunkidx.value(key, -1);
     
     if (idx == -1)
         return T();
@@ -1456,7 +1456,7 @@ SIRE_OUTOFLINE_TEMPLATE
 QDataStream& operator<<(QDataStream &ds, const SireBase::ChunkedHash<Key,T,N> &hash)
 {
     //this streams out the data using the same format as QHash
-    ds << quint32( hash.count() );
+    ds << qint32( hash.count() );
     
     for (typename SireBase::ChunkedHash<Key,T,N>::const_iterator it = hash.constBegin();
          it != hash.constEnd();
@@ -1474,14 +1474,14 @@ SIRE_OUTOFLINE_TEMPLATE
 QDataStream& operator>>(QDataStream &ds, SireBase::ChunkedHash<Key,T,N> &hash)
 {
     //this reads in using the same format as QHash
-    quint32 count;
+    qint32 count;
     
     ds >> count;
     
     hash.clear();
     hash.reserve(count);
     
-    for (quint32 i=0; i<count; ++i)
+    for (qint32 i=0; i<count; ++i)
     {
         Key key;
         T value;

@@ -238,13 +238,6 @@ public:
                          InterSoftCLJPotential::EnergyWorkspace &workspace,
                          double scale_energy=1) const;
 
-    void calculateEnergy(const InterSoftCLJPotential::Molecule &mol0, 
-                         const InterSoftCLJPotential::Molecule &mol1,
-			 MolEnergyTable &energies0,
-                         InterSoftCLJPotential::EnergyWorkspace &workspace,
-                         double scale_energy=1) const;
-
-
     void calculateForce(const InterSoftCLJPotential::Molecule &mol0, 
                         const InterSoftCLJPotential::Molecule &mol1,
                         MolForceTable &forces0,
@@ -496,6 +489,7 @@ private:
                                    double scale_potential) const;
 };
 
+
 /** This class provides the functions and containers necessary to provide an interface to 
     calculate the intramolecular interaction potentials using soft Coulomb and Lennard Jones functions. 
     This is a 3D potential class, namely it requires that
@@ -529,8 +523,8 @@ private:
                                used to scale the intramolecular coulomb and LJ
                                energies, must be a property of type CLJNBPairs
 
-    @author Julien Michel */
-
+    @author Julien Michel 
+*/
 class SIREMM_EXPORT IntraSoftCLJPotential : public SoftCLJPotential
 {
   friend QDataStream& ::operator<<(QDataStream&, const IntraSoftCLJPotential&);
@@ -606,7 +600,6 @@ public:
     IntraSoftCLJPotential::Molecules 
     parameterise(const MoleculeGroup &molecules,
                  const PropertyMap &map = PropertyMap());
-
 
     void calculateEnergy(const IntraSoftCLJPotential::Molecule &mol,
 			 IntraSoftCLJPotential::Energy &energy,
@@ -755,7 +748,6 @@ private:
 			      const quint32 nats0, const quint32 nats1,
 			      double icnrg[], double iljnrg[],
 			      const double alfa[], double delta[], const int nalpha) const;
-
 };
 
 /** This small class is used to hide most of the public interfaces of the 
@@ -874,16 +866,6 @@ InterSoftCLJPotential::calculateEnergy(const InterSoftCLJPotential::Molecule &mo
     }
 }
 
-inline void 
-InterSoftCLJPotential::calculateEnergy(const InterSoftCLJPotential::Molecule &mol0,
-                                       const InterSoftCLJPotential::Molecule &mol1,
-				       MolEnergyTable &energies0,
-                                       InterSoftCLJPotential::EnergyWorkspace &workspace,
-                                       double scale_energy) const
-{
-    throw SireError::incomplete_code( QObject::tr(
-            "InterSoftCLJPotential does not yet support this energy calculations!"), CODELOC );
-}
 /** Calculate the coulomb and LJ forces on the atoms between the passed pair
     of molecules and add the forces on 'mol0' onto 'forces'. This uses
     the passed workspace to perform the calculation. The forces

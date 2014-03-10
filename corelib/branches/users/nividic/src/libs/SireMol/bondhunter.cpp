@@ -102,6 +102,83 @@ BondHunter::~BondHunter()
 {}
 
 /////////
+///////// Implementation of NullBondHunter
+/////////
+
+static const RegisterMetaType<NullBondHunter> r_nullhunter;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const NullBondHunter &hunter)
+{
+    writeHeader(ds, r_nullhunter, 1);
+    
+    ds << static_cast<const BondHunter&>(hunter);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, NullBondHunter &hunter)
+{
+    VersionID v = readHeader(ds, r_nullhunter);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<BondHunter&>(hunter);
+    }
+    else
+        throw version_error(v, "1", r_nullhunter, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+NullBondHunter::NullBondHunter() : ConcreteProperty<NullBondHunter,BondHunter>()
+{}
+
+/** Copy constructor */
+NullBondHunter::NullBondHunter(const NullBondHunter &other)
+               : ConcreteProperty<NullBondHunter,BondHunter>(other)
+{}
+
+/** Destructor */
+NullBondHunter::~NullBondHunter()
+{}
+
+const char* NullBondHunter::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NullBondHunter>() );
+}
+
+const char* NullBondHunter::what() const
+{
+    return NullBondHunter::typeName();
+}
+
+/** Return an empty connectivity object that is ready to be populated
+    by the passed molecule */
+Connectivity NullBondHunter::operator()(const MoleculeView &molview,
+                                        const PropertyMap &map) const
+{
+    return Connectivity(molview.data());
+}
+
+static SharedPolyPointer<NullBondHunter> shared_null;
+
+const NullBondHunter& BondHunter::null()
+{
+    if (shared_null.constData() == 0)
+    {
+        QMutexLocker lkr( SireBase::globalLock() );
+        
+        if (shared_null.constData() == 0)
+            shared_null = new NullBondHunter();
+    }
+    
+    return *(shared_null.constData());
+}
+
+/////////
 ///////// Implementation of CovalentBondHunter
 /////////
 
@@ -517,21 +594,6 @@ Connectivity CovalentBondHunter::operator()(const MoleculeView &molview,
     }
                                              
     return connectivity;
-}
-
-static SharedPolyPointer<CovalentBondHunter> shared_null;
-
-const CovalentBondHunter& BondHunter::null()
-{
-    if (shared_null.constData() == 0)
-    {
-        QMutexLocker lkr( SireBase::globalLock() );
-        
-        if (shared_null.constData() == 0)
-            shared_null = new CovalentBondHunter();
-    }
-    
-    return *(shared_null.constData());
 }
 
 const char* CovalentBondHunter::typeName()

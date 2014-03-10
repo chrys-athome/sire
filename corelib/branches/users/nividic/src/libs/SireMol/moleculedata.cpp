@@ -33,6 +33,8 @@
 #include "moleculeinfodata.h"
 #include "structureeditor.h"
 #include "moleculeview.h"
+#include "atomselection.h"
+#include "moleditor.h"
 
 #include "SireBase/incremint.h"
 
@@ -47,7 +49,7 @@ using namespace SireStream;
 using namespace SireMol;
 using namespace SireBase;
 
-static const RegisterMetaType<MoleculeData> r_moldata;
+static const RegisterMetaType<MoleculeData> r_moldata(NO_ROOT);
 
 /////////
 ///////// Implementation of MoleculeData::PropVersions
@@ -164,7 +166,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeData &moldata)
     return ds;
 }
 
-QHash< MolNum, boost::weak_ptr<MoleculeData::PropVersions> > 
+QHash< MolNum, boost::weak_ptr<MoleculeData::PropVersions> >
 MoleculeData::version_registry;
 
 QMutex MoleculeData::version_registry_mutex;
@@ -205,6 +207,27 @@ MoleculeData::registerMolecule(MolNum molnum)
     }
     
     return vrsns;
+}
+
+static Incremint last_registered_molnum(0);
+
+MolNum MoleculeData::createUniqueMolNum()
+{
+    QMutexLocker lkr(&version_registry_mutex);
+    
+    MolNum molnum( last_registered_molnum.increment() );
+    
+    while (version_registry.contains(molnum))
+    {
+        molnum = MolNum( last_registered_molnum.increment() );
+    }
+    
+    return molnum;
+}
+
+MolNum MolNum::getUniqueNumber()
+{
+    return MoleculeData::createUniqueMolNum();
 }
 
 /** Null constructor */
@@ -326,6 +349,79 @@ bool MoleculeData::operator==(const MoleculeData &other) const
 bool MoleculeData::operator!=(const MoleculeData &other) const
 {
     return molnum != other.molnum or vrsn != other.vrsn;
+}
+
+/** Return a new MoleculeData that contains only the passed selected
+    atoms. This allows parts of the molecule to be pulled out and used independently */
+MoleculeData MoleculeData::extract(const AtomSelection &selected_atoms) const
+{
+    selected_atoms.assertCompatibleWith(*this);
+    
+    if (selected_atoms.selectedAll())
+        return *this;
+    
+    else if (selected_atoms.selectedNone())
+        return MoleculeData();
+    
+    // edit a copy of this molecule
+    MolStructureEditor editor = MolStructureEditor( Molecule(*this) );
+    
+    // delete all of the atoms that don't exist
+    for (int i=molinfo->nAtoms()-1; i>=0; --i)
+    {
+        AtomIdx idx(i);
+        
+        if (not selected_atoms.selected(idx))
+        {
+            editor = editor.remove(idx);
+        }
+    }
+    
+    // delete all empty cutgroups
+    for (int i=molinfo->nCutGroups()-1; i>=0; --i)
+    {
+        CGIdx idx(i);
+        
+        if (not selected_atoms.selected(idx))
+        {
+            editor = editor.remove(idx);
+        }
+    }
+    
+    //delete all empty segments
+    for (int i=molinfo->nSegments()-1; i>=0; --i)
+    {
+        SegIdx idx(i);
+        
+        if (not selected_atoms.selected(idx))
+        {
+            editor = editor.remove(idx);
+        }
+    }
+    
+    //delete all empty chains
+    for (int i=molinfo->nChains()-1; i>=0; --i)
+    {
+        ChainIdx idx(i);
+        
+        if (not selected_atoms.selected(idx))
+        {
+            editor = editor.remove(idx);
+        }
+    }
+    
+    //delete all empty residues
+    for (int i=molinfo->nResidues()-1; i>=0; --i)
+    {
+        ResIdx idx(i);
+        
+        if (not selected_atoms.selected(idx))
+        {
+            editor = editor.remove(idx);
+        }
+    }
+    
+    return editor.commit().data();
 }
 
 /** Return the version number of the property at key 'key'.

@@ -115,6 +115,8 @@ public:
 
     AtomSelection selection() const;
     
+    PartialMolecule extract() const;
+    
     bool hasProperty(const PropertyName &key) const;
     
     bool hasMetadata(const PropertyName &metakey) const;

@@ -281,12 +281,6 @@ void TwoAtomFunctions::set(AtomIdx atom0, AtomIdx atom1, const Expression &expre
             "You cannot add a function that acts between the same atom! (%1)")
                 .arg(atm0), CODELOC );
 
-    if (atom0 < atom1)
-      qSwap(atom0,atom1);
-
-    this->clear(atom0, atom1);
-    this->clear(atom1, atom0);
-
     potentials_by_atoms.insert( IDPair(atm0,atm1), expression );
     AtomFunctions::addSymbols(expression.symbols());
 }
@@ -315,7 +309,13 @@ void TwoAtomFunctions::set(const AtomID &atom0, const AtomID &atom1,
 */
 void TwoAtomFunctions::set(const BondID &bondid, const Expression &expression)
 {
-  this->set( bondid.atom0(), bondid.atom1(), expression );
+    AtomIdx atom0 = info().atomIdx(bondid.atom0());
+    AtomIdx atom1 = info().atomIdx(bondid.atom1());
+    
+    this->clear(atom0, atom1);
+    this->clear(atom1, atom0);
+
+    this->set( atom0, atom1, expression );
 }
 
 /** Check if any of the symbols in 'symbols' need to be removed... */

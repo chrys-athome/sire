@@ -342,7 +342,7 @@ Process Process::run(const QString &command,  const QStringList &arguments)
         //process ID as this child
         setpgrp();
         
-        QByteArray cmd = command.toAscii();
+        QByteArray cmd = command.toUtf8();
         QList<QByteArray> args;
         char* char_args[ arguments.count() + 2 ];
         
@@ -350,7 +350,7 @@ Process Process::run(const QString &command,  const QStringList &arguments)
         
         for (int i=0; i<arguments.count(); ++i)
         {
-            args.append( arguments[i].toAscii() );
+            args.append( arguments[i].toUtf8() );
             char_args[i+1] = args[i].data();
         }
         
@@ -419,8 +419,8 @@ void Process::kill()
     //kill the job
     if (d->is_running)
     {
-        qDebug() << "Killing job " << d->command.toAscii().constData() 
-                 << d->arguments.join(" ").toAscii().constData();
+        qDebug() << "Killing job " << d->command.toUtf8().constData()
+                 << d->arguments.join(" ").toUtf8().constData();
         killpg(d->pid, SIGKILL);
     }
     

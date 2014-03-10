@@ -870,7 +870,7 @@ double Molpro::calculateEnergy(const QString &cmdfile, int ntries) const
             throw SireError::file_error(f, CODELOC);
    
         //write the command file
-        f.write( cmdfile.toAscii() );
+        f.write( cmdfile.toUtf8() );
         f.close();
     }
 
@@ -1126,7 +1126,7 @@ QHash<QString,double> Molpro::calculatePotential(const QString &cmdfile,
             throw SireError::file_error(f, CODELOC);
    
         //write the command file
-        f.write( cmdfile.toAscii() );
+        f.write( cmdfile.toUtf8() );
         f.close();
     }
 

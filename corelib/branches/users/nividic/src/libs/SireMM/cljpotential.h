@@ -89,7 +89,6 @@ using SireVol::CoordGroup;
 using SireMol::PartialMolecule;
 using SireMol::MoleculeGroup;
 
-using SireFF::MolEnergyTable;
 using SireFF::MolForceTable;
 using SireFF::MolFieldTable;
 using SireFF::MolPotentialTable;
@@ -385,12 +384,6 @@ public:
                          InterCLJPotential::EnergyWorkspace &workspace,
                          double scale_energy=1) const;
 
-    void calculateEnergy(const InterCLJPotential::Molecule &mol0, 
-                         const InterCLJPotential::Molecule &mol1,
-                         MolEnergyTable &energies0, 
-                         InterCLJPotential::EnergyWorkspace &workspace,
-                         double scale_energy=1) const;
-
     void calculateForce(const InterCLJPotential::Molecule &mol0, 
                         const InterCLJPotential::Molecule &mol1,
                         MolForceTable &forces0,
@@ -542,12 +535,6 @@ private:
     void _pvt_calculateEnergy(const InterCLJPotential::Molecule &mol0, 
                               const InterCLJPotential::Molecule &mol1,
                               InterCLJPotential::Energy &energy, 
-                              InterCLJPotential::EnergyWorkspace &workspace,
-                              double scale_energy) const;
-
-    void _pvt_calculateEnergy(const InterCLJPotential::Molecule &mol0, 
-                              const InterCLJPotential::Molecule &mol1,
-                              MolEnergyTable &energies0,
                               InterCLJPotential::EnergyWorkspace &workspace,
                               double scale_energy) const;
 
@@ -1222,31 +1209,10 @@ InterCLJPotential::calculateEnergy(const InterCLJPotential::Molecule &mol0,
                                    InterCLJPotential::EnergyWorkspace &workspace,
                                    double scale_energy) const
 {
-  //    qDebug() << " In InterCLJPotential::calculateEnergy(...line 1165";
-
     if (scale_energy != 0)// and 
        // not (mol0.isEmpty() or mol1.isEmpty()))
     {
         this->_pvt_calculateEnergy(mol0, mol1, energy, workspace, scale_energy);
-    }
-}
-
-/** Calculate the coulomb and LJ energy between the passed pair
-    of molecules and add these energies on mol0 onto energies. This uses
-    the passed workspace to perform the calculation */
-inline void 
-InterCLJPotential::calculateEnergy(const InterCLJPotential::Molecule &mol0,
-                                   const InterCLJPotential::Molecule &mol1,
-				   MolEnergyTable &energies0,
-                                   InterCLJPotential::EnergyWorkspace &workspace,
-                                   double scale_energy) const
-{
-  //    qDebug() << " In InterCLJPotential::calculateEnergy(...line 1182";
-
-    if (scale_energy != 0)// and 
-       // not (mol0.isEmpty() or mol1.isEmpty()))
-    {
-        this->_pvt_calculateEnergy(mol0, mol1, energies0, workspace, scale_energy);
     }
 }
 

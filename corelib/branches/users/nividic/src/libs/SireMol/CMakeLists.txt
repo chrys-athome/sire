@@ -14,7 +14,7 @@ set ( SIREMOL_HEADERS
       amberparameters.h
       angleid.h
       atom.h
-      atombeading.h
+      atombeads.h
       atomcharges.h
       atomcoords.h
       atomcutting.h
@@ -35,9 +35,14 @@ set ( SIREMOL_HEADERS
       atomselection.h
       atomsin.hpp
       atomvelocities.h
+      bead.h
+      beadeditor.h
       beadid.h
       beadidx.h
+      beading.h
       beadnum.h
+      beadproperty.hpp
+      beads.h
       bondhunter.h
       bondid.h
       calculateaxes.hpp
@@ -93,6 +98,7 @@ set ( SIREMOL_HEADERS
       molinfo.h
       molname.h
       molnum.h
+      molresid.h
       molviewproperty.h
       mover.h
       mover.hpp
@@ -130,7 +136,7 @@ set ( SIREMOL_HEADERS
 set ( SIREMOL_SOURCES
 
       register_siremol.cpp
-     
+
       amberparameters.cpp
       angleid.cpp
       atom.cpp
@@ -142,7 +148,12 @@ set ( SIREMOL_SOURCES
       atommatcher.cpp
       atomproperty.cpp
       atomselection.cpp
+      bead.cpp
+      beadeditor.cpp
       beadid.cpp
+      beading.cpp
+      beadproperty.cpp
+      beads.cpp
       bondhunter.cpp
       bondid.cpp
       cgatomidx.cpp
@@ -183,6 +194,7 @@ set ( SIREMOL_SOURCES
       moleditor.cpp
       molid.cpp
       molidentifier.cpp
+      molresid.cpp
       molviewproperty.cpp
       mover.cpp
       partialmolecule.cpp
@@ -221,7 +233,6 @@ target_link_libraries (SireMol
                        SireVol
                        SireCAS
                        SireID
-                       SireDB
                        SireStream
                        )
 

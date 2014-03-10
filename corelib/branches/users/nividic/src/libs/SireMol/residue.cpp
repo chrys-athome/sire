@@ -233,8 +233,8 @@ void Residue::update(const MoleculeData &moldata)
             "has a .info() object that has the same UID. You are "
             "trying to update residue %1 in molecule %2 with UID %3 "
             "with molecule %4 with UID %5.")
-                .arg(residx).arg(d->number()).arg(d->info().UID())
-                .arg(moldata.number()).arg(moldata.info().UID()),
+                .arg(residx).arg(d->number()).arg(d->info().UID().toString())
+                .arg(moldata.number()).arg(moldata.info().UID().toString()),
                     CODELOC );
     }
     

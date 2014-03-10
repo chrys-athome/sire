@@ -64,7 +64,7 @@ void MolViewProperty::assertCompatibleWith(const MoleculeInfoData &molinfo) cons
         throw SireError::incompatible_error( QObject::tr(
                 "The property of type %1 is incompatible with the layout "
                 "with UID %2")
-                    .arg(this->what()).arg(molinfo.UID()), CODELOC );
+                    .arg(this->what()).arg(molinfo.UID().toString()), CODELOC );
 }
 
 PropertyPtr MolViewProperty::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,

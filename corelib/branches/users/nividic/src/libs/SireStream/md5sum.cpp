@@ -32,6 +32,7 @@
 #include <QRegExp>
 #include <QFile>
 #include <QByteArray>
+#include <QDataStream>
 
 #include "ThirdParty/md5.h"      // CONDITIONAL_INCLUDE
 

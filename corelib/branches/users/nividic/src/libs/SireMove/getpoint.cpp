@@ -42,6 +42,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireMove;
 using namespace SireMol;
 using namespace SireMaths;
@@ -67,7 +69,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const GetPoint &getpoin
 QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, GetPoint &getpoint)
 {
     VersionID v = readHeader(ds, r_getpoint);
-    
+
     if (v == 1)
     {
         ds >> static_cast<Property&>(getpoint);

@@ -1553,9 +1553,13 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
                 
             else
                 pdbatom.resname = pdbresname[ residue.index() ];
-                
-            pdbatom.resseq = residue.number();
-            
+
+	    // JM May 11. PDB file format does not support more than 4 chars
+	    if ( residue.number() > 9999 )
+	      pdbatom.resseq = 9999;
+	    else
+	      pdbatom.resseq = residue.number();
+
             if (not icode.isEmpty())
                 pdbatom.icode = icode[ residue.index() ];
                 

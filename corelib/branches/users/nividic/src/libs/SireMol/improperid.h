@@ -176,7 +176,6 @@ public:
 private:
     /** The identifiers of the four atoms */
     AtomIdentifier atm0,atm1,atm2,atm3;
-
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -185,9 +184,8 @@ inline uint qHash(const ImproperID &improperid)
 {
     return improperid.hash();
 }
-
+ 
 #endif // SIRE_SKIP_INLINE_FUNCTIONS
-
 
 }
 

@@ -7,25 +7,39 @@
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+# This library uses Intel Threaded Building blocks
+include_directories(${TBB_INCLUDE_DIR})
+
 # Define the headers in SireMM
 set ( SIREMM_HEADERS
       anglerestraint.h
       atomfunctions.h
       atomljs.h
       atompairs.hpp
+      cljatoms.h
+      cljboxes.h
+      cljcalculator.h
       cljcomponent.h
+      cljdelta.h
+      cljfunction.h
+      cljgrid.h
+      cljparam.h
       cljpotential.h
       cljprobe.h
       cljnbpairs.h
+      cljshiftfunction.h
+      cljworkspace.h
       coulombpotential.h
       dihedralrestraint.h
       distancerestraint.h
       errors.h
-      fastintercljff.h
       fouratomfunctions.h
       gridff.h
+      gridff2.h
+      gridinfo.h
       intercljff.h
       intercoulombff.h
+      interff.h
       interljff.h
       internalcomponent.h
       internalff.h
@@ -48,6 +62,7 @@ set ( SIREMM_HEADERS
       softcljcomponent.h
       softcljpotential.h
       switchingfunction.h
+      testff.h
       threeatomfunctions.h
       twoatomfunctions.h
     )
@@ -60,22 +75,34 @@ set ( SIREMM_DETAIL_HEADERS
 set ( SIREMM_SOURCES
 
       register_siremm.cpp
+
       anglerestraint.cpp
       atomfunctions.cpp
       atomljs.cpp
+      cljatoms.cpp
+      cljboxes.cpp
+      cljcalculator.cpp
       cljcomponent.cpp
+      cljdelta.cpp
+      cljfunction.cpp
+      cljgrid.cpp
+      cljparam.cpp
       cljpotential.cpp
       cljprobe.cpp
       cljnbpairs.cpp
+      cljshiftfunction.cpp
+      cljworkspace.cpp
       coulombpotential.cpp
       dihedralrestraint.cpp
       distancerestraint.cpp
       errors.cpp
-      fastintercljff.cpp
       fouratomfunctions.cpp
       gridff.cpp
+      gridff2.cpp
+      gridinfo.cpp
       intercljff.cpp
       intercoulombff.cpp
+      interff.cpp
       interljff.cpp
       internalcomponent.cpp
       internalff.cpp
@@ -97,6 +124,7 @@ set ( SIREMM_SOURCES
       softcljcomponent.cpp
       softcljpotential.cpp
       switchingfunction.cpp
+      testff.cpp
       threeatomfunctions.cpp
       twoatomfunctions.cpp    
 
@@ -120,6 +148,8 @@ target_link_libraries (SireMM
                        SireMaths
                        SireUnits
                        SireStream
+                       ${TBB_LIBRARY}
+                       ${TBB_MALLOC_LIBRARY}
                        )
 
 # installation

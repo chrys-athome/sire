@@ -865,26 +865,16 @@ bool G1FF::group_update(quint32 i, const MoleculeData &moldata)
 {
     assertValidGroup(i);
 
-    FFMolGroupPvt old_state = molgroup;
-    
-    try
+    if (molgroup.update(moldata))
     {
-        if (molgroup.update(moldata))
-        {
-            this->_pvt_changed( Molecule(moldata) );
-            
-            FF::incrementVersion();
-            
-            return true;
-        }
+        this->_pvt_changed( Molecule(moldata) );
+        
+        FF::incrementVersion();
+        
+        return true;
     }
-    catch(...)
-    {
-        molgroup = old_state;
-        throw;
-    }
-    
-    return false;
+    else
+        return false;
 }
 
 /** Update this forcefield so that it uses the same version of the
@@ -1289,4 +1279,20 @@ void G1FF::setContents(const Molecules &molecules, const PropertyMap &map)
 void G1FF::setContents(const MoleculeGroup &group, const PropertyMap &map)
 {
     FF::setContents(MGIdx(0), group, map);
+}
+
+/** Return whether or not this forcefield is using temporary workspace that needs 
+    to be accepted */
+bool G1FF::needsAccepting() const
+{
+    return molgroup.needsAccepting();
+}
+
+/** Tell the forcefield that the last move was accepted. This tells the
+    forcefield to make permanent any temporary changes that were used a workspace
+    to avoid memory allocation during a move */
+void G1FF::accept()
+{
+    if (molgroup.needsAccepting())
+        molgroup.accept();
 }

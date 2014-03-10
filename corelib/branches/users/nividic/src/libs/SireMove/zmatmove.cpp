@@ -393,13 +393,19 @@ void ZMatMove::move(AtomIdx atom, ZMatrixCoords &zmatrix,
     // now that the bond, angle and dihedral delta have been evaluated,
     // change the zmatrix
     if (bonddelta.value() != 0)
+    {
         zmatrix.moveBond(atom, bonddelta);
+    }
     
     if (angledelta.value() != 0)
+    {
         zmatrix.moveAngle(atom, angledelta);
+    }
 
     if (dihedraldelta.value() != 0)
+    {
         zmatrix.moveDihedral(atom, dihedraldelta);
+    }
 }
 
 /** Actually perform 'nmoves' moves of the molecules in the 
@@ -501,11 +507,12 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
                 const PartialMolecule &oldmol = mol_and_bias.get<0>();
                 old_bias = mol_and_bias.get<1>();
 
-                ZMatrixCoords zmatrix( oldmol, map );
+                ZMatrixCoords zmatrix( oldmol.molecule(), map );
 
                 //move the internal coordinates of selected atoms in the 
                 //z-matrix
                 AtomSelection selected_atoms = oldmol.selection();
+                AtomCoords coords;
             
                 if (selected_atoms.selectedAll())
                 {
@@ -517,6 +524,8 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
                     {
                         this->move(it.key(), zmatrix, saved_deltas);
                     }
+                    
+                    coords = zmatrix.toCartesian();
                 }
                 else
                 {
@@ -527,15 +536,37 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
                          ++it)
                     {
                         if (selected_atoms.selected(it.key()))
+                        {
                             this->move(it.key(), zmatrix, saved_deltas);
+                        }
                     }
+                    
+                    AtomCoords oldcoords = oldmol.property(map["coordinates"]).asA<AtomCoords>();
+                    AtomCoords newcoords = zmatrix.toCartesian();
+                    
+                    foreach (CGIdx cgidx, selected_atoms.selectedCutGroups())
+                    {
+                        if (selected_atoms.selectedAll(cgidx))
+                        {
+                            oldcoords = oldcoords.set(cgidx, newcoords[cgidx]);
+                        }
+                        else
+                        {
+                            foreach (Index i, selected_atoms.selectedAtoms(cgidx))
+                            {
+                                CGAtomIdx cgatomidx(cgidx,i);
+                                oldcoords = oldcoords.set(cgatomidx, newcoords[cgatomidx]);
+                            }
+                        }
+                    }
+                    
+                    coords = oldcoords;
                 }
 
                 Molecule newmol = oldmol.molecule().edit()
-                                        .setProperty( map["coordinates"], 
-                                                      zmatrix.toCartesian() )
+                                        .setProperty( map["coordinates"], coords )
                                         .commit();
-            
+                        
                 //update the system with the new coordinates
                 system.update(newmol);
 

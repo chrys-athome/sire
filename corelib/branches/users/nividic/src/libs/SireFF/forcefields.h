@@ -47,7 +47,6 @@ namespace SireFF
 {
 
 class ForceTable;
-class EnergyTable;
 class FieldTable;
 class PotentialTable;
 class Probe;
@@ -190,10 +189,6 @@ public:
                                             const QSet<Symbol> &symbols) const;
     QHash<Symbol,SireCAS::Expression> componentExpressions() const;
     
-    void energy(EnergyTable &energytable, double scale_energy=1);
-    void energy(EnergyTable &energytable, const Symbol &component,
-               double scale_energy=1);
-
     void force(ForceTable &forcetable, double scale_force=1);
     void force(ForceTable &forcetable, const Symbol &component,
                double scale_force=1);
@@ -338,6 +333,9 @@ public:
     void setContents(const MGID &mgid, const ViewsOfMol &molviews);
     void setContents(const MGID &mgid, const Molecules &molecules);
     void setContents(const MGID &mgid, const MoleculeGroup &molgroup);    
+
+    bool needsAccepting() const;
+    void accept();
 
 protected:
     const MoleculeGroup& getGroup(MGNum mgnum) const;

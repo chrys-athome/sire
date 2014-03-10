@@ -30,7 +30,7 @@
 
 #include "atomproperty.hpp"
 
-#include "atombeading.h"
+#include "atombeads.h"
 #include "atomcharges.h"
 #include "atomelements.h"
 #include "atomenergies.h"
@@ -99,6 +99,7 @@ namespace SireMol
     template class AtomProperty<double>;
     template class AtomProperty<QVariant>;
     
+    template class AtomProperty<BeadNum>;
     template class AtomProperty<SireUnits::Dimension::MolarMass>;
     template class AtomProperty<SireUnits::Dimension::MolarEnergy>;
     template class AtomProperty<Element>;
@@ -109,14 +110,13 @@ namespace SireMol
     template class AtomProperty<SireMol::Force3D>;
     
     template class AtomProperty<SireUnits::Dimension::Volume>;
-
-    template class AtomProperty<SireMol::BeadNum>;
 }
 
 static const RegisterMetaType<AtomStringProperty> r_atomstring;
 static const RegisterMetaType<AtomIntProperty> r_atomint;
 static const RegisterMetaType<AtomFloatProperty> r_atomfloat;
 static const RegisterMetaType<AtomVariantProperty> r_atomvariant;
+static const RegisterMetaType<BeadNum> r_atombeads;
 static const RegisterMetaType<AtomCharges> r_atomcharges;
 static const RegisterMetaType<AtomEnergies> r_atomenergies;
 static const RegisterMetaType<AtomMasses> r_atommasses;
@@ -124,4 +124,3 @@ static const RegisterMetaType<AtomForces> r_atomforces;
 static const RegisterMetaType<AtomVelocities> r_atomvelocities;
 static const RegisterMetaType<AtomElements> r_atomelements;
 static const RegisterMetaType<AtomPolarisabilities> r_atompols;
-static const RegisterMetaType<AtomBeading> r_atombeading;

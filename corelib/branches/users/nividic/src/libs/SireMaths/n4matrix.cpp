@@ -42,7 +42,7 @@ using namespace SireMaths;
 using namespace SireBase;
 using namespace SireStream;
 
-static const RegisterMetaType<N4Matrix> r_n4matrix;
+static const RegisterMetaType<N4Matrix> r_n4matrix(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const N4Matrix &matrix)
@@ -659,7 +659,7 @@ NMatrix N4Matrix::view(int i, int j) const
     
     NMatrix mat(nrows, ncolumns);
     
-    qMemCopy( mat.data(), ptr, nrows*ncolumns*sizeof(double) );
+    memcpy( mat.data(), ptr, nrows*ncolumns*sizeof(double) );
     
     return mat;
 }
@@ -680,11 +680,11 @@ void N4Matrix::set(int i, int j, const NMatrix &matrix)
     {
         NMatrix mat_c = matrix.transpose().fullTranspose();
         
-        qMemCopy( ptr, mat_c.constData(), nrows*ncolumns*sizeof(double) );
+        memcpy( ptr, mat_c.constData(), nrows*ncolumns*sizeof(double) );
     }
     else
     {
-        qMemCopy( ptr, matrix.constData(), nrows*ncolumns*sizeof(double) );
+        memcpy( ptr, matrix.constData(), nrows*ncolumns*sizeof(double) );
     }
 }
 

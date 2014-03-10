@@ -65,7 +65,7 @@ using namespace SireStream;
 ////////// Implementation of ZMatrixLine
 //////////
 
-static const RegisterMetaType<ZMatrixLine> r_zmatline;
+static const RegisterMetaType<ZMatrixLine> r_zmatline(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const ZMatrixLine &zmatline)
@@ -244,7 +244,7 @@ const char* ZMatrixLine::typeName()
 ////////// Implementation of ZMatrixCoordsLine
 //////////
 
-static const RegisterMetaType<ZMatrixCoordsLine> r_zmatcoordsline;
+static const RegisterMetaType<ZMatrixCoordsLine> r_zmatcoordsline(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, 
@@ -558,11 +558,18 @@ QString ZMatrix::toString() const
     {
         const ZMatrixLine &line = zmat.at(i);
     
-        lines.append( QObject::tr("%1-%2-%3-%4")
+        lines.append( QObject::tr("%1(%5)-%2(%6)-%3(%7)-%4(%8) : %9 %10 %11")
+                        .arg( info().name(line.atom()).value(),
+                              info().name(line.bond()).value(),
+                              info().name(line.angle()).value(),
+                              info().name(line.dihedral()).value() )
                         .arg(line.atom().value())
                         .arg(line.bond().value())
                         .arg(line.angle().value())
-                        .arg(line.dihedral().value()) );
+                        .arg(line.dihedral().value())
+                        .arg(line.bondDelta().to(angstroms))
+                        .arg(line.angleDelta().to(degrees))
+                        .arg(line.dihedralDelta().to(degrees)) );
     }
 
     return lines.join("\n");
@@ -1403,12 +1410,15 @@ ZMatrix ZMatrix::matchToSelection(const AtomSelection &selection) const
     selection.assertCompatibleWith(*molinfo);
 
     if (selection.selectedAll())
-        return *this;
-    
+    {
+        ZMatrix zmat(*this);
+        zmat.molinfo = selection.info();
+        return zmat;
+    }
     else if (selection.selectedNone())
     {
         ZMatrix zmatrix;
-        zmatrix.molinfo = molinfo;
+        zmatrix.molinfo = selection.info();
         return zmatrix;
     }
         
@@ -1450,6 +1460,7 @@ ZMatrix ZMatrix::matchToSelection(const AtomSelection &selection) const
 
     ZMatrix zmatrix(*this);
     zmatrix.zmat = new_zmat;
+    zmatrix.molinfo = selection.info();
     zmatrix.atomidx_to_zmat = new_index;
     zmatrix.rebuildOrder();
 
@@ -1515,6 +1526,9 @@ PropertyPtr ZMatrix::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
             continue;
             
         ret.add( atm, bnd, ang, dih );
+        ret.setBondDelta( atm, line.bondDelta() );
+        ret.setAngleDelta( atm, line.angleDelta() );
+        ret.setDihedralDelta( atm, line.dihedralDelta() );
     }
     
     return ret;
@@ -1701,9 +1715,9 @@ ZMatrixCoords& ZMatrixCoords::operator=(const ZMatrixCoords &other)
 bool ZMatrixCoords::operator==(const ZMatrixCoords &other) const
 {
     return this == &other or
-           zmat == other.zmat and internal_coords == other.internal_coords and
-           cartesian_coords == other.cartesian_coords and
-           need_rebuild == other.need_rebuild;
+           (zmat == other.zmat and internal_coords == other.internal_coords and
+            cartesian_coords == other.cartesian_coords and
+            need_rebuild == other.need_rebuild);
 }
 
 /** Comparison operator */

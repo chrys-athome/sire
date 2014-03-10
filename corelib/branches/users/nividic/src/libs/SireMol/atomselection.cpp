@@ -444,8 +444,18 @@ bool AtomSelection::selectedAllAtoms() const
     one selected atom */
 bool AtomSelection::selectedAllCutGroups() const
 {
-    return (selected_atoms.isEmpty() and nselected > 0) or
-            selected_atoms.count() == info().nCutGroups();
+    if (selected_atoms.isEmpty() and nselected > 0)
+        return true;
+    
+    for (CGIdx i(0); i<info().nCutGroups(); ++i)
+    {
+        QSet<Index> atoms = selected_atoms.value(i, QSet<Index>());
+        
+        if (atoms.count() < info().nAtoms(i))
+            return false;
+    }
+    
+    return true;
 }
 
 /** Return whether all residues contain at least
@@ -3675,7 +3685,7 @@ void AtomSelection::assertCompatibleWith(const MoleculeInfoData &molinfo) const
         throw SireError::incompatible_error( QObject::tr(
             "The layout \"%1\" is incompatible with this selection, "
             "which is for the layout \"%2\".")
-                .arg(molinfo.UID()).arg(d->UID()), CODELOC );
+                .arg(molinfo.UID().toString()).arg(d->UID().toString()), CODELOC );
 }
 
 /** Assert that this selection is compatible with the molecule whose
@@ -3689,8 +3699,8 @@ void AtomSelection::assertCompatibleWith(const MoleculeData &moldata) const
         throw SireError::incompatible_error( QObject::tr(
             "The molecule \"%1\" (layout %2) is incompatible with this selection, "
             "which is for the layout \"%3\".")
-                .arg(moldata.name()).arg(moldata.info().UID())
-                .arg(d->UID()), CODELOC );
+                .arg(moldata.name()).arg(moldata.info().UID().toString())
+                .arg(d->UID().toString()), CODELOC );
 }
 
 /** Return whether or not this selection is compatible with the molecule info
@@ -3720,8 +3730,8 @@ void AtomSelection::assertCompatibleWith(const AtomSelection &other) const
         throw SireError::incompatible_error( QObject::tr(
             "The selection for layout \"%1\" is incompatible with this selection, "
             "which is for the layout \"%2\".")
-                .arg(other.info().UID())
-                .arg(d->UID()), CODELOC );
+                .arg(other.info().UID().toString())
+                .arg(d->UID().toString()), CODELOC );
 }
 
 AtomSelection& AtomSelection::select(const QSet<SireMol::ResIdx> &ids)

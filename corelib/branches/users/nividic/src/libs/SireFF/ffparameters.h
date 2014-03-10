@@ -31,6 +31,8 @@
 
 #include "SireBase/property.h"
 
+#include <QVarLengthArray>
+
 SIRE_BEGIN_HEADER
 
 namespace SireFF
@@ -57,6 +59,9 @@ QDataStream& operator>>(QDataStream&, SireFF::NullFFParametersArray&);
 
 namespace SireFF
 {
+
+typedef SireBase::PropPtr<FFParameters> FFParametersPtr;
+typedef SireBase::PropPtr<FFParametersArray> FFParametersArrayPtr;
 
 /** This is the virtual base class of all FFParameters. These classes
     are used to hold the extracted parameters for beads in a forcefield
@@ -86,6 +91,8 @@ public:
     static const char* typeName();
     
     virtual FFParameters* clone() const=0;
+
+    virtual FFParametersArrayPtr toArray() const=0;
 
     static NullFFParameters null();
 
@@ -127,14 +134,24 @@ public:
     
     static NullFFParametersArray null();
 
+    virtual FFParametersPtr operator[](int i) const=0;
+    
+    FFParametersPtr at(int i) const;
+
+    virtual int count() const=0;
+    virtual bool isEmpty() const=0;
+
     virtual void append(const FFParameters &params)=0;
     virtual void append(const FFParametersArray &params)=0;
     
     virtual void update(int idx, const FFParameters &params)=0;
-    virtual void update(const QVector<int> &idxs, const FFParametersArray &params)=0;
+    virtual void update(const QVarLengthArray<int> &idxs, 
+                        const FFParametersArray &params)=0;
 
     virtual void remove(int idx)=0;
-    virtual void remove(const QVector<int> &idxs)=0;
+    virtual void remove(const QVarLengthArray<int> &idxs)=0;
+    
+    virtual void removeAll()=0;
 
 protected:
     FFParametersArray& operator=(const FFParametersArray &other);
@@ -163,6 +180,8 @@ public:
     
     bool operator==(const NullFFParameters &other) const;
     bool operator!=(const NullFFParameters &other) const;
+    
+    FFParametersArrayPtr toArray() const;
 };
 
 /** Null FFParameters */
@@ -185,15 +204,22 @@ public:
     
     bool operator==(const NullFFParametersArray &other) const;
     bool operator!=(const NullFFParametersArray &other) const;
+    
+    FFParametersPtr operator[](int i) const;
+
+    int count() const;
+    bool isEmpty() const;
 
     void append(const FFParameters &params);
     void append(const FFParametersArray &params);
     
     void update(int idx, const FFParameters &params);
-    void update(const QVector<int> &idxs, const FFParametersArray &params);
+    void update(const QVarLengthArray<int> &idxs, const FFParametersArray &params);
 
     void remove(int idx);
-    void remove(const QVector<int> &idxs);
+    void remove(const QVarLengthArray<int> &idxs);
+    
+    void removeAll();
 };
 
 } // end of namespace SireFF

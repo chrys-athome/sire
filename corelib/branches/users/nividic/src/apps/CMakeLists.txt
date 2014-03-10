@@ -7,9 +7,9 @@
 
 # Add each application
 add_subdirectory (sire)
+add_subdirectory (testmulti)
+add_subdirectory (test_system)
 
-if (${QT_VERSION_MAJOR} GREATER 3 AND ${QT_VERSION_MINOR} GREATER 3)
-    add_subdirectory (sirentest)
+if (SIRE_BUILD_GUI)
+  add_subdirectory (inquire)
 endif()
-
-#add_subdirectory (sire_browser)

@@ -307,15 +307,6 @@ void FourAtomFunctions::set(AtomIdx atom0, AtomIdx atom1,
             "(%1-%2-%3-%4)")
                 .arg(atm0).arg(atm1).arg(atm2).arg(atm3), CODELOC );
 
-    if (atom3 < atom0)
-    {
-        qSwap(atom3, atom0);
-        qSwap(atom2, atom1);
-    }
-
-    this->clear(atom0, atom1, atom2, atom3);
-    this->clear(atom3, atom2, atom1, atom0);
-    
     potentials_by_atoms.insert( IDQuad(atm0,atm1,atm2,atm3), expression );
     AtomFunctions::addSymbols(expression.symbols());
 }
@@ -347,8 +338,15 @@ void FourAtomFunctions::set(const AtomID &atom0, const AtomID &atom1,
 */
 void FourAtomFunctions::set(const DihedralID &dihedralid, const Expression &expression)
 {
-    this->set(dihedralid.atom0(), dihedralid.atom1(), dihedralid.atom2(), dihedralid.atom3(),
-              expression);
+    AtomIdx atom0 = info().atomIdx(dihedralid.atom0());
+    AtomIdx atom1 = info().atomIdx(dihedralid.atom1());
+    AtomIdx atom2 = info().atomIdx(dihedralid.atom2());
+    AtomIdx atom3 = info().atomIdx(dihedralid.atom3());
+    
+    this->clear(atom0, atom1, atom2, atom3);
+    this->clear(atom3, atom2, atom1, atom0);
+    
+    this->set(atom0, atom1, atom2, atom3, expression);
 }
 
 /** Set the potential energy function used for the improper identified by 'improperid'
@@ -363,8 +361,15 @@ void FourAtomFunctions::set(const DihedralID &dihedralid, const Expression &expr
 */
 void FourAtomFunctions::set(const ImproperID &improperid, const Expression &expression)
 {
-    this->set(improperid.atom0(), improperid.atom1(), improperid.atom2(), improperid.atom3(),
-              expression);
+    AtomIdx atom0 = info().atomIdx(improperid.atom0());
+    AtomIdx atom1 = info().atomIdx(improperid.atom1());
+    AtomIdx atom2 = info().atomIdx(improperid.atom2());
+    AtomIdx atom3 = info().atomIdx(improperid.atom3());
+    
+    this->clear(atom0, atom1, atom2, atom3);
+    this->clear(atom0, atom1, atom3, atom2);
+    
+    this->set(atom0, atom1, atom2, atom3, expression);
 }
 
 /** Check if any of the symbols in 'symbols' need to be removed... */
@@ -400,8 +405,6 @@ void FourAtomFunctions::clear(AtomIdx atom0, AtomIdx atom1,
         
     FourAtomFunctions::removeSymbols( potentials_by_atoms
                                        .take( IDQuad(atm0,atm1,atm2,atm3) ).symbols() );
-    FourAtomFunctions::removeSymbols( potentials_by_atoms
-                                       .take( IDQuad(atm3,atm2,atm1,atm0) ).symbols() );
 }
 
 /** Clear all functions that involve the atom 'atom' 

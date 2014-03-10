@@ -655,7 +655,7 @@ QStringList Mopac::runMopac(const QString &cmdfile) const
             throw SireError::file_error(f, CODELOC);
    
         //write the command file
-        f.write( cmdfile.toAscii() );
+        f.write( cmdfile.toUtf8() );
         f.close();
     }
 

@@ -1310,21 +1310,9 @@ void FF::update(const MoleculeData &moldata)
     }
     else
     {
-        //more than one group contains the molecule - we will need
-        //to save state in case an exception is thrown
-        boost::shared_ptr<FF> old_state( this->clone() );
-        
-        try
+        foreach (MGNum mgnum, mgnums)
         {
-            foreach (MGNum mgnum, mgnums)
-            {
-                this->group_update( this->mgIdx(mgnum), moldata );
-            }
-        }
-        catch(...)
-        {
-            this->copy(*old_state);
-            throw;
+            this->group_update( this->mgIdx(mgnum), moldata );
         }
     }
 }
@@ -1396,23 +1384,10 @@ void FF::update(const Molecules &molecules)
         }
         else
         {
-            //more than one group needs updating - this means that
-            //we must save the state in case an exception is thrown
-            //while we update the nth group
-            boost::shared_ptr<FF> old_state( this->clone() );
-            
-            try
+            foreach (MGNum mgnum, mgnums)
             {
-                foreach (MGNum mgnum, mgnums)
-                {
-                    MGIdx mgidx = this->mgIdx(mgnum);
-                    this->group_update(mgidx, molecules);
-                }
-            }
-            catch(...)
-            {
-                this->copy(*old_state);
-                throw;
+                MGIdx mgidx = this->mgIdx(mgnum);
+                this->group_update(mgidx, molecules);
             }
         }
     }

@@ -198,8 +198,11 @@ Ensemble Moves::ensemble() const
 {
     QList<MovePtr> mvs = this->moves();
     
-    Ensemble merged = mvs.takeFirst()->ensemble();
+    if (mvs.isEmpty())
+        return Ensemble();
     
+    Ensemble merged = mvs.takeFirst()->ensemble();
+
     for (QList<MovePtr>::const_iterator it = mvs.constBegin();
          it != mvs.constEnd();
          ++it)
@@ -429,8 +432,8 @@ void Moves::preCheck(System &system) const
         
         ++ntries;
 
-        //qDebug() << "WARNING - constraints not satisfied\n"
-	//                 << unsatisfied_constraints.join("\n");
+        qDebug() << "WARNING - constraints not satisfied\n"
+                 << unsatisfied_constraints.join("\n");
 
         if (ntries > 5)
             throw SireSystem::constraint_error( QObject::tr(

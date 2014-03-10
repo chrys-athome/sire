@@ -30,6 +30,7 @@
 #define SIREVOL_COORDGROUP_H
 
 #include <QSharedData>
+#include <QVarLengthArray>
 
 #include "SireMaths/vector.h"
 
@@ -240,6 +241,8 @@ public:
 
     bool operator==(const CoordGroupBase &other) const;
     bool operator!=(const CoordGroupBase &other) const;
+
+    QString toString() const;
 
     bool maybeDifferent(const CoordGroupBase &other) const;
 
@@ -460,6 +463,9 @@ public:
     CoordGroupArray(const QVector< QVector<Vector> > &points);
     CoordGroupArray(const QVector<CoordGroup> &cgroups);
     
+    CoordGroupArray(const CoordGroupArray &array0,
+                    const CoordGroupArray &array1);
+    
     CoordGroupArray(const CoordGroupArray &other);
     
     ~CoordGroupArray();
@@ -479,8 +485,12 @@ public:
     const CoordGroup& operator[](quint32 i) const;
     const CoordGroup& at(quint32 i) const;
 
+    QString toString() const;
+
     int count() const;
     int size() const;
+    
+    bool isEmpty() const;
 
     int nCoordGroups() const;
     int nCoords() const;
@@ -497,6 +507,13 @@ public:
     const AABox* constAABoxData() const;
 
     CoordGroup merge() const;
+    
+    void append(const CoordGroup &cgroup);
+    void append(const CoordGroupArray &cgroups);
+    
+    void remove(quint32 i);
+    void remove(quint32 i, int count);
+    void remove(const QVarLengthArray<quint32> &idxs);
     
     void update(quint32 i, const CoordGroup &cgroup);
     void update(quint32 i, const QVector<Vector> &coords);
@@ -528,6 +545,9 @@ protected:
 
     /** Implicitly shared pointer to the data for this array */
     detail::CGSharedPtr<detail::CGArrayData> d;
+
+private:
+    void pvt_remove(const QVarLengthArray<bool> &to_remove);
 };
 
 /** This class holds an array of CoordGroupArrays. This is 
@@ -571,6 +591,8 @@ public:
     
     bool operator==(const CoordGroupArrayArray &other) const;
     bool operator!=(const CoordGroupArrayArray &other) const;
+
+    QString toString() const;
 
     const CoordGroupArray& operator[](quint32 i) const;
     const CoordGroupArray& at(quint32 i) const;
