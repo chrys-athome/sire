@@ -22,6 +22,7 @@ def fix_ForceFields(c):
 special_code = { "SireFF::ForceTable" : fix_Table,
                  "SireFF::FieldTable" : fix_Table,
                  "SireFF::PotentialTable" : fix_Table,
+                 "SireFF::EnergyTable" : fix_Table,
                  "SireFF::FFID" : fix_FFID,
                  "SireFF::FFIdx" : fix_FFID,
                  "SireFF::FFName" : fix_FFID,

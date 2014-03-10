@@ -122,18 +122,6 @@ void register_EnergyTable_class(){
         }
         { //::SireFF::EnergyTable::getTable
         
-            typedef ::SireFF::MolEnergyTable & ( ::SireFF::EnergyTable::*getTable_function_type )( ::SireMol::MolNum ) ;
-            getTable_function_type getTable_function_value( &::SireFF::EnergyTable::getTable );
-            
-            EnergyTable_exposer.def( 
-                "getTable"
-                , getTable_function_value
-                , ( bp::arg("molnum") )
-                    /* undefined call policies */ );
-        
-        }
-        { //::SireFF::EnergyTable::getTable
-        
             typedef ::SireFF::MolEnergyTable const & ( ::SireFF::EnergyTable::*getTable_function_type )( ::SireMol::MolNum ) const;
             getTable_function_type getTable_function_value( &::SireFF::EnergyTable::getTable );
             
