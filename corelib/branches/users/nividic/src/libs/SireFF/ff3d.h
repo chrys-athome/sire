@@ -30,6 +30,7 @@
 #define SIREFF_FF3D_H
 
 #include "forcetable.h"
+#include "energytable.h"
 #include "fieldtable.h"
 #include "potentialtable.h"
 #include "probe.h"
