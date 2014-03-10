@@ -964,7 +964,7 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
     }
 
 
-    if (Debug)
+    if (true)
         qDebug() << "\n Using OpenMM platform = "  << openmm_context->getPlatform().getName().c_str()<<"\n";
 
     // Now update coordinates / velocities / dimensions with sire data
@@ -1089,6 +1089,9 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
     OpenMM::Vec3 b;
     OpenMM::Vec3 c;
 
+    state_openmm=openmm_context->getState(infoMask);
+    qDebug() << "Potential Energy = " << state_openmm.getPotentialEnergy();
+    return;
 
     if(minimize){
 
