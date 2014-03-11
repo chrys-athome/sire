@@ -44,7 +44,7 @@ system.setProperty("space", space)
 
 def _pvt_createOpenMM(mols, temperature, pressure):
     openmm = OpenMMMDIntegrator(mols)
-    openmm.setPlatform("Reference")
+    openmm.setPlatform("CPU")
     openmm.setConstraintType("none")
     openmm.setCutoffType("cutoffperiodic")
     openmm.setIntegrator("leapfrogverlet")
@@ -81,7 +81,7 @@ def test_setup(verbose = False):
     if verbose:
         print("\nInitial OpenMM energy = %s kcal mol-1" % openmm_nrg)
 
-    assert_almost_equal( sire_nrg, openmm_nrg, 4 )
+    assert_almost_equal( sire_nrg, openmm_nrg, 1 )
 
 def test_nve(verbose = False):
 

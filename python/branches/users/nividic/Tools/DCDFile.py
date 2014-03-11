@@ -2,7 +2,6 @@
 import struct, time, array, os
 
 from Sire.Mol import *
-from Sire.IO import *
 
 #
 # Adapted from Peter Eastman's code in OpenMM python API to write a DCD file
@@ -29,8 +28,6 @@ class DCDFile(object):
          - firstStep (int=0) The index of the first step in the trajectory
          - interval (int=1) The frequency (measured in time steps) at which states are written to the trajectory
         """
-
-        PDB().write(group, "%s.pdb" % strfile)
 
         file = open(strfile,'wb')
 
