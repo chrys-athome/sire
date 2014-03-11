@@ -560,8 +560,18 @@ if __name__ == "__main__":
     boost_include_dirs = [ boostdir ]
     gsl_include_dirs = [ gsldir ]
 
-    #construct a module builder that will build all of the wrappers for this module
-    mb = module_builder_t( files = [ "active_headers.h" ],
+    openmm_include_dirs = os.getenv("OPENMMDIR")
+
+    if openmm_include_dirs is not None:
+        if os.path.exists(openmm_include_dirs):
+            print("Generating wrappers including OpenMM from %s" % openmm_include_dirs)
+            openmm_include_dirs = [ "%s/include" % openmm_include_dirs ]
+        else:
+            openmm_include_dirs = None
+
+    if openmm_include_dirs is None:
+        #construct a module builder that will build all of the wrappers for this module
+        mb = module_builder_t( files = [ "active_headers.h" ],
                            cflags = "-m64",
                            include_paths = sire_include_dirs + qt_include_dirs +
                                            boost_include_dirs + gsl_include_dirs,
@@ -570,6 +580,20 @@ if __name__ == "__main__":
                                              "SIREN_SKIP_INLINE_FUNCTIONS",
                                              "SIRE_INSTANTIATE_TEMPLATES",
                                              "SIREN_INSTANTIATE_TEMPLATES"] )
+    else:
+        #construct a module builder that will build all of the wrappers for this module
+        mb = module_builder_t( files = [ "active_headers.h" ],
+                           cflags = "-m64",
+                           include_paths = sire_include_dirs + qt_include_dirs +
+                                           boost_include_dirs + gsl_include_dirs + 
+                                           openmm_include_dirs,
+                           define_symbols = ["GCCXML_PARSE",
+                                             "SIRE_USE_OPENMM",
+                                             "SIRE_SKIP_INLINE_FUNCTIONS",
+                                             "SIREN_SKIP_INLINE_FUNCTIONS",
+                                             "SIRE_INSTANTIATE_TEMPLATES",
+                                             "SIREN_INSTANTIATE_TEMPLATES"] )
+
 
     #get rid of all virtual python functions - this is to stop slow wrapper code
     #from being generated for C++ virtual objects

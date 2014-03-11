@@ -317,6 +317,17 @@ void register_OpenMMMDIntegrator_class(){
                 , getPlatform_function_value );
         
         }
+        { //::SireMove::OpenMMMDIntegrator::getPotentialEnergy
+        
+            typedef ::SireUnits::Dimension::MolarEnergy ( ::SireMove::OpenMMMDIntegrator::*getPotentialEnergy_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const & ) ;
+            getPotentialEnergy_function_type getPotentialEnergy_function_value( &::SireMove::OpenMMMDIntegrator::getPotentialEnergy );
+            
+            OpenMMMDIntegrator_exposer.def( 
+                "getPotentialEnergy"
+                , getPotentialEnergy_function_value
+                , ( bp::arg("workspace"), bp::arg("nrg_component") ) );
+        
+        }
         { //::SireMove::OpenMMMDIntegrator::getPrecision
         
             typedef ::QString ( ::SireMove::OpenMMMDIntegrator::*getPrecision_function_type )(  ) ;
