@@ -14,6 +14,7 @@ set (TEST_DIRS "SireBase"
                "SireQt"
                "SireSystem"
                "SireVol"
+               "OpenMM"
                "io"
      )
 
