@@ -88,8 +88,7 @@ public:
     
     void initialise();
 
-    SireUnits::Dimension::MolarEnergy getPotentialEnergy(IntegratorWorkspace &workspace,
-                                                         const Symbol &nrg_component);
+    SireUnits::Dimension::MolarEnergy getPotentialEnergy(const System &system);
 
     void integrate(IntegratorWorkspace &workspace,
                    const Symbol &nrg_component, 
@@ -183,7 +182,7 @@ public:
 
 
 private:
-    void createContext(IntegratorWorkspace &workspace, const Symbol &nrg_component,
+    void createContext(IntegratorWorkspace &workspace,
                        SireUnits::Dimension::Time timestep, int nmoves, bool record_stats);
     void destroyContext();
 

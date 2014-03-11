@@ -395,8 +395,8 @@ QString OpenMMMDIntegrator::toString() const
     \throw SireError::incompatible_error
 */
 
-void OpenMMMDIntegrator::initialise()  {
-
+void OpenMMMDIntegrator::initialise()
+{
   bool Debug = false;
 
   if (Debug)
@@ -948,7 +948,6 @@ void OpenMMMDIntegrator::initialise()  {
 }
 
 void OpenMMMDIntegrator::createContext(IntegratorWorkspace &workspace,
-                                       const Symbol &nrg_component,
                                        SireUnits::Dimension::Time timestep,
                                        int nmoves, bool record_stats)
 {
@@ -1146,10 +1145,12 @@ void OpenMMMDIntegrator::destroyContext()
     }
 }
 
-MolarEnergy OpenMMMDIntegrator::getPotentialEnergy(IntegratorWorkspace &workspace,
-                                                   const Symbol &nrg_component)
+MolarEnergy OpenMMMDIntegrator::getPotentialEnergy(const System &system)
 {
-    createContext(workspace, nrg_component, 2*femtosecond, 0, false);
+    IntegratorWorkspacePtr ws = this->createWorkspace(molgroup);
+    ws.edit().setSystem(system);
+
+    createContext(ws.edit(), 2*femtosecond, 0, false);
     
     int infoMask = 0;
     infoMask = infoMask +  OpenMM::State::Energy;
@@ -1168,7 +1169,7 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
 {
     bool Debug = false;
 
-    createContext(workspace, nrg_component, timestep, nmoves, record_stats);
+    createContext(workspace, timestep, nmoves, record_stats);
 
     const int nats = openmm_system->getNumParticles();
 
@@ -1360,6 +1361,8 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
         k= k + ws.nAtoms(i);
     }
 
+    System & ptr_sys = ws.nonConstsystem();
+    ptr_sys.mustNowRecalculateFromScratch();
 
     if ( nframes <= 0 )
         ws.commitCoordinatesAndVelocities();
@@ -1380,7 +1383,6 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
         const QString string = "space" ;
         ptr_sys.setProperty(string, sp);
 
-
         /** Buffer dimensions if necessary */
         for (int k=0; k < buffered_dimensions.size() ; k++){
             const QString buffered_space = "buffered_space_" + QString::number(k) ;
@@ -1389,12 +1391,18 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
         }
     }
 
+    if (ws.system().contains(molgroup.read().number()))
+    {
+        molgroup = ws.system()[molgroup.read().number()];
+    }
+    else
+    {
+        molgroup.edit().update(ws.system().molecules());
+    }
+
     /** Clear all buffers */
     buffered_workspace.clear();
     buffered_dimensions.clear();
-
-    System & ptr_sys = ws.nonConstsystem();
-    ptr_sys.mustNowRecalculateFromScratch();
 
     return;
 }
