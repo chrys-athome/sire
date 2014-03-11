@@ -9,6 +9,7 @@
 set ( SCRIPTS
         __init__.py
         AmberLoader.py
+        DCDFile.py
         FDTISingleBound.py
         FDTISingleFree.py
         QuantumToMM.py
