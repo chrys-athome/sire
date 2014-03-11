@@ -1,5 +1,8 @@
 
-import struct, time, array
+import struct, time, array, os
+
+from Sire.Mol import *
+from Sire.IO import *
 
 #
 # Adapted from Peter Eastman's code in OpenMM python API to write a DCD file
@@ -26,6 +29,8 @@ class DCDFile(object):
          - firstStep (int=0) The index of the first step in the trajectory
          - interval (int=1) The frequency (measured in time steps) at which states are written to the trajectory
         """
+
+        PDB().write(group, "%s.pdb" % strfile)
 
         file = open(strfile,'wb')
 
@@ -89,10 +94,9 @@ class DCDFile(object):
             file.write(struct.pack('<i6di', 48, boxSize[0], 0, boxSize[1], 0, 0, boxSize[2], 48))
 
         natoms = 0
-        molecules = group.molecules()
-        molnums = molecules.molNums()
-        for molnum in molnums:
-            mol = molecules.molecule(molnum).molecule()
+
+        for i in range(0,group.nMolecules()):
+            mol = molecules[MolIdx(i)].molecule()
             nat = mol.nAtoms()
             natoms += nat
 
@@ -111,8 +115,8 @@ class DCDFile(object):
         wrapatomcoordinates = False
 
 
-        for molnum in molnums:
-            mol = group.molecule(molnum).molecule()
+        for i in range(0,group.nMolecules()):
+            mol = group[MolIdx(i)].molecule()
             molcoords = mol.property("coordinates")
 
             if wrapmolcoordinates:
@@ -175,7 +179,7 @@ class DCDFile(object):
         molprops = mol.propertyKeys()
         nbuf = 0
         for molprop in molprops:
-            if molprop.startsWith("buffered_coord"):
+            if molprop.startswith("buffered_coord"):
                 nbuf += 1
         if nbuf <= 0:
             print("Could not find any buffered coordinates in the passed group ! ")
@@ -202,10 +206,9 @@ class DCDFile(object):
                 file.write(struct.pack('<i6di', 48, boxSize[0], 0, boxSize[1], 0, 0, boxSize[2], 48))
 
             natoms = 0
-            molecules = group.molecules()
-            molnums = molecules.molNums()
-            for molnum in molnums:
-                mol = molecules.molecule(molnum).molecule()
+            
+            for i in range(0,group.nMolecules()):
+                mol = group[MolIdx(i)].molecule()
                 nat = mol.nAtoms()
                 natoms += nat
 
@@ -217,8 +220,8 @@ class DCDFile(object):
         
             coords = []
 
-            for molnum in molnums:
-                mol = group.molecule(molnum).molecule()
+            for i in range(0,group.nMolecules()):
+                mol = group[MolIdx(i)].molecule()
                 molcoords = mol.property("buffered_coord_%s" % x)
 
                 coords += molcoords.toVector()
