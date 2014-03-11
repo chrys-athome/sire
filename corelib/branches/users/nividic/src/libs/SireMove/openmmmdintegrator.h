@@ -88,6 +88,9 @@ public:
     
     void initialise();
 
+    SireUnits::Dimension::MolarEnergy getPotentialEnergy(IntegratorWorkspace &workspace,
+                                                         const Symbol &nrg_component);
+
     void integrate(IntegratorWorkspace &workspace,
                    const Symbol &nrg_component, 
                    SireUnits::Dimension::Time timestep,
@@ -180,6 +183,10 @@ public:
 
 
 private:
+    void createContext(IntegratorWorkspace &workspace, const Symbol &nrg_component,
+                       SireUnits::Dimension::Time timestep, int nmoves, bool record_stats);
+    void destroyContext();
+
     /** Whether or not to save the velocities after every step, or to save them at the end of all of the steps */
     bool frequent_save_velocities;
     /** The Molecule Group on which the integrator operates */
@@ -244,6 +251,8 @@ private:
 
     int equilib_iterations;
     SireUnits::Dimension::Time equilib_time_step;
+
+    bool is_periodic;
 
 };
 

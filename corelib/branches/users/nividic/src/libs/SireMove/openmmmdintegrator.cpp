@@ -116,19 +116,23 @@ static const RegisterMetaType<OpenMMMDIntegrator> r_openmmint;
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMMDIntegrator &velver)
 {
-    writeHeader(ds, r_openmmint, 1);
+    writeHeader(ds, r_openmmint, 2);
     
     SharedDataStream sds(ds);
     
     sds << velver.frequent_save_velocities << velver.molgroup 
         << velver.Integrator_type << velver.friction
-        << velver.CutoffType << velver.cutoff_distance << velver.field_dielectric << velver.tollerance_ewald_pme
+        << velver.CutoffType << velver.cutoff_distance << velver.field_dielectric
+        << velver.tollerance_ewald_pme
         << velver.Andersen_flag <<  velver.Andersen_frequency 
-        << velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
-        <<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.buffer_frequency
+        << velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType
+        << velver.Pressure << velver.Temperature
+        << velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency
+        << velver.buffer_frequency
         << velver.device_index << velver.LJ_dispersion << velver.precision << velver.integration_tol
         << velver.timeskip  << velver.minimize << velver.minimize_tol << velver.minimize_iterations
         << velver.equilib_iterations << velver.equilib_time_step  << velver.reinetialize_context
+        << velver.is_periodic
         << static_cast<const Integrator&>(velver);
 
     return ds;
@@ -139,18 +143,59 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMMDIntegrator &vel
 
     VersionID v = readHeader(ds, r_openmmint);
 
-    if (v == 1){
+    if (v == 2)
+    {
         SharedDataStream sds(ds);
+
+        velver.is_periodic = false;
 
         sds >> velver.frequent_save_velocities >> velver.molgroup 
             >> velver.Integrator_type >> velver.friction
-            >> velver.CutoffType >> velver.cutoff_distance >> velver.field_dielectric >> velver.tollerance_ewald_pme
+            >> velver.CutoffType >> velver.cutoff_distance >> velver.field_dielectric
+            >> velver.tollerance_ewald_pme
             >> velver.Andersen_flag >>  velver.Andersen_frequency 
-            >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature
-            >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.buffer_frequency
-            >> velver.device_index >> velver.LJ_dispersion >> velver.precision >> velver.integration_tol 
-            >> velver.timeskip  >> velver.minimize >> velver.minimize_tol >> velver.minimize_iterations
-            >> velver.equilib_iterations >> velver.equilib_time_step >> velver.reinetialize_context
+            >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType
+            >> velver.Pressure >> velver.Temperature
+            >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency
+            >> velver.buffer_frequency
+            >> velver.device_index >> velver.LJ_dispersion >> velver.precision
+            >> velver.integration_tol
+            >> velver.timeskip  >> velver.minimize >> velver.minimize_tol
+            >> velver.minimize_iterations
+            >> velver.equilib_iterations >> velver.equilib_time_step
+            >> velver.reinetialize_context
+            >> velver.is_periodic
+            >> static_cast<Integrator&>(velver);
+
+        // Maybe....need to reinitialise from molgroup because openmm system was not serialised...
+        velver.isSystemInitialised = false;
+        velver.isContextInitialised = false;
+
+    //qDebug() << " Re-initialisation of openmmmdintegrator from datastream";
+
+        velver.initialise();
+    }
+    else if (v == 1)
+    {
+        SharedDataStream sds(ds);
+
+        velver.is_periodic = false;
+
+        sds >> velver.frequent_save_velocities >> velver.molgroup 
+            >> velver.Integrator_type >> velver.friction
+            >> velver.CutoffType >> velver.cutoff_distance >> velver.field_dielectric
+            >> velver.tollerance_ewald_pme
+            >> velver.Andersen_flag >>  velver.Andersen_frequency 
+            >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType
+            >> velver.Pressure >> velver.Temperature
+            >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency
+            >> velver.buffer_frequency
+            >> velver.device_index >> velver.LJ_dispersion >> velver.precision
+            >> velver.integration_tol
+            >> velver.timeskip  >> velver.minimize >> velver.minimize_tol
+            >> velver.minimize_iterations
+            >> velver.equilib_iterations >> velver.equilib_time_step
+            >> velver.reinetialize_context
             >> static_cast<Integrator&>(velver);
 
         // Maybe....need to reinitialise from molgroup because openmm system was not serialised...
@@ -162,7 +207,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMMDIntegrator &vel
         velver.initialise();
     }
     else
-        throw version_error(v, "1", r_openmmint, CODELOC);
+        throw version_error(v, "1,2", r_openmmint, CODELOC);
 
     return ds;
 }
@@ -171,49 +216,74 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMMDIntegrator &vel
 OpenMMMDIntegrator::OpenMMMDIntegrator(bool frequent_save) 
                   : ConcreteProperty<OpenMMMDIntegrator,Integrator>(),
                     frequent_save_velocities(frequent_save), molgroup(MoleculeGroup()),
-                    openmm_system(0),openmm_context(0), isSystemInitialised(false),isContextInitialised(false),
+                    openmm_system(0),openmm_context(0), isSystemInitialised(false),
+                    isContextInitialised(false),
                     Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),
-                    CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),tollerance_ewald_pme(0.0001),
+                    CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
+                    tollerance_ewald_pme(0.0001),
                     Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                     MCBarostat_frequency(25),ConstraintType("none"),
-                    Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-                    CMMremoval_frequency(0), buffer_frequency(0),device_index("0"),LJ_dispersion(true),precision("single"),
+                    Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),
+                    Restraint_flag(false),
+                    CMMremoval_frequency(0), buffer_frequency(0),device_index("0"),
+                    LJ_dispersion(true),precision("single"),
                     reinetialize_context(false),integration_tol(0.001),timeskip(0.0 * picosecond),
-                    minimize(false),minimize_tol(1.0),minimize_iterations(0),equilib_iterations(5000),equilib_time_step(0.0005 * picosecond)
+                    minimize(false),minimize_tol(1.0),minimize_iterations(0),
+                    equilib_iterations(5000),equilib_time_step(0.0005 * picosecond),
+                    is_periodic(false)
 {}
 
 /** Constructor using the passed molecule group */
 OpenMMMDIntegrator::OpenMMMDIntegrator(const MoleculeGroup &molecule_group, bool frequent_save) 
                   : ConcreteProperty<OpenMMMDIntegrator,Integrator>(),
                     frequent_save_velocities(frequent_save), molgroup(molecule_group),
-                    openmm_system(0), openmm_context(0), isSystemInitialised(false),isContextInitialised(false),
+                    openmm_system(0), openmm_context(0), isSystemInitialised(false),
+                    isContextInitialised(false),
                     Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),
-                    CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),tollerance_ewald_pme(0.0001),
+                    CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
+                    tollerance_ewald_pme(0.0001),
                     Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                     MCBarostat_frequency(25),ConstraintType("none"),
-                    Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-                    CMMremoval_frequency(0), buffer_frequency(0),device_index("0"),LJ_dispersion(true),precision("single"),
+                    Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),
+                    Restraint_flag(false),
+                    CMMremoval_frequency(0), buffer_frequency(0),device_index("0"),
+                    LJ_dispersion(true),precision("single"),
                     reinetialize_context(false),integration_tol(0.001),timeskip(0.0 * picosecond),
-                    minimize(false),minimize_tol(1.0),minimize_iterations(0),equilib_iterations(5000),equilib_time_step(0.0005 * picosecond)
+                    minimize(false),minimize_tol(1.0),minimize_iterations(0),
+                    equilib_iterations(5000),equilib_time_step(0.0005 * picosecond),
+                    is_periodic(false)
 {}
 
 /** Copy constructor */
 OpenMMMDIntegrator::OpenMMMDIntegrator(const OpenMMMDIntegrator &other)
                   : ConcreteProperty<OpenMMMDIntegrator,Integrator>(other),
-                    frequent_save_velocities(other.frequent_save_velocities), molgroup(other.molgroup),
-                    openmm_system(other.openmm_system), openmm_context(other.openmm_context), isSystemInitialised(other.isSystemInitialised),
+                    frequent_save_velocities(other.frequent_save_velocities),
+                    molgroup(other.molgroup),
+                    openmm_system(other.openmm_system), openmm_context(other.openmm_context),
+                    isSystemInitialised(other.isSystemInitialised),
                     isContextInitialised(other.isContextInitialised),
                     Integrator_type(other.Integrator_type),friction(other.friction),
                     CutoffType(other.CutoffType),cutoff_distance(other.cutoff_distance),
-                    field_dielectric(other.field_dielectric), tollerance_ewald_pme(other.tollerance_ewald_pme),Andersen_flag(other.Andersen_flag),
-                    Andersen_frequency(other.Andersen_frequency), MCBarostat_flag(other.MCBarostat_flag),
-                    MCBarostat_frequency(other.MCBarostat_frequency),ConstraintType(other.ConstraintType), 
-                    Pressure(other.Pressure), Temperature(other.Temperature),platform_type(other.platform_type),
-                    Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency),
-                    buffer_frequency(other.buffer_frequency),device_index(other.device_index),LJ_dispersion(other.LJ_dispersion), precision(other.precision),
-                    reinetialize_context(other.reinetialize_context),integration_tol(other.integration_tol),timeskip(other.timeskip),
-                    minimize(other.minimize),minimize_tol(other.minimize_tol),minimize_iterations(other.minimize_iterations),
-                    equilib_iterations(other.equilib_iterations),equilib_time_step(other.equilib_time_step)
+                    field_dielectric(other.field_dielectric),
+                    tollerance_ewald_pme(other.tollerance_ewald_pme),
+                    Andersen_flag(other.Andersen_flag),
+                    Andersen_frequency(other.Andersen_frequency),
+                    MCBarostat_flag(other.MCBarostat_flag),
+                    MCBarostat_frequency(other.MCBarostat_frequency),
+                    ConstraintType(other.ConstraintType),
+                    Pressure(other.Pressure), Temperature(other.Temperature),
+                    platform_type(other.platform_type),
+                    Restraint_flag(other.Restraint_flag),
+                    CMMremoval_frequency(other.CMMremoval_frequency),
+                    buffer_frequency(other.buffer_frequency),device_index(other.device_index),
+                    LJ_dispersion(other.LJ_dispersion), precision(other.precision),
+                    reinetialize_context(other.reinetialize_context),
+                    integration_tol(other.integration_tol),timeskip(other.timeskip),
+                    minimize(other.minimize),minimize_tol(other.minimize_tol),
+                    minimize_iterations(other.minimize_iterations),
+                    equilib_iterations(other.equilib_iterations),
+                    equilib_time_step(other.equilib_time_step),
+                    is_periodic(other.is_periodic)
 {}
 
 /** Destructor */
@@ -260,6 +330,7 @@ OpenMMMDIntegrator& OpenMMMDIntegrator::operator=(const OpenMMMDIntegrator &othe
     minimize_iterations=other.minimize_iterations;
     equilib_iterations=other.equilib_iterations;
     equilib_time_step=other.equilib_time_step;
+    is_periodic = other.is_periodic;
 
     return *this;
 }
@@ -297,6 +368,7 @@ bool OpenMMMDIntegrator::operator==(const OpenMMMDIntegrator &other) const
     and equilib_iterations == other.equilib_iterations
     and equilib_time_step == other.equilib_time_step
     and reinetialize_context == other.reinetialize_context
+    and is_periodic == other.is_periodic
     and Integrator::operator==(other);
 
 }
@@ -331,6 +403,7 @@ void OpenMMMDIntegrator::initialise()  {
     qDebug() << " initialising OpenMMMDIntegrator";
 
   // Create a workspace using the stored molgroup
+  
 
   const MoleculeGroup moleculegroup = this->molgroup.read();
 
@@ -871,11 +944,15 @@ void OpenMMMDIntegrator::initialise()  {
     this->openmm_system = system_openmm;
 
     this->isSystemInitialised = true;
+    this->is_periodic = false;
 }
 
-void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats){
-
-    bool Debug = false; 
+void OpenMMMDIntegrator::createContext(IntegratorWorkspace &workspace,
+                                       const Symbol &nrg_component,
+                                       SireUnits::Dimension::Time timestep,
+                                       int nmoves, bool record_stats)
+{
+    bool Debug = false;
 
       if(Debug)
         qDebug() << "In OpenMMMDIntegrator::integrate()\n\n" ;
@@ -896,9 +973,9 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
         qDebug() << " openmm nats " << nats;
 
 
-    const double dt = convertTo( timestep.value(), picosecond);
     const double converted_Temperature = convertTo(Temperature.value(), kelvin);
     const double converted_friction = convertTo( friction.value(), picosecond);
+    const double dt = convertTo( timestep.value(), picosecond);
 
     if(!isContextInitialised || (isContextInitialised && reinetialize_context)){
         OpenMM::Integrator * integrator_openmm = NULL;
@@ -963,7 +1040,6 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
 
     }
 
-
     if (true)
         qDebug() << "\n Using OpenMM platform = "  << openmm_context->getPlatform().getName().c_str()<<"\n";
 
@@ -993,42 +1069,51 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
 
         for (int j=0; j < nats_mol; ++j){
 
-            positions_openmm[system_index] = OpenMM::Vec3(c[j].x() * (OpenMM::NmPerAngstrom), c[j].y() * (OpenMM::NmPerAngstrom), c[j].z() * (OpenMM::NmPerAngstrom));
+            positions_openmm[system_index] = OpenMM::Vec3(c[j].x() * (OpenMM::NmPerAngstrom),
+                        c[j].y() * (OpenMM::NmPerAngstrom), c[j].z() * (OpenMM::NmPerAngstrom));
 
             if(m[j] == 0.0)
                 qDebug() << "\nWARNING - THE MASS OF PARTICLE " << system_index << " is ZERO\n";
 
             if (m[j] > SireMaths::small){
-                velocities_openmm[system_index] = OpenMM::Vec3(p[j].x()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,p[j].y()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,p[j].z()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA);
+                velocities_openmm[system_index] = OpenMM::Vec3(p[j].x()/m[j] *
+                    (OpenMM::NmPerAngstrom) * PsPerAKMA,p[j].y()/m[j] *
+                    (OpenMM::NmPerAngstrom) * PsPerAKMA,p[j].z()/m[j] *
+                    (OpenMM::NmPerAngstrom) * PsPerAKMA);
             }
             else{
                 velocities_openmm[system_index] =  OpenMM::Vec3(0.0, 0.0, 0.0);
             }
             
-            if(Debug){
+            if(Debug)
+            {
                 qDebug() << "Particle num = " << system_index;
                 qDebug() << "Particle mass = " << m[j];
-                qDebug() << "X = " << positions_openmm[system_index][0] * OpenMM::AngstromsPerNm << " A" << 
-                            " Y = " << positions_openmm[system_index][1] * OpenMM::AngstromsPerNm << " A" <<
-                            " Z = " << positions_openmm[system_index][2] * OpenMM::AngstromsPerNm << " A";
-                qDebug() << "Vx = " << velocities_openmm[system_index][0] << " Vy = " << velocities_openmm[system_index][1] << " Vz = " << velocities_openmm[system_index][2] << "\n";
+                qDebug() << "X = " << positions_openmm[system_index][0] * OpenMM::AngstromsPerNm
+                                    << " A" <<
+                            " Y = " << positions_openmm[system_index][1] * OpenMM::AngstromsPerNm
+                                    << " A" <<
+                            " Z = " << positions_openmm[system_index][2] * OpenMM::AngstromsPerNm
+                                    << " A";
+                qDebug() << "Vx = " << velocities_openmm[system_index][0] << " Vy = "
+                                    << velocities_openmm[system_index][1] << " Vz = "
+                                    << velocities_openmm[system_index][2] << "\n";
             }
             system_index++;
         }
     }
 
-    if ( system_index != nats ){
+    if ( system_index != nats )
+    {
         if (Debug)
             qDebug() << " system_index " << system_index << " nats " << nats;
         throw SireError::program_bug(QObject::tr("The number of atoms in the openmm system does not match the number of atoms in the sire workspace"), CODELOC);
     }
 
-
     openmm_context->setPositions(positions_openmm);  
     openmm_context->setVelocities(velocities_openmm);
 
-
-    bool isperiodic = false;
+    is_periodic = false;
 
     if ( CutoffType == "cutoffperiodic" || CutoffType == "ewald" || CutoffType == "pme"){
         const System & ptr_sys = ws.system();
@@ -1047,16 +1132,67 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
         openmm_context->setPeriodicBoxVectors( OpenMM::Vec3(Box_x_Edge_Length,0,0),
                           OpenMM::Vec3(0,Box_y_Edge_Length,0),
                           OpenMM::Vec3(0,0,Box_z_Edge_Length) );
-        isperiodic = true;
+        is_periodic = true;
     }
+}
 
+void OpenMMMDIntegrator::destroyContext()
+{
+    if (this->isContextInitialised)
+    {
+        delete openmm_context;
+        openmm_context = 0;
+        this->isContextInitialised = false;
+    }
+}
 
+MolarEnergy OpenMMMDIntegrator::getPotentialEnergy(IntegratorWorkspace &workspace,
+                                                   const Symbol &nrg_component)
+{
+    createContext(workspace, nrg_component, 2*femtosecond, 0, false);
+    
+    int infoMask = 0;
+    infoMask = infoMask +  OpenMM::State::Energy;
+    OpenMM::State state_openmm=openmm_context->getState(infoMask);
+
+    MolarEnergy nrg = state_openmm.getPotentialEnergy() * kJ_per_mol;
+    
+    this->destroyContext();
+    
+    return nrg;
+}
+
+void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component,
+                                   SireUnits::Dimension::Time timestep,
+                                   int nmoves, bool record_stats)
+{
+    bool Debug = false;
+
+    createContext(workspace, nrg_component, timestep, nmoves, record_stats);
+
+    const int nats = openmm_system->getNumParticles();
+
+    AtomicVelocityWorkspace &ws = workspace.asA<AtomicVelocityWorkspace>();
+
+    const double AKMAPerPs = 0.04888821;
+
+    const int nmols = ws.nMolecules();
+
+    QVector< std::vector<OpenMM::Vec3> > buffered_positions;
+    QVector< Vector> buffered_dimensions;
+
+    OpenMM::State state_openmm;
+
+    OpenMM::Vec3 a;
+    OpenMM::Vec3 b;
+    OpenMM::Vec3 c;
 
     int infoMask = 0;
     infoMask = OpenMM::State::Positions;
     infoMask = infoMask + OpenMM::State::Velocities; 
     infoMask = infoMask +  OpenMM::State::Energy;
 
+    const double dt = convertTo( timestep.value(), picosecond);
 
     if (Debug)
         qDebug() << " Doing " << nmoves << " steps of dynamics ";
@@ -1080,21 +1216,13 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
         nframes = 0;
     }
 
-    QVector< std::vector<OpenMM::Vec3> > buffered_positions;
-    QVector< Vector> buffered_dimensions;
+    //OpenMM vector coordinate
+    std::vector<OpenMM::Vec3> positions_openmm(nats);
+    //OpenMM vector momenta
+    std::vector<OpenMM::Vec3> velocities_openmm(nats);
 
-    OpenMM::State state_openmm;
-
-    OpenMM::Vec3 a;
-    OpenMM::Vec3 b;
-    OpenMM::Vec3 c;
-
-    state_openmm=openmm_context->getState(infoMask);
-    qDebug() << "Potential Energy = " << state_openmm.getPotentialEnergy();
-    return;
-
-    if(minimize){
-
+    if(minimize)
+    {
         //New time step for minimization and equilibartion in ps
         double dtm = convertTo( equilib_time_step.value(), picosecond);
 
@@ -1122,7 +1250,6 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
 
     }
 
-
     //Time skipping
     const double time_skip = convertTo( timeskip.value(), picosecond);
 
@@ -1146,7 +1273,6 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
             nframes = nmoves/coord_freq ;
 
     }
-
 
     if ( coord_freq > 0 ){/** Break nmoves in several steps to buffer coordinates*/
         for (int i=0; i < nmoves ; i = i + coord_freq){
@@ -1225,7 +1351,8 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
                         buffered_workspace[l][i][j] = buffered_atcoord;
             }
 
-            sire_momenta[j] = Vector(velocities_openmm[j+k][0] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,
+            sire_momenta[j] = Vector(
+                    velocities_openmm[j+k][0] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,
                     velocities_openmm[j+k][1] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,
                     velocities_openmm[j+k][2] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs);
         }
@@ -1240,7 +1367,7 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
         ws.commitBufferedCoordinatesAndVelocities( buffered_workspace );
 
     /** Now the box dimensions (if the simulation used a periodic space) */
-    if (isperiodic){
+    if (is_periodic){
         state_openmm.getPeriodicBoxVectors(a,b,c);
         Vector new_dims = Vector(a[0] * OpenMM::AngstromsPerNm, b[1] * OpenMM::AngstromsPerNm, c[2] * OpenMM::AngstromsPerNm);
         if (Debug)
