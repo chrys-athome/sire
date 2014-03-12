@@ -13,6 +13,7 @@ set ( SCRIPTS
         FDTISingleBound.py
         FDTISingleFree.py
         QuantumToMM.py
+        OpenMMMD.py
         Plot.py
         WaterChanger.py
         WSRC.py

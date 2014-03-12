@@ -2,6 +2,7 @@
 import struct, time, array, os
 
 from Sire.Mol import *
+from Sire.IO import *
 
 #
 # Adapted from Peter Eastman's code in OpenMM python API to write a DCD file
@@ -30,6 +31,8 @@ class DCDFile(object):
         """
 
         file = open(strfile,'wb')
+
+        PDB().write(group, "%s.pdb" % strfile)
 
         self._file = file
         self._group = group
@@ -168,7 +171,6 @@ class DCDFile(object):
         #if is_quantity(positions):
         #    positions = positions.value_in_unit(nanometers)
         file = self._file
-        
 
         # Find the number of buffered frames we have by inspecting the first molecule in the group
         # assuming all molecules have same number of buffered coordinates...
