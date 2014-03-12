@@ -466,6 +466,9 @@ void OpenMMMDIntegrator::initialise()
     
   OpenMM::System *system_openmm = new OpenMM::System();
 
+  system_openmm->setDefaultPeriodicBoxVectors(OpenMM::Vec3(4, 0, 0),
+                                              OpenMM::Vec3(0, 5, 0), OpenMM::Vec3(0, 0, 6));
+
   OpenMM::NonbondedForce * nonbond_openmm = new OpenMM::NonbondedForce();
 
   system_openmm->addForce(nonbond_openmm);

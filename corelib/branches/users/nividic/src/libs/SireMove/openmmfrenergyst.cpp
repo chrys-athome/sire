@@ -437,6 +437,9 @@ void OpenMMFrEnergyST::initialise()  {
 
     OpenMM::System * system_openmm = new OpenMM::System();
 
+    system_openmm->setDefaultPeriodicBoxVectors(OpenMM::Vec3(6,0,0),
+                                                OpenMM::Vec3(0,6,0),
+                                                OpenMM::Vec3(0,0,6));
 
     //The Standard Non Bonded is only defined to extract 1-2,1-3,1-4 pairs from the system 
     OpenMM::NonbondedForce * nonbond_openmm = new OpenMM::NonbondedForce();
@@ -2316,14 +2319,33 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         qDebug() << "\n Using OpenMM platform = " <<openmm_context->getPlatform().getName().c_str()<<"\n";
 
     // Now update coordinates / velocities / dimensions with sire data
+    AtomicVelocityWorkspace &ws = workspace.asA<AtomicVelocityWorkspace>();
+
+    if ( CutoffType == "cutoffperiodic" ){
+
+        const System & ptr_sys = ws.system();
+        const PropertyName &space_property = PropertyName("space");
+        const PeriodicBox &space = ptr_sys.property(space_property).asA<PeriodicBox>();
+
+        const double Box_x_Edge_Length = space.dimensions()[0] * OpenMM::NmPerAngstrom; //units in nm
+        const double Box_y_Edge_Length = space.dimensions()[1] * OpenMM::NmPerAngstrom; //units in nm
+        const double Box_z_Edge_Length = space.dimensions()[2] * OpenMM::NmPerAngstrom; //units in nm
+
+        if (Debug)
+            qDebug() << "\nBOX SIZE [A] = (" << space.dimensions()[0] << " , " << space.dimensions()[1] << " ,  " << space.dimensions()[2] << ")\n\n";
+
+        //Set Periodic Box Condition
+
+        system_openmm->setDefaultPeriodicBoxVectors(OpenMM::Vec3(Box_x_Edge_Length,0,0),OpenMM::Vec3(0,Box_y_Edge_Length,0),OpenMM::Vec3(0,0,Box_z_Edge_Length) );
+        openmm_context->setPeriodicBoxVectors( OpenMM::Vec3(Box_x_Edge_Length,0,0),OpenMM::Vec3(0,Box_y_Edge_Length,0),OpenMM::Vec3(0,0,Box_z_Edge_Length) );
+        openmm_context->reinitialize();
+    }
 
     //OpenMM vector coordinate
     std::vector<OpenMM::Vec3> positions_openmm(nats);
 
     //OpenMM vector momenta
     std::vector<OpenMM::Vec3> velocities_openmm(nats);
-
-    AtomicVelocityWorkspace &ws = workspace.asA<AtomicVelocityWorkspace>();
 
     // Conversion factor because sire units of time are in AKMA, whereas OpenMM uses picoseconds
 
@@ -2376,25 +2398,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     openmm_context->setPositions(positions_openmm);  
     openmm_context->setVelocities(velocities_openmm);
-
-    if ( CutoffType == "cutoffperiodic" ){
-
-        const System & ptr_sys = ws.system();
-        const PropertyName &space_property = PropertyName("space");
-        const PeriodicBox &space = ptr_sys.property(space_property).asA<PeriodicBox>();
-
-        const double Box_x_Edge_Length = space.dimensions()[0] * OpenMM::NmPerAngstrom; //units in nm
-        const double Box_y_Edge_Length = space.dimensions()[1] * OpenMM::NmPerAngstrom; //units in nm
-        const double Box_z_Edge_Length = space.dimensions()[2] * OpenMM::NmPerAngstrom; //units in nm
-
-        if (Debug)
-            qDebug() << "\nBOX SIZE [A] = (" << space.dimensions()[0] << " , " << space.dimensions()[1] << " ,  " << space.dimensions()[2] << ")\n\n";
-
-        //Set Periodic Box Condition
-
-        openmm_context->setPeriodicBoxVectors( OpenMM::Vec3(Box_x_Edge_Length,0,0),OpenMM::Vec3(0,Box_y_Edge_Length,0),OpenMM::Vec3(0,0,Box_z_Edge_Length) );
-    }
-
 
     if (Debug)
         qDebug() << " Doing " << nmoves << " steps of dynamics ";
