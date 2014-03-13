@@ -98,9 +98,10 @@ class Parameter:
         keys.sort()
 
         for key in keys:
-            print(Parameter._all_params[key])
             if verbose:
-                print("%s\n" % Parameter._all_params[key].description)
+                print("# %s" % Parameter._all_params[key].description)
+
+            print("%s\n" % Parameter._all_params[key])
 
     def __init__(self, key, default_value, description):
         """Create a new parameter with specified key, default value

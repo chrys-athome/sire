@@ -56,7 +56,7 @@ nmoves = Parameter("nmoves", 1000, """Number of Molecular Dynamics moves to perf
 random_seed = Parameter("random seed", None, """Random number seed. Set this if you
                          want to have reproducible simulations.""")
 
-ncycles = Parameter("ncycles", 1, """The number of MD cycles. The total elapsed time will be nmoves*ncycles*time_step""")
+ncycles = Parameter("ncycles", 1, """The number of MD cycles. The total elapsed time will be nmoves*ncycles*timestep""")
 
 ncycles_per_snap = Parameter("ncycles_per_snap", 1, """Number of cycles between saving snapshots""")
 
@@ -95,7 +95,7 @@ integrator_type = Parameter("integrator", "leapfrogverlet", """The integrator to
 
 inverse_friction = Parameter("inverse friction", 0.1*picosecond, """Inverse friction time for the Langevin thermostat.""")
 
-anderson = Parameter("thermostat", True, """Whether or not to use the Andersen thermostat (needed for NVT or NPT simulation).""")
+andersen = Parameter("thermostat", True, """Whether or not to use the Andersen thermostat (needed for NVT or NPT simulation).""")
 
 barostat = Parameter("barostat", True, """Whether or not to use a barostat (needed for NPT simulation).""")
 
@@ -126,6 +126,11 @@ frozen_residues = Parameter("frozen residues", ["LGR", "SIT", "NEG", "POS"], """
 def setupDCD(DCD_root, system):
 
     files = os.listdir(os.getcwd())
+
+    if (save_coords.val):
+        buffer_freq = 500
+    else:
+        buffer_freq = 0
     
     dcds = []
     for f in files:
@@ -136,9 +141,9 @@ def setupDCD(DCD_root, system):
     
     index = len(dcds) + 1
     
-    dcd_filename = DCD_root + "%0009d" % index + ".dcd"
+    dcd_filename = dcd_root.val + "%0009d" % index + ".dcd"
 
-    Trajectory = DCDFile(dcd_filename, system[MGName("all")], system.property("space"), time_step, interval=buffer_freq*ncycles_per_snap)
+    Trajectory = DCDFile(dcd_filename, system[MGName("all")], system.property("space"), timestep.val, interval=buffer_freq*ncycles_per_snap.val)
 
     return Trajectory
 
@@ -148,7 +153,12 @@ def writeSystemData( system, moves, Trajectory, block):
     localtimer = QTime()
     localtimer.start()
 
-    if (block % ncycles_per_snap == 0):
+    if (save_coords.val):
+        buffer_freq = 500
+    else:
+        buffer_freq = 0
+
+    if (block % ncycles_per_snap.val == 0):
         #PDB().write(system[MGName("all")], "output%0009d.pdb" % block)
 
         if buffer_freq > 0:
@@ -234,21 +244,23 @@ def setupForcefields(system, space):
     
     # - first solvent-solvent coulomb/LJ (CLJ) energy
     internonbondedff = InterCLJFF("molecules:molecules")
-    if (Cutofftype != "nocutoff") :
+    if (cutoff_type != "nocutoff") :
         internonbondedff.setUseReactionField(True)
-        internonbondedff.setReactionFieldDielectric(Dielectric)
+        internonbondedff.setReactionFieldDielectric(rf_dielectric.val)
     internonbondedff.add(molecules)
 
     inter_ions_nonbondedff = InterCLJFF("ions:ions")
-    if (Cutofftype != "nocutoff") :
+    if (cutoff_type.val != "nocutoff") :
         inter_ions_nonbondedff.setUseReactionField(True)
-        inter_ions_nonbondedff.setReactionFieldDielectric(Dielectric)
+        inter_ions_nonbondedff.setReactionFieldDielectric(rf_dielectric.val)
+
     inter_ions_nonbondedff.add(ions)
     
     inter_ions_molecules_nonbondedff = InterGroupCLJFF("ions:molecules")
-    if (Cutofftype != "nocutoff") :
+    if (cutoff_type.val != "nocutoff") :
         inter_ions_molecules_nonbondedff.setUseReactionField(True)
-        inter_ions_molecules_nonbondedff.setReactionFieldDielectric(Dielectric)
+        inter_ions_molecules_nonbondedff.setReactionFieldDielectric(rf_dielectric.val)
+
     inter_ions_molecules_nonbondedff.add(ions, MGIdx(0) )
     inter_ions_molecules_nonbondedff.add(molecules, MGIdx(1) )
     
@@ -258,9 +270,11 @@ def setupForcefields(system, space):
 
     # Now solute intramolecular CLJ energy
     intranonbondedff = IntraCLJFF("molecules-intranonbonded")
-    if (Cutofftype != "nocutoff") :
+
+    if (cutoff_type.val != "nocutoff") :
         intranonbondedff.setUseReactionField(True)
-        intranonbondedff.setReactionFieldDielectric(Dielectric)
+        intranonbondedff.setReactionFieldDielectric(rf_dielectric.val)
+
     intranonbondedff.add(molecules)
 
     # solute restraint energy
@@ -269,7 +283,7 @@ def setupForcefields(system, space):
     #
     restraintff = RestraintFF("restraint")
 
-    if UseRestraints:
+    if use_restraints.val:
         molnums = molecules.molecules().molNums()
 
         for molnum in molnums:
@@ -300,10 +314,10 @@ def setupForcefields(system, space):
         system.add(forcefield)
 
     system.setProperty( "space", space )
-    system.setProperty("switchingFunction", CHARMMSwitchingFunction(Cutoff_dist) )
-    system.setProperty( "combiningRules", VariantProperty(combining_rules) )
+    system.setProperty("switchingFunction", CHARMMSwitchingFunction(cutoff_dist.val) )
+    system.setProperty( "combiningRules", VariantProperty(combining_rules.val) )
     #system.setProperty( "useReactionField", VariantProperty(True) )
-    #system.setProperty( "reactionFieldDielectric", VariantProperty(rfdielectric) )
+    #system.setProperty( "reactionFieldDielectric", VariantProperty(rf_dielectric.val) )
 
     total_nrg = internonbondedff.components().total() +\
                 intranonbondedff.components().total() + intrabondedff.components().total() +\
@@ -329,49 +343,57 @@ def setupMoves(system, random_seed, GPUS):
 
     Integrator_OpenMM = OpenMMMDIntegrator( molecules )
   
-    Integrator_OpenMM.setPlatform(platforn.val)
+    Integrator_OpenMM.setPlatform(platform.val)
     Integrator_OpenMM.setConstraintType(constraint.val)
     Integrator_OpenMM.setCutoffType(cutoff_type.val)
     Integrator_OpenMM.setIntegrator(integrator_type.val)
     Integrator_OpenMM.setFriction( inverse_friction.val )# Only meaningful for Langevin/Brownian integrators
     Integrator_OpenMM.setPrecision(precision.val)
-    Integrator_OpenMM.setTimetoSkip(time_to_skip)
-    Integrator_OpenMM.setMinimization(Minimize)
-    Integrator_OpenMM.setMinimizeTol(minimize_tol)
-    Integrator_OpenMM.setMinimizeIterations(minimize_max_iter)
-    Integrator_OpenMM.setEquilib_iterations(equilib_iterations)
-    Integrator_OpenMM.setEquilib_time_step(equilib_time_step)
-    Integrator_OpenMM.setDeviceIndex(GPUS)
-    Integrator_OpenMM.setLJDispersion(LJDispersion)
+    Integrator_OpenMM.setTimetoSkip(time_to_skip.val)
+    Integrator_OpenMM.setMinimization(minimize.val)
+    Integrator_OpenMM.setMinimizeTol(minimize_tol.val)
+    Integrator_OpenMM.setMinimizeIterations(minimize_max_iter.val)
 
-    if Cutofftype != "nocutoff":
-        Integrator_OpenMM.setCutoff_distance(Cutoff_dist)
-    if Cutofftype == "cutoffperiodic":
-        Integrator_OpenMM.setField_dielectric(Dielectric)
+    if equilibrate.val:
+        Integrator_OpenMM.setEquilib_iterations(equil_iterations.val)
+    else:
+        Integrator_OpenMM.setEquilib_iterations(0)
 
-    Integrator_OpenMM.setCMMremoval_frequency(CMMremoval)
+    Integrator_OpenMM.setEquilib_time_step(equil_timestep.val)
+    Integrator_OpenMM.setDeviceIndex(str(GPUS))
+    Integrator_OpenMM.setLJDispersion(lj_dispersion.val)
+
+    if cutoff_type.val != "nocutoff":
+        Integrator_OpenMM.setCutoff_distance(cutoff_dist.val)
+    if cutoff_type.val == "cutoffperiodic":
+        Integrator_OpenMM.setField_dielectric(rf_dielectric.val)
+
+    Integrator_OpenMM.setCMMremoval_frequency(cmm_removal.val)
+
+    if (save_coords.val):
+        buffer_freq = 500
+    else:
+        buffer_freq = 0
 
     Integrator_OpenMM.setBufferFrequency(buffer_freq)
 
-    if UseRestraints:
+    if use_restraints.val:
         Integrator_OpenMM.setRestraint(True)
 
-    if Andersen:
-        Integrator_OpenMM.setTemperature(temperature)
-        Integrator_OpenMM.setAndersen(Andersen)
-        Integrator_OpenMM.setAndersen_frequency(Andersen_frequency)
+    if andersen.val:
+        Integrator_OpenMM.setTemperature(temperature.val)
+        Integrator_OpenMM.setAndersen(andersen.val)
+        Integrator_OpenMM.setAndersen_frequency(andersen_frequency.val)
 
-    if Barostat:
-        Integrator_OpenMM.setPressure(pressure)
-        Integrator_OpenMM.setMCBarostat(Barostat)
-        Integrator_OpenMM.setMCBarostat_frequency(MCBarostat_frequency)
-    
-
+    if barostat.val:
+        Integrator_OpenMM.setPressure(pressure.val)
+        Integrator_OpenMM.setMCBarostat(barostat.val)
+        Integrator_OpenMM.setMCBarostat_frequency(barostat_frequency.val)
 
     #print Integrator_OpenMM.getDeviceIndex()
     Integrator_OpenMM.initialise()
 
-    mdmove = MolecularDynamics(molecules, Integrator_OpenMM, time_step, {"velocity generator":MaxwellBoltzmann(temperature)})
+    mdmove = MolecularDynamics(molecules, Integrator_OpenMM, timestep.val, {"velocity generator":MaxwellBoltzmann(temperature.val)})
 
     print("Created a MD move that uses OpenMM for all molecules on GPU %s " % GPUS)
 
@@ -576,17 +598,17 @@ def run():
         system, moves = Sire.Stream.load( restart_file.val )
         move0 =  moves.moves()[0]
         integrator = move0.integrator()
-        integrator.setDeviceIndex(gpu.val)
-        move0.setIntegrator(integrator.val)
+        integrator.setDeviceIndex(str(gpu.val))
+        move0.setIntegrator(integrator)
         moves = WeightedMoves()
         moves.add(move0)
         print("Index GPU = %s " % moves.moves()[0].integrator().getDeviceIndex())
         print("Loaded a restart file on wich we have performed %d moves." % moves.nMoves())
 
     cycle_start = int(moves.nMoves() / nmoves.val)  + 1
-    cycle_end = cycle_start + ncycles 
+    cycle_end = cycle_start + ncycles.val 
 
-    if (save_coordinates.val):
+    if (save_coords.val):
         trajectory = setupDCD(dcd_root.val, system)
 
     s1 = timer.elapsed()/1000.
@@ -600,7 +622,7 @@ def run():
         system = moves.move(system, nmoves.val, True)
         print("Energy after = %s kJ mol-1" % (system.energy().to(kJ_per_mol)))
 
-        if (save_coordinates.val):
+        if (save_coords.val):
             writeSystemData(system, moves, trajectory, i)
 
     s2 = timer.elapsed()/1000.
