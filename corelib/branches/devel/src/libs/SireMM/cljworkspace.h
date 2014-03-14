@@ -110,8 +110,13 @@ public:
     void clear();
 
 private:
+    void returnToMemoryPool();
+    void createFromMemoryPool();
+    
+    void detach();
+
     /** Implicitly shared pointer to the data */
-    QSharedDataPointer<SireMM::detail::CLJWorkspaceData> d;
+    boost::shared_ptr<detail::CLJWorkspaceData> d;
 };
 
 }

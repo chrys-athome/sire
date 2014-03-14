@@ -34,6 +34,7 @@
 #include "SireStream/shareddatastream.h"
 
 #include <QVarLengthArray>
+#include <QThreadStorage>
 
 using namespace SireMM;
 using namespace SireStream;
@@ -51,17 +52,24 @@ namespace detail
         
         @author Christopher Woods
     */
-    class SIREMM_EXPORT CLJWorkspaceData : public QSharedData
+    class SIREMM_EXPORT CLJWorkspaceData
     {
     public:
         CLJWorkspaceData()
-        {}
+        {
+            qDebug() << "CLJWorkspaceData::CLJWorkspaceData()" << quintptr(this);
+        }
         
         CLJWorkspaceData(const CLJWorkspaceData &other) : deltas(other.deltas)
-        {}
+        {
+            qDebug() << "CLJWorkspaceData::CLJWorkspaceData(const CLJWorkspaceData&)"
+                     << quintptr(this) << quintptr(&other);
+        }
         
         ~CLJWorkspaceData()
-        {}
+        {
+            qDebug() << "CLJWorkspaceData::~CLJWorkspaceData()" << quintptr(this);
+        }
         
         CLJWorkspaceData& operator=(const CLJWorkspaceData &other)
         {
@@ -211,6 +219,58 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJWorkspace &ws)
     return ds;
 }
 
+typedef QVarLengthArray<boost::shared_ptr<SireMM::detail::CLJWorkspaceData>,32> CLJWorkspaceCache;
+QThreadStorage<CLJWorkspaceCache*> cache;
+
+/** Call this to return the memory allocated in this object back to the memory pool */
+void CLJWorkspace::returnToMemoryPool()
+{
+    if (d.get() == 0 or not d.unique())
+        return;
+    
+    if (not cache.hasLocalData())
+    {
+        cache.setLocalData( new CLJWorkspaceCache() );
+    }
+    
+    if (cache.localData()->count() < 32)
+    {
+        d->clear();
+        //qDebug() << "PUSHED" << quintptr(d.get()) << "INTO THE POOL";
+        cache.localData()->push_back(d);
+    }
+    else
+        qDebug() << "DELETING AS THE CACHE IS FULL";
+    
+    d = 0;
+}
+
+/** Construct this by using memory from the pool */
+void CLJWorkspace::createFromMemoryPool()
+{
+    if (d.get() != 0)
+    {
+        d->clear();
+    }
+    else
+    {
+        if (cache.hasLocalData())
+        {
+            if (not cache.localData()->isEmpty())
+            {
+                d = cache.localData()->back();
+                cache.localData()->pop_back();
+                //qDebug() << "TAKEN" << quintptr(d.get()) << "FROM THE POOL" << d->isEmpty();
+                return;
+            }
+        }
+        
+        //no available value in the pool
+        qDebug() << "CREATING AS NOT AVAILABLE IN THE POOL";
+        d.reset( new SireMM::detail::CLJWorkspaceData() );
+    }
+}
+
 /** Constructor */
 CLJWorkspace::CLJWorkspace()
 {}
@@ -222,34 +282,21 @@ CLJWorkspace::CLJWorkspace(const CLJWorkspace &other)
     {
         d = other.d;
     }
-    else
-    {
-        //take over ownership as we want the new pointer :-)
-        d = other.d;
-        const_cast<CLJWorkspace*>(&other)->d = 0;
-    }
 }
 
 /** Destructor */
 CLJWorkspace::~CLJWorkspace()
-{}
+{
+    returnToMemoryPool();
+}
 
 /** Copy assignment operator. The new copy will get the memory of an empty workspace */
 CLJWorkspace& CLJWorkspace::operator=(const CLJWorkspace &other)
 {
-    if (this != &other)
+    if (d.get() != other.d.get())
     {
-        if (other.isEmpty())
-        {
-            if (d.constData() != 0)
-            {
-                d->clear();
-            }
-        }
-        else
-        {
-            d = other.d;
-        }
+        returnToMemoryPool();
+        d = other.d;
     }
     
     return *this;
@@ -258,7 +305,7 @@ CLJWorkspace& CLJWorkspace::operator=(const CLJWorkspace &other)
 /** Comparison operator */
 bool CLJWorkspace::operator==(const CLJWorkspace &other) const
 {
-    return (isEmpty() and other.isEmpty()) or (d.constData() == other.d.constData());
+    return (isEmpty() and other.isEmpty()) or (d.get() == other.d.get());
 }
 
 /** Comparison operator */
@@ -298,7 +345,7 @@ CLJDelta CLJWorkspace::getitem(int i) const
 /** Return a raw pointer to the array of deltas */
 const CLJDelta* CLJWorkspace::data() const
 {
-    if (d.constData() == 0)
+    if (d.get() == 0)
         return 0;
     else
         return d->deltas.constData();
@@ -313,7 +360,7 @@ const CLJDelta* CLJWorkspace::constData() const
 /** Return the number of deltas */
 int CLJWorkspace::count() const
 {
-    if (d.constData() == 0)
+    if (d.get() == 0)
         return 0;
     else
         return d->deltas.count();
@@ -335,12 +382,28 @@ const char* CLJWorkspace::what() const
     return CLJWorkspace::typeName();
 }
 
+void CLJWorkspace::detach()
+{
+    if (d.get() != 0)
+    {
+        if (not d.unique())
+        {
+            boost::shared_ptr<detail::CLJWorkspaceData> d2 = d;
+            createFromMemoryPool();
+            
+            d->operator=(*d2);
+        }
+    }
+}
+
 /** Push a new delta onto the set */
 void CLJWorkspace::push(const CLJDelta &delta)
 {
-    if (d.constData() == 0)
+    detach();
+
+    if (d.get() == 0)
     {
-        d = new detail::CLJWorkspaceData();
+        createFromMemoryPool();
     }
     
     d->push(delta);
@@ -351,9 +414,11 @@ void CLJWorkspace::push(const CLJDelta &delta)
 void CLJWorkspace::push(quint32 idnum, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
                         const MoleculeView &new_atoms, const PropertyMap &map)
 {
-    if (d.constData() == 0)
+    detach();
+
+    if (d.get() == 0)
     {
-        d = new detail::CLJWorkspaceData();
+        createFromMemoryPool();
     }
     
     d->push(idnum, boxes, old_atoms, new_atoms, CLJAtoms::USE_MOLNUM, map);
@@ -365,9 +430,11 @@ void CLJWorkspace::push(quint32 idnum, const CLJBoxes &boxes, const QVector<CLJB
                         const MoleculeView &new_atoms, CLJAtoms::ID_SOURCE source,
                         const PropertyMap &map)
 {
-    if (d.constData() == 0)
+    detach();
+
+    if (d.get() == 0)
     {
-        d = new detail::CLJWorkspaceData();
+        createFromMemoryPool();
     }
     
     d->push(idnum, boxes, old_atoms, new_atoms, source, map);
@@ -383,7 +450,7 @@ int CLJWorkspace::nDeltas() const
     ID (a single CLJAtoms ID) */
 bool CLJWorkspace::isSingleID() const
 {
-    if (d.constData() == 0)
+    if (d.get() == 0)
         return true;
     else
         return d->isSingleID();
@@ -392,7 +459,7 @@ bool CLJWorkspace::isSingleID() const
 /** Return whether or not this workspace is empty */
 bool CLJWorkspace::isEmpty() const
 {
-    if (d.constData() == 0)
+    if (d.get() == 0)
         return true;
     else
         return d->isEmpty();
@@ -411,8 +478,5 @@ CLJDelta CLJWorkspace::merge() const
 /** Clear this workspace */
 void CLJWorkspace::clear()
 {
-    if (d.constData() != 0)
-    {
-        d->clear();
-    }
+    returnToMemoryPool();
 }
