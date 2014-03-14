@@ -57,18 +57,18 @@ namespace detail
     public:
         CLJWorkspaceData()
         {
-            qDebug() << "CLJWorkspaceData::CLJWorkspaceData()" << quintptr(this);
+            //qDebug() << "CLJWorkspaceData::CLJWorkspaceData()" << quintptr(this);
         }
         
         CLJWorkspaceData(const CLJWorkspaceData &other) : deltas(other.deltas)
         {
-            qDebug() << "CLJWorkspaceData::CLJWorkspaceData(const CLJWorkspaceData&)"
-                     << quintptr(this) << quintptr(&other);
+            //qDebug() << "CLJWorkspaceData::CLJWorkspaceData(const CLJWorkspaceData&)"
+            //         << quintptr(this) << quintptr(&other);
         }
         
         ~CLJWorkspaceData()
         {
-            qDebug() << "CLJWorkspaceData::~CLJWorkspaceData()" << quintptr(this);
+            //qDebug() << "CLJWorkspaceData::~CLJWorkspaceData()" << quintptr(this);
         }
         
         CLJWorkspaceData& operator=(const CLJWorkspaceData &other)
@@ -266,7 +266,7 @@ void CLJWorkspace::createFromMemoryPool()
         }
         
         //no available value in the pool
-        qDebug() << "CREATING AS NOT AVAILABLE IN THE POOL";
+        //qDebug() << "CREATING AS NOT AVAILABLE IN THE POOL";
         d.reset( new SireMM::detail::CLJWorkspaceData() );
     }
 }

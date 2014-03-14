@@ -52,19 +52,19 @@ namespace SireMol
         public:
             MolGroupWorkspaceData()
             {
-                qDebug() << "MolGroupWorkspaceData::MolGroupWorkspaceData()" << quintptr(this);
+                //qDebug() << "MolGroupWorkspaceData::MolGroupWorkspaceData()" << quintptr(this);
             }
             
             MolGroupWorkspaceData(const MolGroupWorkspaceData &other)
                     : ver(other.ver), mols(other.mols), views(other.views)
             {
-                qDebug() << "MolGroupWorkspaceData::MolGroupWorkspaceData(copy)"
-                         << quintptr(this) << quintptr(&other);
+                //qDebug() << "MolGroupWorkspaceData::MolGroupWorkspaceData(copy)"
+                //         << quintptr(this) << quintptr(&other);
             }
             
             ~MolGroupWorkspaceData()
             {
-                qDebug() << "MolGroupWorkspaceData::~MolGroupWorkspaceData()" << quintptr(this);
+                //qDebug() << "MolGroupWorkspaceData::~MolGroupWorkspaceData()" << quintptr(this);
             }
             
             MolGroupWorkspaceData& operator=(const MolGroupWorkspaceData &other)
@@ -210,20 +210,23 @@ void MolGroupWorkspace::createFromMemoryPool()
         }
         
         //no available value in the pool
-        qDebug() << "CREATING AS NOT AVAILABLE IN THE POOL";
+        //qDebug() << "CREATING AS NOT AVAILABLE IN THE POOL";
         d.reset( new SireMol::detail::MolGroupWorkspaceData() );
     }
 }
 
 void MolGroupWorkspace::detach()
 {
-    if (not d.unique())
+    if (d.get() != 0)
     {
-        boost::shared_ptr<detail::MolGroupWorkspaceData> d2 = d;
-        
-        d.reset();
-        createFromMemoryPool();
-        d->operator=(*d2);
+        if (not d.unique())
+        {
+            boost::shared_ptr<detail::MolGroupWorkspaceData> d2 = d;
+            
+            d.reset();
+            createFromMemoryPool();
+            d->operator=(*d2);
+        }
     }
 }
 
