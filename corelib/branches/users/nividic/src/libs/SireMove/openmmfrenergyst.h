@@ -1,4 +1,3 @@
-
 /********************************************\
   *
   *  Sire - Molecular Simulation Framework
