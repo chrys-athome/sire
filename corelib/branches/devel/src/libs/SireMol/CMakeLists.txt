@@ -92,6 +92,7 @@ set ( SIREMOL_HEADERS
       molecules.h
       moleculeview.h
       moleditor.h
+      molgroupworkspace.h
       molid.h
       molidentifier.h
       molidx.h
@@ -183,6 +184,7 @@ set ( SIREMOL_SOURCES
       mgidentifier.cpp
       mgidsandmaps.cpp
       molatomid.cpp
+      molgroupworkspace.cpp
       molecule.cpp
       moleculecutting.cpp
       moleculedata.cpp

@@ -170,7 +170,7 @@ QDataStream  &operator>>(QDataStream &ds, SireMM::detail::CLJWorkspaceData &ws)
     
     ws.deltas.resize(n);
     
-    for (int i=0; i<n; ++i)
+    for (quint32 i=0; i<n; ++i)
     {
         ds >> ws.deltas[i];
     }
@@ -220,7 +220,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJWorkspace &ws)
 }
 
 typedef QVarLengthArray<boost::shared_ptr<SireMM::detail::CLJWorkspaceData>,32> CLJWorkspaceCache;
-QThreadStorage<CLJWorkspaceCache*> cache;
+static QThreadStorage<CLJWorkspaceCache*> cache;
 
 /** Call this to return the memory allocated in this object back to the memory pool */
 void CLJWorkspace::returnToMemoryPool()
@@ -242,7 +242,7 @@ void CLJWorkspace::returnToMemoryPool()
     else
         qDebug() << "DELETING AS THE CACHE IS FULL";
     
-    d = 0;
+    d.reset();
 }
 
 /** Construct this by using memory from the pool */
@@ -389,6 +389,7 @@ void CLJWorkspace::detach()
         if (not d.unique())
         {
             boost::shared_ptr<detail::CLJWorkspaceData> d2 = d;
+            d.reset();
             createFromMemoryPool();
             
             d->operator=(*d2);

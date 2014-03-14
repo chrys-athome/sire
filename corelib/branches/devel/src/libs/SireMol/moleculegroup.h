@@ -37,6 +37,7 @@
 #include "SireBase/property.h"
 
 #include "molecules.h"
+#include "molgroupworkspace.h"
 
 SIRE_BEGIN_HEADER
 
@@ -315,6 +316,10 @@ private:
     /** Implicitly shared pointer to the contents and index
         of this group */
     QSharedDataPointer<detail::MolGroupPvt> d;
+    
+    /** The workspace used to cache updates, thus preventing
+        excessive re-allocation of memory during, e.g. MC moves */
+    MolGroupWorkspace workspace;
 };
 
 typedef SireBase::PropPtr<MoleculeGroup> MolGroupPtr;
