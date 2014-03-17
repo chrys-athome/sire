@@ -49,9 +49,6 @@ grid_buffer = Parameter("grid buffer", 2*angstrom,
 
 disable_grid = Parameter("disable grid", False, """Whether or not to disable use of the grid""")
 
-coul_power = Parameter("coulomb power", 0, """Soft-core coulomb power parameter""") 
-shift_delta = Parameter("shift delta", 1.2, """Soft-core LJ shift delta parameter""")
-
 temperature = Parameter("temperature", 25*celsius, """Simulation temperature""")
 random_seed = Parameter("random seed", None, """Random number seed. Set this if you
                          want to have reproducible simulations.""")
@@ -99,9 +96,10 @@ lambda_values = Parameter("lambda values", [ 0.005, 0.071, 0.137, 0.203, 0.269, 
 nsubmoves = Parameter("nsubmoves", 50000,
                       """The number of moves to perform between each RETI move.""")
 
-ligand_name = Parameter("ligand name", "LIG",
+ligand_name = Parameter("ligand name", None,
                         """The name of the ligand. This should be the name of one of the residues
-                           in the ligand, so that this program can find the correct molecule.""")
+                           in the ligand, so that this program can find the correct molecule. If it is not set, then
+                           the first non-protein, non-solvent molecule is used.""")
 
 reflection_radius = Parameter("reflection radius", 15*angstrom,
                               """The radius of the reflection sphere""")
@@ -145,8 +143,8 @@ nequilmoves = Parameter("nequilmoves", 50000,
 
 nmoves = Parameter("nmoves", 1000, """Number of RETI moves to perform during the simulation.""")
 
-coulomb_power = Parameter("coulomb power", 0,
-                          """The soft-core coulomb power parameter""")
+coul_power = Parameter("coulomb power", 0,
+                       """The soft-core coulomb power parameter""")
 
 shift_delta = Parameter("shift delta", 1.2,
                         """The soft-core shift delta parameter""")
@@ -1581,7 +1579,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
         nrgmons["freewater_nrgmon"] = freewater_nrgmon
 
     for key in list(nrgmons.keys()):
-        nrgmons[key].setCoulombPower(coulomb_power.val)
+        nrgmons[key].setCoulombPower(coul_power.val)
         nrgmons[key].setShiftDelta(shift_delta.val)
         nrgmons[key].setTemperature(temperature.val)
 

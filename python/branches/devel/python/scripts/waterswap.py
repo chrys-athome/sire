@@ -53,7 +53,7 @@ must_exit = False
 if args.author:
     print("\nwaterswap was written by Christopher Woods (C) 2013")
     print("It is based on the WSRC module distributed in Sire.")
-    must_exist = True
+    must_exit = True
 
 if args.version:
     print("\nwaterswap version 0.1")

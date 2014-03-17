@@ -11,6 +11,7 @@ set ( SCRIPTS
         AmberLoader.py
         FDTISingleBound.py
         FDTISingleFree.py
+        LSRC.py
         QuantumToMM.py
         Plot.py
         WaterChanger.py
