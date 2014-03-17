@@ -354,7 +354,7 @@ Process Process::run(const QString &command,  const QStringList &arguments)
             char_args[i+1] = args[i].data();
         }
         
-        char_args[arguments.count()+1] = '\0';
+        *char_args[arguments.count()+1] = '\0';
        
         //now run the command
         int status = execvp( char_args[0], char_args );

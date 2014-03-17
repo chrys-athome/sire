@@ -1603,7 +1603,7 @@ CLJBoxes CLJBoxes::squeeze() const
          it != bxs.constEnd();
          ++it)
     {
-        if (not it->read().nAtoms() == 0)
+        if (it->read().nAtoms() != 0)
         {
             ret.bxs.append( it->read().squeeze() );
             ret.box_to_idx.insert( ret.bxs.last().read().index(), ret.bxs.count() - 1 );

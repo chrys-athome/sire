@@ -222,7 +222,7 @@ CombinedSpace::const_iterator CombinedSpace::end() const
 
 void CombinedSpace::assertSingleSpace(const QString &text, const QString &codeloc) const
 {
-    if (not spces.count() == 1)
+    if (spces.count() != 1)
         throw SireVol::incompatible_space( QObject::tr(
                 "%1 as there is not just a single space. The number of spaces "
                 "is equal to %2.").arg(text), codeloc );
