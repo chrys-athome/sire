@@ -370,10 +370,14 @@ def centerSystem(system, molecule):
     center = molecule.evaluate().center()
     print("This requires translating everything by %s..." % (-center))    
     
+    molecules = Molecules()
+
     for molnum in system.molNums():
         molecule = system[molnum].molecule()
         molecule = molecule.move().translate(-center).commit()
-        system.update(molecule)
+        molecules.add(molecule)
+
+    system.update(molecules)
 
     return system
 

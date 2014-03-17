@@ -1924,19 +1924,6 @@ def run():
 
         print("...iteration complete (took %d ms)" % t.elapsed())
 
-        # write a restart file every N moves in case of crash or run out of time
-        if i % restart_frequency.val == 0 or i == nmoves.val:
-            t.start()
-            print("Saving the restart file from iteration %d..." % i)
-            # save the old file to a backup
-            try:
-                shutil.copy(restart_file.val, "%s.bak" % restart_file.val)
-            except:
-                pass
-
-            Sire.Stream.save( (wsrc_system, wsrc_moves), restart_file.val )
-            print("...save complete (took %d ms)" % t.elapsed())
-
         t.start()
         print("Analysing iteration %d..." % i)
         analyseWSRC(wsrc_system, i, bennetts_freenrgs, fep_freenrgs, ti_freenrgs, bound_freenrgs, free_freenrgs,
@@ -1966,6 +1953,19 @@ def run():
             Sire.Stream.save( [bennetts_freenrgs, fep_freenrgs, ti_freenrgs], freenrgs_file )
             Sire.Stream.save( [bound_freenrgs, free_freenrgs], freenrg_parts_file )
             Sire.Stream.save( [res_freenrgs, bound_water_freenrgs, free_water_freenrgs], freenrg_components_file )
+            print("...save complete (took %d ms)" % t.elapsed())
+
+        # write a restart file every N moves in case of crash or run out of time
+        if i % restart_frequency.val == 0 or i == nmoves.val:
+            t.start()
+            print("Saving the restart file from iteration %d..." % i)
+            # save the old file to a backup
+            try:
+                shutil.copy(restart_file.val, "%s.bak" % restart_file.val)
+            except:
+                pass
+
+            Sire.Stream.save( (wsrc_system, wsrc_moves), restart_file.val )
             print("...save complete (took %d ms)" % t.elapsed())
 
     print("All iterations complete. Total runtime was %d ms" % total_t.elapsed())
