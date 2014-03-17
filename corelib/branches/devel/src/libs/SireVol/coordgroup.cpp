@@ -1905,7 +1905,7 @@ CoordGroupEditor::CoordGroupEditor()
 CoordGroupEditor::CoordGroupEditor(const CoordGroup &other)
                  : CoordGroupBase(other), needsupdate(false)
 {
-    if (not other.count() == 0)
+    if (other.count() != 0)
         d = other.d->extract()->cGroupData()[0].d;
 }
 

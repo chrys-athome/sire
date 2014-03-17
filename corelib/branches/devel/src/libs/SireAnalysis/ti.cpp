@@ -887,7 +887,7 @@ Gradients& Gradients::operator+=(const Gradients &other)
                 double lam = it.key();
                 const FreeEnergyAverage &grad = it.value();
                 
-                if (not grad.nSamples() == 0)
+                if (grad.nSamples() != 0)
                 {
                     if (new_fwds.contains(lam))
                     {
@@ -907,7 +907,7 @@ Gradients& Gradients::operator+=(const Gradients &other)
                 double lam = it.key();
                 const FreeEnergyAverage &grad = it.value();
                 
-                if (not grad.nSamples() == 0)
+                if (grad.nSamples() != 0)
                 {
                     if (new_bwds.contains(lam))
                     {
@@ -942,7 +942,7 @@ Gradients& Gradients::operator+=(const Gradients &other)
                 double lam = it.key();
                 const AverageAndStddev &grad = it.value();
                 
-                if (not grad.nSamples() == 0)
+                if (grad.nSamples() != 0)
                 {
                     if (new_analytic.contains(lam))
                     {
