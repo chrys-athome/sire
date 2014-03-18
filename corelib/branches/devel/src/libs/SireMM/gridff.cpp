@@ -2435,15 +2435,16 @@ void GridFF::_pvt_removed(quint32 groupid, const PartialMolecule &mol)
 }
 
 /** Any changes to group 1 mean that the forcefield must be recalculated from scratch */
-void GridFF::_pvt_changed(quint32 groupid, const SireMol::Molecule &molecule)
+void GridFF::_pvt_changed(quint32 groupid, const SireMol::Molecule &molecule, bool auto_commit)
 {
-    InterGroupCLJFF::_pvt_changed(groupid, molecule);
+    InterGroupCLJFF::_pvt_changed(groupid, molecule, auto_commit);
 }
 
 /** Any changes to group 1 mean that the forcefield must be recalculated from scratch */
-void GridFF::_pvt_changed(quint32 groupid, const QList<SireMol::Molecule> &molecules)
+void GridFF::_pvt_changed(quint32 groupid, const QList<SireMol::Molecule> &molecules,
+                          bool auto_commit)
 {
-    InterGroupCLJFF::_pvt_changed(groupid, molecules);
+    InterGroupCLJFF::_pvt_changed(groupid, molecules, auto_commit);
 }
 
 /** Any removals mean that the forcefield must be recalculated from scratch */

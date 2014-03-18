@@ -121,13 +121,15 @@ namespace SireMol
                     
                     if (newmol.number() == oldmol.number())
                     {
-                        ViewsOfMol newmol(oldmol);
-                        newmol.update(newmol.data());
-                        views.push_back(newmol);
+                        ViewsOfMol mol(oldmol);
+                        mol.update(newmol);
+                        views.push_back(mol);
+                        qDebug() << "RETURNING UPDATED";
                         return views.last();
                     }
                 }
                 
+                qDebug() << "RETURNING ORIGINAL?";
                 return oldmol;
             }
             
@@ -169,8 +171,14 @@ static QThreadStorage<MolGroupWorkspaceCache*> cache;
 /** Call this to return the memory allocated in this object back to the memory pool */
 void MolGroupWorkspace::returnToMemoryPool()
 {
-    if (d.get() == 0 or not d.unique())
+    if (d.get() == 0)
         return;
+    
+    if (not d.unique())
+    {
+        d.reset();
+        return;
+    }
     
     if (not cache.hasLocalData())
     {
@@ -361,10 +369,13 @@ void MolGroupWorkspace::push(const MoleculeData &molecule)
 /** Return the updated view of the passed molecule */
 const ViewsOfMol& MolGroupWorkspace::getUpdated(const ViewsOfMol &oldmol) const
 {
+    qDebug() << "MolGroupWorkspace::getUpdated(" << oldmol.number().value() << ")";
+
     if (d.get())
     {
         if (d->contains(oldmol.number()))
         {
+            qDebug() << "DOING SOME WORK";
             MolGroupWorkspace *nonconst_this = const_cast<MolGroupWorkspace*>(this);
             nonconst_this->detach();
             return nonconst_this->d->getUpdated(oldmol);

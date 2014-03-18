@@ -456,7 +456,9 @@ const ViewsOfMol& MoleculeGroup::at(MolNum molnum) const
     const ViewsOfMol &oldmol = d->molecules.at(molnum);
     
     if (workspace.isEmpty())
+    {
         return oldmol;
+    }
     else
         return workspace.getUpdated(oldmol);
 }
@@ -2127,24 +2129,43 @@ void MoleculeGroup::removeAll()
     This does nothing if there is no such molecule in this 
     group, or if it is already at this version, and this returns
     whether or not this changes the group. */
-bool MoleculeGroup::update(const MoleculeData &moldata)
+bool MoleculeGroup::update(const MoleculeData &moldata, bool auto_commit)
 {
-    if (d.constData()->molecules.contains(moldata.number()))
+    if (auto_commit)
     {
-        if (d.constData()->molecules.at(moldata.number()).version() != moldata.version())
+        if (this->needsAccepting())
+            this->accept();
+        
+        if (d.constData()->molecules.contains(moldata.number()))
         {
-            if (workspace.isEmpty())
+            if (d.constData()->molecules.at(moldata.number()).version() != moldata.version())
             {
-                workspace.setVersion(d.constData()->version);
+                d->molecules.update(moldata);
+                d->version.incrementMinor();
+                return true;
             }
-            
-            workspace.push(moldata);
-            workspace.incrementMinor();
-            return true;
         }
-    }
 
-    return false;
+        return false;
+    }
+    else
+    {
+        if (d.constData()->molecules.contains(moldata.number()))
+        {
+            if (d.constData()->molecules.at(moldata.number()).version() != moldata.version())
+            {
+                if (workspace.isEmpty())
+                {
+                    workspace.setVersion(d.constData()->version);
+                }
+                
+                workspace.push(moldata);
+                workspace.incrementMinor();
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 /** Update this group so that the molecule in this group that
@@ -2154,9 +2175,9 @@ bool MoleculeGroup::update(const MoleculeData &moldata)
     This does nothing if there is no such molecule in this 
     group, or if it is already at this version, and this returns
     whether or not this changes the group. */
-bool MoleculeGroup::update(const MoleculeView &molview)
+bool MoleculeGroup::update(const MoleculeView &molview, bool auto_commit)
 {
-    return this->update(molview.data());
+    return this->update(molview.data(), auto_commit);
 }
 
 /** Update this group so that the contained molecules have the 
@@ -2164,34 +2185,60 @@ bool MoleculeGroup::update(const MoleculeView &molview)
     nothing if none of these molecules are in this group, or
     if they are already at the same versions. This returns
     the list of molecules that were changed by this update. */
-QList<Molecule> MoleculeGroup::update(const Molecules &molecules)
+QList<Molecule> MoleculeGroup::update(const Molecules &molecules, bool auto_commit)
 {
     QList<Molecule> updated_mols;
-    bool must_create_version = false;
 
-    for (Molecules::const_iterator it = molecules.constBegin();
-         it != molecules.constEnd();
-         ++it)
+    if (auto_commit)
     {
-        if (d.constData()->molecules.contains(it.key()))
+        if (this->needsAccepting())
+            this->accept();
+        
+        for (Molecules::const_iterator it = molecules.constBegin();
+             it != molecules.constEnd();
+             ++it)
         {
-            if (d.constData()->molecules.at(it.key()).version() != it.value().version())
+            if (d.constData()->molecules.contains(it.key()))
             {
-                if (workspace.isEmpty())
-                    must_create_version = true;
-            
-                workspace.push(it.value().data());
-                updated_mols.append(it.value().molecule());
+                if (d.constData()->molecules.at(it.key()).version() != it.value().version())
+                {
+                    d->molecules.update(it.value().data());
+                    updated_mols.append(it.value().molecule());
+                }
             }
         }
-    }
-    
-    if (not updated_mols.isEmpty())
-    {
-        if (must_create_version)
-            workspace.setVersion( d.constData()->version );
         
-        workspace.incrementMinor();
+        if (not updated_mols.isEmpty())
+            d->version.incrementMinor();
+    }
+    else
+    {
+        bool must_create_version = false;
+        
+        for (Molecules::const_iterator it = molecules.constBegin();
+             it != molecules.constEnd();
+             ++it)
+        {
+            if (d.constData()->molecules.contains(it.key()))
+            {
+                if (d.constData()->molecules.at(it.key()).version() != it.value().version())
+                {
+                    if (workspace.isEmpty())
+                        must_create_version = true;
+                
+                    workspace.push(it.value().data());
+                    updated_mols.append(it.value().molecule());
+                }
+            }
+        }
+        
+        if (not updated_mols.isEmpty())
+        {
+            if (must_create_version)
+                workspace.setVersion( d.constData()->version );
+            
+            workspace.incrementMinor();
+        }
     }
     
     return updated_mols;
@@ -2204,7 +2251,7 @@ QList<Molecule> MoleculeGroup::update(const Molecules &molecules)
     returns the list of molecules that were changed by this
     update
 */
-QList<Molecule> MoleculeGroup::update(const MoleculeGroup &molgroup)
+QList<Molecule> MoleculeGroup::update(const MoleculeGroup &molgroup, bool auto_commit)
 {
     if (molgroup == *this)
         //there is nothing to update!
@@ -2215,10 +2262,10 @@ QList<Molecule> MoleculeGroup::update(const MoleculeGroup &molgroup)
         {
             MoleculeGroup copy(molgroup);
             copy.accept();
-            return this->update(copy);
+            return this->update(copy.molecules(), auto_commit);
         }
         else
-            return this->update(molgroup.molecules());
+            return this->update(molgroup.molecules(), auto_commit);
     }
 }
 

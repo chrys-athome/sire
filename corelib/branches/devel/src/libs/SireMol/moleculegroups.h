@@ -317,11 +317,11 @@ public:
     virtual bool remove(MolNum molnum, const MGID &mgid)=0;
     virtual bool remove(const QSet<MolNum> &molnums, const MGID &mgid)=0;
 
-    virtual void update(const MoleculeData &moldata)=0;
-    void update(const MoleculeView &molview);
+    virtual void update(const MoleculeData &moldata, bool auto_commit=true)=0;
+    void update(const MoleculeView &molview, bool auto_commit=true);
     
-    virtual void update(const Molecules &molecules)=0;
-    virtual void update(const MoleculeGroup &molgroup)=0;
+    virtual void update(const Molecules &molecules, bool auto_commit=true)=0;
+    virtual void update(const MoleculeGroup &molgroup, bool auto_commit=true)=0;
     
     virtual void setContents(const MGID &mgid, const MoleculeView &molview)=0;
     virtual void setContents(const MGID &mgid, const ViewsOfMol &molviews)=0;
@@ -476,10 +476,10 @@ public:
     bool remove(MolNum molnum, const MGID &mgid);
     bool remove(const QSet<MolNum> &molnums, const MGID &mgid);
 
-    void update(const MoleculeData &moldata);
+    void update(const MoleculeData &moldata, bool auto_commit=true);
     
-    void update(const Molecules &molecules);
-    void update(const MoleculeGroup &molgroup);
+    void update(const Molecules &molecules, bool auto_commit=true);
+    void update(const MoleculeGroup &molgroup, bool auto_commit=true);
     
     void setContents(const MGID &mgid, const MoleculeView &molview);
     void setContents(const MGID &mgid, const ViewsOfMol &molviews);

@@ -861,13 +861,13 @@ void G1FF::group_removeAll(quint32 i)
 
 /** Update the molecule whose data is in 'moldata' to use this
     version of the molecule data in this forcefield */
-bool G1FF::group_update(quint32 i, const MoleculeData &moldata)
+bool G1FF::group_update(quint32 i, const MoleculeData &moldata, bool auto_commit)
 {
     assertValidGroup(i);
 
-    if (molgroup.update(moldata))
+    if (molgroup.update(moldata, auto_commit))
     {
-        this->_pvt_changed( Molecule(moldata) );
+        this->_pvt_changed( Molecule(moldata), auto_commit );
         
         FF::incrementVersion();
         
@@ -879,7 +879,7 @@ bool G1FF::group_update(quint32 i, const MoleculeData &moldata)
 
 /** Update this forcefield so that it uses the same version of the
     molecules as in 'molecules' */
-QList<Molecule> G1FF::group_update(quint32 i, const Molecules &molecules)
+QList<Molecule> G1FF::group_update(quint32 i, const Molecules &molecules, bool auto_commit)
 {
     assertValidGroup(i);
     
@@ -887,11 +887,11 @@ QList<Molecule> G1FF::group_update(quint32 i, const Molecules &molecules)
     
     try
     {
-        QList<Molecule> updated_mols = molgroup.update(molecules);
+        QList<Molecule> updated_mols = molgroup.update(molecules, auto_commit);
         
         if (not updated_mols.isEmpty())
         {
-            this->_pvt_changed(updated_mols);
+            this->_pvt_changed(updated_mols, auto_commit);
             
             FF::incrementVersion();
         }
@@ -909,9 +909,9 @@ QList<Molecule> G1FF::group_update(quint32 i, const Molecules &molecules)
 
 /** Update the molecule group in this forcefield so that it has
     the same molecule versions as in 'new_group' */
-QList<Molecule> G1FF::group_update(quint32 i, const MoleculeGroup &new_group)
+QList<Molecule> G1FF::group_update(quint32 i, const MoleculeGroup &new_group, bool auto_commit)
 {
-    return G1FF::group_update(i, new_group.molecules());
+    return G1FF::group_update(i, new_group.molecules(), auto_commit);
 }
 
 /** Set the contents of this forcefield so that it only contains the 

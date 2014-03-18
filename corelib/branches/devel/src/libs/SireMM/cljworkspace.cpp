@@ -226,8 +226,14 @@ static QThreadStorage<CLJWorkspaceCache*> cache;
 /** Call this to return the memory allocated in this object back to the memory pool */
 void CLJWorkspace::returnToMemoryPool()
 {
-    if (d.get() == 0 or not d.unique())
+    if (d.get() == 0)
         return;
+    
+    if (not d.unique())
+    {
+        d.reset();
+        return;
+    }
     
     if (not cache.hasLocalData())
     {

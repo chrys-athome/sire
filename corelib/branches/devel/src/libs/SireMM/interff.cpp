@@ -912,9 +912,9 @@ void InterFF::_pvt_removed(const SireMol::PartialMolecule &mol)
 }
 
 /** Function called to indicate that a molecule in this forcefield has changed */
-void InterFF::_pvt_changed(const SireMol::Molecule &molecule)
+void InterFF::_pvt_changed(const SireMol::Molecule &molecule, bool auto_update)
 {
-    if (needs_reboxing)
+    if (auto_update or needs_reboxing)
         reboxChangedAtoms();
 
     //get the ID number of this molecule in the forcefield
@@ -990,16 +990,19 @@ void InterFF::_pvt_changed(const SireMol::Molecule &molecule)
     
         this->setDirty();
     }
+    
+    if (auto_update and this->needsAccepting())
+        this->accept();
 }
 
 /** Function called to indicate that a list of molecules in this forcefield have changed */
-void InterFF::_pvt_changed(const QList<SireMol::Molecule> &molecules)
+void InterFF::_pvt_changed(const QList<SireMol::Molecule> &molecules, bool auto_update)
 {
     if (not atom_locs.isEmpty())
     {
         foreach (const Molecule &molecule, molecules)
         {
-            this->_pvt_changed(molecule);
+            this->_pvt_changed(molecule, auto_update);
             
             if (atom_locs.isEmpty())
                 break;
