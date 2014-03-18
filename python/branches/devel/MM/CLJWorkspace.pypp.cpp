@@ -15,6 +15,8 @@ namespace bp = boost::python;
 
 #include "cljworkspace.h"
 
+#include <QThreadStorage>
+
 #include <QVarLengthArray>
 
 #include "cljworkspace.h"

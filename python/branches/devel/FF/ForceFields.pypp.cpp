@@ -1636,35 +1636,35 @@ void register_ForceFields_class(){
         }
         { //::SireFF::ForceFields::update
         
-            typedef void ( ::SireFF::ForceFields::*update_function_type )( ::SireMol::MoleculeData const & ) ;
+            typedef void ( ::SireFF::ForceFields::*update_function_type )( ::SireMol::MoleculeData const &,bool ) ;
             update_function_type update_function_value( &::SireFF::ForceFields::update );
             
             ForceFields_exposer.def( 
                 "update"
                 , update_function_value
-                , ( bp::arg("moldata") ) );
+                , ( bp::arg("moldata"), bp::arg("auto_commit")=(bool)(true) ) );
         
         }
         { //::SireFF::ForceFields::update
         
-            typedef void ( ::SireFF::ForceFields::*update_function_type )( ::SireMol::Molecules const & ) ;
+            typedef void ( ::SireFF::ForceFields::*update_function_type )( ::SireMol::Molecules const &,bool ) ;
             update_function_type update_function_value( &::SireFF::ForceFields::update );
             
             ForceFields_exposer.def( 
                 "update"
                 , update_function_value
-                , ( bp::arg("molecules") ) );
+                , ( bp::arg("molecules"), bp::arg("auto_commit")=(bool)(true) ) );
         
         }
         { //::SireFF::ForceFields::update
         
-            typedef void ( ::SireFF::ForceFields::*update_function_type )( ::SireMol::MoleculeGroup const & ) ;
+            typedef void ( ::SireFF::ForceFields::*update_function_type )( ::SireMol::MoleculeGroup const &,bool ) ;
             update_function_type update_function_value( &::SireFF::ForceFields::update );
             
             ForceFields_exposer.def( 
                 "update"
                 , update_function_value
-                , ( bp::arg("molgroup") ) );
+                , ( bp::arg("molgroup"), bp::arg("auto_commit")=(bool)(true) ) );
         
         }
         { //::SireFF::ForceFields::userProperties
