@@ -200,6 +200,9 @@ public:
     SireUnits::Dimension::Angle measure(const DihedralID &dihedral,
                                         const PropertyMap &map=PropertyMap()) const;
 
+    void findMCS(const MoleculeView &other,
+                 const PropertyMap &map=PropertyMap()) const;
+
 private:
 
     /** The atoms over which the properties will be 

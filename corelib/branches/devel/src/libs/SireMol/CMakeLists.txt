@@ -177,6 +177,7 @@ set ( SIREMOL_SOURCES
       errors.cpp
       evaluator.cpp
       improperid.cpp
+      findmcs.cpp
       geometryperturbation.cpp
       groupatomids.cpp
       groupgroupids.cpp

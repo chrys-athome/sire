@@ -35,6 +35,10 @@
 #include "bondid.h"
 #include "angleid.h"
 #include "dihedralid.h"
+#include "connectivity.h"
+#include "molecule.h"
+#include "mover.hpp"
+#include "editor.hpp"
 
 #include "SireVol/coordgroup.h"
 
@@ -52,6 +56,7 @@
 #include "SireStream/datastream.h"
 
 #include <QDebug>
+#include <QElapsedTimer>
 
 using namespace SireMol;
 using namespace SireMaths;
