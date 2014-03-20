@@ -2,6 +2,7 @@
 
 use File::Compare;
 
+
 ## Script to check two directory trees to ensure that they 
 ## are identical - and to copy files from the first tree
 ## that are different or missing in the second tree
