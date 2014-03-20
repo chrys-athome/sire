@@ -382,6 +382,14 @@ void register_Evaluator_class(){
                 , selection_function_value );
         
         }
+        {
+            typedef void ( ::SireMol::Evaluator::*findMCS_function_type )(const ::SireMol::MoleculeView&, const ::SireBase::PropertyMap&  ) const;
+            findMCS_function_type findMCS_function_value( &::SireMol::Evaluator::findMCS );
+        
+            Evaluator_exposer.def(
+                "findMCS"
+                , findMCS_function_value );
+        }
         { //::SireMol::Evaluator::toString
         
             typedef ::QString ( ::SireMol::Evaluator::*toString_function_type )(  ) const;
