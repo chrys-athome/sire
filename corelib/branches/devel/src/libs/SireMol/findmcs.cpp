@@ -49,6 +49,8 @@
 #include "dihedralid.h"
 #include "improperid.h"
 
+#include "SireUnits/dimensions.h"
+
 #include "SireMol/errors.h"
 #include "SireBase/errors.h"
 
@@ -66,6 +68,7 @@
 using namespace SireStream;
 using namespace SireMol;
 using namespace SireBase;
+using namespace SireUnits::Dimension;
 
 using namespace boost;
 
@@ -199,15 +202,28 @@ struct in_ring_t
     typedef edge_property_tag kind;
 };
 
-/** Calculate the maximum common substructure of this view with 'other' */
-void Evaluator::findMCS(const MoleculeView &other, const PropertyMap &map) const
+///////////
+/////////// MCS part of Evaluator
+///////////
+
+/** Find the maximum common substructure of this molecule view with 'other'. This
+    returns the mapping from this structure to 'other' for the matching parts,
+    using the optionally supplied propertymap to find the elements, masses,
+    connectivity and coordinates of the two molecules, with the passed 'atommatcher'
+    used to pre-match atoms before the common substructure search (useful to speed
+    up the search and to enforce matching sub-parts) */
+QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
+                                          const AtomMatcher &matcher,
+                                          const Time &timeout,
+                                          const PropertyMap &map0,
+                                          const PropertyMap &map1) const
 {
     Connectivity c0;
     Connectivity c1;
     
     try
     {
-        c0 = data().property( map["connectivity"] ).asA<Connectivity>();
+        c0 = data().property( map0["connectivity"] ).asA<Connectivity>();
     }
     catch(...)
     {
@@ -216,7 +232,7 @@ void Evaluator::findMCS(const MoleculeView &other, const PropertyMap &map) const
     
     try
     {
-        c1 = other.data().property( map["connectivity"] ).asA<Connectivity>();
+        c1 = other.data().property( map1["connectivity"] ).asA<Connectivity>();
     }
     catch(...)
     {
@@ -230,8 +246,8 @@ void Evaluator::findMCS(const MoleculeView &other, const PropertyMap &map) const
     AtomSelection selected0 = this->selection();
     AtomSelection selected1 = other.selection();
     
-    QVector<Element> elements0 = ::getElements(this->molecule(), map);
-    QVector<Element> elements1 = ::getElements(other.molecule(), map);
+    QVector<Element> elements0 = ::getElements(this->molecule(), map0);
+    QVector<Element> elements1 = ::getElements(other.molecule(), map1);
     
     int nskip0 = 0;
     int nskip1 = 0;
@@ -326,4 +342,6 @@ void Evaluator::findMCS(const MoleculeView &other, const PropertyMap &map) const
                     edges_equivalent(make_property_map_equivalent(in_ring_0,in_ring_1)));
                     
     qDebug() << "MATCH TOOK" << (0.000001*t_total.nsecsElapsed()) << "ms";
+    
+    return QHash<AtomIdx,AtomIdx>();
 }

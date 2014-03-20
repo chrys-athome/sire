@@ -200,8 +200,41 @@ public:
     SireUnits::Dimension::Angle measure(const DihedralID &dihedral,
                                         const PropertyMap &map=PropertyMap()) const;
 
-    void findMCS(const MoleculeView &other,
-                 const PropertyMap &map=PropertyMap()) const;
+    QHash<AtomIdx,AtomIdx> findMCS(const MoleculeView &other,
+                                   const PropertyMap &map=PropertyMap()) const;
+
+    QHash<AtomIdx,AtomIdx> findMCS(const MoleculeView &other,
+                                   const AtomMatcher &atommatcher,
+                                   const PropertyMap &map=PropertyMap()) const;
+
+    QHash<AtomIdx,AtomIdx> findMCS(const MoleculeView &other,
+                                   const PropertyMap &map0,
+                                   const PropertyMap &map1) const;
+
+    QHash<AtomIdx,AtomIdx> findMCS(const MoleculeView &other,
+                                   const AtomMatcher &atommatcher,
+                                   const PropertyMap &map0,
+                                   const PropertyMap &map1) const;
+
+    QHash<AtomIdx,AtomIdx> findMCS(const MoleculeView &other,
+                                   const SireUnits::Dimension::Time &timeout,
+                                   const PropertyMap &map=PropertyMap()) const;
+
+    QHash<AtomIdx,AtomIdx> findMCS(const MoleculeView &other,
+                                   const AtomMatcher &atommatcher,
+                                   const SireUnits::Dimension::Time &timeout,
+                                   const PropertyMap &map=PropertyMap()) const;
+
+    QHash<AtomIdx,AtomIdx> findMCS(const MoleculeView &other,
+                                   const SireUnits::Dimension::Time &timeout,
+                                   const PropertyMap &map0,
+                                   const PropertyMap &map1) const;
+
+    QHash<AtomIdx,AtomIdx> findMCS(const MoleculeView &other,
+                                   const AtomMatcher &atommatcher,
+                                   const SireUnits::Dimension::Time &timeout,
+                                   const PropertyMap &map0,
+                                   const PropertyMap &map1) const;
 
 private:
 
