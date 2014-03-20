@@ -297,6 +297,9 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::Mover< SireMol::Selector<SireMol::Residue> > >();
     ObjectRegistry::registerConverterFor< SireMol::AtomIdxMatcher >();
     ObjectRegistry::registerConverterFor< SireMol::AtomNameMatcher >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomIDMatcher >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomMultiMatcher >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomMCSMatcher >();
     ObjectRegistry::registerConverterFor< SireMol::AtomName >();
     ObjectRegistry::registerConverterFor< SireMol::ChargePerturbation >();
 

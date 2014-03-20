@@ -41,15 +41,21 @@
 
 #include "AtomID.pypp.hpp"
 
+#include "AtomIDMatcher.pypp.hpp"
+
 #include "AtomIdx.pypp.hpp"
 
 #include "AtomIdxMatcher.pypp.hpp"
 
 #include "AtomIntProperty.pypp.hpp"
 
+#include "AtomMCSMatcher.pypp.hpp"
+
 #include "AtomMasses.pypp.hpp"
 
 #include "AtomMatcher.pypp.hpp"
+
+#include "AtomMultiMatcher.pypp.hpp"
 
 #include "AtomName.pypp.hpp"
 
@@ -558,11 +564,17 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_AtomEditor_class();
 
-    register_AtomIdx_class();
-
     register_AtomMatcher_class();
 
+    register_AtomIDMatcher_class();
+
+    register_AtomIdx_class();
+
     register_AtomIdxMatcher_class();
+
+    register_AtomMCSMatcher_class();
+
+    register_AtomMultiMatcher_class();
 
     register_AtomName_class();
 

@@ -7,13 +7,21 @@
 
 namespace bp = boost::python;
 
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
+
+#include "atomidentifier.h"
 
 #include "atomidx.h"
 
 #include "atommatcher.h"
 
 #include "atomname.h"
+
+#include "atomselection.h"
+
+#include "evaluator.h"
 
 #include "moleculeinfodata.h"
 
@@ -45,6 +53,17 @@ void register_AtomNameMatcher_class(){
                 , ( bp::arg("molinfo0"), bp::arg("molinfo1") ) );
         
         }
+        { //::SireMol::AtomNameMatcher::match
+        
+            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::AtomNameMatcher::*match_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
+            match_function_type match_function_value( &::SireMol::AtomNameMatcher::match );
+            
+            AtomNameMatcher_exposer.def( 
+                "match"
+                , match_function_value
+                , ( bp::arg("molview0"), bp::arg("map0"), bp::arg("molview1"), bp::arg("map1") ) );
+        
+        }
         AtomNameMatcher_exposer.def( bp::self != bp::self );
         { //::SireMol::AtomNameMatcher::operator=
         
@@ -59,6 +78,16 @@ void register_AtomNameMatcher_class(){
         
         }
         AtomNameMatcher_exposer.def( bp::self == bp::self );
+        { //::SireMol::AtomNameMatcher::toString
+        
+            typedef ::QString ( ::SireMol::AtomNameMatcher::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireMol::AtomNameMatcher::toString );
+            
+            AtomNameMatcher_exposer.def( 
+                "toString"
+                , toString_function_value );
+        
+        }
         { //::SireMol::AtomNameMatcher::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -67,17 +96,6 @@ void register_AtomNameMatcher_class(){
             AtomNameMatcher_exposer.def( 
                 "typeName"
                 , typeName_function_value );
-        
-        }
-        { //::SireMol::AtomNameMatcher::unchangedAtomOrder
-        
-            typedef bool ( ::SireMol::AtomNameMatcher::*unchangedAtomOrder_function_type )( ::SireMol::MoleculeInfoData const &,::SireMol::MoleculeInfoData const & ) const;
-            unchangedAtomOrder_function_type unchangedAtomOrder_function_value( &::SireMol::AtomNameMatcher::unchangedAtomOrder );
-            
-            AtomNameMatcher_exposer.def( 
-                "unchangedAtomOrder"
-                , unchangedAtomOrder_function_value
-                , ( bp::arg("molinfo0"), bp::arg("molinfo1") ) );
         
         }
         { //::SireMol::AtomNameMatcher::what

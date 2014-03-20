@@ -7,13 +7,21 @@
 
 namespace bp = boost::python;
 
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
+
+#include "atomidentifier.h"
 
 #include "atomidx.h"
 
 #include "atommatcher.h"
 
 #include "atomname.h"
+
+#include "atomselection.h"
+
+#include "evaluator.h"
 
 #include "moleculeinfodata.h"
 
@@ -31,6 +39,71 @@ void register_AtomMatcher_class(){
         typedef bp::class_< SireMol::AtomMatcher, bp::bases< SireBase::Property >, boost::noncopyable > AtomMatcher_exposer_t;
         AtomMatcher_exposer_t AtomMatcher_exposer = AtomMatcher_exposer_t( "AtomMatcher", bp::no_init );
         bp::scope AtomMatcher_scope( AtomMatcher_exposer );
+        { //::SireMol::AtomMatcher::add
+        
+            typedef ::SireMol::AtomMultiMatcher ( ::SireMol::AtomMatcher::*add_function_type )( ::SireMol::AtomMatcher const & ) const;
+            add_function_type add_function_value( &::SireMol::AtomMatcher::add );
+            
+            AtomMatcher_exposer.def( 
+                "add"
+                , add_function_value
+                , ( bp::arg("other") ) );
+        
+        }
+        { //::SireMol::AtomMatcher::changesOrder
+        
+            typedef bool ( ::SireMol::AtomMatcher::*changesOrder_function_type )( ::SireMol::MoleculeInfoData const &,::SireMol::MoleculeInfoData const & ) const;
+            changesOrder_function_type changesOrder_function_value( &::SireMol::AtomMatcher::changesOrder );
+            
+            AtomMatcher_exposer.def( 
+                "changesOrder"
+                , changesOrder_function_value
+                , ( bp::arg("molinfo0"), bp::arg("molinfo1") ) );
+        
+        }
+        { //::SireMol::AtomMatcher::changesOrder
+        
+            typedef bool ( ::SireMol::AtomMatcher::*changesOrder_function_type )( ::SireMol::MoleculeView const &,::SireMol::MoleculeView const & ) const;
+            changesOrder_function_type changesOrder_function_value( &::SireMol::AtomMatcher::changesOrder );
+            
+            AtomMatcher_exposer.def( 
+                "changesOrder"
+                , changesOrder_function_value
+                , ( bp::arg("molview0"), bp::arg("molview1") ) );
+        
+        }
+        { //::SireMol::AtomMatcher::changesOrder
+        
+            typedef bool ( ::SireMol::AtomMatcher::*changesOrder_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
+            changesOrder_function_type changesOrder_function_value( &::SireMol::AtomMatcher::changesOrder );
+            
+            AtomMatcher_exposer.def( 
+                "changesOrder"
+                , changesOrder_function_value
+                , ( bp::arg("molview0"), bp::arg("map0"), bp::arg("molview1"), bp::arg("map1") ) );
+        
+        }
+        { //::SireMol::AtomMatcher::changesOrder
+        
+            typedef bool ( ::SireMol::AtomMatcher::*changesOrder_function_type )( ::SireMol::MoleculeView const &,::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
+            changesOrder_function_type changesOrder_function_value( &::SireMol::AtomMatcher::changesOrder );
+            
+            AtomMatcher_exposer.def( 
+                "changesOrder"
+                , changesOrder_function_value
+                , ( bp::arg("molview0"), bp::arg("molview1"), bp::arg("map") ) );
+        
+        }
+        { //::SireMol::AtomMatcher::isNull
+        
+            typedef bool ( ::SireMol::AtomMatcher::*isNull_function_type )(  ) const;
+            isNull_function_type isNull_function_value( &::SireMol::AtomMatcher::isNull );
+            
+            AtomMatcher_exposer.def( 
+                "isNull"
+                , isNull_function_value );
+        
+        }
         { //::SireMol::AtomMatcher::match
         
             typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::AtomMatcher::*match_function_type )( ::SireMol::MoleculeInfoData const &,::SireMol::MoleculeInfoData const & ) const;
@@ -44,6 +117,17 @@ void register_AtomMatcher_class(){
         }
         { //::SireMol::AtomMatcher::match
         
+            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::AtomMatcher::*match_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
+            match_function_type match_function_value( &::SireMol::AtomMatcher::match );
+            
+            AtomMatcher_exposer.def( 
+                "match"
+                , match_function_value
+                , ( bp::arg("molview0"), bp::arg("map0"), bp::arg("molview1"), bp::arg("map1") ) );
+        
+        }
+        { //::SireMol::AtomMatcher::match
+        
             typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::AtomMatcher::*match_function_type )( ::SireMol::MoleculeView const &,::SireMol::MoleculeView const & ) const;
             match_function_type match_function_value( &::SireMol::AtomMatcher::match );
             
@@ -53,16 +137,18 @@ void register_AtomMatcher_class(){
                 , ( bp::arg("molview0"), bp::arg("molview1") ) );
         
         }
-        { //::SireMol::AtomMatcher::toString
+        { //::SireMol::AtomMatcher::match
         
-            typedef ::QString ( ::SireMol::AtomMatcher::*toString_function_type )(  ) const;
-            toString_function_type toString_function_value( &::SireMol::AtomMatcher::toString );
+            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::AtomMatcher::*match_function_type )( ::SireMol::MoleculeView const &,::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
+            match_function_type match_function_value( &::SireMol::AtomMatcher::match );
             
             AtomMatcher_exposer.def( 
-                "toString"
-                , toString_function_value );
+                "match"
+                , match_function_value
+                , ( bp::arg("molview0"), bp::arg("molview1"), bp::arg("map") ) );
         
         }
+        AtomMatcher_exposer.def( bp::self + bp::self );
         { //::SireMol::AtomMatcher::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -71,17 +157,6 @@ void register_AtomMatcher_class(){
             AtomMatcher_exposer.def( 
                 "typeName"
                 , typeName_function_value );
-        
-        }
-        { //::SireMol::AtomMatcher::unchangedAtomOrder
-        
-            typedef bool ( ::SireMol::AtomMatcher::*unchangedAtomOrder_function_type )( ::SireMol::MoleculeInfoData const &,::SireMol::MoleculeInfoData const & ) const;
-            unchangedAtomOrder_function_type unchangedAtomOrder_function_value( &::SireMol::AtomMatcher::unchangedAtomOrder );
-            
-            AtomMatcher_exposer.def( 
-                "unchangedAtomOrder"
-                , unchangedAtomOrder_function_value
-                , ( bp::arg("molinfo0"), bp::arg("molinfo1") ) );
         
         }
         AtomMatcher_exposer.staticmethod( "typeName" );
