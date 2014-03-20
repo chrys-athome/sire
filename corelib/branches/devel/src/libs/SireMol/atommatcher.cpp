@@ -651,6 +651,48 @@ AtomIDMatcher::AtomIDMatcher(const QList< QPair<AtomIdentifier,AtomIdentifier> >
     }
 }
 
+/** Construct to match atom names */
+AtomIDMatcher::AtomIDMatcher(const QList< boost::tuple<QString,QString> > &names)
+              : ConcreteProperty<AtomIDMatcher,AtomMatcher>()
+{
+    for (int i=0; i<names.count(); ++i)
+    {
+        const boost::tuple<QString,QString> &name = names[i];
+
+        if (not (name.get<0>().isEmpty() or name.get<1>().isEmpty()))
+        {
+            m.append( QPair<AtomIdentifier,AtomIdentifier>( AtomName(name.get<0>()),
+                                                            AtomName(name.get<1>()) ) );
+        }
+    }
+}
+
+/** Construct to match atom indexes */
+AtomIDMatcher::AtomIDMatcher(const QList< boost::tuple<int,int> > &idxs)
+              : ConcreteProperty<AtomIDMatcher,AtomMatcher>()
+{
+    for (int i=0; i<idxs.count(); ++i)
+    {
+        const boost::tuple<int,int> &idx = idxs[i];
+        
+        m.append( QPair<AtomIdentifier,AtomIdentifier>( AtomIdx(idx.get<0>()),
+                                                        AtomIdx(idx.get<1>()) ) );
+    }
+}
+
+/** Construct to match specified AtomIdentifiers */
+AtomIDMatcher::AtomIDMatcher(const QList< boost::tuple<AtomIdentifier,AtomIdentifier> > &ids)
+              : ConcreteProperty<AtomIDMatcher,AtomMatcher>()
+{
+    for (int i=0; i<ids.count(); ++i)
+    {
+        const boost::tuple<AtomIdentifier,AtomIdentifier> id = ids[i];
+        
+        if (not (id.get<0>().isNull() or id.get<1>().isNull()))
+            m.append( QPair<AtomIdentifier,AtomIdentifier>(id.get<0>(),id.get<1>()) );
+    }
+}
+
 /** Copy constructor */
 AtomIDMatcher::AtomIDMatcher(const AtomIDMatcher &other)
               : ConcreteProperty<AtomIDMatcher,AtomMatcher>(other),

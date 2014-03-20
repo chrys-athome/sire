@@ -36,6 +36,8 @@
 #include "SireBase/property.h"
 #include "SireBase/propertymap.h"
 
+#include <boost/tuple/tuple.hpp>
+
 namespace SireMol
 {
 class AtomMatcher;
@@ -239,9 +241,14 @@ friend QDataStream& ::operator>>(QDataStream&, AtomIDMatcher&);
 
 public:
     AtomIDMatcher();
+    
     AtomIDMatcher(const QList< QPair<QString,QString> > &match_names);
     AtomIDMatcher(const QList< QPair<int,int> > &match_idxs);
     AtomIDMatcher(const QList< QPair<AtomIdentifier,AtomIdentifier> > &match_ids);
+    
+    AtomIDMatcher(const QList< boost::tuple<QString,QString> > &match_names);
+    AtomIDMatcher(const QList< boost::tuple<int,int> > &match_idxs );
+    AtomIDMatcher(const QList< boost::tuple<AtomIdentifier,AtomIdentifier> > &match_ids);
     
     AtomIDMatcher(const AtomIDMatcher &other);
     
