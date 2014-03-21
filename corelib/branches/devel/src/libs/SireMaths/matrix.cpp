@@ -659,7 +659,7 @@ boost::tuple<Matrix,Matrix,Matrix> Matrix::singleValueDecomposition() const
         // calculate single value decomposition of A into V S W^T
         int ok = gsl_linalg_SV_decomp_jacobi(A, W, S);
 
-        if (not ok)
+        if (ok != 0)
             throw SireMaths::domain_error( QObject::tr(
                     "Could not calculate the single value decomposition of %1.")
                         .arg(this->toString()), CODELOC );
@@ -675,7 +675,7 @@ boost::tuple<Matrix,Matrix,Matrix> Matrix::singleValueDecomposition() const
         gsl_vector_free(S);
         gsl_matrix_free(W);
         
-        return boost::tuple<Matrix,Matrix,Matrix>(a,w,s);
+        return boost::tuple<Matrix,Matrix,Matrix>(a,s,w);
     }
     catch(...)
     {
@@ -778,7 +778,7 @@ Matrix Matrix::covariance(const QVector<Vector> &p, const QVector<Vector> &q, in
         //compute the covariance matrix P^T Q
         int ok = gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, P, Q, 0.0, C);
 
-        if (not ok)
+        if (ok != 0)
             throw SireMaths::domain_error( QObject::tr(
                     "Something went wrong with the dgemm in covariance!"), CODELOC );
 

@@ -38,6 +38,22 @@
 
 #include <QElapsedTimer>
 
+#include "tostring.h"
+
+using namespace SireMaths;
+
+static QVector<Vector> translate(const QVector<Vector> &v, const Vector &delta)
+{
+    QVector<Vector> v2(v);
+    
+    for (int i=0; i<v.count(); ++i)
+    {
+        v2[i] += delta;
+    }
+    
+    return v2;
+}
+
 namespace SireMaths
 {
     /** Return the centroid of the points in 'p'. If n != -1 then
@@ -134,13 +150,8 @@ namespace SireMaths
         if (p.isEmpty() or q.isEmpty())
             return Matrix::identity();
 
-        QElapsedTimer t;
-        t.start();
-
         //calculate the covariance matrix
         Matrix c = Matrix::covariance(p, q);
-    
-        qDebug() << "c" << c.toString();
         
         //calculate the single value decomposition of this in V S W^T
         boost::tuple<Matrix,Matrix,Matrix> svd = c.svd();
@@ -149,26 +160,15 @@ namespace SireMaths
         Matrix s = svd.get<1>();
         Matrix w = svd.get<2>();
         
-        qDebug() << "v" << v.toString();
-        qDebug() << "s" << s.toString();
-        qDebug() << "w" << w.toString();
-        
         double det_vw = v.determinant() * w.determinant();
-        qDebug() << "DET" << det_vw;
 
         if (det_vw < 0)
         {
-            //s(2,2) = -s(2,2);
             v(2,2) = -v(2,2);
         }
 
         //now create the rotation matrix
         Matrix r = v * w;
-
-        qDebug() << "r" << r.toString();
-        
-        qint64 ns = t.nsecsElapsed();
-        qDebug() << "TOOK" << (0.000001*ns) << "ms";
 
         return r;
     }
@@ -217,7 +217,86 @@ namespace SireMaths
     AxisSet SIREMATHS_EXPORT kabaschFit(const QVector<Vector> &p,
                                         const QVector<Vector> &q)
     {
-        return AxisSet(Matrix::identity(), Vector(0));
+        if (p.isEmpty() or q.isEmpty())
+            return Matrix::identity();
+        
+        //find the maximum point in p
+        Vector step_size(0);
+        
+        for (int i=0; i<qMin(p.count(),q.count()); ++i)
+        {
+            step_size = step_size.max(q[i]);
+        }
+        
+        const Vector threshold = 1e-9 * step_size;
+    
+        Matrix rotmat_best = kabasch(p,q);
+        
+        double rmsd_best = getRMSD( p, AxisSet(rotmat_best).fromIdentity(q) );
+        
+        QVector<Vector> q2(q);
+        
+        Vector delta(0);
+        
+        while (true)
+        {
+            for (int i=0; i<3; ++i)
+            {
+                Vector tmp = delta;
+                tmp.set(i, tmp[i] + step_size[i]);
+                
+                q2 = translate(q,tmp);
+                Matrix rotmat = kabasch(p,q2);
+                double rmsd = getRMSD( p, AxisSet(rotmat).fromIdentity(q2) );
+                
+                if (rmsd < rmsd_best)
+                {
+                    //this has improved the fit
+                    rmsd_best = rmsd;
+                    rotmat_best = rotmat;
+                    delta = tmp;
+                }
+                else
+                {
+                    //try the other way
+                    tmp = delta;
+                    tmp.set(i, tmp[i] - step_size[i]);
+                    
+                    q2 = translate(q,tmp);
+                    rotmat = kabasch(p,q2);
+                    rmsd = getRMSD( p, AxisSet(rotmat).fromIdentity(q2) );
+                    
+                    if (rmsd < rmsd_best)
+                    {
+                        //this has improved the fit
+                        rmsd_best = rmsd;
+                        rotmat_best = rotmat;
+                        delta = tmp;
+                    }
+                    else
+                    {
+                        //we need to reduce the amount by which we are searching
+                        step_size.set(i, 0.5*step_size[i]);
+                    }
+                }
+            }
+            
+            bool finished = true;
+            
+            for (int i=0; i<3; ++i)
+            {
+                if (step_size[i] > threshold[i])
+                {
+                    finished = false;
+                    break;
+                }
+            }
+            
+            if (finished)
+                break;
+        }
+
+        return AxisSet(rotmat_best, delta);
     }
 
     /** Return AxisSet containing the translation vector and rotation
@@ -231,24 +310,32 @@ namespace SireMaths
     {
         if (p.isEmpty() or q.isEmpty())
             return AxisSet(Matrix::identity(), Vector(0));
+
+        //first, translate p and q so that their centroids
+        //are at (0,0,0)
+
+        //calculate the difference in centroids of p and q
+        const int n = qMin(p.count(), q.count());
+        
+        Vector cp = getCentroid(p,n);
+        Vector cq = getCentroid(q,n);
+        
+        QVector<Vector> pc(n), qc(n);
+        for (int i=0; i<n; ++i)
+        {
+            pc[i] = p[i] - cp;
+            qc[i] = q[i] - cq;
+        }
     
         if (fit)
-            return kabaschFit(p, q);
-        
+        {
+            AxisSet a = kabaschFit(pc, qc);
+            return AxisSet(a.matrix(), a.origin() + cp - cq);
+        }
         else
         {
-            //calculate the difference in centroids of p and q
-            const int n = qMin(p.count(), q.count());
             
-            Vector delta = getCentroid(q,n) - getCentroid(p,n);
-            
-            QVector<Vector> r(n);
-            for (int i=0; i<n; ++i)
-            {
-                r[i] = q[i] - delta;
-            }
-            
-            return AxisSet(kabasch(p, r), delta);
+            return AxisSet(kabasch(pc,qc), cp-cq);
         }
     }
     
@@ -265,16 +352,9 @@ namespace SireMaths
         
         AxisSet a = getAlignment(p, q, fit);
         
-        Vector c = getCentroid(q, qMin(p.count(),q.count()));
+        //Vector c = getCentroid(q, qMin(p.count(),q.count()));
         
-        QVector<Vector> r(q);
-        
-        for (int i=0; i<r.count(); ++i)
-        {
-            r[i] = c + a.fromIdentity(q[i] - c);
-        }
-        
-        return r;
+        return a.fromIdentity(q);
     }
 
 } // end of namespace SireMaths

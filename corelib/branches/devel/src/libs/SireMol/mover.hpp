@@ -31,10 +31,13 @@
 
 #include "mover.h"
 #include "evaluator.h"
+#include "atommatcher.h"
+#include "atomcoords.h"
 
 #include "SireBase/propertymap.h"
 
 #include "SireMaths/axisset.h"
+#include "SireMaths/align.h"
 
 SIRE_BEGIN_HEADER
 
@@ -144,6 +147,22 @@ public:
                       const AtomMatcher &matcher,
                       const PropertyMap &map0,
                       const PropertyMap &map1);
+
+    Mover<T>& align(const MoleculeView &other,
+                    const PropertyMap &map = PropertyMap());
+
+    Mover<T>& align(const MoleculeView &other,
+                    const PropertyMap &map0,
+                    const PropertyMap &map1);
+
+    Mover<T>& align(const MoleculeView &other,
+                    const AtomMatcher &matcher,
+                    const PropertyMap &map = PropertyMap());
+
+    Mover<T>& align(const MoleculeView &other,
+                    const AtomMatcher &matcher,
+                    const PropertyMap &map0,
+                    const PropertyMap &map1);
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -533,6 +552,89 @@ Mover<T>& Mover<T>::alignTo(const MoleculeView &other,
                             const PropertyMap &map)
 {
     return this->alignTo(other, aligning_atoms, matcher, map, map);
+}
+
+/** Align this molecule view against 'other' using the supplied AtomMatcher
+    to match atoms between the two views, and the supplied property maps to
+    find the required properties in each view (this, then other). */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>& Mover<T>::align(const MoleculeView &other,
+                          const AtomMatcher &matcher,
+                          const PropertyMap &map0,
+                          const PropertyMap &map1)
+{
+    const AtomCoords &this_coords = this->data().property( map0["coordinates"] )
+                                                .template asA<AtomCoords>();
+    
+    const AtomCoords &other_coords = other.data().property( map1["coordinates"] )
+                                                 .template asA<AtomCoords>();
+    
+    QHash<AtomIdx,AtomIdx> map = matcher.match(*this, map0, other, map1);
+    
+    if (map.isEmpty())
+    {
+        //there are no matching atoms - we can't do anything
+        qDebug() << "No matching atoms!";
+        return *this;
+    }
+    
+    QVector<Vector> p(map.count()), q(map.count());
+    
+    int n = 0;
+    
+    for (QHash<AtomIdx,AtomIdx>::const_iterator it = map.constBegin();
+         it != map.constEnd();
+         ++it)
+    {
+        q[n] = this_coords.at( this->data().info().cgAtomIdx(it.key()) );
+        p[n] = other_coords.at( other.data().info().cgAtomIdx(it.value()) );
+        n += 1;
+    }
+    
+    AxisSet align_axes = SireMaths::getAlignment(p, q);
+    
+    MoverBase::mapInto(*(this->d), align_axes, map0);
+    
+    return *this;
+}
+
+/** Align this molecule view against 'other' using the optionally supplied property
+    map to find the required properties in both molecules. This matches atoms using their
+    AtomIdx, which may not be what you want. If you want more control on matching,
+    then supply an AtomMatcher */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>& Mover<T>::align(const MoleculeView &other,
+                          const PropertyMap &map)
+{
+    return this->align(other, AtomIdxMatcher(), map, map);
+}
+
+/** Align this molecule view against 'other' using the supplied property
+    maps to find the required properties in each molecule respectively. 
+    This matches atoms using their
+    AtomIdx, which may not be what you want. If you want more control on matching,
+    then supply an AtomMatcher */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>& Mover<T>::align(const MoleculeView &other,
+                          const PropertyMap &map0,
+                          const PropertyMap &map1)
+{
+    return this->align(other, AtomIdxMatcher(), map0, map1);
+}
+
+/** Align this molecule view against 'other' using the supplied AtomMatcher
+    to match atoms between the two views, and the supplied property map to
+    find the required properties in both views. */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>& Mover<T>::align(const MoleculeView &other,
+                          const AtomMatcher &matcher,
+                          const PropertyMap &map)
+{
+    return this->align(other, matcher, map, map);
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS

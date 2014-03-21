@@ -30,6 +30,7 @@
 #define SIREMATHS_AXISSET_H
 
 #include <QString>
+#include <QVector>
 
 #include "matrix.h"
 #include "vector.h"
@@ -82,9 +83,14 @@ public:
     const Vector& origin() const;
 
     Vector fromIdentity(const Vector &vec) const;
+    QVector<Vector> fromIdentity(const QVector<Vector> &vec) const;
+    
     Vector toIdentity(const Vector &vec) const;
     Vector toFrame(const AxisSet &frame, const Vector &vec) const;
     Vector fromFrame(const AxisSet &frame, const Vector &vec) const;
+    
+    Vector fromIdentity(const Vector &vec, const Vector &delta) const;
+    QVector<Vector> fromIdentity(const QVector<Vector> &vecs, const Vector &delta) const;
     
 protected:
 

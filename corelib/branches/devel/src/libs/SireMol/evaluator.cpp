@@ -434,10 +434,10 @@ static void getPrincipalAxes(Matrix &inertia, Vector principal_moments)
     inertia_array[6] = inertia_array[2];
     inertia_array[7] = inertia_array[5];
 
-    std::pair<Vector,Matrix> eigs = inertia.diagonalise();
+    boost::tuple<Vector,Matrix> eigs = inertia.diagonalise();
 
-    principal_moments = eigs.first;
-    inertia = eigs.second;
+    principal_moments = eigs.get<0>();
+    inertia = eigs.get<1>();
     
     //if one or more of the eigenvalues is zero then we may have a problem
     //because the wrong eigenvector direction may be chosen - in this case,
@@ -506,7 +506,7 @@ static AxisSet getPrincipalAxes(const AtomCoords &coords,
         
     Vector com = ::getCOM(coords, masses, selected_atoms);
 
-    Matrix inertia(0);
+    Matrix inertia( double(0) );
     
     if (selected_atoms.selectedAll())
     {
