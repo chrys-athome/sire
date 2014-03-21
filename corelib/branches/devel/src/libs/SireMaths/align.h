@@ -41,6 +41,10 @@ SIRE_BEGIN_HEADER
 
 namespace SireMaths
 {
+    Vector getCentroid(const QVector<Vector> &p, int n=-1);
+    
+    double getRMSD(const QVector<Vector> &p, const QVector<Vector> &q, int n=-1);
+
     AxisSet kabaschFit(const QVector<Vector> &p,
                        const QVector<Vector> &q);
 
@@ -56,6 +60,8 @@ namespace SireMaths
                           bool fit=true);
 }
 
+SIRE_EXPOSE_FUNCTION( SireMaths::getCentroid )
+SIRE_EXPOSE_FUNCTION( SireMaths::getRMSD )
 SIRE_EXPOSE_FUNCTION( SireMaths::kabasch )
 SIRE_EXPOSE_FUNCTION( SireMaths::kabaschFit )
 SIRE_EXPOSE_FUNCTION( SireMaths::getAlignment )

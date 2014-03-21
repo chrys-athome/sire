@@ -29,27 +29,27 @@
 #include "SireMaths/align.h"
 #include "SireMaths/accumulator.h"
 
+#include "SireError/errors.h"
+
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_linalg.h>
 
+#include <QElapsedTimer>
+
 namespace SireMaths
 {
     /** Return the centroid of the points in 'p'. If n != -1 then
         only calculate the centroid of the first n points */
-    Vector getCentroid(const QVector<Vector> &p, int n=-1)
+    Vector SIREMATHS_EXPORT getCentroid(const QVector<Vector> &p, int n)
     {
         if (p.isEmpty())
             return Vector(0);
     
         Average x, y, z;
     
-        if (n < 0)
-        {
-            n = p.count();
-        }
-        else if (n > p.count())
+        if (n < 0 or n > p.count())
         {
             n = p.count();
         }
@@ -66,18 +66,14 @@ namespace SireMaths
 
     /** Return the RMSD between the two sets of points. If n != -1 then
         only calculate the RMSD using the first n points */
-    double getRMSD(const QVector<Vector> &p, const QVector<Vector> &q, int n=-1)
+    double SIREMATHS_EXPORT getRMSD(const QVector<Vector> &p, const QVector<Vector> &q, int n)
     {
         if (p.isEmpty() or q.isEmpty())
             return 0;
         
-        if (n < 0)
+        if (n < 0 or n > qMin(p.count(),q.count()))
         {
             n = qMin(p.count(), q.count());
-        }
-        else if (n > qMin(p.count(),q.count()))
-        {
-            n = qMin(p.count(),q.count());
         }
         
         Average msd;
@@ -90,11 +86,6 @@ namespace SireMaths
         }
         
         return std::sqrt( msd.average() );
-    }
-
-    double determinant(gsl_matrix *m, int nrow, int ncol)
-    {
-        
     }
 
     /** Use the kabasch algorithm (http://en.wikipedia.org/wiki/Kabsch_algorithm)
@@ -142,76 +133,44 @@ namespace SireMaths
     {
         if (p.isEmpty() or q.isEmpty())
             return Matrix::identity();
+
+        QElapsedTimer t;
+        t.start();
+
+        //calculate the covariance matrix
+        Matrix c = Matrix::covariance(p, q);
     
-        gsl_matrix *P = 0;
-        gsl_matrix *Q = 0;
-        gsl_matrix *A = 0;
+        qDebug() << "c" << c.toString();
         
-        gsl_vector *S = 0;
-        gsl_matrix *V = 0;
-        gsl_matrix *W = 0;
+        //calculate the single value decomposition of this in V S W^T
+        boost::tuple<Matrix,Matrix,Matrix> svd = c.svd();
         
-        const int n = qMin(p.count(), q.count());
+        Matrix v = svd.get<0>();
+        Matrix s = svd.get<1>();
+        Matrix w = svd.get<2>();
         
-        try
+        qDebug() << "v" << v.toString();
+        qDebug() << "s" << s.toString();
+        qDebug() << "w" << w.toString();
+        
+        double det_vw = v.determinant() * w.determinant();
+        qDebug() << "DET" << det_vw;
+
+        if (det_vw < 0)
         {
-            //convert the two vectors of points into GSL matrices
-            P = gsl_matrix_alloc(n, 3);
-            Q = gsl_matrix_alloc(n, 3);
-            
-            for (int i=0; i<n; ++i)
-            {
-                gsl_matrix_set(P, i, 0, p[i].x());
-                gsl_matrix_set(P, i, 1, p[i].y());
-                gsl_matrix_set(P, i, 2, p[i].z());
-                
-                gsl_matrix_set(Q, i, 0, q[i].x());
-                gsl_matrix_set(Q, i, 1, q[i].y());
-                gsl_matrix_set(Q, i, 2, q[i].z());
-            }
-            
-            //create space to hold the covariance matrix
-            A = gsl_matrix_alloc(3, 3);
-            
-            for (int i=0; i<3; ++i)
-            {
-                for (int j=0; j<3; ++j)
-                {
-                    gsl_matrix_set(A, i, j, 0);
-                }
-            }
-            
-            //compute the covariance matrix P^T Q
-            int ok = gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, P, Q, 0.0, A);
-            
-            qDebug() << "gsl_blas_dgemm" << ok;
-            
-            //create space to hold the matrices for single value decomposition
-            S = gsl_vector_alloc(3);
-            W = gsl_matrix_alloc(3, 3);
-            
-            // calculate single value decomposition of A into V S W^T
-            ok = gsl_linalg_SV_decomp_jacobi(A, W, S);
-            
-            //above has decomposed in-place (so A has been overwritten to make V)
-            gsl_matrix *V = A;
-            
-            qDebug() << "gsl_linalg_SV_decomp_jacobi" << ok;
-            
-            //calculate the product of determinants of V and W
-            //double detVW =
+            //s(2,2) = -s(2,2);
+            v(2,2) = -v(2,2);
         }
-        catch(...)
-        {
-            gsl_matrix_free(P);
-            gsl_matrix_free(Q);
-            gsl_matrix_free(A);
-            gsl_vector_free(S);
-            gsl_matrix_free(V);
-            throw;
-        }
-    
-        return Matrix::identity();
+
+        //now create the rotation matrix
+        Matrix r = v * w;
+
+        qDebug() << "r" << r.toString();
+        
+        qint64 ns = t.nsecsElapsed();
+        qDebug() << "TOOK" << (0.000001*ns) << "ms";
+
+        return r;
     }
     
     /** Use the kabasch algorithm (http://en.wikipedia.org/wiki/Kabsch_algorithm)
