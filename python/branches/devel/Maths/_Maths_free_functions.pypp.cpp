@@ -23,11 +23,15 @@ namespace bp = boost::python;
 
 #include "gamma.h"
 
+#include "SireError/errors.h"
+
 #include "SireMaths/accumulator.h"
 
 #include "SireMaths/align.h"
 
 #include "align.h"
+
+#include <QElapsedTimer>
 
 #include <gsl/gsl_blas.h>
 
@@ -107,11 +111,55 @@ namespace bp = boost::python;
 
 #include "gamma.h"
 
+#include "SireError/errors.h"
+
 #include "SireMaths/accumulator.h"
 
 #include "SireMaths/align.h"
 
 #include "align.h"
+
+#include <QElapsedTimer>
+
+#include <gsl/gsl_blas.h>
+
+#include <gsl/gsl_linalg.h>
+
+#include <gsl/gsl_matrix.h>
+
+#include <gsl/gsl_vector.h>
+
+#include "align.h"
+
+#include "SireError/errors.h"
+
+#include "SireMaths/accumulator.h"
+
+#include "SireMaths/align.h"
+
+#include "align.h"
+
+#include <QElapsedTimer>
+
+#include <gsl/gsl_blas.h>
+
+#include <gsl/gsl_linalg.h>
+
+#include <gsl/gsl_matrix.h>
+
+#include <gsl/gsl_vector.h>
+
+#include "align.h"
+
+#include "SireError/errors.h"
+
+#include "SireMaths/accumulator.h"
+
+#include "SireMaths/align.h"
+
+#include "align.h"
+
+#include <QElapsedTimer>
 
 #include <gsl/gsl_blas.h>
 
@@ -153,11 +201,15 @@ namespace bp = boost::python;
 
 #include "gamma.h"
 
+#include "SireError/errors.h"
+
 #include "SireMaths/accumulator.h"
 
 #include "SireMaths/align.h"
 
 #include "align.h"
+
+#include <QElapsedTimer>
 
 #include <gsl/gsl_blas.h>
 
@@ -169,11 +221,15 @@ namespace bp = boost::python;
 
 #include "align.h"
 
+#include "SireError/errors.h"
+
 #include "SireMaths/accumulator.h"
 
 #include "SireMaths/align.h"
 
 #include "align.h"
+
+#include <QElapsedTimer>
 
 #include <gsl/gsl_blas.h>
 
@@ -376,6 +432,30 @@ void register_free_functions(){
             "getAlignment"
             , getAlignment_function_value
             , ( bp::arg("p"), bp::arg("q"), bp::arg("fit")=(bool)(true) ) );
+    
+    }
+
+    { //::SireMaths::getCentroid
+    
+        typedef ::SireMaths::Vector ( *getCentroid_function_type )( ::QVector< SireMaths::Vector > const &,int );
+        getCentroid_function_type getCentroid_function_value( &::SireMaths::getCentroid );
+        
+        bp::def( 
+            "getCentroid"
+            , getCentroid_function_value
+            , ( bp::arg("p"), bp::arg("n")=(int)(-0x00000000000000001) ) );
+    
+    }
+
+    { //::SireMaths::getRMSD
+    
+        typedef double ( *getRMSD_function_type )( ::QVector< SireMaths::Vector > const &,::QVector< SireMaths::Vector > const &,int );
+        getRMSD_function_type getRMSD_function_value( &::SireMaths::getRMSD );
+        
+        bp::def( 
+            "getRMSD"
+            , getRMSD_function_value
+            , ( bp::arg("p"), bp::arg("q"), bp::arg("n")=(int)(-0x00000000000000001) ) );
     
     }
 

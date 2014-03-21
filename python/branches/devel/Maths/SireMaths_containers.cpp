@@ -73,5 +73,8 @@ void register_SireMaths_containers()
     register_pair< NVector,NMatrix >();
 
     register_tuple< boost::tuple<Vector,Vector,Vector> >();
+
+    register_tuple< boost::tuple<Matrix,Vector> >();
+    register_tuple< boost::tuple<Matrix,Matrix,Matrix> >();
 }
 
