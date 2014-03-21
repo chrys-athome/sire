@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "mover_metaid.h"
 
+#include "SireMaths/align.h"
+
 #include "SireMaths/axisset.h"
 
 #include "SireMaths/matrix.h"
@@ -66,6 +68,58 @@ void register_Mover_Selector_Atom__class(){
         Mover_Selector_Atom__exposer.def( bp::init< SireMol::Selector< SireMol::Atom > const & >(( bp::arg("view") )) );
         Mover_Selector_Atom__exposer.def( bp::init< SireMol::Selector< SireMol::Atom > const &, SireMol::AtomSelection const & >(( bp::arg("view"), bp::arg("movable_atoms") )) );
         Mover_Selector_Atom__exposer.def( bp::init< SireMol::Mover< SireMol::Selector< SireMol::Atom > > const & >(( bp::arg("other") )) );
+        { //::SireMol::Mover< SireMol::Selector< SireMol::Atom > >::align
+        
+            typedef SireMol::Mover< SireMol::Selector< SireMol::Atom > > exported_class_t;
+            typedef ::SireMol::Mover< SireMol::Selector< SireMol::Atom > > & ( ::SireMol::Mover< SireMol::Selector< SireMol::Atom > >::*align_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) ;
+            align_function_type align_function_value( &::SireMol::Mover< SireMol::Selector< SireMol::Atom > >::align );
+            
+            Mover_Selector_Atom__exposer.def( 
+                "align"
+                , align_function_value
+                , ( bp::arg("other"), bp::arg("map")=SireBase::PropertyMap() )
+                    /* undefined call policies */ );
+        
+        }
+        { //::SireMol::Mover< SireMol::Selector< SireMol::Atom > >::align
+        
+            typedef SireMol::Mover< SireMol::Selector< SireMol::Atom > > exported_class_t;
+            typedef ::SireMol::Mover< SireMol::Selector< SireMol::Atom > > & ( ::SireMol::Mover< SireMol::Selector< SireMol::Atom > >::*align_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,::SireBase::PropertyMap const & ) ;
+            align_function_type align_function_value( &::SireMol::Mover< SireMol::Selector< SireMol::Atom > >::align );
+            
+            Mover_Selector_Atom__exposer.def( 
+                "align"
+                , align_function_value
+                , ( bp::arg("other"), bp::arg("map0"), bp::arg("map1") )
+                    /* undefined call policies */ );
+        
+        }
+        { //::SireMol::Mover< SireMol::Selector< SireMol::Atom > >::align
+        
+            typedef SireMol::Mover< SireMol::Selector< SireMol::Atom > > exported_class_t;
+            typedef ::SireMol::Mover< SireMol::Selector< SireMol::Atom > > & ( ::SireMol::Mover< SireMol::Selector< SireMol::Atom > >::*align_function_type )( ::SireMol::MoleculeView const &,::SireMol::AtomMatcher const &,::SireBase::PropertyMap const & ) ;
+            align_function_type align_function_value( &::SireMol::Mover< SireMol::Selector< SireMol::Atom > >::align );
+            
+            Mover_Selector_Atom__exposer.def( 
+                "align"
+                , align_function_value
+                , ( bp::arg("other"), bp::arg("matcher"), bp::arg("map")=SireBase::PropertyMap() )
+                    /* undefined call policies */ );
+        
+        }
+        { //::SireMol::Mover< SireMol::Selector< SireMol::Atom > >::align
+        
+            typedef SireMol::Mover< SireMol::Selector< SireMol::Atom > > exported_class_t;
+            typedef ::SireMol::Mover< SireMol::Selector< SireMol::Atom > > & ( ::SireMol::Mover< SireMol::Selector< SireMol::Atom > >::*align_function_type )( ::SireMol::MoleculeView const &,::SireMol::AtomMatcher const &,::SireBase::PropertyMap const &,::SireBase::PropertyMap const & ) ;
+            align_function_type align_function_value( &::SireMol::Mover< SireMol::Selector< SireMol::Atom > >::align );
+            
+            Mover_Selector_Atom__exposer.def( 
+                "align"
+                , align_function_value
+                , ( bp::arg("other"), bp::arg("matcher"), bp::arg("map0"), bp::arg("map1") )
+                    /* undefined call policies */ );
+        
+        }
         { //::SireMol::Mover< SireMol::Selector< SireMol::Atom > >::alignTo
         
             typedef SireMol::Mover< SireMol::Selector< SireMol::Atom > > exported_class_t;

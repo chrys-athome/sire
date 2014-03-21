@@ -23,6 +23,7 @@ set ( PYPP_SOURCES
        DihedralPerturbation.pypp.cpp
        Force3D.pypp.cpp
        CovalentBondHunterParameters.pypp.cpp
+       AtomResultMatcher.pypp.cpp
        UserBeading.pypp.cpp
        BondID.pypp.cpp
        MolInfo.pypp.cpp
@@ -192,6 +193,7 @@ set ( PYPP_SOURCES
        BeadFloatProperty.pypp.cpp
        Selector_CutGroup_.pypp.cpp
        NullPerturbation.pypp.cpp
+       _Mol_free_functions.pypp.cpp
        AtomElements.pypp.cpp
        CovalentBondHunter.pypp.cpp
        AtomsIn_SegID_.pypp.cpp

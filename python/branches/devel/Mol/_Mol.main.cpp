@@ -67,6 +67,8 @@
 
 #include "AtomProp.pypp.hpp"
 
+#include "AtomResultMatcher.pypp.hpp"
+
 #include "AtomSelection.pypp.hpp"
 
 #include "AtomStringProperty.pypp.hpp"
@@ -451,6 +453,8 @@
 
 #include "Within.pypp.hpp"
 
+#include "_Mol_free_functions.pypp.hpp"
+
 namespace bp = boost::python;
 
 #include "SireMol_containers.h"
@@ -609,6 +613,8 @@ BOOST_PYTHON_MODULE(_Mol){
     register_AtomFloatProperty_class();
 
     register_AtomIntProperty_class();
+
+    register_AtomResultMatcher_class();
 
     register_AtomSelection_class();
 
@@ -916,6 +922,8 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_UserBeading_class();
 
+    register_Within_class();
+
     register_SireMol_properties();
 
     bp::implicitly_convertible< SireMol::AtomID, SireMol::AtomIdentifier >();
@@ -936,6 +944,6 @@ BOOST_PYTHON_MODULE(_Mol){
 
     bp::implicitly_convertible< SireMol::MoleculeView, SireMol::PartialMolecule >();
 
-    register_Within_class();
+    register_free_functions();
 }
 

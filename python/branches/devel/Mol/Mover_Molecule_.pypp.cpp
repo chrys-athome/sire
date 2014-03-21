@@ -37,6 +37,8 @@ namespace bp = boost::python;
 
 #include "molecule.h"
 
+#include "SireMaths/align.h"
+
 #include "SireMaths/axisset.h"
 
 #include "SireMaths/matrix.h"
@@ -90,6 +92,58 @@ void register_Mover_Molecule__class(){
         Mover_Molecule__exposer.def( bp::init< SireMol::Molecule const & >(( bp::arg("view") )) );
         Mover_Molecule__exposer.def( bp::init< SireMol::Molecule const &, SireMol::AtomSelection const & >(( bp::arg("view"), bp::arg("movable_atoms") )) );
         Mover_Molecule__exposer.def( bp::init< SireMol::Mover< SireMol::Molecule > const & >(( bp::arg("other") )) );
+        { //::SireMol::Mover< SireMol::Molecule >::align
+        
+            typedef SireMol::Mover< SireMol::Molecule > exported_class_t;
+            typedef ::SireMol::Mover< SireMol::Molecule > & ( ::SireMol::Mover< SireMol::Molecule >::*align_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) ;
+            align_function_type align_function_value( &::SireMol::Mover< SireMol::Molecule >::align );
+            
+            Mover_Molecule__exposer.def( 
+                "align"
+                , align_function_value
+                , ( bp::arg("other"), bp::arg("map")=SireBase::PropertyMap() )
+                    /* undefined call policies */ );
+        
+        }
+        { //::SireMol::Mover< SireMol::Molecule >::align
+        
+            typedef SireMol::Mover< SireMol::Molecule > exported_class_t;
+            typedef ::SireMol::Mover< SireMol::Molecule > & ( ::SireMol::Mover< SireMol::Molecule >::*align_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,::SireBase::PropertyMap const & ) ;
+            align_function_type align_function_value( &::SireMol::Mover< SireMol::Molecule >::align );
+            
+            Mover_Molecule__exposer.def( 
+                "align"
+                , align_function_value
+                , ( bp::arg("other"), bp::arg("map0"), bp::arg("map1") )
+                    /* undefined call policies */ );
+        
+        }
+        { //::SireMol::Mover< SireMol::Molecule >::align
+        
+            typedef SireMol::Mover< SireMol::Molecule > exported_class_t;
+            typedef ::SireMol::Mover< SireMol::Molecule > & ( ::SireMol::Mover< SireMol::Molecule >::*align_function_type )( ::SireMol::MoleculeView const &,::SireMol::AtomMatcher const &,::SireBase::PropertyMap const & ) ;
+            align_function_type align_function_value( &::SireMol::Mover< SireMol::Molecule >::align );
+            
+            Mover_Molecule__exposer.def( 
+                "align"
+                , align_function_value
+                , ( bp::arg("other"), bp::arg("matcher"), bp::arg("map")=SireBase::PropertyMap() )
+                    /* undefined call policies */ );
+        
+        }
+        { //::SireMol::Mover< SireMol::Molecule >::align
+        
+            typedef SireMol::Mover< SireMol::Molecule > exported_class_t;
+            typedef ::SireMol::Mover< SireMol::Molecule > & ( ::SireMol::Mover< SireMol::Molecule >::*align_function_type )( ::SireMol::MoleculeView const &,::SireMol::AtomMatcher const &,::SireBase::PropertyMap const &,::SireBase::PropertyMap const & ) ;
+            align_function_type align_function_value( &::SireMol::Mover< SireMol::Molecule >::align );
+            
+            Mover_Molecule__exposer.def( 
+                "align"
+                , align_function_value
+                , ( bp::arg("other"), bp::arg("matcher"), bp::arg("map0"), bp::arg("map1") )
+                    /* undefined call policies */ );
+        
+        }
         { //::SireMol::Mover< SireMol::Molecule >::alignTo
         
             typedef SireMol::Mover< SireMol::Molecule > exported_class_t;
