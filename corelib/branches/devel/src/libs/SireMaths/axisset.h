@@ -51,7 +51,8 @@ namespace SireMaths
 {
 
 /**
-This class provides a complete set of orthonormal axes that provide a frame of reference (origin+axes) for a coordinate system. 
+This class provides a complete set of orthonormal axes that provide a 
+frame of reference (origin+axes) for a coordinate system.
  
 @author Christopher Woods
 */

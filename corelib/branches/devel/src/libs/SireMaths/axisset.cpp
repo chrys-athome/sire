@@ -81,8 +81,6 @@ AxisSet::~AxisSet()
 /** Convert a vector from the cartesian frame to this coordinate frame */
 Vector AxisSet::fromIdentity(const Vector &vec) const
 {
-    #warning Is this right? What about origins?
-
     return (mat * vec) + orgn;
 }
 

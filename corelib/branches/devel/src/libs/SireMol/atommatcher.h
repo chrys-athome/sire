@@ -43,6 +43,7 @@ namespace SireMol
 class AtomMatcher;
 class AtomIdxMatcher;
 class AtomNameMatcher;
+class AtomResultMatcher;
 class AtomIDMatcher;
 class AtomMultiMatcher;
 class AtomMCSMatcher;
@@ -59,6 +60,9 @@ QDataStream& operator>>(QDataStream&, SireMol::AtomNameMatcher&);
 
 QDataStream& operator<<(QDataStream&, const SireMol::AtomIDMatcher&);
 QDataStream& operator>>(QDataStream&, SireMol::AtomIDMatcher&);
+
+QDataStream& operator<<(QDataStream&, const SireMol::AtomResultMatcher&);
+QDataStream& operator>>(QDataStream&, SireMol::AtomResultMatcher&);
 
 QDataStream& operator<<(QDataStream&, const SireMol::AtomMultiMatcher&);
 QDataStream& operator>>(QDataStream&, SireMol::AtomMultiMatcher&);
@@ -139,6 +143,55 @@ public:
 };
 
 typedef SireBase::PropPtr<AtomMatcher> AtomMatcherPtr;
+
+/** This is a simple atom matcher that can be used to repeat a match
+    based on a prior result
+    
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT AtomResultMatcher
+         : public SireBase::ConcreteProperty<AtomResultMatcher,AtomMatcher>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const AtomResultMatcher&);
+friend QDataStream& ::operator>>(QDataStream&, AtomResultMatcher&);
+
+public:
+    AtomResultMatcher();
+    AtomResultMatcher(const QHash<AtomIdx,AtomIdx> &results);
+    
+    AtomResultMatcher(const AtomResultMatcher &other);
+    
+    ~AtomResultMatcher();
+    
+    static const char* typeName();
+    
+    const char* what() const
+    {
+        return AtomResultMatcher::typeName();
+    }
+
+    bool isNull() const;
+
+    QString toString() const;
+
+    AtomResultMatcher& operator=(const AtomResultMatcher &other);
+    
+    bool operator==(const AtomResultMatcher &other) const;
+    bool operator!=(const AtomResultMatcher &other) const;
+    
+    QHash<AtomIdx,AtomIdx> match(const MoleculeInfoData &molinfo0,
+                                 const MoleculeInfoData &molinfo1) const;
+    
+    QHash<AtomIdx,AtomIdx> match(const MoleculeView &molview0,
+                                 const PropertyMap &map0,
+                                 const MoleculeView &molview1,
+                                 const PropertyMap &map1) const;
+
+private:
+    /** The result of matching using another AtomMatcher */
+    QHash<AtomIdx,AtomIdx> m;
+};
 
 /** This is a simple atom matcher that matches the atoms based
     on their index in the molecule - e.g. it matches the first
@@ -376,12 +429,14 @@ private:
 Q_DECLARE_METATYPE( SireMol::AtomIdxMatcher )
 Q_DECLARE_METATYPE( SireMol::AtomNameMatcher )
 Q_DECLARE_METATYPE( SireMol::AtomIDMatcher )
+Q_DECLARE_METATYPE( SireMol::AtomResultMatcher )
 Q_DECLARE_METATYPE( SireMol::AtomMultiMatcher )
 Q_DECLARE_METATYPE( SireMol::AtomMCSMatcher )
 
 SIRE_EXPOSE_CLASS( SireMol::AtomMatcher )
 SIRE_EXPOSE_CLASS( SireMol::AtomIdxMatcher )
 SIRE_EXPOSE_CLASS( SireMol::AtomNameMatcher )
+SIRE_EXPOSE_CLASS( SireMol::AtomResultMatcher )
 SIRE_EXPOSE_CLASS( SireMol::AtomIDMatcher )
 SIRE_EXPOSE_CLASS( SireMol::AtomMultiMatcher )
 SIRE_EXPOSE_CLASS( SireMol::AtomMCSMatcher )
