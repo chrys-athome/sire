@@ -31,13 +31,10 @@
 
 #include "mover.h"
 #include "evaluator.h"
-#include "atommatcher.h"
-#include "atomcoords.h"
 
 #include "SireBase/propertymap.h"
 
 #include "SireMaths/axisset.h"
-#include "SireMaths/align.h"
 
 SIRE_BEGIN_HEADER
 
@@ -564,37 +561,9 @@ Mover<T>& Mover<T>::align(const MoleculeView &other,
                           const PropertyMap &map0,
                           const PropertyMap &map1)
 {
-    const AtomCoords &this_coords = this->data().property( map0["coordinates"] )
-                                                .template asA<AtomCoords>();
-    
-    const AtomCoords &other_coords = other.data().property( map1["coordinates"] )
-                                                 .template asA<AtomCoords>();
-    
-    QHash<AtomIdx,AtomIdx> map = matcher.match(*this, map0, other, map1);
-    
-    if (map.isEmpty())
-    {
-        //there are no matching atoms - we can't do anything
-        qDebug() << "No matching atoms!";
-        return *this;
-    }
-    
-    QVector<Vector> p(map.count()), q(map.count());
-    
-    int n = 0;
-    
-    for (QHash<AtomIdx,AtomIdx>::const_iterator it = map.constBegin();
-         it != map.constEnd();
-         ++it)
-    {
-        q[n] = this_coords.at( this->data().info().cgAtomIdx(it.key()) );
-        p[n] = other_coords.at( other.data().info().cgAtomIdx(it.value()) );
-        n += 1;
-    }
-    
-    AxisSet align_axes = SireMaths::getAlignment(p, q);
-    
-    MoverBase::mapInto(*(this->d), align_axes, map0);
+    MoverBase::mapInto(*(this->d),
+                       SireMol::getAlignment(other, map1,
+                                             *this, map0, matcher), map0);
     
     return *this;
 }
@@ -608,7 +577,10 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::align(const MoleculeView &other,
                           const PropertyMap &map)
 {
-    return this->align(other, AtomIdxMatcher(), map, map);
+    MoverBase::mapInto(*(this->d),
+                       SireMol::getAlignment(other, *this, map), map);
+    
+    return *this;
 }
 
 /** Align this molecule view against 'other' using the supplied property
@@ -622,7 +594,10 @@ Mover<T>& Mover<T>::align(const MoleculeView &other,
                           const PropertyMap &map0,
                           const PropertyMap &map1)
 {
-    return this->align(other, AtomIdxMatcher(), map0, map1);
+    MoverBase::mapInto(*(this->d),
+                       SireMol::getAlignment(other, map1, *this, map0), map0);
+    
+    return *this;
 }
 
 /** Align this molecule view against 'other' using the supplied AtomMatcher
@@ -634,7 +609,10 @@ Mover<T>& Mover<T>::align(const MoleculeView &other,
                           const AtomMatcher &matcher,
                           const PropertyMap &map)
 {
-    return this->align(other, matcher, map, map);
+    MoverBase::mapInto(*(this->d),
+                       SireMol::getAlignment(other, *this, matcher, map), map);
+    
+    return *this;
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS

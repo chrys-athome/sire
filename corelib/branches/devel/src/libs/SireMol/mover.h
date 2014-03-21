@@ -68,6 +68,20 @@ using SireBase::PropertyMap;
 
 using SireVol::Space;
 
+AxisSet getAlignment(const MoleculeView &view0, const MoleculeView &view1, bool fit=true);
+AxisSet getAlignment(const MoleculeView &view0, const MoleculeView &view1,
+                     const PropertyMap &map, bool fit=true);
+AxisSet getAlignment(const MoleculeView &view0, const PropertyMap &map0,
+                     const MoleculeView &view1, const PropertyMap &map1,
+                     bool fit=true);
+AxisSet getAlignment(const MoleculeView &view0, const MoleculeView &view1,
+                     const AtomMatcher &matcher, bool fit=true);
+AxisSet getAlignment(const MoleculeView &view0, const MoleculeView &view1,
+                     const AtomMatcher &matcher, const PropertyMap &map, bool fit=true);
+AxisSet getAlignment(const MoleculeView &view0, const PropertyMap &map0,
+                     const MoleculeView &view1, const PropertyMap &map1,
+                     const AtomMatcher &matcher, bool fit=true);
+
 /** This class provides the template-independent part
     of Mover<T>. This class is not designed to be used
     on its own!
@@ -198,9 +212,10 @@ protected:
     AtomSelection movable_atoms;
 };
 
-SIRE_EXPOSE_CLASS( SireMol::MoverBase )
-
 }
+
+SIRE_EXPOSE_CLASS( SireMol::MoverBase )
+SIRE_EXPOSE_FUNCTION( SireMol::getAlignment )
 
 SIRE_END_HEADER
 

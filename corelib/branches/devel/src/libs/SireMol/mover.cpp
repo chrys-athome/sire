@@ -39,6 +39,7 @@
 
 #include "tostring.h"
 
+#include "SireMaths/align.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/axisset.h"
@@ -56,6 +57,90 @@ using namespace SireMol;
 using namespace SireMaths;
 using namespace SireVol;
 using namespace SireUnits;
+
+namespace SireMol
+{
+    /** Return the AxisSet needed to move 'view1' so that it is aligned against
+        the atoms in 'view0' */
+    AxisSet SIREMOL_EXPORT getAlignment(const MoleculeView &view0, const PropertyMap &map0,
+                                        const MoleculeView &view1, const PropertyMap &map1,
+                                        const AtomMatcher &matcher, bool fit)
+    {
+        const AtomCoords &coords0 = view0.data().property( map0["coordinates"] )
+                                                .asA<AtomCoords>();
+        
+        const AtomCoords &coords1 = view1.data().property( map1["coordinates"] )
+                                                .asA<AtomCoords>();
+        
+        QHash<AtomIdx,AtomIdx> map = matcher.match(view0, map0, view1, map1);
+        
+        if (map.isEmpty())
+        {
+            //there are no matching atoms - we can't do anything
+            qDebug() << "No matching atoms!";
+            return AxisSet( Matrix::identity(), Vector(0) );
+        }
+        
+        QVector<Vector> p(map.count()), q(map.count());
+        
+        int n = 0;
+        
+        for (QHash<AtomIdx,AtomIdx>::const_iterator it = map.constBegin();
+             it != map.constEnd();
+             ++it)
+        {
+            p[n] = coords0.at( view0.data().info().cgAtomIdx(it.key()) );
+            q[n] = coords1.at( view1.data().info().cgAtomIdx(it.value()) );
+            n += 1;
+        }
+        
+        return SireMaths::getAlignment(p, q, fit);
+    }
+
+    /** Return the AxisSet needed to move 'view1' so that it is aligned against
+        the atoms in 'view0' */
+    AxisSet SIREMOL_EXPORT getAlignment(const MoleculeView &view0,
+                                        const MoleculeView &view1, bool fit)
+    {
+        return getAlignment(view0, PropertyMap(), view1, PropertyMap(),
+                            AtomIdxMatcher(), fit);
+    }
+
+    /** Return the AxisSet needed to move 'view1' so that it is aligned against
+        the atoms in 'view0' */
+    AxisSet SIREMOL_EXPORT getAlignment(const MoleculeView &view0, const MoleculeView &view1,
+                                        const PropertyMap &map, bool fit)
+    {
+        return getAlignment(view0, map, view1, map, AtomIdxMatcher(), fit);
+    }
+
+    /** Return the AxisSet needed to move 'view1' so that it is aligned against
+        the atoms in 'view0' */
+    AxisSet SIREMOL_EXPORT getAlignment(const MoleculeView &view0, const PropertyMap &map0,
+                                        const MoleculeView &view1, const PropertyMap &map1,
+                                        bool fit)
+    {
+        return getAlignment(view0, map0, view1, map1, AtomIdxMatcher(), fit);
+    }
+
+    /** Return the AxisSet needed to move 'view1' so that it is aligned against
+        the atoms in 'view0' */
+    AxisSet SIREMOL_EXPORT getAlignment(const MoleculeView &view0, const MoleculeView &view1,
+                                        const AtomMatcher &matcher, bool fit)
+    {
+        return getAlignment(view0, PropertyMap(), view1, PropertyMap(), matcher, fit);
+    }
+
+    /** Return the AxisSet needed to move 'view1' so that it is aligned against
+        the atoms in 'view0' */
+    AxisSet SIREMOL_EXPORT getAlignment(const MoleculeView &view0, const MoleculeView &view1,
+                                        const AtomMatcher &matcher,
+                                        const PropertyMap &map, bool fit)
+    {
+        return getAlignment(view0, map, view1, map, matcher, fit);
+    }
+
+} // end of namespace SireMol
 
 /** Constructor */
 MoverBase::MoverBase()
