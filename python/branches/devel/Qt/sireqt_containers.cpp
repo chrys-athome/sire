@@ -87,6 +87,12 @@ void register_SireQt_containers()
 
     register_tuple< boost::tuple<double,double> >();
     register_tuple< boost::tuple<double,double,double> >();
+    register_tuple< boost::tuple<int,int> >();
+
+    register_tuple< boost::tuple<QString,QString> >();
+
+    register_list< QList<boost::tuple<int,int> > >();
+    register_list< QList<boost::tuple<QString,QString> > >();
 
     #if QT_VERSION >= 0x402000
     register_set< QSet<QString> >();

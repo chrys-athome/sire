@@ -41,6 +41,7 @@
 #include "Helpers/pair.hpp"
 
 #include "SireMaths/vector.h"
+#include "SireMaths/matrix.h"
 #include "SireMaths/nmatrix.h"
 #include "SireMaths/nvector.h"
 #include "SireMaths/accumulator.h"
