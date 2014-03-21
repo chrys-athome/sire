@@ -82,7 +82,7 @@ void register_Mover_Beads__class(){
                 "align"
                 , align_function_value
                 , ( bp::arg("other"), bp::arg("map")=SireBase::PropertyMap() )
-                    /* undefined call policies */ );
+                , bp::return_self< >() );
         
         }
         { //::SireMol::Mover< SireMol::Beads >::align
@@ -95,7 +95,7 @@ void register_Mover_Beads__class(){
                 "align"
                 , align_function_value
                 , ( bp::arg("other"), bp::arg("map0"), bp::arg("map1") )
-                    /* undefined call policies */ );
+                , bp::return_self< >() );
         
         }
         { //::SireMol::Mover< SireMol::Beads >::align
@@ -108,7 +108,7 @@ void register_Mover_Beads__class(){
                 "align"
                 , align_function_value
                 , ( bp::arg("other"), bp::arg("matcher"), bp::arg("map")=SireBase::PropertyMap() )
-                    /* undefined call policies */ );
+                , bp::return_self< >() );
         
         }
         { //::SireMol::Mover< SireMol::Beads >::align
@@ -121,7 +121,7 @@ void register_Mover_Beads__class(){
                 "align"
                 , align_function_value
                 , ( bp::arg("other"), bp::arg("matcher"), bp::arg("map0"), bp::arg("map1") )
-                    /* undefined call policies */ );
+                , bp::return_self< >() );
         
         }
         { //::SireMol::Mover< SireMol::Beads >::alignTo
