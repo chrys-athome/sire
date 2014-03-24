@@ -314,7 +314,18 @@ Mover<T>& Mover<T>::rotate(const Matrix &rotmat, const Vector &point,
     MoverBase::rotate(*(this->d), rotmat, point, map);
     return *this;
 }
-    
+
+/** Transform the movable atoms using the transformation 't',
+    using the supplied map to find the necessary
+    properties */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>& Mover<T>::transform(const Transform &t, const PropertyMap &map)
+{
+    MoverBase::transform(*(this->d), t, map);
+    return *this;
+}
+
 /** Change the bond identified by 'bond' by the amount 'delta',
     by only moving the movable atoms in this view, using the 
     supplied map to find the necessary properties.
