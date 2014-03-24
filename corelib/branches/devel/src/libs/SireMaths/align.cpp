@@ -210,55 +210,67 @@ Vector Transform::operator()(const Vector &point) const
     return delta + rotcent + rotmat.rotate(point-rotcent);
 }
 
-/** Apply this transformation to all of the passed points, returning the results */
-QVector<Vector> Transform::operator()(const QVector<Vector> &points) const
+/** Apply this transformation to all of the passed points. Note that this
+    modifies the points themselves and returns a pointer to the same array */
+Vector* Transform::apply(Vector *points, int sz) const
 {
-    if (points.isEmpty() or (delta.isZero() and rotmat.isIdentity()))
+    if (sz == 0 or (delta.isZero() and rotmat.isIdentity()))
         return points;
     
     else
     {
-        QVector<Vector> ret(points);
-        
         if (rotmat.isIdentity())
         {
-            for (int i=0; i<ret.count(); ++i)
+            for (int i=0; i<sz; ++i)
             {
-                ret[i] += delta;
+                points[i] += delta;
             }
         }
         else if (delta.isZero())
         {
             if (rotcent.isZero())
             {
-                for (int i=0; i<ret.count(); ++i)
+                for (int i=0; i<sz; ++i)
                 {
-                    ret[i] = rotmat.rotate(ret[i]);
+                    points[i] = rotmat.rotate(points[i]);
                 }
             }
             else
             {
-                for (int i=0; i<ret.count(); ++i)
+                for (int i=0; i<sz; ++i)
                 {
-                    ret[i] = rotcent + rotmat.rotate(ret[i]-rotcent);
+                    points[i] = rotcent + rotmat.rotate(points[i]-rotcent);
                 }
             }
         }
         else if (rotcent.isZero())
         {
-            for (int i=0; i<ret.count(); ++i)
+            for (int i=0; i<sz; ++i)
             {
-                ret[i] = delta + rotmat.rotate(ret[i]);
+                points[i] = delta + rotmat.rotate(points[i]);
             }
         }
         else
         {
-            for (int i=0; i<ret.count(); ++i)
+            for (int i=0; i<sz; ++i)
             {
-                ret[i] = delta + rotcent + rotmat.rotate(ret[i]-rotcent);
+                points[i] = delta + rotcent + rotmat.rotate(points[i]-rotcent);
             }
         }
         
+        return points;
+    }
+}
+
+/** Apply this transformation to all of the passed points, returning the results */
+QVector<Vector> Transform::operator()(const QVector<Vector> &points) const
+{
+    if (points.isEmpty() or (delta.isZero() and rotmat.isIdentity()))
+        return points;
+    else
+    {
+        QVector<Vector> ret(points);
+        this->apply(ret.data(), ret.count());
         return ret;
     }
 }

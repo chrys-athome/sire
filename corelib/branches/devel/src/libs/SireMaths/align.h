@@ -98,6 +98,8 @@ namespace SireMaths
         Vector apply(const Vector &point) const;
         QVector<Vector> apply(const QVector<Vector> &points) const;
         
+        Vector* apply(Vector *coords, int sz) const;
+        
         Vector translationDelta() const;
         
         Vector rotationCenter() const;

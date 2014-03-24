@@ -344,7 +344,7 @@ void MoverBase::transform(AtomCoords &coords,
                           const AtomSelection &selected_atoms,
                           const Transform &t)
 {
-    if (selected_atoms.selectedNone() or t.isEmpty())
+    if (selected_atoms.selectedNone() or t.isZero())
         return;
 
     int ncg = coords.count();
