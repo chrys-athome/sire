@@ -442,7 +442,7 @@ void register_Mover_PartialMolecule__class(){
                 "transform"
                 , transform_function_value
                 , ( bp::arg("transform"), bp::arg("map")=SireBase::PropertyMap() )
-                    /* undefined call policies */ );
+                , bp::return_self< >() );
         
         }
         { //::SireMol::Mover< SireMol::PartialMolecule >::translate
