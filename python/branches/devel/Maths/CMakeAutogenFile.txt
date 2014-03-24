@@ -35,6 +35,7 @@ set ( PYPP_SOURCES
        VectorArrayProperty.pypp.cpp
        Complex.pypp.cpp
        DistVector.pypp.cpp
+       Transform.pypp.cpp
        BennettsFreeEnergyAverage.pypp.cpp
        Line.pypp.cpp
        Triangle.pypp.cpp

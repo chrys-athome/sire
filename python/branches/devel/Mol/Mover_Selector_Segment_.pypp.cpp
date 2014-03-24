@@ -402,6 +402,19 @@ void register_Mover_Selector_Segment__class(){
                 , toString_function_value );
         
         }
+        { //::SireMol::Mover< SireMol::Selector< SireMol::Segment > >::transform
+        
+            typedef SireMol::Mover< SireMol::Selector< SireMol::Segment > > exported_class_t;
+            typedef ::SireMol::Mover< SireMol::Selector< SireMol::Segment > > & ( ::SireMol::Mover< SireMol::Selector< SireMol::Segment > >::*transform_function_type )( ::SireMaths::Transform const &,::SireBase::PropertyMap const & ) ;
+            transform_function_type transform_function_value( &::SireMol::Mover< SireMol::Selector< SireMol::Segment > >::transform );
+            
+            Mover_Selector_Segment__exposer.def( 
+                "transform"
+                , transform_function_value
+                , ( bp::arg("transform"), bp::arg("map")=SireBase::PropertyMap() )
+                    /* undefined call policies */ );
+        
+        }
         { //::SireMol::Mover< SireMol::Selector< SireMol::Segment > >::translate
         
             typedef SireMol::Mover< SireMol::Selector< SireMol::Segment > > exported_class_t;

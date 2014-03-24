@@ -27,6 +27,8 @@ namespace bp = boost::python;
 
 #include "moleculeview.h"
 
+#include "tostring.h"
+
 #include "atommatcher.h"
 
 #include "Qt/qdatastream.hpp"

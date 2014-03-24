@@ -17,6 +17,7 @@
 #include "matrix.h"
 #include "distvector.h"
 #include "triangle.h"
+#include "align.h"
 #include "trigmatrix.h"
 #include "torsion.h"
 #include "rangenerator.h"
@@ -50,6 +51,7 @@ void register_SireMaths_objects()
     ObjectRegistry::registerConverterFor< SireMaths::Matrix >();
     ObjectRegistry::registerConverterFor< SireMaths::DistVector >();
     ObjectRegistry::registerConverterFor< SireMaths::Triangle >();
+    ObjectRegistry::registerConverterFor< SireMaths::Transform >();
     ObjectRegistry::registerConverterFor< SireMaths::TrigMatrix >();
     ObjectRegistry::registerConverterFor< SireMaths::Torsion >();
     ObjectRegistry::registerConverterFor< SireMaths::RanGenerator >();

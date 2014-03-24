@@ -158,6 +158,17 @@ void register_Quaternion_class(){
                 , ( bp::arg("p") ) );
         
         }
+        { //::SireMaths::Quaternion::rotate
+        
+            typedef ::QVector< SireMaths::Vector > ( ::SireMaths::Quaternion::*rotate_function_type )( ::QVector< SireMaths::Vector > const & ) const;
+            rotate_function_type rotate_function_value( &::SireMaths::Quaternion::rotate );
+            
+            Quaternion_exposer.def( 
+                "rotate"
+                , rotate_function_value
+                , ( bp::arg("points") ) );
+        
+        }
         { //::SireMaths::Quaternion::slerp
         
             typedef ::SireMaths::Quaternion ( ::SireMaths::Quaternion::*slerp_function_type )( ::SireMaths::Quaternion const &,double ) const;

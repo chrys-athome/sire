@@ -27,6 +27,8 @@ namespace bp = boost::python;
 
 #include "moleculeview.h"
 
+#include "tostring.h"
+
 #include "atommatcher.h"
 
 SireMol::AtomNameMatcher __copy__(const SireMol::AtomNameMatcher &other){ return SireMol::AtomNameMatcher(other); }

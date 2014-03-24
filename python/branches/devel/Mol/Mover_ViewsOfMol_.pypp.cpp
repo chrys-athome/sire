@@ -434,6 +434,19 @@ void register_Mover_ViewsOfMol__class(){
                 , toString_function_value );
         
         }
+        { //::SireMol::Mover< SireMol::ViewsOfMol >::transform
+        
+            typedef SireMol::Mover< SireMol::ViewsOfMol > exported_class_t;
+            typedef ::SireMol::Mover< SireMol::ViewsOfMol > & ( ::SireMol::Mover< SireMol::ViewsOfMol >::*transform_function_type )( ::SireMaths::Transform const &,::SireBase::PropertyMap const & ) ;
+            transform_function_type transform_function_value( &::SireMol::Mover< SireMol::ViewsOfMol >::transform );
+            
+            Mover_ViewsOfMol__exposer.def( 
+                "transform"
+                , transform_function_value
+                , ( bp::arg("transform"), bp::arg("map")=SireBase::PropertyMap() )
+                    /* undefined call policies */ );
+        
+        }
         { //::SireMol::Mover< SireMol::ViewsOfMol >::translate
         
             typedef SireMol::Mover< SireMol::ViewsOfMol > exported_class_t;

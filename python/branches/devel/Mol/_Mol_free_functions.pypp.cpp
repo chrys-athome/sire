@@ -263,7 +263,7 @@ void register_free_functions(){
 
     { //::SireMol::getAlignment
     
-        typedef ::SireMaths::AxisSet ( *getAlignment_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,::SireMol::AtomMatcher const &,bool );
+        typedef ::SireMaths::Transform ( *getAlignment_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,::SireMol::AtomMatcher const &,bool );
         getAlignment_function_type getAlignment_function_value( &::SireMol::getAlignment );
         
         bp::def( 
@@ -275,7 +275,7 @@ void register_free_functions(){
 
     { //::SireMol::getAlignment
     
-        typedef ::SireMaths::AxisSet ( *getAlignment_function_type )( ::SireMol::MoleculeView const &,::SireMol::MoleculeView const &,::SireMol::AtomMatcher const &,::SireBase::PropertyMap const &,bool );
+        typedef ::SireMaths::Transform ( *getAlignment_function_type )( ::SireMol::MoleculeView const &,::SireMol::MoleculeView const &,::SireMol::AtomMatcher const &,::SireBase::PropertyMap const &,bool );
         getAlignment_function_type getAlignment_function_value( &::SireMol::getAlignment );
         
         bp::def( 
@@ -287,7 +287,7 @@ void register_free_functions(){
 
     { //::SireMol::getAlignment
     
-        typedef ::SireMaths::AxisSet ( *getAlignment_function_type )( ::SireMol::MoleculeView const &,::SireMol::MoleculeView const &,::SireMol::AtomMatcher const &,bool );
+        typedef ::SireMaths::Transform ( *getAlignment_function_type )( ::SireMol::MoleculeView const &,::SireMol::MoleculeView const &,::SireMol::AtomMatcher const &,bool );
         getAlignment_function_type getAlignment_function_value( &::SireMol::getAlignment );
         
         bp::def( 
@@ -299,7 +299,7 @@ void register_free_functions(){
 
     { //::SireMol::getAlignment
     
-        typedef ::SireMaths::AxisSet ( *getAlignment_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,bool );
+        typedef ::SireMaths::Transform ( *getAlignment_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,bool );
         getAlignment_function_type getAlignment_function_value( &::SireMol::getAlignment );
         
         bp::def( 
@@ -311,7 +311,7 @@ void register_free_functions(){
 
     { //::SireMol::getAlignment
     
-        typedef ::SireMaths::AxisSet ( *getAlignment_function_type )( ::SireMol::MoleculeView const &,::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,bool );
+        typedef ::SireMaths::Transform ( *getAlignment_function_type )( ::SireMol::MoleculeView const &,::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,bool );
         getAlignment_function_type getAlignment_function_value( &::SireMol::getAlignment );
         
         bp::def( 
@@ -323,7 +323,7 @@ void register_free_functions(){
 
     { //::SireMol::getAlignment
     
-        typedef ::SireMaths::AxisSet ( *getAlignment_function_type )( ::SireMol::MoleculeView const &,::SireMol::MoleculeView const &,bool );
+        typedef ::SireMaths::Transform ( *getAlignment_function_type )( ::SireMol::MoleculeView const &,::SireMol::MoleculeView const &,bool );
         getAlignment_function_type getAlignment_function_value( &::SireMol::getAlignment );
         
         bp::def( 

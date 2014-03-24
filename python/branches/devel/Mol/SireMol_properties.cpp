@@ -131,6 +131,7 @@
 #include "evaluator.h"
 #include "moleculeinfodata.h"
 #include "moleculeview.h"
+#include "tostring.h"
 #include "atommatcher.h"
 void register_SireMol_properties()
 {

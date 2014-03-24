@@ -29,7 +29,11 @@ namespace bp = boost::python;
 
 #include "SireMaths/align.h"
 
+#include "SireStream/datastream.h"
+
 #include "align.h"
+
+#include "tostring.h"
 
 #include <QElapsedTimer>
 
@@ -117,7 +121,11 @@ namespace bp = boost::python;
 
 #include "SireMaths/align.h"
 
+#include "SireStream/datastream.h"
+
 #include "align.h"
+
+#include "tostring.h"
 
 #include <QElapsedTimer>
 
@@ -137,7 +145,11 @@ namespace bp = boost::python;
 
 #include "SireMaths/align.h"
 
+#include "SireStream/datastream.h"
+
 #include "align.h"
+
+#include "tostring.h"
 
 #include <QElapsedTimer>
 
@@ -157,7 +169,11 @@ namespace bp = boost::python;
 
 #include "SireMaths/align.h"
 
+#include "SireStream/datastream.h"
+
 #include "align.h"
+
+#include "tostring.h"
 
 #include <QElapsedTimer>
 
@@ -207,7 +223,11 @@ namespace bp = boost::python;
 
 #include "SireMaths/align.h"
 
+#include "SireStream/datastream.h"
+
 #include "align.h"
+
+#include "tostring.h"
 
 #include <QElapsedTimer>
 
@@ -227,7 +247,11 @@ namespace bp = boost::python;
 
 #include "SireMaths/align.h"
 
+#include "SireStream/datastream.h"
+
 #include "align.h"
+
+#include "tostring.h"
 
 #include <QElapsedTimer>
 
@@ -425,7 +449,7 @@ void register_free_functions(){
 
     { //::SireMaths::getAlignment
     
-        typedef ::SireMaths::AxisSet ( *getAlignment_function_type )( ::QVector< SireMaths::Vector > const &,::QVector< SireMaths::Vector > const &,bool );
+        typedef ::SireMaths::Transform ( *getAlignment_function_type )( ::QVector< SireMaths::Vector > const &,::QVector< SireMaths::Vector > const &,bool );
         getAlignment_function_type getAlignment_function_value( &::SireMaths::getAlignment );
         
         bp::def( 
@@ -509,7 +533,7 @@ void register_free_functions(){
 
     { //::SireMaths::kabaschFit
     
-        typedef ::SireMaths::AxisSet ( *kabaschFit_function_type )( ::QVector< SireMaths::Vector > const &,::QVector< SireMaths::Vector > const & );
+        typedef ::SireMaths::Transform ( *kabaschFit_function_type )( ::QVector< SireMaths::Vector > const &,::QVector< SireMaths::Vector > const & );
         kabaschFit_function_type kabaschFit_function_value( &::SireMaths::kabaschFit );
         
         bp::def( 

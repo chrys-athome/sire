@@ -426,6 +426,19 @@ void register_Mover_CutGroup__class(){
                 , toString_function_value );
         
         }
+        { //::SireMol::Mover< SireMol::CutGroup >::transform
+        
+            typedef SireMol::Mover< SireMol::CutGroup > exported_class_t;
+            typedef ::SireMol::Mover< SireMol::CutGroup > & ( ::SireMol::Mover< SireMol::CutGroup >::*transform_function_type )( ::SireMaths::Transform const &,::SireBase::PropertyMap const & ) ;
+            transform_function_type transform_function_value( &::SireMol::Mover< SireMol::CutGroup >::transform );
+            
+            Mover_CutGroup__exposer.def( 
+                "transform"
+                , transform_function_value
+                , ( bp::arg("transform"), bp::arg("map")=SireBase::PropertyMap() )
+                    /* undefined call policies */ );
+        
+        }
         { //::SireMol::Mover< SireMol::CutGroup >::translate
         
             typedef SireMol::Mover< SireMol::CutGroup > exported_class_t;

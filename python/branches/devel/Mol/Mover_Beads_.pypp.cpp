@@ -406,6 +406,19 @@ void register_Mover_Beads__class(){
                 , toString_function_value );
         
         }
+        { //::SireMol::Mover< SireMol::Beads >::transform
+        
+            typedef SireMol::Mover< SireMol::Beads > exported_class_t;
+            typedef ::SireMol::Mover< SireMol::Beads > & ( ::SireMol::Mover< SireMol::Beads >::*transform_function_type )( ::SireMaths::Transform const &,::SireBase::PropertyMap const & ) ;
+            transform_function_type transform_function_value( &::SireMol::Mover< SireMol::Beads >::transform );
+            
+            Mover_Beads__exposer.def( 
+                "transform"
+                , transform_function_value
+                , ( bp::arg("transform"), bp::arg("map")=SireBase::PropertyMap() )
+                    /* undefined call policies */ );
+        
+        }
         { //::SireMol::Mover< SireMol::Beads >::translate
         
             typedef SireMol::Mover< SireMol::Beads > exported_class_t;

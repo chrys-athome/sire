@@ -422,6 +422,19 @@ void register_Mover_Segment__class(){
                 , toString_function_value );
         
         }
+        { //::SireMol::Mover< SireMol::Segment >::transform
+        
+            typedef SireMol::Mover< SireMol::Segment > exported_class_t;
+            typedef ::SireMol::Mover< SireMol::Segment > & ( ::SireMol::Mover< SireMol::Segment >::*transform_function_type )( ::SireMaths::Transform const &,::SireBase::PropertyMap const & ) ;
+            transform_function_type transform_function_value( &::SireMol::Mover< SireMol::Segment >::transform );
+            
+            Mover_Segment__exposer.def( 
+                "transform"
+                , transform_function_value
+                , ( bp::arg("transform"), bp::arg("map")=SireBase::PropertyMap() )
+                    /* undefined call policies */ );
+        
+        }
         { //::SireMol::Mover< SireMol::Segment >::translate
         
             typedef SireMol::Mover< SireMol::Segment > exported_class_t;

@@ -432,6 +432,19 @@ void register_Mover_PartialMolecule__class(){
                 , toString_function_value );
         
         }
+        { //::SireMol::Mover< SireMol::PartialMolecule >::transform
+        
+            typedef SireMol::Mover< SireMol::PartialMolecule > exported_class_t;
+            typedef ::SireMol::Mover< SireMol::PartialMolecule > & ( ::SireMol::Mover< SireMol::PartialMolecule >::*transform_function_type )( ::SireMaths::Transform const &,::SireBase::PropertyMap const & ) ;
+            transform_function_type transform_function_value( &::SireMol::Mover< SireMol::PartialMolecule >::transform );
+            
+            Mover_PartialMolecule__exposer.def( 
+                "transform"
+                , transform_function_value
+                , ( bp::arg("transform"), bp::arg("map")=SireBase::PropertyMap() )
+                    /* undefined call policies */ );
+        
+        }
         { //::SireMol::Mover< SireMol::PartialMolecule >::translate
         
             typedef SireMol::Mover< SireMol::PartialMolecule > exported_class_t;
