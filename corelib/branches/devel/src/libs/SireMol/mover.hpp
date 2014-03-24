@@ -35,6 +35,7 @@
 #include "SireBase/propertymap.h"
 
 #include "SireMaths/axisset.h"
+#include "SireMaths/align.h"
 
 SIRE_BEGIN_HEADER
 
@@ -94,7 +95,10 @@ public:
                      
     Mover<T>& rotate(const Matrix &rotmat, const Vector &point,
                      const PropertyMap &map = PropertyMap());
-                                 
+    
+    Mover<T>& transform(const Transform &transform,
+                        const PropertyMap &map = PropertyMap());
+    
     Mover<T>& change(const BondID &bond, SireUnits::Dimension::Length delta,
                      const PropertyMap &map = PropertyMap());
                      
@@ -561,9 +565,9 @@ Mover<T>& Mover<T>::align(const MoleculeView &other,
                           const PropertyMap &map0,
                           const PropertyMap &map1)
 {
-    MoverBase::mapInto(*(this->d),
-                       SireMol::getAlignment(other, map1,
-                                             *this, map0, matcher), map0);
+    MoverBase::transform(*(this->d),
+                         SireMol::getAlignment(other, map1,
+                                               *this, map0, matcher), map0);
     
     return *this;
 }
@@ -577,8 +581,8 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::align(const MoleculeView &other,
                           const PropertyMap &map)
 {
-    MoverBase::mapInto(*(this->d),
-                       SireMol::getAlignment(other, *this, map), map);
+    MoverBase::transform(*(this->d),
+                         SireMol::getAlignment(other, *this, map), map);
     
     return *this;
 }
@@ -594,8 +598,8 @@ Mover<T>& Mover<T>::align(const MoleculeView &other,
                           const PropertyMap &map0,
                           const PropertyMap &map1)
 {
-    MoverBase::mapInto(*(this->d),
-                       SireMol::getAlignment(other, map1, *this, map0), map0);
+    MoverBase::transform(*(this->d),
+                         SireMol::getAlignment(other, map1, *this, map0), map0);
     
     return *this;
 }
@@ -609,8 +613,8 @@ Mover<T>& Mover<T>::align(const MoleculeView &other,
                           const AtomMatcher &matcher,
                           const PropertyMap &map)
 {
-    MoverBase::mapInto(*(this->d),
-                       SireMol::getAlignment(other, *this, matcher, map), map);
+    MoverBase::transform(*(this->d),
+                         SireMol::getAlignment(other, *this, matcher, map), map);
     
     return *this;
 }

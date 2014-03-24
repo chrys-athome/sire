@@ -29,6 +29,8 @@
 #include "SireMaths/align.h"
 #include "SireMaths/accumulator.h"
 
+#include "SireStream/datastream.h"
+
 #include "SireError/errors.h"
 
 #include <gsl/gsl_matrix.h>
@@ -41,6 +43,265 @@
 #include "tostring.h"
 
 using namespace SireMaths;
+using namespace SireStream;
+
+/////////
+///////// Implementation of Transform
+/////////
+
+static const RegisterMetaType<Transform> r_trans(NO_ROOT);
+
+QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Transform &trans)
+{
+    writeHeader(ds, r_trans, 1);
+    
+    ds << trans.delta << trans.rotcent << trans.rotmat;
+    
+    return ds;
+}
+
+QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Transform &trans)
+{
+    VersionID v = readHeader(ds, r_trans);
+    
+    if (v == 1)
+    {
+        ds >> trans.delta >> trans.rotcent >> trans.rotmat;
+    }
+    else
+        throw version_error(v, "1", r_trans, CODELOC);
+    
+    return ds;
+}
+
+/** Constructor (no transformation) */
+Transform::Transform() : delta(0), rotcent(0), rotmat( Quaternion::identity() )
+{}
+
+/** Construct to only translate by 'delta' */
+Transform::Transform(const Vector &del)
+          : delta(del), rotcent(0), rotmat( Quaternion::identity() )
+{}
+
+/** Construct to only rotate using 'rotmat' around the rotation center 'center' */
+Transform::Transform(const Quaternion &mat, const Vector &center)
+          : delta(0), rotcent(center), rotmat(mat)
+{
+    if (rotmat.isIdentity())
+    {
+        rotcent = Vector(0);
+    }
+}
+
+/** Construct to only rotate using 'rotmat' around the rotation center 'center' */
+Transform::Transform(const Matrix &mat, const Vector &center)
+          : delta(0), rotcent(center), rotmat(mat)
+{
+    if (rotmat.isIdentity())
+    {
+        rotcent = Vector(0);
+    }
+}
+
+/** Construct to translate by delta and to rotate using 'rotmat' around the rotation
+    center 'center' */
+Transform::Transform(const Vector &del, const Quaternion &mat, const Vector &center)
+          : delta(del), rotcent(center), rotmat(mat)
+{
+    if (rotmat.isIdentity())
+    {
+        rotcent = Vector(0);
+    }
+}
+
+/** Construct to translate by delta and to rotate using 'rotmat' around the rotation
+    center 'center' */
+Transform::Transform(const Vector &del, const Matrix &mat, const Vector &center)
+          : delta(del), rotcent(center), rotmat(mat)
+{
+    if (rotmat.isIdentity())
+    {
+        rotcent = Vector(0);
+    }
+}
+
+/** Copy constructor */
+Transform::Transform(const Transform &other)
+          : delta(other.delta), rotcent(other.rotcent), rotmat(other.rotmat)
+{}
+
+/** Destructor */
+Transform::~Transform()
+{}
+
+/** Copy assignment operator */
+Transform& Transform::operator=(const Transform &other)
+{
+    if (this != &other)
+    {
+        delta = other.delta;
+        rotcent = other.rotcent;
+        rotmat = other.rotmat;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool Transform::operator==(const Transform &other) const
+{
+    return delta == other.delta and rotcent == other.rotcent and rotmat == other.rotmat;
+}
+
+/** Comparison operator */
+bool Transform::operator!=(const Transform &other) const
+{
+    return not operator==(other);
+}
+
+const char* Transform::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Transform>() );
+}
+
+const char* Transform::what() const
+{
+    return Transform::typeName();
+}
+
+/** Return whether this is null (has no transformation) */
+bool Transform::isNull() const
+{
+    return delta.isZero() and rotmat.isIdentity();
+}
+
+/** Return whether this is zero (has no transformation) */
+bool Transform::isZero() const
+{
+    return delta.isZero() and rotmat.isIdentity();
+}
+
+QString Transform::toString() const
+{
+    if (isZero())
+        return QObject::tr("Transform::null");
+    
+    else if (delta.isZero())
+    {
+        return QObject::tr("Transform( rotate by %1 about %2 )")
+                    .arg(rotmat.toString()).arg(rotcent.toString());
+    }
+    else if (rotmat.isIdentity())
+    {
+        return QObject::tr("Transform( translate by %1 )")
+                    .arg(delta.toString());
+    }
+    else
+    {
+        return QObject::tr("Transform( rotate by %1 about %2 then translate by %3 )")
+                .arg(rotmat.toString()).arg(rotcent.toString())
+                .arg(delta.toString());
+    }
+}
+
+/** Apply this transformation to the passed point, returning the result */
+Vector Transform::operator()(const Vector &point) const
+{
+    return delta + rotcent + rotmat.rotate(point-rotcent);
+}
+
+/** Apply this transformation to all of the passed points, returning the results */
+QVector<Vector> Transform::operator()(const QVector<Vector> &points) const
+{
+    if (points.isEmpty() or (delta.isZero() and rotmat.isIdentity()))
+        return points;
+    
+    else
+    {
+        QVector<Vector> ret(points);
+        
+        if (rotmat.isIdentity())
+        {
+            for (int i=0; i<ret.count(); ++i)
+            {
+                ret[i] += delta;
+            }
+        }
+        else if (delta.isZero())
+        {
+            if (rotcent.isZero())
+            {
+                for (int i=0; i<ret.count(); ++i)
+                {
+                    ret[i] = rotmat.rotate(ret[i]);
+                }
+            }
+            else
+            {
+                for (int i=0; i<ret.count(); ++i)
+                {
+                    ret[i] = rotcent + rotmat.rotate(ret[i]-rotcent);
+                }
+            }
+        }
+        else if (rotcent.isZero())
+        {
+            for (int i=0; i<ret.count(); ++i)
+            {
+                ret[i] = delta + rotmat.rotate(ret[i]);
+            }
+        }
+        else
+        {
+            for (int i=0; i<ret.count(); ++i)
+            {
+                ret[i] = delta + rotcent + rotmat.rotate(ret[i]-rotcent);
+            }
+        }
+        
+        return ret;
+    }
+}
+
+/** Apply this transformation to the passed point, returning the result */
+Vector Transform::apply(const Vector &point) const
+{
+    return this->operator()(point);
+}
+
+/** Apply this transformation to all of the passed points, returning the results */
+QVector<Vector> Transform::apply(const QVector<Vector> &points) const
+{
+    return this->operator()(points);
+}
+
+/** Return the amount by which to translate */
+Vector Transform::translationDelta() const
+{
+    return delta;
+}
+
+/** Return the center of rotation */
+Vector Transform::rotationCenter() const
+{
+    return rotcent;
+}
+
+/** Return the rotation matrix as a quaternion */
+Quaternion Transform::rotationQuaternion() const
+{
+    return rotmat;
+}
+
+/** Return the rotation matrix */
+Matrix Transform::rotationMatrix() const
+{
+    return rotmat.toMatrix();
+}
+
+/////////
+///////// Alignment functions
+/////////
 
 static QVector<Vector> translate(const QVector<Vector> &v, const Vector &delta)
 {
@@ -214,11 +475,11 @@ namespace SireMaths
         (note that the C++ implement that I have here is licensed under the GPL,
          as stated at the top of this file)
     */
-    AxisSet SIREMATHS_EXPORT kabaschFit(const QVector<Vector> &p,
-                                        const QVector<Vector> &q)
+    Transform SIREMATHS_EXPORT kabaschFit(const QVector<Vector> &p,
+                                          const QVector<Vector> &q)
     {
         if (p.isEmpty() or q.isEmpty())
-            return Matrix::identity();
+            return Transform();
         
         //find the maximum point in p
         Vector step_size(0);
@@ -296,7 +557,7 @@ namespace SireMaths
                 break;
         }
 
-        return AxisSet(rotmat_best, delta);
+        return Transform(delta, rotmat_best, Vector(0));
     }
 
     /** Return AxisSet containing the translation vector and rotation
@@ -304,12 +565,12 @@ namespace SireMaths
         points in 'p'. If 'fit' is true, then this performs an RMSD
         fit to find the optimal translation vector (as opposed to merely
         taking the difference of centroids) */
-    AxisSet SIREMATHS_EXPORT getAlignment(const QVector<Vector> &p,
-                                          const QVector<Vector> &q,
-                                          bool fit)
+    Transform SIREMATHS_EXPORT getAlignment(const QVector<Vector> &p,
+                                            const QVector<Vector> &q,
+                                            bool fit)
     {
         if (p.isEmpty() or q.isEmpty())
-            return AxisSet(Matrix::identity(), Vector(0));
+            return Transform();
 
         //first, translate p and q so that their centroids
         //are at (0,0,0)
@@ -327,15 +588,20 @@ namespace SireMaths
             qc[i] = q[i] - cq;
         }
     
+        qDebug() << "cp" << cp.toString();
+        qDebug() << "cq" << cq.toString();
+    
         if (fit)
         {
-            AxisSet a = kabaschFit(pc, qc);
-            return AxisSet(a.matrix(), a.origin() + cp - cq);
+            Transform a = kabaschFit(pc, qc);
+            return Transform(a.translationDelta() + cp - cq, a.rotationQuaternion(), cq);
         }
         else
         {
+            Matrix rotmat = kabasch(pc, qc);
+            qDebug() << "rotmat" << rotmat.toString();
             
-            return AxisSet(kabasch(pc,qc), cp-cq);
+            return Transform(cp-cq, rotmat, cq);
         }
     }
     
@@ -350,11 +616,12 @@ namespace SireMaths
         if (p.isEmpty() or q.isEmpty())
             return q;
         
-        AxisSet a = getAlignment(p, q, fit);
+        Transform a = getAlignment(p, q, fit);
         
         //Vector c = getCentroid(q, qMin(p.count(),q.count()));
+        //qDebug() << "centroid" << c.toString();
         
-        return a.fromIdentity(q);
+        return a.apply(q);
     }
 
 } // end of namespace SireMaths

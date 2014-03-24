@@ -138,7 +138,7 @@ Vector AxisSet::toFrame(const AxisSet &frame, const Vector &vec) const
 /** Return a string representation of the AxisSet */
 QString AxisSet::toString() const
 {
-    return QObject::tr("AxisSet, %1, %2").arg(orgn.toString(),mat.toString());
+    return QObject::tr("AxisSet{ origin() = %1,matrix=\n%2 }").arg(orgn.toString(),mat.toString());
 }
 
 const char* AxisSet::typeName()

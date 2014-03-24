@@ -212,6 +212,46 @@ Vector Quaternion::rotate(const Vector &p) const
                        + ( 0.5 - sx2 - sy2 )*p.z()) );
 }
 
+/** Use the quaternion to rotate all of the points in 'p' */
+QVector<Vector> Quaternion::rotate(const QVector<Vector> &points) const
+{
+    if (this->isIdentity())
+        return points;
+
+    const double sx2 = sc[0]*sc[0];
+    const double sy2 = sc[1]*sc[1];
+    const double sz2 = sc[2]*sc[2];
+
+    const double sxy = sc[0]*sc[1];
+    const double sxz = sc[0]*sc[2];
+    const double syz = sc[1]*sc[2];
+
+    const double swx = sc[0]*sc[3];
+    const double swy = sc[1]*sc[3];
+    const double swz = sc[2]*sc[3];
+
+    QVector<Vector> ret(points);
+    
+    for (int i=0; i<ret.count(); ++i)
+    {
+        Vector &p = ret[i];
+        
+        p = Vector( 2.0*( ( 0.5 - sy2 - sz2 ) *p.x()
+                         + ( sxy - swz )      *p.y()
+                         + ( sxz + swy )      *p.z()),
+
+                    2.0*( ( sxy + swz )       *p.x()
+                        + ( 0.5 - sx2 - sz2 ) *p.y()
+                        + ( syz - swx )       *p.z()),
+
+                    2.0*( ( sxz - swy )       *p.x()
+                        + ( syz + swx )       *p.y()
+                        + ( 0.5 - sx2 - sy2 ) *p.z()) );
+    }
+
+    return ret;
+}
+
 /** Return a quaternion that represents the identity matrix */
 Quaternion Quaternion::identity()
 {

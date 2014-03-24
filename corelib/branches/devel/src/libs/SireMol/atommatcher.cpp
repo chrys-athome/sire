@@ -35,6 +35,8 @@
 #include "moleculeinfodata.h"
 #include "moleculeview.h"
 
+#include "tostring.h"
+
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
@@ -483,6 +485,159 @@ QHash<AtomIdx,AtomIdx> AtomNameMatcher::match(const MoleculeInfoData &mol0,
 const char* AtomNameMatcher::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<AtomNameMatcher>() );
+}
+
+/////////
+///////// Implmentation of AtomResultMatcher
+/////////
+
+static const RegisterMetaType<AtomResultMatcher> r_resmatcher;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomResultMatcher &resmatcher)
+{
+    writeHeader(ds, r_resmatcher, 1);
+    SharedDataStream sds(ds);
+    sds << resmatcher.m << static_cast<const AtomMatcher&>(resmatcher);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomResultMatcher &resmatcher)
+{
+    VersionID v = readHeader(ds, r_resmatcher);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        sds >> resmatcher.m >> static_cast<AtomMatcher&>(resmatcher);
+    }
+    else
+        throw version_error(v, "1", r_resmatcher, CODELOC);
+
+    return ds;
+}
+
+/** Constructor */
+AtomResultMatcher::AtomResultMatcher() : ConcreteProperty<AtomResultMatcher,AtomMatcher>()
+{}
+
+/** Constructor */
+AtomResultMatcher::AtomResultMatcher(const QHash<AtomIdx,AtomIdx> &results)
+                  : ConcreteProperty<AtomResultMatcher,AtomMatcher>(), m(results)
+{}
+
+/** Copy constructor */
+AtomResultMatcher::AtomResultMatcher(const AtomResultMatcher &other)
+                  : ConcreteProperty<AtomResultMatcher,AtomMatcher>(other),
+                    m(other.m)
+{}
+
+/** Destructor */
+AtomResultMatcher::~AtomResultMatcher()
+{}
+
+/** Copy assignment operator */
+AtomResultMatcher& AtomResultMatcher::operator=(const AtomResultMatcher &other)
+{
+    m = other.m;
+    return *this;
+}
+
+/** Comparison operator */
+bool AtomResultMatcher::operator==(const AtomResultMatcher &other) const
+{
+    return m == other.m;
+}
+
+/** Comparison operator */
+bool AtomResultMatcher::operator!=(const AtomResultMatcher &other) const
+{
+    return not operator==(other);
+}
+
+bool AtomResultMatcher::isNull() const
+{
+    return m.isEmpty();
+}
+
+QString AtomResultMatcher::toString() const
+{
+    if (isNull())
+        return QObject::tr("AtomResultMatcher::null");
+    else
+        return QObject::tr("AtomResultMatcher( %1 )").arg(Sire::toString(m));
+}
+
+/** Match the atoms in 'mol1' to the atoms in 'mol0' - this
+    returns the AtomIdxs of the atoms in 'mol1' that are in
+    'mol0', indexed by the AtomIdx of the atom in 'mol0'.
+    
+     This skips atoms in 'mol1' that are not in 'mol0'
+*/
+QHash<AtomIdx,AtomIdx> AtomResultMatcher::match(const MoleculeView &mol0,
+                                                const PropertyMap &map0,
+                                                const MoleculeView &mol1,
+                                                const PropertyMap &map1) const
+{
+    const AtomSelection sel0 = mol0.selection();
+    const AtomSelection sel1 = mol1.selection();
+    
+    QHash<AtomIdx,AtomIdx> map;
+    
+    const int nats0 = mol0.data().info().nAtoms();
+    const int nats1 = mol1.data().info().nAtoms();
+    
+    for (QHash<AtomIdx,AtomIdx>::const_iterator it = m.constBegin();
+         it != m.constEnd();
+         ++it)
+    {
+        if (it.key().value() >= 0 and it.key().value() < nats0)
+        {
+            if (it.value().value() >= 0 and it.value().value() < nats1)
+            {
+                if (sel0.selected(it.key()) and sel1.selected(it.value()))
+                    map.insert(it.key(), it.value());
+            }
+        }
+    }
+    
+    return map;
+}
+/** Match the atoms in 'mol1' to the atoms in 'mol0' - this
+    returns the AtomIdxs of the atoms in 'mol1' that are in
+    'mol0', indexed by the AtomIdx of the atom in 'mol0'.
+    
+     This skips atoms in 'mol1' that are not in 'mol0'
+*/
+QHash<AtomIdx,AtomIdx> AtomResultMatcher::match(const MoleculeInfoData &mol0,
+                                                const MoleculeInfoData &mol1) const
+{
+    QHash<AtomIdx,AtomIdx> map;
+    
+    const int nats0 = mol0.nAtoms();
+    const int nats1 = mol1.nAtoms();
+    
+    for (QHash<AtomIdx,AtomIdx>::const_iterator it = m.constBegin();
+         it != m.constEnd();
+         ++it)
+    {
+        if (it.key().value() >= 0 and it.key().value() < nats0)
+        {
+            if (it.value().value() >= 0 and it.value().value() < nats1)
+            {
+                map.insert(it.key(), it.value());
+            }
+        }
+    }
+    
+    return map;
+}
+
+const char* AtomResultMatcher::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AtomResultMatcher>() );
 }
 
 /////////
