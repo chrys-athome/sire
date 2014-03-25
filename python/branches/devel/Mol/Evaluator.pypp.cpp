@@ -462,6 +462,50 @@ void register_Evaluator_class(){
                 , propertyKeys_function_value );
         
         }
+        { //::SireMol::Evaluator::rmsd
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMol::Evaluator::*rmsd_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
+            rmsd_function_type rmsd_function_value( &::SireMol::Evaluator::rmsd );
+            
+            Evaluator_exposer.def( 
+                "rmsd"
+                , rmsd_function_value
+                , ( bp::arg("other"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Evaluator::rmsd
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMol::Evaluator::*rmsd_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,::SireBase::PropertyMap const & ) const;
+            rmsd_function_type rmsd_function_value( &::SireMol::Evaluator::rmsd );
+            
+            Evaluator_exposer.def( 
+                "rmsd"
+                , rmsd_function_value
+                , ( bp::arg("other"), bp::arg("map0"), bp::arg("map1") ) );
+        
+        }
+        { //::SireMol::Evaluator::rmsd
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMol::Evaluator::*rmsd_function_type )( ::SireMol::MoleculeView const &,::SireMol::AtomMatcher const &,::SireBase::PropertyMap const & ) const;
+            rmsd_function_type rmsd_function_value( &::SireMol::Evaluator::rmsd );
+            
+            Evaluator_exposer.def( 
+                "rmsd"
+                , rmsd_function_value
+                , ( bp::arg("other"), bp::arg("atommatcher"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Evaluator::rmsd
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMol::Evaluator::*rmsd_function_type )( ::SireMol::MoleculeView const &,::SireMol::AtomMatcher const &,::SireBase::PropertyMap const &,::SireBase::PropertyMap const & ) const;
+            rmsd_function_type rmsd_function_value( &::SireMol::Evaluator::rmsd );
+            
+            Evaluator_exposer.def( 
+                "rmsd"
+                , rmsd_function_value
+                , ( bp::arg("other"), bp::arg("atommatcher"), bp::arg("map0"), bp::arg("map1") ) );
+        
+        }
         { //::SireMol::Evaluator::selectedAll
         
             typedef bool ( ::SireMol::Evaluator::*selectedAll_function_type )(  ) const;
