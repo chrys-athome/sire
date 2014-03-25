@@ -327,6 +327,18 @@ static QVector<Vector> translate(const QVector<Vector> &v, const Vector &delta)
     return v2;
 }
 
+static QVector<Vector> rotate(const QVector<Vector> &v, const Matrix &rotmat)
+{
+    QVector<Vector> v2(v);
+    
+    for (int i=0; i<v.count(); ++i)
+    {
+        v2[i] = rotmat * v2[i];
+    }
+    
+    return v2;
+}
+
 namespace SireMaths
 {
     /** Return the centroid of the points in 'p'. If n != -1 then
@@ -502,17 +514,22 @@ namespace SireMaths
         }
         
         const Vector threshold = 1e-9 * step_size;
-    
-        Matrix rotmat_best = kabasch(p,q);
-        
-        double rmsd_best = getRMSD( p, AxisSet(rotmat_best).fromIdentity(q) );
         
         QVector<Vector> q2(q);
+    
+        q2 = translate(q, Vector(0.2,0,0) );
+    
+        Matrix rotmat_best = kabasch(p,q2);
+        
+        double rmsd_best = getRMSD( p, rotate(q2,rotmat_best) );
+        qDebug() << "BEST" << rmsd_best;
         
         Vector delta(0);
         
         while (true)
         {
+            qDebug() << "STEP" << delta.toString();
+        
             for (int i=0; i<3; ++i)
             {
                 Vector tmp = delta;
@@ -520,7 +537,9 @@ namespace SireMaths
                 
                 q2 = translate(q,tmp);
                 Matrix rotmat = kabasch(p,q2);
-                double rmsd = getRMSD( p, AxisSet(rotmat).fromIdentity(q2) );
+                double rmsd = getRMSD( p, rotate(q2,rotmat) );
+                
+                qDebug() << "rmsd" << rmsd << rmsd_best;
                 
                 if (rmsd < rmsd_best)
                 {
@@ -528,6 +547,7 @@ namespace SireMaths
                     rmsd_best = rmsd;
                     rotmat_best = rotmat;
                     delta = tmp;
+                    qDebug() << "NEW BEST" << rmsd_best << delta.toString();
                 }
                 else
                 {
@@ -537,7 +557,9 @@ namespace SireMaths
                     
                     q2 = translate(q,tmp);
                     rotmat = kabasch(p,q2);
-                    rmsd = getRMSD( p, AxisSet(rotmat).fromIdentity(q2) );
+                    rmsd = getRMSD( p, rotate(q2,rotmat) );
+                    
+                    qDebug() << "rmsd" << rmsd << rmsd_best;
                     
                     if (rmsd < rmsd_best)
                     {
@@ -545,6 +567,7 @@ namespace SireMaths
                         rmsd_best = rmsd;
                         rotmat_best = rotmat;
                         delta = tmp;
+                        qDebug() << "NEW BEST" << rmsd_best << delta.toString();
                     }
                     else
                     {
@@ -605,6 +628,7 @@ namespace SireMaths
     
         if (fit)
         {
+            qDebug() << "kabaschFit";
             Transform a = kabaschFit(pc, qc);
             return Transform(a.translationDelta() + cp - cq, a.rotationQuaternion(), cq);
         }

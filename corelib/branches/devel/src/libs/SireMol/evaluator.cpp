@@ -47,6 +47,7 @@
 #include "SireMaths/line.h"
 #include "SireMaths/triangle.h"
 #include "SireMaths/torsion.h"
+#include "SireMaths/accumulator.h"
 
 #include "SireBase/errors.h"
 #include "SireMol/errors.h"
@@ -1216,6 +1217,74 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
                                           const PropertyMap &map) const
 {
     return this->findMCS(other, atommatcher, timeout, map, map);
+}
+
+/** Return the root mean square deviation (RMSD) of the atoms in this view against
+    the atoms in 'other', using the passed AtomMatcher to match atoms in this
+    view against 'other', and using the passed property maps to find the required
+    properties */
+SireUnits::Dimension::Length Evaluator::rmsd(const MoleculeView &other,
+                                             const AtomMatcher &atommatcher,
+                                             const PropertyMap &map0,
+                                             const PropertyMap &map1) const
+{
+    const AtomCoords &c0 = this->data().property( map0["coordinates"] ).asA<AtomCoords>();
+    const AtomCoords &c1 = this->data().property( map1["coordinates"] ).asA<AtomCoords>();
+
+    QHash<AtomIdx,AtomIdx> match = atommatcher.match(*this, map0, other, map1);
+
+    const AtomSelection &sel0 = this->selection();
+    const AtomSelection &sel1 = other.selection();
+    
+    Average msd;
+
+    for (QHash<AtomIdx,AtomIdx>::const_iterator it = match.constBegin();
+         it != match.constEnd();
+         ++it)
+    {
+        const AtomIdx atm0 = it.key();
+        const AtomIdx atm1 = it.value();
+    
+        if (sel0.selected(atm0) and sel1.selected(atm1))
+        {
+            Vector v0 = c0.get( this->data().info().cgAtomIdx(atm0) );
+            Vector v1 = c1.get( this->data().info().cgAtomIdx(atm1) );
+            
+            msd.accumulate( Vector::distance2(v0,v1) );
+        }
+    }
+    
+    return Length( std::sqrt( msd.average() ) );
+}
+
+/** Return the root mean square deviation (RMSD) of the atoms in this view against
+    the atoms in 'other', using the passed property map to find the required
+    properties */
+SireUnits::Dimension::Length Evaluator::rmsd(const MoleculeView &other,
+                                             const PropertyMap &map) const
+{
+    return this->rmsd(other, AtomIdxMatcher(), map, map);
+}
+
+/** Return the root mean square deviation (RMSD) of the atoms in this view against
+    the atoms in 'other', using the passed property maps to find the required
+    properties */
+SireUnits::Dimension::Length Evaluator::rmsd(const MoleculeView &other,
+                                             const PropertyMap &map0,
+                                             const PropertyMap &map1) const
+{
+    return this->rmsd(other, AtomIdxMatcher(), map0, map1);
+}
+
+/** Return the root mean square deviation (RMSD) of the atoms in this view against
+    the atoms in 'other', using the passed AtomMatcher to match atoms in this
+    view against 'other', and using the passed property map to find the required
+    properties */
+SireUnits::Dimension::Length Evaluator::rmsd(const MoleculeView &other,
+                                             const AtomMatcher &atommatcher,
+                                             const PropertyMap &map) const
+{
+    return this->rmsd(other, atommatcher, map, map);
 }
 
 const char* Evaluator::typeName()

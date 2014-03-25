@@ -100,8 +100,9 @@ namespace SireMol
         
         qDebug() << "P" << Sire::toString(p);
         qDebug() << "Q" << Sire::toString(q);
+        qDebug() << "FIT" << fit;
         
-        Transform t = SireMaths::getAlignment(p, q, false);
+        Transform t = SireMaths::getAlignment(p, q, fit);
         qDebug() << t.toString();
         
         return t;

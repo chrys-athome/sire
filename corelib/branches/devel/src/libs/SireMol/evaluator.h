@@ -200,6 +200,22 @@ public:
     SireUnits::Dimension::Angle measure(const DihedralID &dihedral,
                                         const PropertyMap &map=PropertyMap()) const;
 
+    SireUnits::Dimension::Length rmsd(const MoleculeView &other,
+                                      const PropertyMap &map=PropertyMap()) const;
+
+    SireUnits::Dimension::Length rmsd(const MoleculeView &other,
+                                      const PropertyMap &map0,
+                                      const PropertyMap &map1) const;
+    
+    SireUnits::Dimension::Length rmsd(const MoleculeView &other,
+                                      const AtomMatcher &atommatcher,
+                                      const PropertyMap &map=PropertyMap()) const;
+
+    SireUnits::Dimension::Length rmsd(const MoleculeView &other,
+                                      const AtomMatcher &atommatcher,
+                                      const PropertyMap &map0,
+                                      const PropertyMap &map1) const;
+
     QHash<AtomIdx,AtomIdx> findMCS(const MoleculeView &other,
                                    const PropertyMap &map=PropertyMap()) const;
 
