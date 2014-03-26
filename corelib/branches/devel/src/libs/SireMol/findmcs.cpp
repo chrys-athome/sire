@@ -163,7 +163,7 @@ public:
             timed_out = true;
             return false;
         }
-        else if (ns > last_update + 5000)
+        else if (ns > last_update + 5000000)
         {
             qDebug() << "Still searching..." << (t_total->nsecsElapsed()*0.000001) << "ms";
         }

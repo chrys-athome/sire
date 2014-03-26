@@ -37,11 +37,14 @@
 
 #include "tostring.h"
 
+#include "SireUnits/units.h"
+
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 
 using namespace SireMol;
+using namespace SireUnits;
 using namespace SireBase;
 using namespace SireStream;
 
@@ -524,9 +527,23 @@ AtomResultMatcher::AtomResultMatcher() : ConcreteProperty<AtomResultMatcher,Atom
 {}
 
 /** Constructor */
-AtomResultMatcher::AtomResultMatcher(const QHash<AtomIdx,AtomIdx> &results)
+AtomResultMatcher::AtomResultMatcher(const QHash<AtomIdx,AtomIdx> &results, bool invert)
                   : ConcreteProperty<AtomResultMatcher,AtomMatcher>(), m(results)
-{}
+{
+    if (invert and not results.isEmpty())
+    {
+        //invert the map (this allows reverse lookups)
+        m.clear();
+        m.reserve(results.count());
+        
+        for (QHash<AtomIdx,AtomIdx>::const_iterator it = results.constBegin();
+             it != results.constEnd();
+             ++it)
+        {
+            m.insert( it.value(), it.key() );
+        }
+    }
+}
 
 /** Copy constructor */
 AtomResultMatcher::AtomResultMatcher(const AtomResultMatcher &other)
@@ -641,6 +658,166 @@ const char* AtomResultMatcher::typeName()
 }
 
 /////////
+///////// Implmentation of AtomMatchInverter
+/////////
+
+static const RegisterMetaType<AtomMatchInverter> r_inverter;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomMatchInverter &inverter)
+{
+    writeHeader(ds, r_inverter, 1);
+    SharedDataStream sds(ds);
+    sds << inverter.m << static_cast<const AtomMatcher&>(inverter);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomMatchInverter &inverter)
+{
+    VersionID v = readHeader(ds, r_inverter);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        sds >> inverter.m >> static_cast<AtomMatcher&>(inverter);
+    }
+    else
+        throw version_error(v, "1", r_inverter, CODELOC);
+
+    return ds;
+}
+
+/** Constructor */
+AtomMatchInverter::AtomMatchInverter() : ConcreteProperty<AtomMatchInverter,AtomMatcher>()
+{}
+
+/** Constructor */
+AtomMatchInverter::AtomMatchInverter(const AtomMatcher &matcher)
+                  : ConcreteProperty<AtomMatchInverter,AtomMatcher>()
+{
+    if (not matcher.isNull())
+        m = matcher;
+}
+
+/** Copy constructor */
+AtomMatchInverter::AtomMatchInverter(const AtomMatchInverter &other)
+                  : ConcreteProperty<AtomMatchInverter,AtomMatcher>(other),
+                    m(other.m)
+{}
+
+/** Destructor */
+AtomMatchInverter::~AtomMatchInverter()
+{}
+
+/** Copy assignment operator */
+AtomMatchInverter& AtomMatchInverter::operator=(const AtomMatchInverter &other)
+{
+    m = other.m;
+    return *this;
+}
+
+/** Comparison operator */
+bool AtomMatchInverter::operator==(const AtomMatchInverter &other) const
+{
+    return m == other.m;
+}
+
+/** Comparison operator */
+bool AtomMatchInverter::operator!=(const AtomMatchInverter &other) const
+{
+    return not operator==(other);
+}
+
+bool AtomMatchInverter::isNull() const
+{
+    return m.constData() == 0 or m.read().isNull();
+}
+
+QString AtomMatchInverter::toString() const
+{
+    if (isNull())
+        return QObject::tr("AtomMatchInverter::null");
+    else
+        return QObject::tr("AtomMatchInverter{ %1 }").arg(m.read().toString());
+}
+
+/** Match the atoms in 'mol1' to the atoms in 'mol0' - this
+    returns the AtomIdxs of the atoms in 'mol1' that are in
+    'mol0', indexed by the AtomIdx of the atom in 'mol0'.
+    
+     This skips atoms in 'mol1' that are not in 'mol0'
+*/
+QHash<AtomIdx,AtomIdx> AtomMatchInverter::match(const MoleculeView &mol0,
+                                                const PropertyMap &map0,
+                                                const MoleculeView &mol1,
+                                                const PropertyMap &map1) const
+{
+    if (isNull())
+        return QHash<AtomIdx,AtomIdx>();
+    
+    //apply the match backwards, and then invert the result
+    QHash<AtomIdx,AtomIdx> map = m.read().match(mol1,map1,mol0,map0);
+    
+    //invert the match
+    if (not map.isEmpty())
+    {
+        QHash<AtomIdx,AtomIdx> invmap;
+        invmap.reserve(map.count());
+        
+        for (QHash<AtomIdx,AtomIdx>::const_iterator it = map.constBegin();
+             it != map.constEnd();
+             ++it)
+        {
+            invmap.insert( it.value(), it.key() );
+        }
+        
+        return invmap;
+    }
+    else
+        return map;
+}
+/** Match the atoms in 'mol1' to the atoms in 'mol0' - this
+    returns the AtomIdxs of the atoms in 'mol1' that are in
+    'mol0', indexed by the AtomIdx of the atom in 'mol0'.
+    
+     This skips atoms in 'mol1' that are not in 'mol0'
+*/
+QHash<AtomIdx,AtomIdx> AtomMatchInverter::match(const MoleculeInfoData &mol0,
+                                                const MoleculeInfoData &mol1) const
+{
+    if (isNull())
+        return QHash<AtomIdx,AtomIdx>();
+    
+    //apply the match backwards, and then invert the result
+    QHash<AtomIdx,AtomIdx> map = m.read().match(mol1,mol0);
+    
+    //invert the match
+    if (not map.isEmpty())
+    {
+        QHash<AtomIdx,AtomIdx> invmap;
+        invmap.reserve(map.count());
+        
+        for (QHash<AtomIdx,AtomIdx>::const_iterator it = map.constBegin();
+             it != map.constEnd();
+             ++it)
+        {
+            invmap.insert( it.value(), it.key() );
+        }
+        
+        return invmap;
+    }
+    else
+        return map;
+}
+
+const char* AtomMatchInverter::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AtomMatchInverter>() );
+}
+
+/////////
 ///////// Implementation of AtomMCSMatcher
 /////////
 
@@ -651,7 +828,8 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
                                        const AtomMCSMatcher &mcsmatcher)
 {
     writeHeader(ds, r_mcsmatcher, 1);
-    ds << static_cast<const AtomMatcher&>(mcsmatcher);
+    ds << static_cast<const AtomMatcher&>(mcsmatcher)
+       << double( mcsmatcher.timeout.to(second) );
     
     return ds;
 }
@@ -663,7 +841,10 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomMCSMatcher &mcsmatch
     
     if (v == 1)
     {
-        ds >> static_cast<AtomMatcher&>(mcsmatcher);
+        double timeout;
+        ds >> static_cast<AtomMatcher&>(mcsmatcher) >> timeout;
+        
+        mcsmatcher.timeout = timeout*second;
     }
     else
         throw version_error(v, "1", r_namematcher, CODELOC);
@@ -672,12 +853,18 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomMCSMatcher &mcsmatch
 }
 
 /** Constructor */
-AtomMCSMatcher::AtomMCSMatcher() : ConcreteProperty<AtomMCSMatcher,AtomMatcher>()
+AtomMCSMatcher::AtomMCSMatcher()
+               : ConcreteProperty<AtomMCSMatcher,AtomMatcher>(), timeout(5*second)
+{}
+
+/** Construct specifying the timeout for the MCS match */
+AtomMCSMatcher::AtomMCSMatcher(const SireUnits::Dimension::Time &t)
+               : ConcreteProperty<AtomMCSMatcher,AtomMatcher>(), timeout(t)
 {}
 
 /** Copy constructor */
 AtomMCSMatcher::AtomMCSMatcher(const AtomMCSMatcher &other)
-               : ConcreteProperty<AtomMCSMatcher,AtomMatcher>(other)
+               : ConcreteProperty<AtomMCSMatcher,AtomMatcher>(other), timeout(other.timeout)
 {}
 
 /** Destructor */
@@ -687,13 +874,14 @@ AtomMCSMatcher::~AtomMCSMatcher()
 /** Copy assignment operator */
 AtomMCSMatcher& AtomMCSMatcher::operator=(const AtomMCSMatcher &other)
 {
+    timeout = other.timeout;
     return *this;
 }
 
 /** Comparison operator */
 bool AtomMCSMatcher::operator==(const AtomMCSMatcher &other) const
 {
-    return true;
+    return timeout == other.timeout;
 }
 
 /** Comparison operator */
@@ -723,7 +911,7 @@ QHash<AtomIdx,AtomIdx> AtomMCSMatcher::match(const MoleculeView &mol0,
                                              const MoleculeView &mol1,
                                              const PropertyMap &map1) const
 {
-    return Evaluator(mol0).findMCS(mol1, map0, map1);
+    return Evaluator(mol0).findMCS(mol1, timeout, map0, map1);
 }
 
 /////////

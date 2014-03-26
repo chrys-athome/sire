@@ -36,6 +36,8 @@
 #include "SireBase/property.h"
 #include "SireBase/propertymap.h"
 
+#include "SireUnits/dimensions.h"
+
 #include <boost/tuple/tuple.hpp>
 
 namespace SireMol
@@ -44,6 +46,7 @@ class AtomMatcher;
 class AtomIdxMatcher;
 class AtomNameMatcher;
 class AtomResultMatcher;
+class AtomMatchInverter;
 class AtomIDMatcher;
 class AtomMultiMatcher;
 class AtomMCSMatcher;
@@ -63,6 +66,9 @@ QDataStream& operator>>(QDataStream&, SireMol::AtomIDMatcher&);
 
 QDataStream& operator<<(QDataStream&, const SireMol::AtomResultMatcher&);
 QDataStream& operator>>(QDataStream&, SireMol::AtomResultMatcher&);
+
+QDataStream& operator<<(QDataStream&, const SireMol::AtomMatchInverter&);
+QDataStream& operator>>(QDataStream&, SireMol::AtomMatchInverter&);
 
 QDataStream& operator<<(QDataStream&, const SireMol::AtomMultiMatcher&);
 QDataStream& operator>>(QDataStream&, SireMol::AtomMultiMatcher&);
@@ -158,7 +164,7 @@ friend QDataStream& ::operator>>(QDataStream&, AtomResultMatcher&);
 
 public:
     AtomResultMatcher();
-    AtomResultMatcher(const QHash<AtomIdx,AtomIdx> &results);
+    AtomResultMatcher(const QHash<AtomIdx,AtomIdx> &results, bool invert=false);
     
     AtomResultMatcher(const AtomResultMatcher &other);
     
@@ -191,6 +197,57 @@ public:
 private:
     /** The result of matching using another AtomMatcher */
     QHash<AtomIdx,AtomIdx> m;
+};
+
+/** This is a atom matcher that inverts the match of the sub-matcher.
+    This is useful when you want to match from molecule 1 to molecule 0
+    as opposed to molecule 0 to molecule 1, and but don't want to change
+    the order of the match at the calling site
+    
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT AtomMatchInverter
+         : public SireBase::ConcreteProperty<AtomMatchInverter,AtomMatcher>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const AtomMatchInverter&);
+friend QDataStream& ::operator>>(QDataStream&, AtomMatchInverter&);
+
+public:
+    AtomMatchInverter();
+    AtomMatchInverter(const AtomMatcher &matcher);
+    
+    AtomMatchInverter(const AtomMatchInverter &other);
+    
+    ~AtomMatchInverter();
+    
+    static const char* typeName();
+    
+    const char* what() const
+    {
+        return AtomMatchInverter::typeName();
+    }
+
+    bool isNull() const;
+
+    QString toString() const;
+
+    AtomMatchInverter& operator=(const AtomMatchInverter &other);
+    
+    bool operator==(const AtomMatchInverter &other) const;
+    bool operator!=(const AtomMatchInverter &other) const;
+    
+    QHash<AtomIdx,AtomIdx> match(const MoleculeInfoData &molinfo0,
+                                 const MoleculeInfoData &molinfo1) const;
+    
+    QHash<AtomIdx,AtomIdx> match(const MoleculeView &molview0,
+                                 const PropertyMap &map0,
+                                 const MoleculeView &molview1,
+                                 const PropertyMap &map1) const;
+
+private:
+    /** The matcher used for the forwards match */
+    AtomMatcherPtr m;
 };
 
 /** This is a simple atom matcher that matches the atoms based
@@ -350,6 +407,7 @@ friend QDataStream& ::operator>>(QDataStream&, AtomMCSMatcher&);
 
 public:
     AtomMCSMatcher();
+    AtomMCSMatcher(const SireUnits::Dimension::Time &timeout);
     
     AtomMCSMatcher(const AtomMCSMatcher &other);
     
@@ -373,6 +431,10 @@ public:
                                  const PropertyMap &map0,
                                  const MoleculeView &molview1,
                                  const PropertyMap &map1) const;
+
+private:
+    /** Timeout for the MCS match */
+    SireUnits::Dimension::Time timeout;
 };
 
 /** This is an atom matcher combines several sub-AtomMatchers together
@@ -430,6 +492,7 @@ Q_DECLARE_METATYPE( SireMol::AtomIdxMatcher )
 Q_DECLARE_METATYPE( SireMol::AtomNameMatcher )
 Q_DECLARE_METATYPE( SireMol::AtomIDMatcher )
 Q_DECLARE_METATYPE( SireMol::AtomResultMatcher )
+Q_DECLARE_METATYPE( SireMol::AtomMatchInverter )
 Q_DECLARE_METATYPE( SireMol::AtomMultiMatcher )
 Q_DECLARE_METATYPE( SireMol::AtomMCSMatcher )
 
@@ -437,6 +500,7 @@ SIRE_EXPOSE_CLASS( SireMol::AtomMatcher )
 SIRE_EXPOSE_CLASS( SireMol::AtomIdxMatcher )
 SIRE_EXPOSE_CLASS( SireMol::AtomNameMatcher )
 SIRE_EXPOSE_CLASS( SireMol::AtomResultMatcher )
+SIRE_EXPOSE_CLASS( SireMol::AtomMatchInverter )
 SIRE_EXPOSE_CLASS( SireMol::AtomIDMatcher )
 SIRE_EXPOSE_CLASS( SireMol::AtomMultiMatcher )
 SIRE_EXPOSE_CLASS( SireMol::AtomMCSMatcher )

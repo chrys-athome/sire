@@ -31,6 +31,7 @@
 
 #include "mover.h"
 #include "evaluator.h"
+#include "atommatcher.h"
 
 #include "SireBase/propertymap.h"
 
@@ -578,7 +579,7 @@ Mover<T>& Mover<T>::align(const MoleculeView &other,
 {
     MoverBase::transform(*(this->d),
                          SireMol::getAlignment(other, map1,
-                                               *this, map0, matcher), map0);
+                                               *this, map0, AtomMatchInverter(matcher)), map0);
     
     return *this;
 }
@@ -625,7 +626,7 @@ Mover<T>& Mover<T>::align(const MoleculeView &other,
                           const PropertyMap &map)
 {
     MoverBase::transform(*(this->d),
-                         SireMol::getAlignment(other, *this, matcher, map), map);
+                         SireMol::getAlignment(other, *this, AtomMatchInverter(matcher), map), map);
     
     return *this;
 }
