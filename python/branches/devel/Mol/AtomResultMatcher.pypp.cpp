@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "SireStream/datastream.h"
 
+#include "SireUnits/units.h"
+
 #include "atomidentifier.h"
 
 #include "atomidx.h"
@@ -43,7 +45,7 @@ void register_AtomResultMatcher_class(){
         typedef bp::class_< SireMol::AtomResultMatcher, bp::bases< SireMol::AtomMatcher, SireBase::Property > > AtomResultMatcher_exposer_t;
         AtomResultMatcher_exposer_t AtomResultMatcher_exposer = AtomResultMatcher_exposer_t( "AtomResultMatcher", bp::init< >() );
         bp::scope AtomResultMatcher_scope( AtomResultMatcher_exposer );
-        AtomResultMatcher_exposer.def( bp::init< QHash< SireMol::AtomIdx, SireMol::AtomIdx > const & >(( bp::arg("results") )) );
+        AtomResultMatcher_exposer.def( bp::init< QHash< SireMol::AtomIdx, SireMol::AtomIdx > const &, bp::optional< bool > >(( bp::arg("results"), bp::arg("invert")=(bool)(false) )) );
         AtomResultMatcher_exposer.def( bp::init< SireMol::AtomResultMatcher const & >(( bp::arg("other") )) );
         { //::SireMol::AtomResultMatcher::isNull
         

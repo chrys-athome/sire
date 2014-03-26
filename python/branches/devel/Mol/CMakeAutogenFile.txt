@@ -213,6 +213,7 @@ set ( PYPP_SOURCES
        MoverBase.pypp.cpp
        SegStringProperty.pypp.cpp
        IDOrSet_ChainID_.pypp.cpp
+       AtomMatchInverter.pypp.cpp
        AtomIntProperty.pypp.cpp
        AtomCharges.pypp.cpp
        AtomsIn_CGID_.pypp.cpp

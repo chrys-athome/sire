@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "SireStream/datastream.h"
 
+#include "SireUnits/units.h"
+
 #include "atomidentifier.h"
 
 #include "atomidx.h"
@@ -43,6 +45,7 @@ void register_AtomMCSMatcher_class(){
         typedef bp::class_< SireMol::AtomMCSMatcher, bp::bases< SireMol::AtomMatcher, SireBase::Property > > AtomMCSMatcher_exposer_t;
         AtomMCSMatcher_exposer_t AtomMCSMatcher_exposer = AtomMCSMatcher_exposer_t( "AtomMCSMatcher", bp::init< >() );
         bp::scope AtomMCSMatcher_scope( AtomMCSMatcher_exposer );
+        AtomMCSMatcher_exposer.def( bp::init< SireUnits::Dimension::Time const & >(( bp::arg("timeout") )) );
         AtomMCSMatcher_exposer.def( bp::init< SireMol::AtomMCSMatcher const & >(( bp::arg("other") )) );
         { //::SireMol::AtomMCSMatcher::match
         

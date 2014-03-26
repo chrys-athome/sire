@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "SireStream/datastream.h"
 
+#include "SireUnits/units.h"
+
 #include "atomidentifier.h"
 
 #include "atomidx.h"

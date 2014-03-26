@@ -53,6 +53,8 @@
 
 #include "AtomMasses.pypp.hpp"
 
+#include "AtomMatchInverter.pypp.hpp"
+
 #include "AtomMatcher.pypp.hpp"
 
 #include "AtomMultiMatcher.pypp.hpp"
@@ -577,6 +579,8 @@ BOOST_PYTHON_MODULE(_Mol){
     register_AtomIdxMatcher_class();
 
     register_AtomMCSMatcher_class();
+
+    register_AtomMatchInverter_class();
 
     register_AtomMultiMatcher_class();
 

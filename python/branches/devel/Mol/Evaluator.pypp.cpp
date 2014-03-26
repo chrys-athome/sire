@@ -9,6 +9,8 @@ namespace bp = boost::python;
 
 #include "SireBase/errors.h"
 
+#include "SireMaths/accumulator.h"
+
 #include "SireMaths/axisset.h"
 
 #include "SireMaths/line.h"
