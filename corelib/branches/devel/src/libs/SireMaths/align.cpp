@@ -528,7 +528,7 @@ namespace SireMaths
         
         while (true)
         {
-            qDebug() << "STEP" << delta.toString();
+            //qDebug() << "STEP" << delta.toString();
         
             for (int i=0; i<3; ++i)
             {
@@ -539,7 +539,7 @@ namespace SireMaths
                 Matrix rotmat = kabasch(p,q2);
                 double rmsd = getRMSD( p, rotate(q2,rotmat) );
                 
-                qDebug() << "rmsd" << rmsd << rmsd_best;
+                //qDebug() << "rmsd" << rmsd << rmsd_best;
                 
                 if (rmsd < rmsd_best)
                 {
@@ -547,7 +547,7 @@ namespace SireMaths
                     rmsd_best = rmsd;
                     rotmat_best = rotmat;
                     delta = tmp;
-                    qDebug() << "NEW BEST" << rmsd_best << delta.toString();
+                    //qDebug() << "NEW BEST" << rmsd_best << delta.toString();
                 }
                 else
                 {
@@ -559,7 +559,7 @@ namespace SireMaths
                     rotmat = kabasch(p,q2);
                     rmsd = getRMSD( p, rotate(q2,rotmat) );
                     
-                    qDebug() << "rmsd" << rmsd << rmsd_best;
+                    //qDebug() << "rmsd" << rmsd << rmsd_best;
                     
                     if (rmsd < rmsd_best)
                     {
@@ -567,7 +567,7 @@ namespace SireMaths
                         rmsd_best = rmsd;
                         rotmat_best = rotmat;
                         delta = tmp;
-                        qDebug() << "NEW BEST" << rmsd_best << delta.toString();
+                        //qDebug() << "NEW BEST" << rmsd_best << delta.toString();
                     }
                     else
                     {

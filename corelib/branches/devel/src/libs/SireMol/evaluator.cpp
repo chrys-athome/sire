@@ -1142,7 +1142,7 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
                                           const PropertyMap &map0,
                                           const PropertyMap &map1) const
 {
-    return this->findMCS(other, matcher, 10*second, map0, map1);
+    return this->findMCS(other, matcher, 5*second, map0, map1);
 }
 
 /** Find the maximum common substructure of this molecule view with 'other'. This

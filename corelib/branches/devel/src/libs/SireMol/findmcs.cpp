@@ -90,7 +90,7 @@ private:
     QElapsedTimer *t_delta;
     qint64 last_update;
     qint64 max_time_ns;
-    bool timed_out;
+    bool *timed_out;
 
 public:
     findmcs_callback(const G0 &mg0, const G1 &mg1,
@@ -100,7 +100,7 @@ public:
                      qint64 maxtime, bool *timedout)
          : g0(mg0), g1(mg1), max_nats(nats), max_size(msize),
            best_matches(matches),
-           t_total(tt), t_delta(td), last_update(0), timed_out(timedout)
+           t_total(tt), t_delta(td), last_update(0), max_time_ns(maxtime), timed_out(timedout)
     {
         *max_size = 0;
     }
@@ -150,7 +150,7 @@ public:
             if (nmatch == max_nats)
             {
                 qDebug() << "No more atoms to match :-)";
-                timed_out = false;
+                *timed_out = false;
                 return false;
             }
         }
@@ -160,10 +160,10 @@ public:
         if (ns > max_time_ns)
         {
             qDebug() << "Ran out of time. Returning the best answer.";
-            timed_out = true;
+            *timed_out = true;
             return false;
         }
-        else if (ns > last_update + 5000000)
+        else if (ns > last_update + 500000000)
         {
             qDebug() << "Still searching..." << (t_total->nsecsElapsed()*0.000001) << "ms";
         }
@@ -410,6 +410,7 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
     int max_size = 0;
     QList< QHash<AtomIdx,AtomIdx> > best_matches;
     const qint64 max_time_ns = timeout.to(nanosecond);
+    qDebug() << "Using timeout" << timeout.to(second) << "second(s)";
     QElapsedTimer t_total;
     QElapsedTimer t_delta;
     bool timed_out = false;

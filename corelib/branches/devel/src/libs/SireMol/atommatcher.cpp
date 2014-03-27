@@ -52,6 +52,16 @@ using namespace SireStream;
 ///////// Implmentation of AtomMatcher
 /////////
 
+AtomMultiMatcher *null_matcher = 0;
+
+const AtomMultiMatcher& AtomMatcher::null()
+{
+    if (not null_matcher)
+        null_matcher = new AtomMultiMatcher();
+    
+    return *null_matcher;
+}
+
 static const RegisterMetaType<AtomMatcher> r_atommatcher( MAGIC_ONLY,
                                                           "SireMol::AtomMatcher" );
 

@@ -146,6 +146,8 @@ public:
     virtual QHash<AtomIdx,AtomIdx> match(const MoleculeView &molview0,
                                          const MoleculeView &molview1,
                                          const PropertyMap &map) const;
+
+    static const AtomMultiMatcher& null();
 };
 
 typedef SireBase::PropPtr<AtomMatcher> AtomMatcherPtr;
