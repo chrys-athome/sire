@@ -3,6 +3,7 @@ from Sire.IO import *
 from Sire.Mol import *
 from Sire.Maths import *
 from Sire.Base import *
+from Sire.Units import *
 
 import Sire.Config
 
@@ -127,16 +128,17 @@ if not can_align:
     sys.exit(-1)
 
 print("Looking for the maximum common substructure of the two ligands...")
-atommap = AtomMCSMatcher().match(lig0, PropertyMap(), lig1, PropertyMap())
+atommap = AtomMCSMatcher(1*second).match(lig1, PropertyMap(), lig0, PropertyMap())
 
 print("Number of matched atoms == %s" % len(atommap))
 
 print("Mapping from the first to second ligand: %s" % atommap)
 
-print("\nRMSD before alignment == %s A" % lig0.evaluate().rmsd(lig1, AtomResultMatcher(atommap)))
+print("\nRMSD before alignment == %s A" % lig1.evaluate().rmsd(lig0, AtomResultMatcher(atommap)))
 
 print("\nAligning the molecule...")
-lig1 = lig1.move().align(lig0, AtomMCSMatcher()).commit()
+lig1 = lig1.move().align(lig0, AtomResultMatcher(atommap)).commit()
+
 
 print("\nRMSD after alignment == %s A" % lig0.evaluate().rmsd(lig1, AtomResultMatcher(atommap)))
 
