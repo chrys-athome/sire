@@ -26,7 +26,6 @@
   *
 \*********************************************/
 
-
 #include "openmmfrenergyst.h"
 #include "ensemble.h"
 
