@@ -91,16 +91,19 @@ private:
     qint64 *last_update;
     qint64 max_time_ns;
     bool *timed_out;
+    QSet<int> user_matched_verts;
 
 public:
     findmcs_callback(const G0 &mg0, const G1 &mg1,
                      int nats, int *msize,
                      QList< QHash<int,int> > *matches,
                      QElapsedTimer *tt, QElapsedTimer *td,
-                     qint64 maxtime, qint64 *update, bool *timedout)
+                     qint64 maxtime, qint64 *update, bool *timedout,
+                     const QSet<int> &user_verts)
          : g0(mg0), g1(mg1), max_nats(nats), max_size(msize),
            best_matches(matches),
-           t_total(tt), t_delta(td), last_update(update), max_time_ns(maxtime), timed_out(timedout)
+           t_total(tt), t_delta(td), last_update(update), max_time_ns(maxtime), timed_out(timedout),
+           user_matched_verts(user_verts)
     {
         *max_size = 0;
     }
@@ -111,47 +114,56 @@ public:
     {
         // count up the number of matching vertices
         int nmatch = 0;
+        int nuser = 0;
     
         BGL_FORALL_VERTICES_T(v0, g0, G0)
         {
             if (get(map01, v0) != graph_traits<G1>::null_vertex())
             {
                 nmatch += 1;
+                
+                //count up the number of user-matched vertices
+                if (user_matched_verts.contains(v0))
+                    nuser += 1;
             }
         }
     
-        if (nmatch > *max_size)
+        //we must match all user-supplied vertices
+        if (nuser >= user_matched_verts.count())
         {
-            //qint64 ns = t_delta->nsecsElapsed();
-            t_delta->restart();
-            *max_size = nmatch;
-            best_matches->clear();
-            //qDebug() << "nmatch ==" << nmatch << " " << *max_size;
-            //qDebug() << "FOUND LARGER MATCH!";
-            //qDebug() << (0.000001*ns) << " ms since last maximum match...";
-        }
-    
-        if (nmatch >= *max_size)
-        {
-            // Save the correspondence between vertices into the "best_matches" list
-            QHash<int,int> map;
-            
-            BGL_FORALL_VERTICES_T(v0, g0, G0)
+            if (nmatch > *max_size)
             {
-                // Skip unmapped vertices
-                if (get(map01, v0) != graph_traits<G1>::null_vertex())
-                {
-                    map.insert(v0,get(map01,v0));
-                }
+                //qint64 ns = t_delta->nsecsElapsed();
+                t_delta->restart();
+                *max_size = nmatch;
+                best_matches->clear();
+                //qDebug() << "nmatch ==" << nmatch << " " << *max_size;
+                //qDebug() << "FOUND LARGER MATCH!";
+                //qDebug() << (0.000001*ns) << " ms since last maximum match...";
             }
-
-            best_matches->append(map);
         
-            if (nmatch == max_nats)
+            if (nmatch >= *max_size)
             {
-                //qDebug() << "No more atoms to match :-)";
-                *timed_out = false;
-                return false;
+                // Save the correspondence between vertices into the "best_matches" list
+                QHash<int,int> map;
+                
+                BGL_FORALL_VERTICES_T(v0, g0, G0)
+                {
+                    // Skip unmapped vertices
+                    if (get(map01, v0) != graph_traits<G1>::null_vertex())
+                    {
+                        map.insert(v0,get(map01,v0));
+                    }
+                }
+
+                best_matches->append(map);
+            
+                if (nmatch == max_nats)
+                {
+                    //qDebug() << "No more atoms to match :-)";
+                    *timed_out = false;
+                    return false;
+                }
             }
         }
 
@@ -251,15 +263,19 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
     
     if (not matcher.isNull())
     {
+        qDebug() << "PERFORMING INITIAL CUSTOM MATCH" << matcher.toString();
         user_map01 = matcher.match(*this, map0, other, map1);
+        qDebug() << Sire::toString(user_map01);
         
-        //create the inverted map from molecule 1 to molecule 1
+        //create the inverted map from molecule 1 to molecule 0
         for (QHash<AtomIdx,AtomIdx>::const_iterator it = user_map01.constBegin();
              it != user_map01.constEnd();
              ++it)
         {
             user_map10.insert( it.value(), it.key() );
         }
+        
+        qDebug() << Sire::toString(user_map10);
     }
 
     //now try to match up the atoms using their connectivity
@@ -341,6 +357,8 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
     property_map<Graph,user_match_t>::type user_match_0 = get(user_match_t(), g0);
     int nvert0 = 0;
 
+    QSet<int> user_matched_verts;
+
     for (int i=0; i<nats0; ++i)
     {
         if (not skip0[i])
@@ -351,6 +369,7 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
             if (user_map01.contains(AtomIdx(i)))
             {
                 put(user_match_0, nvert0, i);
+                user_matched_verts.insert(nvert0);
             }
             else
             {
@@ -422,7 +441,7 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
     qint64 last_update = 0;
     findmcs_callback<Graph,Graph> func(g0, g1, qMin(nats0-nskip0,nats1-nskip1), &max_size,
                                        &best_matches, &t_total, &t_delta, max_time_ns,
-                                       &last_update, &timed_out);
+                                       &last_update, &timed_out, user_matched_verts);
     
     t_total.start();
     mcgregor_common_subgraphs_unique(g0, g1, true, func,
@@ -444,7 +463,8 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
     if (best_matches.isEmpty())
     {
         qDebug() << "FOUND NO MATCHES?";
-        return QHash<AtomIdx,AtomIdx>();
+        //return the original map that constrained this search
+        return user_map01;
     }
     else
     {
