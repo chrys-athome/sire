@@ -179,6 +179,10 @@ public:
     AtomIDMatcher(const QList< boost::tuple<int,int> > &match_idxs );
     AtomIDMatcher(const QList< boost::tuple<AtomIdentifier,AtomIdentifier> > &match_ids);
     
+    AtomIDMatcher(const QHash<QString,QString> &match_names);
+    AtomIDMatcher(const QHash<int,int> &match_idxs);
+    AtomIDMatcher(const QHash<AtomIdentifier,AtomIdentifier> &match_ids);
+    
     AtomIDMatcher(const AtomIDMatcher &other);
     
     ~AtomIDMatcher();

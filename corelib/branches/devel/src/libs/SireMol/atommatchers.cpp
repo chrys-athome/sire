@@ -541,6 +541,32 @@ AtomIDMatcher::AtomIDMatcher(const QList< QPair<QString,QString> > &names)
     }
 }
 
+/** Construct to match atom names */
+AtomIDMatcher::AtomIDMatcher(const QHash<QString,QString> &names)
+              : ConcreteProperty<AtomIDMatcher,AtomMatcher>()
+{
+    QSet<QString> matched_names;
+
+    for (QHash<QString,QString>::const_iterator it = names.constBegin();
+         it != names.constEnd();
+         ++it)
+    {
+        if (not it.key().isEmpty() or it.value().isEmpty())
+        {
+            if (matched_names.contains(it.value()))
+                throw SireError::invalid_arg( QObject::tr(
+                        "You are trying to match multiple atoms (%1) to the same name (%2). "
+                        "Please ensure that you have a unique name <=> name mapping.")
+                            .arg(Sire::toString(names.keys(it.value())))
+                            .arg(it.value()), CODELOC );
+        
+            matched_names.insert(it.value());
+            m.append( QPair<AtomIdentifier,AtomIdentifier>( AtomName(it.key()),
+                                                            AtomName(it.value()) ) );
+        }
+    }
+}
+
 /** Construct to match atom indexes */
 AtomIDMatcher::AtomIDMatcher(const QList< QPair<int,int> > &idxs)
               : ConcreteProperty<AtomIDMatcher,AtomMatcher>()
@@ -554,6 +580,30 @@ AtomIDMatcher::AtomIDMatcher(const QList< QPair<int,int> > &idxs)
     }
 }
 
+/** Construct to match atom indexes */
+AtomIDMatcher::AtomIDMatcher(const QHash<int,int> &idxs)
+              : ConcreteProperty<AtomIDMatcher,AtomMatcher>()
+{
+    QSet<int> matched_idxs;
+    
+    for (QHash<int,int>::const_iterator it = idxs.constBegin();
+         it != idxs.constEnd();
+         ++it)
+    {
+        if (matched_idxs.contains(it.value()))
+            throw SireError::invalid_arg( QObject::tr(
+                    "You are trying to match multiple atoms (%1) to the same index (%2). "
+                    "Please ensure that you have a unique index <=> index mapping.")
+                        .arg(Sire::toString(idxs.keys(it.value())))
+                        .arg(it.value()), CODELOC );
+    
+        matched_idxs.insert(it.value());
+        
+        m.append( QPair<AtomIdentifier,AtomIdentifier>( AtomIdx(it.key()),
+                                                        AtomIdx(it.value()) ) );
+    }
+}
+
 /** Construct to match specified AtomIdentifiers */
 AtomIDMatcher::AtomIDMatcher(const QList< QPair<AtomIdentifier,AtomIdentifier> > &ids)
               : ConcreteProperty<AtomIDMatcher,AtomMatcher>()
@@ -564,6 +614,32 @@ AtomIDMatcher::AtomIDMatcher(const QList< QPair<AtomIdentifier,AtomIdentifier> >
         
         if (not (id.first.isNull() or id.second.isNull()))
             m.append(id);
+    }
+}
+
+/** Construct to match specified AtomIdentifiers */
+AtomIDMatcher::AtomIDMatcher(const QHash<AtomIdentifier,AtomIdentifier> &ids)
+              : ConcreteProperty<AtomIDMatcher,AtomMatcher>()
+{
+    QSet<AtomIdentifier> matched_ids;
+    
+    for (QHash<AtomIdentifier,AtomIdentifier>::const_iterator it = ids.constBegin();
+         it != ids.constEnd();
+         ++it)
+    {
+        if (not it.key().isNull() or it.value().isNull())
+        {
+            if (matched_ids.contains(it.value()))
+                throw SireError::invalid_arg( QObject::tr(
+                        "You are trying to match multiple atoms (%1) to the same ID (%2). "
+                        "Please ensure that you have a unique ID <=> ID mapping.")
+                            .arg(Sire::toString(ids.keys(it.value())))
+                            .arg(it.value().toString()), CODELOC );
+        
+            matched_ids.insert(it.value());
+            
+            m.append( QPair<AtomIdentifier,AtomIdentifier>(it.key(), it.value()) );
+        }
     }
 }
 
