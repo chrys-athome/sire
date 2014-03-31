@@ -522,7 +522,6 @@ namespace SireMaths
         Matrix rotmat_best = kabasch(p,q2);
         
         double rmsd_best = getRMSD( p, rotate(q2,rotmat_best) );
-        qDebug() << "BEST" << rmsd_best;
         
         Vector delta(0);
         
@@ -623,20 +622,14 @@ namespace SireMaths
             qc[i] = q[i] - cq;
         }
     
-        qDebug() << "cp" << cp.toString();
-        qDebug() << "cq" << cq.toString();
-    
         if (fit)
         {
-            qDebug() << "kabaschFit";
             Transform a = kabaschFit(pc, qc);
             return Transform(a.translationDelta() + cp - cq, a.rotationQuaternion(), cq);
         }
         else
         {
             Matrix rotmat = kabasch(pc, qc);
-            qDebug() << "rotmat" << rotmat.toString();
-            
             return Transform(cp-cq, rotmat, cq);
         }
     }

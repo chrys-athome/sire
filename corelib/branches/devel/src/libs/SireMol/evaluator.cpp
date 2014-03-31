@@ -32,6 +32,7 @@
 #include "atomcharges.h"
 #include "atomelements.h"
 #include "atommatcher.h"
+#include "atommatchers.h"
 #include "bondid.h"
 #include "angleid.h"
 #include "dihedralid.h"
@@ -1229,7 +1230,7 @@ SireUnits::Dimension::Length Evaluator::rmsd(const MoleculeView &other,
                                              const PropertyMap &map1) const
 {
     const AtomCoords &c0 = this->data().property( map0["coordinates"] ).asA<AtomCoords>();
-    const AtomCoords &c1 = this->data().property( map1["coordinates"] ).asA<AtomCoords>();
+    const AtomCoords &c1 = other.data().property( map1["coordinates"] ).asA<AtomCoords>();
 
     QHash<AtomIdx,AtomIdx> match = atommatcher.match(*this, map0, other, map1);
 

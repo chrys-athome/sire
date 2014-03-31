@@ -28,6 +28,7 @@ set ( SIREMOL_HEADERS
       atomidx.h
       atommasses.h
       atommatcher.h
+      atommatchers.h
       atomname.h
       atomnum.h
       atompolarisabilities.h
@@ -147,6 +148,7 @@ set ( SIREMOL_SOURCES
       atomidentifier.cpp
       atomcutting.cpp
       atommatcher.cpp
+      atommatchers.cpp
       atomproperty.cpp
       atomselection.cpp
       bead.cpp

@@ -85,22 +85,22 @@ private:
     const G1& g1;
     int max_nats;
     int *max_size;
-    QList< QHash<AtomIdx,AtomIdx> > *best_matches;
+    QList< QHash<int,int> > *best_matches;
     QElapsedTimer *t_total;
     QElapsedTimer *t_delta;
-    qint64 last_update;
+    qint64 *last_update;
     qint64 max_time_ns;
     bool *timed_out;
 
 public:
     findmcs_callback(const G0 &mg0, const G1 &mg1,
                      int nats, int *msize,
-                     QList< QHash<AtomIdx,AtomIdx> > *matches,
+                     QList< QHash<int,int> > *matches,
                      QElapsedTimer *tt, QElapsedTimer *td,
-                     qint64 maxtime, bool *timedout)
+                     qint64 maxtime, qint64 *update, bool *timedout)
          : g0(mg0), g1(mg1), max_nats(nats), max_size(msize),
            best_matches(matches),
-           t_total(tt), t_delta(td), last_update(0), max_time_ns(maxtime), timed_out(timedout)
+           t_total(tt), t_delta(td), last_update(update), max_time_ns(maxtime), timed_out(timedout)
     {
         *max_size = 0;
     }
@@ -122,26 +122,26 @@ public:
     
         if (nmatch > *max_size)
         {
-            qint64 ns = t_delta->nsecsElapsed();
+            //qint64 ns = t_delta->nsecsElapsed();
             t_delta->restart();
             *max_size = nmatch;
             best_matches->clear();
-            qDebug() << "nmatch ==" << nmatch << " " << *max_size;
-            qDebug() << "FOUND LARGER MATCH!";
-            qDebug() << (0.000001*ns) << " ms since last maximum match...";
+            //qDebug() << "nmatch ==" << nmatch << " " << *max_size;
+            //qDebug() << "FOUND LARGER MATCH!";
+            //qDebug() << (0.000001*ns) << " ms since last maximum match...";
         }
     
         if (nmatch >= *max_size)
         {
             // Save the correspondence between vertices into the "best_matches" list
-            QHash<AtomIdx,AtomIdx> map;
+            QHash<int,int> map;
             
             BGL_FORALL_VERTICES_T(v0, g0, G0)
             {
                 // Skip unmapped vertices
                 if (get(map01, v0) != graph_traits<G1>::null_vertex())
                 {
-                    map.insert( AtomIdx(v0), AtomIdx(get(map01,v0)) );
+                    map.insert(v0,get(map01,v0));
                 }
             }
 
@@ -149,7 +149,7 @@ public:
         
             if (nmatch == max_nats)
             {
-                qDebug() << "No more atoms to match :-)";
+                //qDebug() << "No more atoms to match :-)";
                 *timed_out = false;
                 return false;
             }
@@ -159,13 +159,14 @@ public:
     
         if (ns > max_time_ns)
         {
-            qDebug() << "Ran out of time. Returning the best answer.";
+            //qDebug() << "Ran out of time. Returning the best answer.";
             *timed_out = true;
             return false;
         }
-        else if (ns > last_update + 500000000)
+        else if (ns > *last_update + 500000000)
         {
             qDebug() << "Still searching..." << (t_total->nsecsElapsed()*0.000001) << "ms";
+            *last_update = ns;
         }
 
         return true;
@@ -334,6 +335,7 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
     
     Graph g0(nats0-nskip0);
     QVector<int> atomidx_to_idx0(nats0, -1);
+    QVector<AtomIdx> idx_to_atomidx0(nats0-nskip0);
     
     property_map<Graph,in_ring_t>::type in_ring_0 = get(in_ring_t(), g0);
     property_map<Graph,user_match_t>::type user_match_0 = get(user_match_t(), g0);
@@ -344,6 +346,7 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
         if (not skip0[i])
         {
             atomidx_to_idx0[i] = nvert0;
+            idx_to_atomidx0[nvert0] = AtomIdx(i);
             
             if (user_map01.contains(AtomIdx(i)))
             {
@@ -371,6 +374,7 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
     
     Graph g1(nats1-nskip1);
     QVector<int> atomidx_to_idx1(nats1, -1);
+    QVector<AtomIdx> idx_to_atomidx1(nats1-nskip1);
     
     property_map<Graph,in_ring_t>::type in_ring_1 = get(in_ring_t(), g1);
     property_map<Graph,user_match_t>::type user_match_1 = get(user_match_t(), g1);
@@ -382,6 +386,7 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
         if (not skip1[i])
         {
             atomidx_to_idx1[i] = nvert1;
+            idx_to_atomidx1[nvert1] = AtomIdx(i);
             
             if (user_map10.contains(AtomIdx(i)))
             {
@@ -408,15 +413,16 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
     }
 
     int max_size = 0;
-    QList< QHash<AtomIdx,AtomIdx> > best_matches;
+    QList< QHash<int,int> > best_matches;
     const qint64 max_time_ns = timeout.to(nanosecond);
-    qDebug() << "Using timeout" << timeout.to(second) << "second(s)";
+    //qDebug() << "Using timeout" << timeout.to(second) << "second(s)";
     QElapsedTimer t_total;
     QElapsedTimer t_delta;
     bool timed_out = false;
+    qint64 last_update = 0;
     findmcs_callback<Graph,Graph> func(g0, g1, qMin(nats0-nskip0,nats1-nskip1), &max_size,
                                        &best_matches, &t_total, &t_delta, max_time_ns,
-                                       &timed_out);
+                                       &last_update, &timed_out);
     
     t_total.start();
     mcgregor_common_subgraphs_unique(g0, g1, true, func,
@@ -442,6 +448,18 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
     }
     else
     {
-        return best_matches.at(0);
+        //we need to convert from vertex indicies back to AtomIdx values
+        QHash<int,int> best_match = best_matches.at(0);
+        
+        QHash<AtomIdx,AtomIdx> map;
+        
+        for (QHash<int,int>::const_iterator it = best_match.constBegin();
+             it != best_match.constEnd();
+             ++it)
+        {
+            map.insert( idx_to_atomidx0[it.key()], idx_to_atomidx1[it.value()] );
+        }
+    
+        return map;
     }
 }

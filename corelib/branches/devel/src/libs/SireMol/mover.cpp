@@ -32,6 +32,7 @@
 #include "weightfunction.h"
 
 #include "atommatcher.h"
+#include "atommatchers.h"
 #include "bondid.h"
 #include "angleid.h"
 #include "dihedralid.h"
@@ -76,8 +77,6 @@ namespace SireMol
         
         QHash<AtomIdx,AtomIdx> map = matcher.match(view0, map0, view1, map1);
         
-        qDebug() << "Aligning with match" << Sire::toString(map);
-        
         if (map.isEmpty())
         {
             //there are no matching atoms - we can't do anything
@@ -98,21 +97,9 @@ namespace SireMol
             n += 1;
         }
         
-        qDebug() << "P" << Sire::toString(p);
-        qDebug() << "Q" << Sire::toString(q);
-        qDebug() << "FIT" << fit;
-        
         Transform t = SireMaths::getAlignment(p, q, fit);
-        qDebug() << t.toString();
         
         return t;
-        /*
-        
-        SireMaths::AxisSet ax2( ax.matrix(), ax.origin() * -1.0 );
-        
-        qDebug() << ax2.toString();
-        
-        return ax2;*/
     }
 
     /** Return the AxisSet needed to move 'view1' so that it is aligned against
