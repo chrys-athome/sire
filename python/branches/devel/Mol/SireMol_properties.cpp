@@ -127,6 +127,7 @@
 #include "atomidentifier.h"
 #include "atomidx.h"
 #include "atommatcher.h"
+#include "atommatchers.h"
 #include "atomname.h"
 #include "atomselection.h"
 #include "evaluator.h"

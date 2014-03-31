@@ -19,6 +19,8 @@ namespace bp = boost::python;
 
 #include "atommatcher.h"
 
+#include "atommatchers.h"
+
 #include "atomname.h"
 
 #include "atomselection.h"
@@ -31,7 +33,7 @@ namespace bp = boost::python;
 
 #include "tostring.h"
 
-#include "atommatcher.h"
+#include "atommatchers.h"
 
 SireMol::AtomNameMatcher __copy__(const SireMol::AtomNameMatcher &other){ return SireMol::AtomNameMatcher(other); }
 

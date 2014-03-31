@@ -19,6 +19,8 @@ namespace bp = boost::python;
 
 #include "atommatcher.h"
 
+#include "atommatchers.h"
+
 #include "atomname.h"
 
 #include "atomselection.h"

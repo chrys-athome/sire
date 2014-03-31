@@ -33,47 +33,7 @@ namespace bp = boost::python;
 
 #include "atommatcher.h"
 
-#include "bondid.h"
-
-#include "connectivity.h"
-
-#include "dihedralid.h"
-
-#include "improperid.h"
-
-#include "mover.h"
-
-#include "tostring.h"
-
-#include "weightfunction.h"
-
-#include "mover.h"
-
-#include "SireMaths/align.h"
-
-#include "SireMaths/axisset.h"
-
-#include "SireMaths/matrix.h"
-
-#include "SireMaths/quaternion.h"
-
-#include "SireMaths/rotate.h"
-
-#include "SireMaths/vectorproperty.h"
-
-#include "SireMol/errors.h"
-
-#include "SireUnits/units.h"
-
-#include "SireVol/coordgroup.h"
-
-#include "SireVol/space.h"
-
-#include "angleid.h"
-
-#include "atomcoords.h"
-
-#include "atommatcher.h"
+#include "atommatchers.h"
 
 #include "bondid.h"
 
@@ -117,47 +77,7 @@ namespace bp = boost::python;
 
 #include "atommatcher.h"
 
-#include "bondid.h"
-
-#include "connectivity.h"
-
-#include "dihedralid.h"
-
-#include "improperid.h"
-
-#include "mover.h"
-
-#include "tostring.h"
-
-#include "weightfunction.h"
-
-#include "mover.h"
-
-#include "SireMaths/align.h"
-
-#include "SireMaths/axisset.h"
-
-#include "SireMaths/matrix.h"
-
-#include "SireMaths/quaternion.h"
-
-#include "SireMaths/rotate.h"
-
-#include "SireMaths/vectorproperty.h"
-
-#include "SireMol/errors.h"
-
-#include "SireUnits/units.h"
-
-#include "SireVol/coordgroup.h"
-
-#include "SireVol/space.h"
-
-#include "angleid.h"
-
-#include "atomcoords.h"
-
-#include "atommatcher.h"
+#include "atommatchers.h"
 
 #include "bondid.h"
 
@@ -201,6 +121,8 @@ namespace bp = boost::python;
 
 #include "atommatcher.h"
 
+#include "atommatchers.h"
+
 #include "bondid.h"
 
 #include "connectivity.h"
@@ -242,6 +164,96 @@ namespace bp = boost::python;
 #include "atomcoords.h"
 
 #include "atommatcher.h"
+
+#include "atommatchers.h"
+
+#include "bondid.h"
+
+#include "connectivity.h"
+
+#include "dihedralid.h"
+
+#include "improperid.h"
+
+#include "mover.h"
+
+#include "tostring.h"
+
+#include "weightfunction.h"
+
+#include "mover.h"
+
+#include "SireMaths/align.h"
+
+#include "SireMaths/axisset.h"
+
+#include "SireMaths/matrix.h"
+
+#include "SireMaths/quaternion.h"
+
+#include "SireMaths/rotate.h"
+
+#include "SireMaths/vectorproperty.h"
+
+#include "SireMol/errors.h"
+
+#include "SireUnits/units.h"
+
+#include "SireVol/coordgroup.h"
+
+#include "SireVol/space.h"
+
+#include "angleid.h"
+
+#include "atomcoords.h"
+
+#include "atommatcher.h"
+
+#include "atommatchers.h"
+
+#include "bondid.h"
+
+#include "connectivity.h"
+
+#include "dihedralid.h"
+
+#include "improperid.h"
+
+#include "mover.h"
+
+#include "tostring.h"
+
+#include "weightfunction.h"
+
+#include "mover.h"
+
+#include "SireMaths/align.h"
+
+#include "SireMaths/axisset.h"
+
+#include "SireMaths/matrix.h"
+
+#include "SireMaths/quaternion.h"
+
+#include "SireMaths/rotate.h"
+
+#include "SireMaths/vectorproperty.h"
+
+#include "SireMol/errors.h"
+
+#include "SireUnits/units.h"
+
+#include "SireVol/coordgroup.h"
+
+#include "SireVol/space.h"
+
+#include "angleid.h"
+
+#include "atomcoords.h"
+
+#include "atommatcher.h"
+
+#include "atommatchers.h"
 
 #include "bondid.h"
 

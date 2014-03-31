@@ -3,6 +3,7 @@
 // (C) Christopher Woods, GPL >= 2 License
 
 #include "boost/python.hpp"
+#include "Helpers/clone_const_reference.hpp"
 #include "AtomMCSMatcher.pypp.hpp"
 
 namespace bp = boost::python;
@@ -19,6 +20,8 @@ namespace bp = boost::python;
 
 #include "atommatcher.h"
 
+#include "atommatchers.h"
+
 #include "atomname.h"
 
 #include "atomselection.h"
@@ -31,7 +34,7 @@ namespace bp = boost::python;
 
 #include "tostring.h"
 
-#include "atommatcher.h"
+#include "atommatchers.h"
 
 SireMol::AtomMCSMatcher __copy__(const SireMol::AtomMCSMatcher &other){ return SireMol::AtomMCSMatcher(other); }
 
@@ -46,6 +49,8 @@ void register_AtomMCSMatcher_class(){
         AtomMCSMatcher_exposer_t AtomMCSMatcher_exposer = AtomMCSMatcher_exposer_t( "AtomMCSMatcher", bp::init< >() );
         bp::scope AtomMCSMatcher_scope( AtomMCSMatcher_exposer );
         AtomMCSMatcher_exposer.def( bp::init< SireUnits::Dimension::Time const & >(( bp::arg("timeout") )) );
+        AtomMCSMatcher_exposer.def( bp::init< SireMol::AtomMatcher const & >(( bp::arg("prematcher") )) );
+        AtomMCSMatcher_exposer.def( bp::init< SireMol::AtomMatcher const &, SireUnits::Dimension::Time const & >(( bp::arg("prematcher"), bp::arg("timeout") )) );
         AtomMCSMatcher_exposer.def( bp::init< SireMol::AtomMCSMatcher const & >(( bp::arg("other") )) );
         { //::SireMol::AtomMCSMatcher::match
         
@@ -72,6 +77,27 @@ void register_AtomMCSMatcher_class(){
         
         }
         AtomMCSMatcher_exposer.def( bp::self == bp::self );
+        { //::SireMol::AtomMCSMatcher::preMatcher
+        
+            typedef ::SireMol::AtomMatcher const & ( ::SireMol::AtomMCSMatcher::*preMatcher_function_type )(  ) const;
+            preMatcher_function_type preMatcher_function_value( &::SireMol::AtomMCSMatcher::preMatcher );
+            
+            AtomMCSMatcher_exposer.def( 
+                "preMatcher"
+                , preMatcher_function_value
+                , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::SireMol::AtomMCSMatcher::timeout
+        
+            typedef ::SireUnits::Dimension::Time ( ::SireMol::AtomMCSMatcher::*timeout_function_type )(  ) const;
+            timeout_function_type timeout_function_value( &::SireMol::AtomMCSMatcher::timeout );
+            
+            AtomMCSMatcher_exposer.def( 
+                "timeout"
+                , timeout_function_value );
+        
+        }
         { //::SireMol::AtomMCSMatcher::toString
         
             typedef ::QString ( ::SireMol::AtomMCSMatcher::*toString_function_type )(  ) const;

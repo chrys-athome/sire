@@ -19,6 +19,7 @@
 #include "atomidx.h"
 #include "atommasses.h"
 #include "atommatcher.h"
+#include "atommatchers.h"
 #include "atomname.h"
 #include "atomnum.h"
 #include "atompolarisabilities.h"

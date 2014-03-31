@@ -65,6 +65,8 @@ namespace bp = boost::python;
 
 #include "atommatcher.h"
 
+#include "atommatchers.h"
+
 #include "bondid.h"
 
 #include "connectivity.h"

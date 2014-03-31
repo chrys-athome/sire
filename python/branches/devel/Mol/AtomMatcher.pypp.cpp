@@ -19,6 +19,8 @@ namespace bp = boost::python;
 
 #include "atommatcher.h"
 
+#include "atommatchers.h"
+
 #include "atomname.h"
 
 #include "atomselection.h"
@@ -152,6 +154,17 @@ void register_AtomMatcher_class(){
                 , ( bp::arg("molview0"), bp::arg("molview1"), bp::arg("map") ) );
         
         }
+        { //::SireMol::AtomMatcher::null
+        
+            typedef ::SireMol::AtomMultiMatcher const & ( *null_function_type )(  );
+            null_function_type null_function_value( &::SireMol::AtomMatcher::null );
+            
+            AtomMatcher_exposer.def( 
+                "null"
+                , null_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
         AtomMatcher_exposer.def( bp::self + bp::self );
         { //::SireMol::AtomMatcher::typeName
         
@@ -163,6 +176,7 @@ void register_AtomMatcher_class(){
                 , typeName_function_value );
         
         }
+        AtomMatcher_exposer.staticmethod( "null" );
         AtomMatcher_exposer.staticmethod( "typeName" );
         AtomMatcher_exposer.def( "__rlshift__", &__rlshift__QDataStream< ::SireMol::AtomMatcher >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
