@@ -53,6 +53,9 @@ void register_AtomIDMatcher_class(){
         AtomIDMatcher_exposer.def( bp::init< QList< boost::tuples::tuple< QString, QString, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > > const & >(( bp::arg("match_names") )) );
         AtomIDMatcher_exposer.def( bp::init< QList< boost::tuples::tuple< int, int, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > > const & >(( bp::arg("match_idxs") )) );
         AtomIDMatcher_exposer.def( bp::init< QList< boost::tuples::tuple< SireMol::AtomIdentifier, SireMol::AtomIdentifier, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > > const & >(( bp::arg("match_ids") )) );
+        AtomIDMatcher_exposer.def( bp::init< QHash< QString, QString > const & >(( bp::arg("match_names") )) );
+        AtomIDMatcher_exposer.def( bp::init< QHash< int, int > const & >(( bp::arg("match_idxs") )) );
+        AtomIDMatcher_exposer.def( bp::init< QHash< SireMol::AtomIdentifier, SireMol::AtomIdentifier > const & >(( bp::arg("match_ids") )) );
         AtomIDMatcher_exposer.def( bp::init< SireMol::AtomIDMatcher const & >(( bp::arg("other") )) );
         { //::SireMol::AtomIDMatcher::isNull
         
