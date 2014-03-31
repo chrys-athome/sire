@@ -206,16 +206,16 @@ def mergeLSRC(sys0, ligand0_mol, sys1, ligand1_mol, watersys):
         reflection_center = sys0.property("reflection center").toVector()[0]
         reflection_radius = float(str(sys0.property("reflection sphere radius")))
 
-        if reflection_center != sys1.property("reflection center") or
-           reflection_center != watersys.property("reflection center") or
-           reflection_radius != float(str(sys1.property("reflection sphere radius"))) or
+        if reflection_center != sys1.property("reflection center") or \
+           reflection_center != watersys.property("reflection center") or \
+           reflection_radius != float(str(sys1.property("reflection sphere radius"))) or \
            reflection_radius != float(str(watersys.property("reflection sphere radius"))):
 
             print("Disagreement of the reflection sphere in the boxes!")
             print("sys0: %s and %s    sys1: %s and %s   water: %s and %s" % \
                     (reflection_center,reflection_radius,
                      sys1.property("reflection center"), float(str(sys1.property("reflection sphere radius"))),
-                     watersys.property("reflection center"), float(str(watersys.property("reflection sphere radius"))))
+                     watersys.property("reflection center"), float(str(watersys.property("reflection sphere radius")))))
 
             sys.exit(-1)
 

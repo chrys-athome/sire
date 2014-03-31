@@ -130,16 +130,26 @@ if not can_align:
 print("Looking for the maximum common substructure of the two ligands...")
 atommap = AtomMCSMatcher(1*second).match(lig1, PropertyMap(), lig0, PropertyMap())
 
-print("Number of matched atoms == %s" % len(atommap))
+keys = atommap.keys()
 
-print("Mapping from the first to second ligand: %s" % atommap)
+lines = []
 
-print("\nRMSD before alignment == %s A" % lig1.evaluate().rmsd(lig0, AtomResultMatcher(atommap)))
+for key in keys:
+    lines.append("%s <=> %s" % (lig1.atom(key).name(),lig0.atom(atommap[key]).name()))
+
+lines.sort()
+
+print("\nMapping from %s to %s" % (ligname1,ligname0))
+for line in lines:
+    print(line)
+
+print("\nNumber of matched atoms == %s" % len(atommap))
+
+print("\nRMSD before alignment == %s" % lig1.evaluate().rmsd(lig0, AtomResultMatcher(atommap)))
 
 print("\nAligning the molecule...")
-lig1 = lig1.move().align(lig0, AtomResultMatcher(atommap)).commit()
+lig2 = lig1.move().align(lig0, AtomResultMatcher(atommap)).commit()
 
+print("\nRMSD after alignment == %s" % lig2.evaluate().rmsd(lig0, AtomResultMatcher(atommap)))
 
-print("\nRMSD after alignment == %s A" % lig0.evaluate().rmsd(lig1, AtomResultMatcher(atommap)))
-
-PDB().write(lig1, outfile)
+PDB().write(lig2, outfile)
