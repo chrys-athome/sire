@@ -33,6 +33,17 @@ parser.add_argument('-p1', '--pdb1', nargs=1,
                     help="Supply the PDB file containing the second ligand, which will be "
                          "aligned against the first ligand.")
 
+parser.add_argument('-t', '--timeout', nargs=1,
+                    help="Set the timeout (in seconds) used when searching for the maximum common overlap of "
+                         "the molecules. The longer the timeout, the more likely you will find the "
+                         "best match.")
+
+parser.add_argument('-m', '--match', nargs="+",
+                    help="Manually specify matching atoms in the molecules. You can do this using "
+                         "atom name, e.g. -m CA:CB means that the atom called \"CA\" in the first ligand "
+                         "is called \"CB\" in the second ligand. You can specify multiple matches using spaces, "
+                         "e.g. -m CA:CB CD:CE CG:CH etc.")
+
 parser.add_argument('-o', '--output', nargs=1,
                     help="Name of the PDB file in which to output the aligned copy of the "
                          "second ligand.")
@@ -60,6 +71,26 @@ if args.version:
 if must_exit:
     sys.exit(0)
 
+if args.timeout:
+    timeout = float(args.timeout[0]) * second
+else:
+    timeout = 1 * second
+
+if args.match:
+    matcher = {}
+
+    for m in args.match:
+        parts = m.split(":")
+        if len(parts) == 2:
+            matcher[parts[0]] = parts[1]
+
+    if len(matcher) > 0:
+        matcher = AtomIDMatcher(matcher)
+    else:
+        matcher = None
+else:
+    matcher = None
+
 pdb0 = args.pdb0
 pdb1 = args.pdb1
 ligname0 = args.ligand0
@@ -79,6 +110,9 @@ outfile = args.output[0]
 print("\nAligning ligand %s from PDB file %s against ligand %s in PDB file %s." % \
             (ligname1,pdb1,ligname0,pdb0))
 print("Aligned coordinates of ligand %s will be written to file %s." % (ligname1,outfile))
+print("Match will use a timeout of %s s" % timeout.to(second))
+if matcher:
+    print("Match will enforce that atoms are assigned using: %s" % matcher)
 
 mols0 = PDB().read(pdb0)
 mols1 = PDB().read(pdb1)
@@ -128,7 +162,11 @@ if not can_align:
     sys.exit(-1)
 
 print("Looking for the maximum common substructure of the two ligands...")
-atommap = AtomMCSMatcher(1*second).match(lig1, PropertyMap(), lig0, PropertyMap())
+
+if matcher:
+    atommap = AtomMCSMatcher(AtomMatchInverter(matcher),timeout).match(lig1, PropertyMap(), lig0, PropertyMap())
+else:
+    atommap = AtomMCSMatcher(timeout).match(lig1, PropertyMap(), lig0, PropertyMap())
 
 keys = atommap.keys()
 
