@@ -122,8 +122,8 @@ AtomMultiMatcher AtomMatcher::add(const AtomMatcher &other) const
 }
 
 /** Return whether or not this match changes the order of number of atoms */
-bool AtomMatcher::changesOrder(const MoleculeInfoData &mol0,
-                               const MoleculeInfoData &mol1) const
+bool AtomMatcher::pvt_changesOrder(const MoleculeInfoData &mol0,
+                                   const MoleculeInfoData &mol1) const
 {
     if (mol0.nAtoms() != mol1.nAtoms())
         return true;
@@ -145,10 +145,10 @@ bool AtomMatcher::changesOrder(const MoleculeInfoData &mol0,
 }
 
 /** Return whether or not this match changes the order or number of viewed atoms */
-bool AtomMatcher::changesOrder(const MoleculeView &molview0,
-                               const PropertyMap &map0,
-                               const MoleculeView &molview1,
-                               const PropertyMap &map1) const
+bool AtomMatcher::pvt_changesOrder(const MoleculeView &molview0,
+                                   const PropertyMap &map0,
+                                   const MoleculeView &molview1,
+                                   const PropertyMap &map1) const
 {
     const int nats0 = molview0.selection().nSelectedAtoms();
     const int nats1 = molview1.selection().nSelectedAtoms();
@@ -172,6 +172,60 @@ bool AtomMatcher::changesOrder(const MoleculeView &molview0,
     return false;
 }
 
+bool AtomMatcher::pvt_changesOrder(const MoleculeView &molview0,
+                                   const MoleculeView &molview1) const
+{
+    return this->changesOrder(molview0, PropertyMap(), molview1, PropertyMap());
+}
+
+bool AtomMatcher::pvt_changesOrder(const MoleculeView &molview0,
+                                   const MoleculeView &molview1,
+                                   const PropertyMap &map) const
+{
+    return this->changesOrder(molview0, map, molview1, map);
+}
+
+QHash<AtomIdx,AtomIdx> AtomMatcher::pvt_match(const MoleculeView &molview0,
+                                              const MoleculeView &molview1) const
+{
+    return this->match(molview0, PropertyMap(), molview1, PropertyMap());
+}
+
+QHash<AtomIdx,AtomIdx> AtomMatcher::pvt_match(const MoleculeView &molview0,
+                                              const MoleculeView &molview1,
+                                              const PropertyMap &map) const
+{
+    return this->match(molview0, map, molview1, map);
+}
+
+/** Match atoms based only on the data in the MoleculeInfoData of the molecules. */
+QHash<AtomIdx,AtomIdx> AtomMatcher::pvt_match(const MoleculeInfoData &mol0,
+                                              const MoleculeInfoData &mol1) const
+{
+    throw SireError::unsupported( QObject::tr(
+                "The AtomMatcher \"%1\" does not support matching using "
+                "MoleculeInfoData objects only.")
+                    .arg(this->toString()), CODELOC );
+
+    return QHash<AtomIdx,AtomIdx>();
+}
+
+/** Return whether or not this match changes the order of number of atoms */
+bool AtomMatcher::changesOrder(const MoleculeInfoData &mol0,
+                               const MoleculeInfoData &mol1) const
+{
+    return this->pvt_changesOrder(mol0, mol1);
+}
+
+/** Return whether or not this match changes the order or number of viewed atoms */
+bool AtomMatcher::changesOrder(const MoleculeView &molview0,
+                               const PropertyMap &map0,
+                               const MoleculeView &molview1,
+                               const PropertyMap &map1) const
+{
+    return this->pvt_changesOrder(molview0,map0, molview1,map1);
+}
+
 bool AtomMatcher::changesOrder(const MoleculeView &molview0,
                                const MoleculeView &molview1) const
 {
@@ -188,26 +242,29 @@ bool AtomMatcher::changesOrder(const MoleculeView &molview0,
 QHash<AtomIdx,AtomIdx> AtomMatcher::match(const MoleculeView &molview0,
                                           const MoleculeView &molview1) const
 {
-    return this->match(molview0, PropertyMap(), molview1, PropertyMap());
+    return this->pvt_match(molview0,molview1);
 }
 
 QHash<AtomIdx,AtomIdx> AtomMatcher::match(const MoleculeView &molview0,
                                           const MoleculeView &molview1,
                                           const PropertyMap &map) const
 {
-    return this->match(molview0, map, molview1, map);
+    return this->pvt_match(molview0,molview1,map);
+}
+
+QHash<AtomIdx,AtomIdx> AtomMatcher::match(const MoleculeView &molview0,
+                                          const PropertyMap &map0,
+                                          const MoleculeView &molview1,
+                                          const PropertyMap &map1) const
+{
+    return this->pvt_match(molview0,map0,molview1,map1);
 }
 
 /** Match atoms based only on the data in the MoleculeInfoData of the molecules. */
 QHash<AtomIdx,AtomIdx> AtomMatcher::match(const MoleculeInfoData &mol0,
                                           const MoleculeInfoData &mol1) const
 {
-    throw SireError::unsupported( QObject::tr(
-                "The AtomMatcher \"%1\" does not support matching using "
-                "MoleculeInfoData objects only.")
-                    .arg(this->toString()), CODELOC );
-
-    return QHash<AtomIdx,AtomIdx>();
+    return this->pvt_match(mol0,mol1);
 }
 
 /////////
@@ -313,10 +370,10 @@ QString AtomResultMatcher::toString() const
     
      This skips atoms in 'mol1' that are not in 'mol0'
 */
-QHash<AtomIdx,AtomIdx> AtomResultMatcher::match(const MoleculeView &mol0,
-                                                const PropertyMap &map0,
-                                                const MoleculeView &mol1,
-                                                const PropertyMap &map1) const
+QHash<AtomIdx,AtomIdx> AtomResultMatcher::pvt_match(const MoleculeView &mol0,
+                                                    const PropertyMap &map0,
+                                                    const MoleculeView &mol1,
+                                                    const PropertyMap &map1) const
 {
     const AtomSelection sel0 = mol0.selection();
     const AtomSelection sel1 = mol1.selection();
@@ -348,8 +405,8 @@ QHash<AtomIdx,AtomIdx> AtomResultMatcher::match(const MoleculeView &mol0,
     
      This skips atoms in 'mol1' that are not in 'mol0'
 */
-QHash<AtomIdx,AtomIdx> AtomResultMatcher::match(const MoleculeInfoData &mol0,
-                                                const MoleculeInfoData &mol1) const
+QHash<AtomIdx,AtomIdx> AtomResultMatcher::pvt_match(const MoleculeInfoData &mol0,
+                                                    const MoleculeInfoData &mol1) const
 {
     QHash<AtomIdx,AtomIdx> map;
     
@@ -469,10 +526,10 @@ QString AtomMatchInverter::toString() const
     
      This skips atoms in 'mol1' that are not in 'mol0'
 */
-QHash<AtomIdx,AtomIdx> AtomMatchInverter::match(const MoleculeView &mol0,
-                                                const PropertyMap &map0,
-                                                const MoleculeView &mol1,
-                                                const PropertyMap &map1) const
+QHash<AtomIdx,AtomIdx> AtomMatchInverter::pvt_match(const MoleculeView &mol0,
+                                                    const PropertyMap &map0,
+                                                    const MoleculeView &mol1,
+                                                    const PropertyMap &map1) const
 {
     if (isNull())
         return QHash<AtomIdx,AtomIdx>();
@@ -504,8 +561,8 @@ QHash<AtomIdx,AtomIdx> AtomMatchInverter::match(const MoleculeView &mol0,
     
      This skips atoms in 'mol1' that are not in 'mol0'
 */
-QHash<AtomIdx,AtomIdx> AtomMatchInverter::match(const MoleculeInfoData &mol0,
-                                                const MoleculeInfoData &mol1) const
+QHash<AtomIdx,AtomIdx> AtomMatchInverter::pvt_match(const MoleculeInfoData &mol0,
+                                                    const MoleculeInfoData &mol1) const
 {
     if (isNull())
         return QHash<AtomIdx,AtomIdx>();

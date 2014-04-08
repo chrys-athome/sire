@@ -103,14 +103,15 @@ public:
     
     bool operator==(const AtomIdxMatcher &other) const;
     bool operator!=(const AtomIdxMatcher &other) const;
+
+protected:
+    QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeInfoData &molinfo0,
+                                     const MoleculeInfoData &molinfo1) const;
     
-    QHash<AtomIdx,AtomIdx> match(const MoleculeInfoData &molinfo0,
-                                 const MoleculeInfoData &molinfo1) const;
-    
-    QHash<AtomIdx,AtomIdx> match(const MoleculeView &molview0,
-                                 const PropertyMap &map0,
-                                 const MoleculeView &molview1,
-                                 const PropertyMap &map1) const;
+    QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeView &molview0,
+                                     const PropertyMap &map0,
+                                     const MoleculeView &molview1,
+                                     const PropertyMap &map1) const;
 };
 
 /** This is a simple atom matcher that matches the atoms based
@@ -146,13 +147,14 @@ public:
     
     QString toString() const;
 
-    QHash<AtomIdx,AtomIdx> match(const MoleculeInfoData &molinfo0,
-                                 const MoleculeInfoData &molinfo1) const;
+protected:
+    QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeInfoData &molinfo0,
+                                     const MoleculeInfoData &molinfo1) const;
     
-    QHash<AtomIdx,AtomIdx> match(const MoleculeView &molview0,
-                                 const PropertyMap &map0,
-                                 const MoleculeView &molview1,
-                                 const PropertyMap &map1) const;
+    QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeView &molview0,
+                                     const PropertyMap &map0,
+                                     const MoleculeView &molview1,
+                                     const PropertyMap &map1) const;
 };
 
 /** This is an atom matcher that allows the user to specify
@@ -203,13 +205,14 @@ public:
     
     QString toString() const;
 
-    QHash<AtomIdx,AtomIdx> match(const MoleculeInfoData &molinfo0,
-                                 const MoleculeInfoData &molinfo1) const;
+protected:
+    QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeInfoData &molinfo0,
+                                     const MoleculeInfoData &molinfo1) const;
     
-    QHash<AtomIdx,AtomIdx> match(const MoleculeView &molview0,
-                                 const PropertyMap &map0,
-                                 const MoleculeView &molview1,
-                                 const PropertyMap &map1) const;
+    QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeView &molview0,
+                                     const PropertyMap &map0,
+                                     const MoleculeView &molview1,
+                                     const PropertyMap &map1) const;
 
 private:
     /** The mapping from atom ID in molecule 0 to atom ID in molecule 1 */
@@ -234,6 +237,15 @@ public:
     AtomMCSMatcher(const AtomMatcher &prematcher);
     AtomMCSMatcher(const AtomMatcher &prematcher,
                    const SireUnits::Dimension::Time &timeout);
+
+    AtomMCSMatcher(bool match_light_atoms);
+    AtomMCSMatcher(const SireUnits::Dimension::Time &timeout,
+                   bool match_light_atoms);
+    AtomMCSMatcher(const AtomMatcher &prematcher,
+                   bool match_light_atoms);
+    AtomMCSMatcher(const AtomMatcher &prematcher,
+                   const SireUnits::Dimension::Time &timeout,
+                   bool match_light_atoms);
     
     AtomMCSMatcher(const AtomMCSMatcher &other);
     
@@ -252,15 +264,18 @@ public:
     bool operator!=(const AtomMCSMatcher &other) const;
     
     QString toString() const;
-    
-    QHash<AtomIdx,AtomIdx> match(const MoleculeView &molview0,
-                                 const PropertyMap &map0,
-                                 const MoleculeView &molview1,
-                                 const PropertyMap &map1) const;
 
     const AtomMatcher& preMatcher() const;
     
     SireUnits::Dimension::Time timeout() const;
+
+    bool matchingLightAtoms() const;
+
+protected:
+    QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeView &molview0,
+                                     const PropertyMap &map0,
+                                     const MoleculeView &molview1,
+                                     const PropertyMap &map1) const;
 
 private:
     /** The pre-matcher */
@@ -268,6 +283,9 @@ private:
 
     /** Timeout for the MCS match */
     SireUnits::Dimension::Time t;
+    
+    /** Whether or not to match light atoms */
+    bool match_light;
 };
 
 /** This is an atom matcher combines several sub-AtomMatchers together
@@ -306,13 +324,14 @@ public:
     
     QString toString() const;
 
-    QHash<AtomIdx,AtomIdx> match(const MoleculeInfoData &molinfo0,
-                                 const MoleculeInfoData &molinfo1) const;
+protected:
+    QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeInfoData &molinfo0,
+                                     const MoleculeInfoData &molinfo1) const;
     
-    QHash<AtomIdx,AtomIdx> match(const MoleculeView &molview0,
-                                 const PropertyMap &map0,
-                                 const MoleculeView &molview1,
-                                 const PropertyMap &map1) const;
+    QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeView &molview0,
+                                     const PropertyMap &map0,
+                                     const MoleculeView &molview1,
+                                     const PropertyMap &map1) const;
 
 private:
     /** The set of matches, which are processed in order */

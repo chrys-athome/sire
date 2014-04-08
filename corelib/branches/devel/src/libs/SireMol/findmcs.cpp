@@ -245,17 +245,13 @@ struct user_match_t
 /////////// MCS part of Evaluator
 ///////////
 
-/** Find the maximum common substructure of this molecule view with 'other'. This
-    returns the mapping from this structure to 'other' for the matching parts,
-    using the optionally supplied propertymap to find the elements, masses,
-    connectivity and coordinates of the two molecules, with the passed 'atommatcher'
-    used to pre-match atoms before the common substructure search (useful to speed
-    up the search and to enforce matching sub-parts) */
-QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
-                                          const AtomMatcher &matcher,
-                                          const Time &timeout,
-                                          const PropertyMap &map0,
-                                          const PropertyMap &map1) const
+QHash<AtomIdx,AtomIdx> pvt_findMCS(const MoleculeView &mol, const MoleculeView &other,
+                                   const AtomMatcher &matcher,
+                                   const Time &timeout,
+                                   bool match_light_atoms,
+                                   const PropertyMap &map0,
+                                   const PropertyMap &map1,
+                                   bool is_pre_match)
 {
     //first, see if the user has specified any match
     QHash<AtomIdx,AtomIdx> user_map01;
@@ -263,9 +259,7 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
     
     if (not matcher.isNull())
     {
-        qDebug() << "PERFORMING INITIAL CUSTOM MATCH" << matcher.toString();
-        user_map01 = matcher.match(*this, map0, other, map1);
-        qDebug() << Sire::toString(user_map01);
+        user_map01 = matcher.match(mol, map0, other, map1);
         
         //create the inverted map from molecule 1 to molecule 0
         for (QHash<AtomIdx,AtomIdx>::const_iterator it = user_map01.constBegin();
@@ -274,8 +268,6 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
         {
             user_map10.insert( it.value(), it.key() );
         }
-        
-        qDebug() << Sire::toString(user_map10);
     }
 
     //now try to match up the atoms using their connectivity
@@ -284,11 +276,11 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
     
     try
     {
-        c0 = data().property( map0["connectivity"] ).asA<Connectivity>();
+        c0 = mol.data().property( map0["connectivity"] ).asA<Connectivity>();
     }
     catch(...)
     {
-        c0 = Connectivity( this->molecule() );
+        c0 = Connectivity( mol.molecule() );
     }
     
     try
@@ -300,14 +292,14 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
         c1 = Connectivity( other.molecule() );
     }
     
-    int nats0 = this->molecule().nAtoms();
+    int nats0 = mol.molecule().nAtoms();
     int nats1 = other.molecule().nAtoms();
     
     //remove any non-heavy or unselected atoms
-    AtomSelection selected0 = this->selection();
+    AtomSelection selected0 = mol.selection();
     AtomSelection selected1 = other.selection();
     
-    QVector<Element> elements0 = ::getElements(this->molecule(), map0);
+    QVector<Element> elements0 = ::getElements(mol.molecule(), map0);
     QVector<Element> elements1 = ::getElements(other.molecule(), map1);
     
     int nskip0 = 0;
@@ -316,21 +308,50 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
     QVector<bool> skip0(nats0, false);
     QVector<bool> skip1(nats1, false);
     
-    for (int i=0; i<nats0; ++i)
+    if (match_light_atoms)
     {
-        if (elements0[i].nProtons() < 6 or not selected0.selected(AtomIdx(i)))
+        if (not selected0.selectedAll())
         {
-            nskip0 += 1;
-            skip0[i] = true;
+            for (int i=0; i<nats0; ++i)
+            {
+                if (not selected0.selected(AtomIdx(i)))
+                {
+                    nskip0 += 1;
+                    skip0[i] = true;
+                }
+            }
+        }
+
+        if (not selected1.selectedAll())
+        {
+            for (int i=0; i<nats1; ++i)
+            {
+                if (not selected1.selected(AtomIdx(i)))
+                {
+                    nskip1 += 1;
+                    skip1[i] = true;
+                }
+            }
         }
     }
-
-    for (int i=0; i<nats1; ++i)
+    else
     {
-        if (elements1[i].nProtons() < 6 or not selected1.selected(AtomIdx(i)))
+        for (int i=0; i<nats0; ++i)
         {
-            nskip1 += 1;
-            skip1[i] = true;
+            if (elements0[i].nProtons() < 6 or not selected0.selected(AtomIdx(i)))
+            {
+                nskip0 += 1;
+                skip0[i] = true;
+            }
+        }
+
+        for (int i=0; i<nats1; ++i)
+        {
+            if (elements1[i].nProtons() < 6 or not selected1.selected(AtomIdx(i)))
+            {
+                nskip1 += 1;
+                skip1[i] = true;
+            }
         }
     }
     
@@ -370,6 +391,10 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
             {
                 put(user_match_0, nvert0, i);
                 user_matched_verts.insert(nvert0);
+            }
+            else if (match_light_atoms and elements0[i].nProtons() < 6)
+            {
+                put(user_match_0, nvert0, -2);
             }
             else
             {
@@ -411,6 +436,10 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
             {
                 put(user_match_1, nvert1, user_map10.value(AtomIdx(i)).value());
             }
+            else if (match_light_atoms and elements1[i].nProtons() < 6)
+            {
+                put(user_match_1, nvert1, -2);
+            }
             else
             {
                 put(user_match_1, nvert1, -1);
@@ -447,17 +476,22 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
     mcgregor_common_subgraphs_unique(g0, g1, true, func,
                     edges_equivalent(make_property_map_equivalent(in_ring_0,in_ring_1)).
                     vertices_equivalent(make_property_map_equivalent(user_match_0,user_match_1)) );
-                    
-    qDebug() << "MATCH TOOK" << (0.000001*t_total.nsecsElapsed()) << "ms";
     
-    if (timed_out)
+    if (is_pre_match)
+        qDebug() << "PREMATCH TOOK" << (0.000001*t_total.nsecsElapsed()) << "ms";
+    else
     {
-        qDebug() << "We ran out of time when looking for a match. You can speed things"
-                 << "up by using an AtomMatcher to pre-match some of the atoms that you"
-                 << "know should be equivalent, e.g. one of the rings, or the common"
-                 << "framework of the molecules. As it is, only the best-found match"
-                 << "in the time available is being returned, which may not correspond"
-                 << "to the best possible match.";
+        qDebug() << "MATCH TOOK" << (0.000001*t_total.nsecsElapsed()) << "ms";
+    
+        if (timed_out)
+        {
+            qDebug() << "We ran out of time when looking for a match. You can speed things"
+                     << "up by using an AtomMatcher to pre-match some of the atoms that you"
+                     << "know should be equivalent, e.g. one of the rings, or the common"
+                     << "framework of the molecules. As it is, only the best-found match"
+                     << "in the time available is being returned, which may not correspond"
+                     << "to the best possible match.";
+        }
     }
     
     if (best_matches.isEmpty())
@@ -482,4 +516,35 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
     
         return map;
     }
+}
+
+/** Find the maximum common substructure of this molecule view with 'other'. This
+    returns the mapping from this structure to 'other' for the matching parts,
+    using the optionally supplied propertymap to find the elements, masses,
+    connectivity and coordinates of the two molecules, with the passed 'atommatcher'
+    used to pre-match atoms before the common substructure search (useful to speed
+    up the search and to enforce matching sub-parts) 
+    
+    If 'match_light_atoms' is true, then include light atoms (e.g. hydrogen)
+    in the match. This may make things slower...
+*/
+QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
+                                          const AtomMatcher &matcher,
+                                          const Time &timeout,
+                                          bool match_light_atoms,
+                                          const PropertyMap &map0,
+                                          const PropertyMap &map1) const
+{
+    if (match_light_atoms)
+    {
+        //do a pre-match using only the heavy atoms
+        QHash<AtomIdx,AtomIdx> pre_match = pvt_findMCS(*this, other, matcher, timeout,
+                                                       false, map0, map1, false);
+    
+        //now use the pre-match to speed up the full match
+        return pvt_findMCS(*this, other, AtomResultMatcher(pre_match), timeout,
+                           true, map0, map1, true);
+    }
+    else
+        return pvt_findMCS(*this, other, matcher, timeout, false, map0, map1, true);
 }

@@ -102,37 +102,68 @@ public:
     
     virtual AtomMatcher* clone() const=0;
 
-    virtual bool changesOrder(const MoleculeInfoData &molinfo0,
-                              const MoleculeInfoData &molinfo1) const;
+    bool changesOrder(const MoleculeInfoData &molinfo0,
+                      const MoleculeInfoData &molinfo1) const;
 
-    virtual bool changesOrder(const MoleculeView &molview0,
-                              const MoleculeView &molview1) const;
+    bool changesOrder(const MoleculeView &molview0,
+                      const MoleculeView &molview1) const;
     
-    virtual bool changesOrder(const MoleculeView &molview0,
-                              const PropertyMap &map0,
-                              const MoleculeView &molview1,
-                              const PropertyMap &map1) const;
+    bool changesOrder(const MoleculeView &molview0,
+                      const PropertyMap &map0,
+                      const MoleculeView &molview1,
+                      const PropertyMap &map1) const;
     
-    virtual bool changesOrder(const MoleculeView &molview0,
-                              const MoleculeView &molview1,
-                              const PropertyMap &map) const;
+    bool changesOrder(const MoleculeView &molview0,
+                      const MoleculeView &molview1,
+                      const PropertyMap &map) const;
     
-    virtual QHash<AtomIdx,AtomIdx> match(const MoleculeInfoData &molinfo0,
-                                         const MoleculeInfoData &molinfo1) const;
+    QHash<AtomIdx,AtomIdx> match(const MoleculeInfoData &molinfo0,
+                                 const MoleculeInfoData &molinfo1) const;
     
-    virtual QHash<AtomIdx,AtomIdx> match(const MoleculeView &molview0,
-                                         const PropertyMap &map0,
-                                         const MoleculeView &molview1,
-                                         const PropertyMap &map1) const=0;
+    QHash<AtomIdx,AtomIdx> match(const MoleculeView &molview0,
+                                 const PropertyMap &map0,
+                                 const MoleculeView &molview1,
+                                 const PropertyMap &map1) const;
 
-    virtual QHash<AtomIdx,AtomIdx> match(const MoleculeView &molview0,
-                                         const MoleculeView &molview1) const;
+    QHash<AtomIdx,AtomIdx> match(const MoleculeView &molview0,
+                                 const MoleculeView &molview1) const;
     
-    virtual QHash<AtomIdx,AtomIdx> match(const MoleculeView &molview0,
-                                         const MoleculeView &molview1,
-                                         const PropertyMap &map) const;
+    QHash<AtomIdx,AtomIdx> match(const MoleculeView &molview0,
+                                 const MoleculeView &molview1,
+                                 const PropertyMap &map) const;
 
     static const AtomMultiMatcher& null();
+
+protected:
+    virtual bool pvt_changesOrder(const MoleculeInfoData &molinfo0,
+                                  const MoleculeInfoData &molinfo1) const;
+
+    virtual bool pvt_changesOrder(const MoleculeView &molview0,
+                                  const MoleculeView &molview1) const;
+    
+    virtual bool pvt_changesOrder(const MoleculeView &molview0,
+                                  const PropertyMap &map0,
+                                  const MoleculeView &molview1,
+                                  const PropertyMap &map1) const;
+    
+    virtual bool pvt_changesOrder(const MoleculeView &molview0,
+                                  const MoleculeView &molview1,
+                                  const PropertyMap &map) const;
+    
+    virtual QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeInfoData &molinfo0,
+                                             const MoleculeInfoData &molinfo1) const;
+    
+    virtual QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeView &molview0,
+                                             const PropertyMap &map0,
+                                             const MoleculeView &molview1,
+                                             const PropertyMap &map1) const=0;
+
+    virtual QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeView &molview0,
+                                             const MoleculeView &molview1) const;
+    
+    virtual QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeView &molview0,
+                                             const MoleculeView &molview1,
+                                             const PropertyMap &map) const;
 };
 
 typedef SireBase::PropPtr<AtomMatcher> AtomMatcherPtr;
@@ -172,14 +203,15 @@ public:
     
     bool operator==(const AtomResultMatcher &other) const;
     bool operator!=(const AtomResultMatcher &other) const;
+
+protected:
+    QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeInfoData &molinfo0,
+                                     const MoleculeInfoData &molinfo1) const;
     
-    QHash<AtomIdx,AtomIdx> match(const MoleculeInfoData &molinfo0,
-                                 const MoleculeInfoData &molinfo1) const;
-    
-    QHash<AtomIdx,AtomIdx> match(const MoleculeView &molview0,
-                                 const PropertyMap &map0,
-                                 const MoleculeView &molview1,
-                                 const PropertyMap &map1) const;
+    QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeView &molview0,
+                                     const PropertyMap &map0,
+                                     const MoleculeView &molview1,
+                                     const PropertyMap &map1) const;
 
 private:
     /** The result of matching using another AtomMatcher */
@@ -223,14 +255,15 @@ public:
     
     bool operator==(const AtomMatchInverter &other) const;
     bool operator!=(const AtomMatchInverter &other) const;
+
+protected:
+    QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeInfoData &molinfo0,
+                                     const MoleculeInfoData &molinfo1) const;
     
-    QHash<AtomIdx,AtomIdx> match(const MoleculeInfoData &molinfo0,
-                                 const MoleculeInfoData &molinfo1) const;
-    
-    QHash<AtomIdx,AtomIdx> match(const MoleculeView &molview0,
-                                 const PropertyMap &map0,
-                                 const MoleculeView &molview1,
-                                 const PropertyMap &map1) const;
+    QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeView &molview0,
+                                     const PropertyMap &map0,
+                                     const MoleculeView &molview1,
+                                     const PropertyMap &map1) const;
 
 private:
     /** The matcher used for the forwards match */

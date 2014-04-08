@@ -252,6 +252,50 @@ public:
                                    const PropertyMap &map0,
                                    const PropertyMap &map1) const;
 
+    QHash<AtomIdx,AtomIdx> findMCS(const MoleculeView &other,
+                                   bool match_light_atoms,
+                                   const PropertyMap &map=PropertyMap()) const;
+
+    QHash<AtomIdx,AtomIdx> findMCS(const MoleculeView &other,
+                                   const AtomMatcher &atommatcher,
+                                   bool match_light_atoms,
+                                   const PropertyMap &map=PropertyMap()) const;
+
+    QHash<AtomIdx,AtomIdx> findMCS(const MoleculeView &other,
+                                   bool match_light_atoms,
+                                   const PropertyMap &map0,
+                                   const PropertyMap &map1) const;
+
+    QHash<AtomIdx,AtomIdx> findMCS(const MoleculeView &other,
+                                   const AtomMatcher &atommatcher,
+                                   bool match_light_atoms,
+                                   const PropertyMap &map0,
+                                   const PropertyMap &map1) const;
+
+    QHash<AtomIdx,AtomIdx> findMCS(const MoleculeView &other,
+                                   const SireUnits::Dimension::Time &timeout,
+                                   bool match_light_atoms,
+                                   const PropertyMap &map=PropertyMap()) const;
+
+    QHash<AtomIdx,AtomIdx> findMCS(const MoleculeView &other,
+                                   const AtomMatcher &atommatcher,
+                                   const SireUnits::Dimension::Time &timeout,
+                                   bool match_light_atoms,
+                                   const PropertyMap &map=PropertyMap()) const;
+
+    QHash<AtomIdx,AtomIdx> findMCS(const MoleculeView &other,
+                                   const SireUnits::Dimension::Time &timeout,
+                                   bool match_light_atoms,
+                                   const PropertyMap &map0,
+                                   const PropertyMap &map1) const;
+
+    QHash<AtomIdx,AtomIdx> findMCS(const MoleculeView &other,
+                                   const AtomMatcher &atommatcher,
+                                   const SireUnits::Dimension::Time &timeout,
+                                   bool match_light_atoms,
+                                   const PropertyMap &map0,
+                                   const PropertyMap &map1) const;
+
 private:
 
     /** The atoms over which the properties will be 

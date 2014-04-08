@@ -121,10 +121,10 @@ QString AtomIdxMatcher::toString() const
     
      This skips atoms in 'mol1' that are not in 'mol0'
 */
-QHash<AtomIdx,AtomIdx> AtomIdxMatcher::match(const MoleculeView &mol0,
-                                             const PropertyMap &map0,
-                                             const MoleculeView &mol1,
-                                             const PropertyMap &map1) const
+QHash<AtomIdx,AtomIdx> AtomIdxMatcher::pvt_match(const MoleculeView &mol0,
+                                                 const PropertyMap &map0,
+                                                 const MoleculeView &mol1,
+                                                 const PropertyMap &map1) const
 {
     const AtomSelection sel0 = mol0.selection();
     const AtomSelection sel1 = mol1.selection();
@@ -164,8 +164,8 @@ QHash<AtomIdx,AtomIdx> AtomIdxMatcher::match(const MoleculeView &mol0,
     
      This skips atoms in 'mol1' that are not in 'mol0'
 */
-QHash<AtomIdx,AtomIdx> AtomIdxMatcher::match(const MoleculeInfoData &mol0,
-                                             const MoleculeInfoData &mol1) const
+QHash<AtomIdx,AtomIdx> AtomIdxMatcher::pvt_match(const MoleculeInfoData &mol0,
+                                                 const MoleculeInfoData &mol1) const
 {
     QHash<AtomIdx,AtomIdx> map;
     
@@ -259,10 +259,10 @@ QString AtomNameMatcher::toString() const
     
      This skips atoms in 'mol1' that are not in 'mol0'
 */
-QHash<AtomIdx,AtomIdx> AtomNameMatcher::match(const MoleculeView &mol0,
-                                              const PropertyMap &map0,
-                                              const MoleculeView &mol1,
-                                              const PropertyMap &map1) const
+QHash<AtomIdx,AtomIdx> AtomNameMatcher::pvt_match(const MoleculeView &mol0,
+                                                  const PropertyMap &map0,
+                                                  const MoleculeView &mol1,
+                                                  const PropertyMap &map1) const
 {
     QHash<AtomIdx,AtomIdx> map;
 
@@ -312,8 +312,8 @@ QHash<AtomIdx,AtomIdx> AtomNameMatcher::match(const MoleculeView &mol0,
     
      This skips atoms in 'mol1' that are not in 'mol0'
 */
-QHash<AtomIdx,AtomIdx> AtomNameMatcher::match(const MoleculeInfoData &mol0,
-                                              const MoleculeInfoData &mol1) const
+QHash<AtomIdx,AtomIdx> AtomNameMatcher::pvt_match(const MoleculeInfoData &mol0,
+                                                  const MoleculeInfoData &mol1) const
 {
     QHash<AtomIdx,AtomIdx> map;
 
@@ -350,11 +350,12 @@ static const RegisterMetaType<AtomMCSMatcher> r_mcsmatcher;
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, 
                                        const AtomMCSMatcher &mcsmatcher)
 {
-    writeHeader(ds, r_mcsmatcher, 1);
+    writeHeader(ds, r_mcsmatcher, 2);
     
     SharedDataStream sds(ds);
     
     sds << mcsmatcher.prematcher << double(mcsmatcher.t.to(second))
+        << mcsmatcher.match_light
         << static_cast<const AtomMatcher&>(mcsmatcher);
     
     return ds;
@@ -365,7 +366,19 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomMCSMatcher &mcsmatch
 {
     VersionID v = readHeader(ds, r_mcsmatcher);
     
-    if (v == 1)
+    if (v == 2)
+    {
+        double timeout;
+        
+        SharedDataStream sds(ds);
+        
+        sds >> mcsmatcher.prematcher >> timeout
+            >> mcsmatcher.match_light
+            >> static_cast<AtomMatcher&>(mcsmatcher);
+        
+        mcsmatcher.t = timeout*second;
+    }
+    else if (v == 1)
     {
         double timeout;
         
@@ -374,40 +387,77 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomMCSMatcher &mcsmatch
         sds >> mcsmatcher.prematcher >> timeout >> static_cast<AtomMatcher&>(mcsmatcher);
         
         mcsmatcher.t = timeout*second;
+        mcsmatcher.match_light = false;
     }
     else
-        throw version_error(v, "1", r_namematcher, CODELOC);
+        throw version_error(v, "1,2", r_namematcher, CODELOC);
 
     return ds;
 }
 
 /** Constructor */
 AtomMCSMatcher::AtomMCSMatcher()
-               : ConcreteProperty<AtomMCSMatcher,AtomMatcher>(), t(1*second)
+               : ConcreteProperty<AtomMCSMatcher,AtomMatcher>(), t(1*second),
+                 match_light(false)
 {}
 
 /** Construct specifying the timeout for the MCS match */
 AtomMCSMatcher::AtomMCSMatcher(const SireUnits::Dimension::Time &timeout)
-               : ConcreteProperty<AtomMCSMatcher,AtomMatcher>(), t(timeout)
+               : ConcreteProperty<AtomMCSMatcher,AtomMatcher>(), t(timeout),
+                 match_light(false)
 {}
 
 /** Construct specifying the prematcher for the MCS match */
 AtomMCSMatcher::AtomMCSMatcher(const AtomMatcher &matcher)
                : ConcreteProperty<AtomMCSMatcher,AtomMatcher>(),
-                 prematcher(matcher), t(1*second)
+                 prematcher(matcher), t(1*second), match_light(false)
 {}
 
 /** Construct specifying the timeout and prematcher for the MCS match */
 AtomMCSMatcher::AtomMCSMatcher(const AtomMatcher &matcher,
                                const SireUnits::Dimension::Time &timeout)
                : ConcreteProperty<AtomMCSMatcher,AtomMatcher>(),
-                 prematcher(matcher), t(timeout)
+                 prematcher(matcher), t(timeout), match_light(false)
+{}
+
+/** Constructor, specifying whether or not to match light atoms */
+AtomMCSMatcher::AtomMCSMatcher(bool match_light_atoms)
+               : ConcreteProperty<AtomMCSMatcher,AtomMatcher>(), t(1*second),
+                 match_light(match_light_atoms)
+{}
+
+/** Construct specifying the timeout for the MCS match, and specifying whether or not 
+    to match light atoms */
+AtomMCSMatcher::AtomMCSMatcher(const SireUnits::Dimension::Time &timeout,
+                               bool match_light_atoms)
+               : ConcreteProperty<AtomMCSMatcher,AtomMatcher>(), t(timeout),
+                 match_light(match_light_atoms)
+{}
+
+/** Construct specifying the prematcher for the MCS match,
+    and specifying whether or not to match light atoms
+*/
+AtomMCSMatcher::AtomMCSMatcher(const AtomMatcher &matcher,
+                               bool match_light_atoms)
+               : ConcreteProperty<AtomMCSMatcher,AtomMatcher>(),
+                 prematcher(matcher), t(1*second), match_light(match_light_atoms)
+{}
+
+/** Construct specifying the timeout and prematcher for the MCS match,
+    and specifying whether or not to match light atoms
+*/
+AtomMCSMatcher::AtomMCSMatcher(const AtomMatcher &matcher,
+                               const SireUnits::Dimension::Time &timeout,
+                               bool match_light_atoms)
+               : ConcreteProperty<AtomMCSMatcher,AtomMatcher>(),
+                 prematcher(matcher), t(timeout), match_light(match_light_atoms)
 {}
 
 /** Copy constructor */
 AtomMCSMatcher::AtomMCSMatcher(const AtomMCSMatcher &other)
                : ConcreteProperty<AtomMCSMatcher,AtomMatcher>(other),
-                 prematcher(other.prematcher), t(other.t)
+                 prematcher(other.prematcher), t(other.t),
+                 match_light(other.match_light)
 {}
 
 /** Destructor */
@@ -421,6 +471,7 @@ AtomMCSMatcher& AtomMCSMatcher::operator=(const AtomMCSMatcher &other)
     {
         t = other.t;
         prematcher = other.prematcher;
+        match_light = other.match_light;
     }
     
     return *this;
@@ -429,26 +480,29 @@ AtomMCSMatcher& AtomMCSMatcher::operator=(const AtomMCSMatcher &other)
 /** Comparison operator */
 bool AtomMCSMatcher::operator==(const AtomMCSMatcher &other) const
 {
-    return prematcher == other.prematcher and t == other.t;
+    return prematcher == other.prematcher and t == other.t and match_light == other.match_light;
 }
 
 /** Comparison operator */
 bool AtomMCSMatcher::operator!=(const AtomMCSMatcher &other) const
 {
-    return false;
+    return not operator==(other);
 }
 
 QString AtomMCSMatcher::toString() const
 {
     if (prematcher.isNull() or prematcher.read().isNull())
     {
-        return QObject::tr("AtomMCSMatcher( timeout() = %1 s )").arg(t.to(second));
+        return QObject::tr("AtomMCSMatcher( timeout() = %1 s, matchingLightAtoms() = %2 )")
+                .arg(t.to(second)).arg(match_light);
     }
     else
     {
-        return QObject::tr("AtomMCSMatcher( preMatcher() = %1, timeout() = %2 s")
+        return QObject::tr("AtomMCSMatcher( preMatcher() = %1, timeout() = %2 s, "
+                           "matchingLightAtoms() = %3 )")
                     .arg(prematcher.read().toString())
-                    .arg(t.to(second));
+                    .arg(t.to(second))
+                    .arg(match_light);
     }
 }
 
@@ -470,21 +524,28 @@ SireUnits::Dimension::Time AtomMCSMatcher::timeout() const
     return t;
 }
 
+/** Return whether or not this will include light atoms (e.g. hydrogen)
+    when searching for the maximum common substructure */
+bool AtomMCSMatcher::matchingLightAtoms() const
+{
+    return match_light;
+}
+
 /** Match the atoms in 'mol1' to the atoms in 'mol0' - this
     returns the AtomIdxs of the atoms in 'mol1' that are in
     'mol0', indexed by the AtomIdx of the atom in 'mol0'.
     
      This skips atoms in 'mol1' that are not in 'mol0'
 */
-QHash<AtomIdx,AtomIdx> AtomMCSMatcher::match(const MoleculeView &mol0,
-                                             const PropertyMap &map0,
-                                             const MoleculeView &mol1,
-                                             const PropertyMap &map1) const
+QHash<AtomIdx,AtomIdx> AtomMCSMatcher::pvt_match(const MoleculeView &mol0,
+                                                 const PropertyMap &map0,
+                                                 const MoleculeView &mol1,
+                                                 const PropertyMap &map1) const
 {
     if (prematcher.isNull() or prematcher.read().isNull())
-        return Evaluator(mol0).findMCS(mol1, t, map0, map1);
+        return Evaluator(mol0).findMCS(mol1, t, match_light, map0, map1);
     else
-        return Evaluator(mol0).findMCS(mol1, prematcher.read(), t, map0, map1);
+        return Evaluator(mol0).findMCS(mol1, prematcher.read(), t, match_light, map0, map1);
 }
 
 /////////
@@ -744,10 +805,10 @@ QString AtomIDMatcher::toString() const
     
      This skips atoms in 'mol1' that are not in 'mol0'
 */
-QHash<AtomIdx,AtomIdx> AtomIDMatcher::match(const MoleculeView &mol0,
-                                            const PropertyMap &map0,
-                                            const MoleculeView &mol1,
-                                            const PropertyMap &map1) const
+QHash<AtomIdx,AtomIdx> AtomIDMatcher::pvt_match(const MoleculeView &mol0,
+                                                const PropertyMap &map0,
+                                                const MoleculeView &mol1,
+                                                const PropertyMap &map1) const
 {
     QHash<AtomIdx,AtomIdx> map;
 
@@ -800,8 +861,8 @@ QHash<AtomIdx,AtomIdx> AtomIDMatcher::match(const MoleculeView &mol0,
     
      This skips atoms in 'mol1' that are not in 'mol0'
 */
-QHash<AtomIdx,AtomIdx> AtomIDMatcher::match(const MoleculeInfoData &mol0,
-                                            const MoleculeInfoData &mol1) const
+QHash<AtomIdx,AtomIdx> AtomIDMatcher::pvt_match(const MoleculeInfoData &mol0,
+                                                const MoleculeInfoData &mol1) const
 {
     QHash<AtomIdx,AtomIdx> map;
 
@@ -977,10 +1038,10 @@ QString AtomMultiMatcher::toString() const
     
      This skips atoms in 'mol1' that are not in 'mol0'
 */
-QHash<AtomIdx,AtomIdx> AtomMultiMatcher::match(const MoleculeView &mol0,
-                                               const PropertyMap &map0,
-                                               const MoleculeView &mol1,
-                                               const PropertyMap &map1) const
+QHash<AtomIdx,AtomIdx> AtomMultiMatcher::pvt_match(const MoleculeView &mol0,
+                                                   const PropertyMap &map0,
+                                                   const MoleculeView &mol1,
+                                                   const PropertyMap &map1) const
 {
     if (m.isEmpty())
         return QHash<AtomIdx,AtomIdx>();
@@ -1034,8 +1095,8 @@ QHash<AtomIdx,AtomIdx> AtomMultiMatcher::match(const MoleculeView &mol0,
     
      This skips atoms in 'mol1' that are not in 'mol0'
 */
-QHash<AtomIdx,AtomIdx> AtomMultiMatcher::match(const MoleculeInfoData &mol0,
-                                               const MoleculeInfoData &mol1) const
+QHash<AtomIdx,AtomIdx> AtomMultiMatcher::pvt_match(const MoleculeInfoData &mol0,
+                                                   const MoleculeInfoData &mol1) const
 {
     if (m.isEmpty())
         return QHash<AtomIdx,AtomIdx>();
