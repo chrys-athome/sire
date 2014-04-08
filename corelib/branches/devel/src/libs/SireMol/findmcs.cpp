@@ -539,12 +539,12 @@ QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
     {
         //do a pre-match using only the heavy atoms
         QHash<AtomIdx,AtomIdx> pre_match = pvt_findMCS(*this, other, matcher, timeout,
-                                                       false, map0, map1, false);
+                                                       false, map0, map1, true);
     
         //now use the pre-match to speed up the full match
         return pvt_findMCS(*this, other, AtomResultMatcher(pre_match), timeout,
-                           true, map0, map1, true);
+                           true, map0, map1, false);
     }
     else
-        return pvt_findMCS(*this, other, matcher, timeout, false, map0, map1, true);
+        return pvt_findMCS(*this, other, matcher, timeout, false, map0, map1, false);
 }
