@@ -269,6 +269,94 @@ void register_Evaluator_class(){
                 , ( bp::arg("other"), bp::arg("atommatcher"), bp::arg("timeout"), bp::arg("map0"), bp::arg("map1") ) );
         
         }
+        { //::SireMol::Evaluator::findMCS
+        
+            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::Evaluator::*findMCS_function_type )( ::SireMol::MoleculeView const &,bool,::SireBase::PropertyMap const & ) const;
+            findMCS_function_type findMCS_function_value( &::SireMol::Evaluator::findMCS );
+            
+            Evaluator_exposer.def( 
+                "findMCS"
+                , findMCS_function_value
+                , ( bp::arg("other"), bp::arg("match_light_atoms"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Evaluator::findMCS
+        
+            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::Evaluator::*findMCS_function_type )( ::SireMol::MoleculeView const &,::SireMol::AtomMatcher const &,bool,::SireBase::PropertyMap const & ) const;
+            findMCS_function_type findMCS_function_value( &::SireMol::Evaluator::findMCS );
+            
+            Evaluator_exposer.def( 
+                "findMCS"
+                , findMCS_function_value
+                , ( bp::arg("other"), bp::arg("atommatcher"), bp::arg("match_light_atoms"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Evaluator::findMCS
+        
+            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::Evaluator::*findMCS_function_type )( ::SireMol::MoleculeView const &,bool,::SireBase::PropertyMap const &,::SireBase::PropertyMap const & ) const;
+            findMCS_function_type findMCS_function_value( &::SireMol::Evaluator::findMCS );
+            
+            Evaluator_exposer.def( 
+                "findMCS"
+                , findMCS_function_value
+                , ( bp::arg("other"), bp::arg("match_light_atoms"), bp::arg("map0"), bp::arg("map1") ) );
+        
+        }
+        { //::SireMol::Evaluator::findMCS
+        
+            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::Evaluator::*findMCS_function_type )( ::SireMol::MoleculeView const &,::SireMol::AtomMatcher const &,bool,::SireBase::PropertyMap const &,::SireBase::PropertyMap const & ) const;
+            findMCS_function_type findMCS_function_value( &::SireMol::Evaluator::findMCS );
+            
+            Evaluator_exposer.def( 
+                "findMCS"
+                , findMCS_function_value
+                , ( bp::arg("other"), bp::arg("atommatcher"), bp::arg("match_light_atoms"), bp::arg("map0"), bp::arg("map1") ) );
+        
+        }
+        { //::SireMol::Evaluator::findMCS
+        
+            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::Evaluator::*findMCS_function_type )( ::SireMol::MoleculeView const &,::SireUnits::Dimension::Time const &,bool,::SireBase::PropertyMap const & ) const;
+            findMCS_function_type findMCS_function_value( &::SireMol::Evaluator::findMCS );
+            
+            Evaluator_exposer.def( 
+                "findMCS"
+                , findMCS_function_value
+                , ( bp::arg("other"), bp::arg("timeout"), bp::arg("match_light_atoms"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Evaluator::findMCS
+        
+            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::Evaluator::*findMCS_function_type )( ::SireMol::MoleculeView const &,::SireMol::AtomMatcher const &,::SireUnits::Dimension::Time const &,bool,::SireBase::PropertyMap const & ) const;
+            findMCS_function_type findMCS_function_value( &::SireMol::Evaluator::findMCS );
+            
+            Evaluator_exposer.def( 
+                "findMCS"
+                , findMCS_function_value
+                , ( bp::arg("other"), bp::arg("atommatcher"), bp::arg("timeout"), bp::arg("match_light_atoms"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Evaluator::findMCS
+        
+            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::Evaluator::*findMCS_function_type )( ::SireMol::MoleculeView const &,::SireUnits::Dimension::Time const &,bool,::SireBase::PropertyMap const &,::SireBase::PropertyMap const & ) const;
+            findMCS_function_type findMCS_function_value( &::SireMol::Evaluator::findMCS );
+            
+            Evaluator_exposer.def( 
+                "findMCS"
+                , findMCS_function_value
+                , ( bp::arg("other"), bp::arg("timeout"), bp::arg("match_light_atoms"), bp::arg("map0"), bp::arg("map1") ) );
+        
+        }
+        { //::SireMol::Evaluator::findMCS
+        
+            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::Evaluator::*findMCS_function_type )( ::SireMol::MoleculeView const &,::SireMol::AtomMatcher const &,::SireUnits::Dimension::Time const &,bool,::SireBase::PropertyMap const &,::SireBase::PropertyMap const & ) const;
+            findMCS_function_type findMCS_function_value( &::SireMol::Evaluator::findMCS );
+            
+            Evaluator_exposer.def( 
+                "findMCS"
+                , findMCS_function_value
+                , ( bp::arg("other"), bp::arg("atommatcher"), bp::arg("timeout"), bp::arg("match_light_atoms"), bp::arg("map0"), bp::arg("map1") ) );
+        
+        }
         { //::SireMol::Evaluator::hasMetadata
         
             typedef bool ( ::SireMol::Evaluator::*hasMetadata_function_type )( ::SireBase::PropertyName const & ) const;

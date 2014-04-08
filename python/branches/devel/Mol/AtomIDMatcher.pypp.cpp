@@ -67,28 +67,6 @@ void register_AtomIDMatcher_class(){
                 , isNull_function_value );
         
         }
-        { //::SireMol::AtomIDMatcher::match
-        
-            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::AtomIDMatcher::*match_function_type )( ::SireMol::MoleculeInfoData const &,::SireMol::MoleculeInfoData const & ) const;
-            match_function_type match_function_value( &::SireMol::AtomIDMatcher::match );
-            
-            AtomIDMatcher_exposer.def( 
-                "match"
-                , match_function_value
-                , ( bp::arg("molinfo0"), bp::arg("molinfo1") ) );
-        
-        }
-        { //::SireMol::AtomIDMatcher::match
-        
-            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::AtomIDMatcher::*match_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
-            match_function_type match_function_value( &::SireMol::AtomIDMatcher::match );
-            
-            AtomIDMatcher_exposer.def( 
-                "match"
-                , match_function_value
-                , ( bp::arg("molview0"), bp::arg("map0"), bp::arg("molview1"), bp::arg("map1") ) );
-        
-        }
         AtomIDMatcher_exposer.def( bp::self != bp::self );
         { //::SireMol::AtomIDMatcher::operator=
         

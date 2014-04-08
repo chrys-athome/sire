@@ -60,28 +60,6 @@ void register_AtomMultiMatcher_class(){
                 , isNull_function_value );
         
         }
-        { //::SireMol::AtomMultiMatcher::match
-        
-            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::AtomMultiMatcher::*match_function_type )( ::SireMol::MoleculeInfoData const &,::SireMol::MoleculeInfoData const & ) const;
-            match_function_type match_function_value( &::SireMol::AtomMultiMatcher::match );
-            
-            AtomMultiMatcher_exposer.def( 
-                "match"
-                , match_function_value
-                , ( bp::arg("molinfo0"), bp::arg("molinfo1") ) );
-        
-        }
-        { //::SireMol::AtomMultiMatcher::match
-        
-            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::AtomMultiMatcher::*match_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
-            match_function_type match_function_value( &::SireMol::AtomMultiMatcher::match );
-            
-            AtomMultiMatcher_exposer.def( 
-                "match"
-                , match_function_value
-                , ( bp::arg("molview0"), bp::arg("map0"), bp::arg("molview1"), bp::arg("map1") ) );
-        
-        }
         AtomMultiMatcher_exposer.def( bp::self != bp::self );
         { //::SireMol::AtomMultiMatcher::operator=
         

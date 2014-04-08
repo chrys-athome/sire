@@ -48,28 +48,6 @@ void register_AtomNameMatcher_class(){
         AtomNameMatcher_exposer_t AtomNameMatcher_exposer = AtomNameMatcher_exposer_t( "AtomNameMatcher", bp::init< >() );
         bp::scope AtomNameMatcher_scope( AtomNameMatcher_exposer );
         AtomNameMatcher_exposer.def( bp::init< SireMol::AtomNameMatcher const & >(( bp::arg("arg0") )) );
-        { //::SireMol::AtomNameMatcher::match
-        
-            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::AtomNameMatcher::*match_function_type )( ::SireMol::MoleculeInfoData const &,::SireMol::MoleculeInfoData const & ) const;
-            match_function_type match_function_value( &::SireMol::AtomNameMatcher::match );
-            
-            AtomNameMatcher_exposer.def( 
-                "match"
-                , match_function_value
-                , ( bp::arg("molinfo0"), bp::arg("molinfo1") ) );
-        
-        }
-        { //::SireMol::AtomNameMatcher::match
-        
-            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::AtomNameMatcher::*match_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
-            match_function_type match_function_value( &::SireMol::AtomNameMatcher::match );
-            
-            AtomNameMatcher_exposer.def( 
-                "match"
-                , match_function_value
-                , ( bp::arg("molview0"), bp::arg("map0"), bp::arg("molview1"), bp::arg("map1") ) );
-        
-        }
         AtomNameMatcher_exposer.def( bp::self != bp::self );
         { //::SireMol::AtomNameMatcher::operator=
         

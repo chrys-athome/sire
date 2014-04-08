@@ -51,16 +51,19 @@ void register_AtomMCSMatcher_class(){
         AtomMCSMatcher_exposer.def( bp::init< SireUnits::Dimension::Time const & >(( bp::arg("timeout") )) );
         AtomMCSMatcher_exposer.def( bp::init< SireMol::AtomMatcher const & >(( bp::arg("prematcher") )) );
         AtomMCSMatcher_exposer.def( bp::init< SireMol::AtomMatcher const &, SireUnits::Dimension::Time const & >(( bp::arg("prematcher"), bp::arg("timeout") )) );
+        AtomMCSMatcher_exposer.def( bp::init< bool >(( bp::arg("match_light_atoms") )) );
+        AtomMCSMatcher_exposer.def( bp::init< SireUnits::Dimension::Time const &, bool >(( bp::arg("timeout"), bp::arg("match_light_atoms") )) );
+        AtomMCSMatcher_exposer.def( bp::init< SireMol::AtomMatcher const &, bool >(( bp::arg("prematcher"), bp::arg("match_light_atoms") )) );
+        AtomMCSMatcher_exposer.def( bp::init< SireMol::AtomMatcher const &, SireUnits::Dimension::Time const &, bool >(( bp::arg("prematcher"), bp::arg("timeout"), bp::arg("match_light_atoms") )) );
         AtomMCSMatcher_exposer.def( bp::init< SireMol::AtomMCSMatcher const & >(( bp::arg("other") )) );
-        { //::SireMol::AtomMCSMatcher::match
+        { //::SireMol::AtomMCSMatcher::matchingLightAtoms
         
-            typedef ::QHash< SireMol::AtomIdx, SireMol::AtomIdx > ( ::SireMol::AtomMCSMatcher::*match_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const &,::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
-            match_function_type match_function_value( &::SireMol::AtomMCSMatcher::match );
+            typedef bool ( ::SireMol::AtomMCSMatcher::*matchingLightAtoms_function_type )(  ) const;
+            matchingLightAtoms_function_type matchingLightAtoms_function_value( &::SireMol::AtomMCSMatcher::matchingLightAtoms );
             
             AtomMCSMatcher_exposer.def( 
-                "match"
-                , match_function_value
-                , ( bp::arg("molview0"), bp::arg("map0"), bp::arg("molview1"), bp::arg("map1") ) );
+                "matchingLightAtoms"
+                , matchingLightAtoms_function_value );
         
         }
         AtomMCSMatcher_exposer.def( bp::self != bp::self );
