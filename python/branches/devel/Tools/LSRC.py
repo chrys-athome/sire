@@ -160,7 +160,7 @@ coul_power = Parameter("coulomb power", 0,
 shift_delta = Parameter("shift delta", 1.2,
                         """The soft-core shift delta parameter""")
 
-use_single_topology = Parameter("single topology", True,
+use_single_topology = Parameter("single topology", False,
                                 """Whether or not to use single topology to morph from ligand 0 to ligand 1.""")
 
 use_dual_topology = Parameter("dual topology", True,
@@ -1967,7 +1967,7 @@ def run():
 
             # perform analysis
             t.start()
-            print("Analysing iteration %d..." % i)
+            print("Analysing iteration %d..." % iteration)
             analyseLSRC("%s/stage1" % outdir.val,
                         lsrc1_system, iteration, bennetts_freenrgs1, fep_freenrgs1, ti_freenrgs1, bound_freenrgs1, free_freenrgs1,
                         res_freenrgs1, bound_water_freenrgs1, free_water_freenrgs1)
