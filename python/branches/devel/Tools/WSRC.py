@@ -138,6 +138,7 @@ restart_file = Parameter("restart file", "wsrc_restart.s3",
 
 sysmoves_file = Parameter("sysmoves file", "wsrc_sysmoves.s3",
                           """Name of the file to save the initial WSRC pre-simulation system.""")
+
 nequilmoves = Parameter("nequilmoves", 50000,
                         """Number of equilibration moves to perform before setting up the free energy simulation.""")
 

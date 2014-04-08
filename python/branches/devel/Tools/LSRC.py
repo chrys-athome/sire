@@ -151,6 +151,9 @@ restart_file3 = Parameter("restart file 3", "lsrc_restart3.s3",
 
 nmoves = Parameter("nmoves", 500, """Number of RETI moves to perform during the simulation.""")
 
+nequilmoves = Parameter("nequilmoves", 50000,
+                        """Number of equilibration moves to perform before setting up the free energy simulation.""")
+
 coul_power = Parameter("coulomb power", 0,
                         """The soft-core coulomb power parameter""")
 
@@ -1281,6 +1284,27 @@ def createStage(system, protein_system, ligand_mol0, ligand_mol1, water_system, 
 
     moves = createLSRCMoves(system)    
 
+    # now calculate the total energy of the system - this initialises grids etc.
+    # ensuring that, when we make the replicas, the maximum amount of sharing between
+    # replicas occurs
+    print("\nEnergies of this system at lambda == 0...")
+    system.setConstant(lam, 0.0)
+    printEnergies(system.energies(), sys.stdout)
+
+    print("\nEnergies of this system at lambda == 1...")
+    system.setConstant(lam, 1.0)
+    printEnergies(system.energies(), sys.stdout)
+
+    system.setConstant(lam, 0.0)
+
+    # Now equlibrate the system
+    if nequilmoves.val:
+        print("\nPerforming %s moves of equilibration..." % nequilmoves.val)
+        system = moves.move(system, nequilmoves.val, False)
+        print("\nEnergies after equilibration...")
+        printEnergies(system.energies(), sys.stdout)
+        moves.clearStatistics()
+
     return (system, moves)
 
 
@@ -1530,6 +1554,15 @@ def loadStage3():
     return (lsrc_system,lsrc_moves)
 
     return
+
+
+def printEnergies(nrgs, FILE):
+    """This function prints all of the energies in 'nrgs' to the file 'FILE'"""
+    keys = list(nrgs.keys())
+    keys.sort()
+
+    for key in keys:
+        FILE.write("%s  ==  %s kcal mol-1\n" % (key, nrgs[key]))
 
 
 def printComponents(comps, FILE):

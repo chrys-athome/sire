@@ -44,6 +44,9 @@ parser.add_argument('-m', '--match', nargs="+",
                          "is called \"CB\" in the second ligand. You can specify multiple matches using spaces, "
                          "e.g. -m CA:CB CD:CE CG:CH etc.")
 
+parser.add_argument('--match-light', action="store_true",
+                    help="Flag that alignment should include matching hydrogen and other light atoms.")
+
 parser.add_argument('-o', '--output', nargs=1,
                     help="Name of the PDB file in which to output the aligned copy of the "
                          "second ligand.")
@@ -75,6 +78,11 @@ if args.timeout:
     timeout = float(args.timeout[0]) * second
 else:
     timeout = 1 * second
+
+if args.match_light:
+    match_light = True
+else:
+    match_light = False
 
 if args.match:
     matcher = {}
@@ -111,6 +119,10 @@ print("\nAligning ligand %s from PDB file %s against ligand %s in PDB file %s." 
             (ligname1,pdb1,ligname0,pdb0))
 print("Aligned coordinates of ligand %s will be written to file %s." % (ligname1,outfile))
 print("Match will use a timeout of %s s" % timeout.to(second))
+
+if match_light:
+    print("Match will include light (hydrogen) atoms.")
+
 if matcher:
     print("Match will enforce that atoms are assigned using: %s" % matcher)
 
@@ -164,9 +176,10 @@ if not can_align:
 print("Looking for the maximum common substructure of the two ligands...")
 
 if matcher:
-    atommap = AtomMCSMatcher(AtomMatchInverter(matcher),timeout).match(lig1, PropertyMap(), lig0, PropertyMap())
+    atommap = AtomMCSMatcher(AtomMatchInverter(matcher),timeout,match_light) \
+                    .match(lig1, lig0)
 else:
-    atommap = AtomMCSMatcher(timeout).match(lig1, PropertyMap(), lig0, PropertyMap())
+    atommap = AtomMCSMatcher(timeout,match_light).match(lig1, lig0)
 
 keys = atommap.keys()
 
