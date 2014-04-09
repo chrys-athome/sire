@@ -45,6 +45,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QElapsedTimer>
+
 using namespace SireSystem;
 using namespace SireMol;
 using namespace SireMM;
@@ -476,14 +478,18 @@ void SireSystem::detail::VolMapMonitorData::commitEvaluation()
         float *a = avg_occ.data();
         const float *b = tmp_occ.constData();
         
+        const float big_ratio = float(nsamples) / float(nsamples+1);
+        const float small_ratio = float(1) / float(nsamples+1);
+        
         for (int i=0; i<avg_occ.count(); ++i)
         {
-            a[i] += b[i];
+            a[i] = big_ratio * a[i] + small_ratio * b[i];
         }
     }
     
     tmp_occ.clear();
     tmp_grid_info = GridInfo();
+    nsamples += 1;
 }
 
 /** This internal function is called during evaluation to resize the temporary grid */
@@ -659,6 +665,9 @@ void VolMapMonitor::monitor(System &system)
     if (d.constData() == 0)
         return;
     
+    QElapsedTimer t;
+    t.start();
+    
     //now update the molecule group, if needed
     if (system.contains(group().number()))
     {
@@ -674,44 +683,6 @@ void VolMapMonitor::monitor(System &system)
     
     const PropertyName coords_property = d->map["coordinates"];
     const PropertyName element_property = d->map["element"];
-    
-    if (d->nsamples == 0)
-    {
-        //we need to create the grid - create a grid that encompasses all of the atoms in
-        //the molecule group, and that extends a small way either side
-        MoleculeGroup::const_iterator it = d->molgroup.read().constBegin();
-        
-        AABox box = it.value().evaluate().aaBox();
-        
-        for (++it; it != d->molgroup.read().constEnd(); ++it)
-        {
-            box += it.value().evaluate().aaBox();
-        }
-        
-        //construct a default grid, with a 5 A buffer around the edge
-        box = AABox::from( box.minCoords() - Vector(5,5,5),
-                           box.maxCoords() + Vector(5,5,5) );
-        
-        d->grid_info = GridInfo(box, d->grid_spacing);
-        
-        bool ok = true;
-        
-        //make sure that we don't have ridiculously large grids!
-        while (d->grid_info.nPoints() > (256*256*256))
-        {
-            d->grid_spacing *= 1.1;
-            d->grid_info = GridInfo(box, d->grid_spacing);
-            ok = false;
-        }
-        
-        if (not ok)
-        {
-            qDebug() << "Had to reduce the grid spacing to" << d->grid_spacing.value()
-                     << "A to ensure that the grid does not get too big!";
-        }
-        
-        d->avg_occ = QVector<float>(d->grid_info.nPoints(), 0.0);
-    }
     
     try
     {
@@ -796,4 +767,7 @@ void VolMapMonitor::monitor(System &system)
         d->cancelEvaluation();
         throw;
     }
+    
+    qint64 ns = t.nsecsElapsed();
+    qDebug() << "Monitoring took" << (0.000001*ns) << "ms";
 }

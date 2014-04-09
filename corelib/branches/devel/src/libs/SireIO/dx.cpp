@@ -140,7 +140,9 @@ void DX::write(const GridInfo &gridinfo, const QVector<float> &values,
                 .arg(gridinfo.dimensions().minCoords().x())
                 .arg(gridinfo.dimensions().minCoords().y())
                 .arg(gridinfo.dimensions().minCoords().z());
-    ts << QString("delta 1 0 0\ndelta 0 1 0\ndelta 0 0 1\n");
+    ts << QString("delta %1 0 0\n").arg(gridinfo.spacing().value());
+    ts << QString("delta 0 %1 0\n").arg(gridinfo.spacing().value());
+    ts << QString("delta 0 0 %1\n").arg(gridinfo.spacing().value());
     
     ts << QString("object 2 class gridconnections counts %1 %2 %3\n")
                 .arg(gridinfo.dimX()).arg(gridinfo.dimY()).arg(gridinfo.dimZ());
@@ -148,12 +150,14 @@ void DX::write(const GridInfo &gridinfo, const QVector<float> &values,
     ts << QString("object 3 class array type double rank 0 items %1 data follows\n")
                 .arg(gridinfo.nPoints());
     
-    for (int i=0; i<values.count(); ++i)
+    for (int i=1; i<=values.count(); ++i)
     {
-        ts << values.constData()[i];
+        ts << values.constData()[i-1];
         
-        if (i > 0 and i % 3 == 0)
+        if (i % 3 == 0)
             ts << "\n";
+        else
+            ts << " ";
     }
     
     if (values.count() % 3 != 0)
