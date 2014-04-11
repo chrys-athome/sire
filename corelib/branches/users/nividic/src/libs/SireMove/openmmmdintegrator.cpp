@@ -952,8 +952,7 @@ void OpenMMMDIntegrator::initialise()
 
 void OpenMMMDIntegrator::createContext(IntegratorWorkspace &workspace,
                                        SireUnits::Dimension::Time timestep,
-                                       int nmoves, bool record_stats)
-{
+                                       int nmoves, bool record_stats){
     bool Debug = false;
 
       if(Debug)

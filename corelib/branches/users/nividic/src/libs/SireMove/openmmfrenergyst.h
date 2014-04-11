@@ -87,8 +87,15 @@ public:
     bool isTimeReversible() const;
 
     void initialise();
+    
+    
+    SireUnits::Dimension::MolarEnergy getPotentialEnergy(const System &system);
+    
 
-    void integrate(IntegratorWorkspace &workspace,const Symbol &nrg_component, SireUnits::Dimension::Time timestep,int nmoves, bool record_stats) ;
+    void integrate(IntegratorWorkspace &workspace,
+                   const Symbol &nrg_component,
+                   SireUnits::Dimension::Time timestep,
+                   int nmoves, bool record_stats) ;
 
     IntegratorWorkspacePtr createWorkspace(const PropertyMap &map = PropertyMap()) const;
     IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup,const PropertyMap &map = PropertyMap()) const;
@@ -193,6 +200,10 @@ public:
     double getGradient(void);
 
 private:
+    void createContext(IntegratorWorkspace &workspace,
+                       SireUnits::Dimension::Time timestep, int nmoves, bool record_stats);
+    void destroyContext();
+    
     /** Whether or not to save the velocities after every step, or to save them at the end of all of the steps */
     bool frequent_save_velocities;
     /** The Molecule Group on which the integrator operates */

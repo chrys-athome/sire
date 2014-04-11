@@ -2221,39 +2221,38 @@ void OpenMMFrEnergyST::initialise()  {
 }
 
 
-void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) {
-
-    bool Debug = false; 
-
+void OpenMMFrEnergyST::createContext(IntegratorWorkspace &workspace,SireUnits::Dimension::Time timestep, int nmoves, bool record_stats){
+    bool Debug = false;
+    
     if (Debug)
         qDebug() << "In OpenMMFrEnergyST::integrate()\n\n" ;
-
+    
     // Check that the openmm system has been initialised
     // !! Should check that the workspace is compatible with molgroup
     if ( not this->isSystemInitialised){
-
-    qDebug() << "Not initialised ! ";
-    throw SireError::program_bug(QObject::tr(
-        "OpenMMFrEnergyST should have been initialised before calling integrate."), CODELOC);
+        
+        qDebug() << "Not initialised ! ";
+        throw SireError::program_bug(QObject::tr(
+                                                 "OpenMMFrEnergyST should have been initialised before calling integrate."), CODELOC);
     }
-
+    
     OpenMM::System *system_openmm = openmm_system;
-
+    
     int nats = system_openmm->getNumParticles();
-
+    
     if (Debug)
         qDebug() << " openmm nats " << nats;
-
-
-    // Integrator 
-
+    
+    
+    // Integrator
+    
     const double dt = convertTo( timestep.value(), picosecond);
     const double converted_Temperature = convertTo(Temperature.value(), kelvin);
     const double converted_friction = convertTo( friction.value(), picosecond);
-
+    
     if(!isContextInitialised || (isContextInitialised && reinetialize_context)){
         OpenMM::Integrator * integrator_openmm = NULL;
-
+        
         if (Integrator_type == "leapfrogverlet")
             integrator_openmm = new OpenMM::VerletIntegrator(dt);//dt in picosecond
         else if (Integrator_type == "variableleapfrogverlet")
@@ -2264,14 +2263,14 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             integrator_openmm = new OpenMM::VariableLangevinIntegrator(converted_Temperature, converted_friction, integration_tol);
         else if (Integrator_type == "brownian")
             integrator_openmm = new OpenMM::BrownianIntegrator(converted_Temperature, converted_friction, dt);
-        else 
+        else
             throw SireError::program_bug(QObject::tr("The user defined Integrator type is not supported. Available types are leapfrogverlet, variableleapfrogverlet, langevin, variablelangevin, brownian"), CODELOC);
-
+        
         if (true){
             qDebug() << "Using Integrator: " << Integrator_type;
-
+            
             qDebug() << "Integration step = " << dt <<" ps";
-
+            
             if(Integrator_type == "variablelangevin" || Integrator_type == "variableleapfrogverlet"){
                 qDebug() << "Integration Tol = " << integration_tol;
             }
@@ -2279,17 +2278,17 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
                 qDebug() << "Converted Friction = " << converted_friction << "1/ps";
             }
         }
-
+        
         OpenMM::Platform& platform_openmm = OpenMM::Platform::getPlatformByName(platform_type.toStdString());
-
+        
         if (platform_type == "OpenCL"){
-
+            
             const std::string prop = std::string("OpenCLDeviceIndex");
             const std::string prec = std::string("OpenCLPrecision");
-
+            
             platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );
             platform_openmm.setPropertyDefaultValue(prec, precision.toStdString() );
-        
+            
             if (Debug){
                 qDebug() << "Setting up OpenCL default Index to " << device_index;
                 qDebug() << "Setting up OpenCL precision to" << precision;
@@ -2300,77 +2299,77 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             const std::string prec = std::string("CudaPrecision");
             platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );
             platform_openmm.setPropertyDefaultValue(prec, precision.toStdString() );
-
+            
             if (Debug){
                 qDebug() << "Setting up CUDA default Index to " << device_index;
                 qDebug() << "Setting up CUDA precision to" << precision;
             }
-        
+            
         }
-
-
+        
+        
         delete openmm_context;
         openmm_context = new OpenMM::Context( *system_openmm, *integrator_openmm, platform_openmm);
         this->isContextInitialised = true;
-
+        
     }
-
+    
     if (Debug)
         qDebug() << "\n Using OpenMM platform = " <<openmm_context->getPlatform().getName().c_str()<<"\n";
 
     // Now update coordinates / velocities / dimensions with sire data
     AtomicVelocityWorkspace &ws = workspace.asA<AtomicVelocityWorkspace>();
-
+    
     if ( CutoffType == "cutoffperiodic" ){
-
+        
         const System & ptr_sys = ws.system();
         const PropertyName &space_property = PropertyName("space");
         const PeriodicBox &space = ptr_sys.property(space_property).asA<PeriodicBox>();
-
+        
         const double Box_x_Edge_Length = space.dimensions()[0] * OpenMM::NmPerAngstrom; //units in nm
         const double Box_y_Edge_Length = space.dimensions()[1] * OpenMM::NmPerAngstrom; //units in nm
         const double Box_z_Edge_Length = space.dimensions()[2] * OpenMM::NmPerAngstrom; //units in nm
-
+        
         if (Debug)
             qDebug() << "\nBOX SIZE [A] = (" << space.dimensions()[0] << " , " << space.dimensions()[1] << " ,  " << space.dimensions()[2] << ")\n\n";
-
+        
         //Set Periodic Box Condition
-
+        
         system_openmm->setDefaultPeriodicBoxVectors(OpenMM::Vec3(Box_x_Edge_Length,0,0),OpenMM::Vec3(0,Box_y_Edge_Length,0),OpenMM::Vec3(0,0,Box_z_Edge_Length) );
         openmm_context->setPeriodicBoxVectors( OpenMM::Vec3(Box_x_Edge_Length,0,0),OpenMM::Vec3(0,Box_y_Edge_Length,0),OpenMM::Vec3(0,0,Box_z_Edge_Length) );
         openmm_context->reinitialize();
     }
-
+    
     //OpenMM vector coordinate
     std::vector<OpenMM::Vec3> positions_openmm(nats);
-
+    
     //OpenMM vector momenta
     std::vector<OpenMM::Vec3> velocities_openmm(nats);
-
+    
     // Conversion factor because sire units of time are in AKMA, whereas OpenMM uses picoseconds
-
+    
     double AKMAPerPs = 0.04888821;
     double PsPerAKMA = 1.0 / AKMAPerPs;
-
+    
     const int nmols = ws.nMolecules();
-
+    
     int system_index = 0;
-
+    
     for (int i=0; i < nmols; ++i){
-
+        
         const int nats_mol = ws.nAtoms(i);
-
+        
         Vector *c = ws.coordsArray(i);
         Vector *p = ws.momentaArray(i);
         const double *m = ws.massArray(i);
-
+        
         for (int j=0; j < nats_mol; ++j){
-
+            
             positions_openmm[system_index] = OpenMM::Vec3(c[j].x() * (OpenMM::NmPerAngstrom), c[j].y() * (OpenMM::NmPerAngstrom), c[j].z() * (OpenMM::NmPerAngstrom));
-
+            
             if(m[j] == 0.0)
                 qDebug() << "\nWARNING - THE MASS OF PARTICLE " << system_index << " is ZERO\n";
-
+            
             if (m[j] > SireMaths::small){
                 velocities_openmm[system_index] = OpenMM::Vec3(p[j].x()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,p[j].y()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,p[j].z()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA);
             }
@@ -2381,26 +2380,78 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             if(Debug){
                 qDebug() << "Particle num = " << system_index;
                 qDebug() << "Particle mass = " << m[j];
-                qDebug() << "X = " << positions_openmm[system_index][0] * OpenMM::AngstromsPerNm << " A" << 
-                            " Y = " << positions_openmm[system_index][1] * OpenMM::AngstromsPerNm << " A" <<
-                            " Z = " << positions_openmm[system_index][2] * OpenMM::AngstromsPerNm << " A";
+                qDebug() << "X = " << positions_openmm[system_index][0] * OpenMM::AngstromsPerNm << " A" <<
+                " Y = " << positions_openmm[system_index][1] * OpenMM::AngstromsPerNm << " A" <<
+                " Z = " << positions_openmm[system_index][2] * OpenMM::AngstromsPerNm << " A";
                 qDebug() << "Vx = " << velocities_openmm[system_index][0] << " Vy = " << velocities_openmm[system_index][1] << " Vz = " << velocities_openmm[system_index][2] << "\n";
             }
             system_index++;
         }
     }
-
+    
     if ( system_index != nats ){
         if (Debug)
             qDebug() << " system_index " << system_index << " nats " << nats;
         throw SireError::program_bug(QObject::tr("The number of atoms in the openmm system does not match the number of atoms in the sire workspace"), CODELOC);
     }
-
+    
     openmm_context->setPositions(positions_openmm);  
     openmm_context->setVelocities(velocities_openmm);
 
+    
+}
+
+
+void OpenMMFrEnergyST::destroyContext()
+{
+    if (this->isContextInitialised)
+    {
+        delete openmm_context;
+        openmm_context = 0;
+        this->isContextInitialised = false;
+    }
+}
+
+MolarEnergy OpenMMFrEnergyST::getPotentialEnergy(const System &system)
+{
+    IntegratorWorkspacePtr ws = this->createWorkspace(molgroup);
+    ws.edit().setSystem(system);
+    
+    createContext(ws.edit(), 2*femtosecond, 0, false);
+    
+    int infoMask = 0;
+    infoMask = infoMask +  OpenMM::State::Energy;
+    OpenMM::State state_openmm=openmm_context->getState(infoMask);
+    
+    MolarEnergy nrg = state_openmm.getPotentialEnergy() * kJ_per_mol;
+    
+    this->destroyContext();
+    
+    return nrg;
+}
+
+
+void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) {
+
+
+    bool Debug = false;
+    
+    createContext(workspace, timestep, nmoves, record_stats);
+    
+    const int nats = openmm_system->getNumParticles();
+    
+    AtomicVelocityWorkspace &ws = workspace.asA<AtomicVelocityWorkspace>();
+    
+    const int nmols = ws.nMolecules();
+    
+    const double AKMAPerPs = 0.04888821;
+    
+    const double dt = convertTo( timestep.value(), picosecond);
+    
     if (Debug)
         qDebug() << " Doing " << nmoves << " steps of dynamics ";
+    
+    
     
     int n_samples = nmoves / energy_frequency;
 
@@ -2493,6 +2544,11 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     DCD dcd("traj.dcd", true,CUTOFFPERIODIC, center, energy_frequency, nats, dt,  context_openmm, ws );*/
 
+    //OpenMM vector coordinate
+    std::vector<OpenMM::Vec3> positions_openmm(nats);
+    //OpenMM vector momenta
+    std::vector<OpenMM::Vec3> velocities_openmm(nats);
+    
 
     if(minimize){
 
