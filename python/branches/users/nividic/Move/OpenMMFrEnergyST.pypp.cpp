@@ -383,6 +383,17 @@ void register_OpenMMFrEnergyST_class(){
                 , getPlatform_function_value );
         
         }
+        { //::SireMove::OpenMMFrEnergyST::getPotentialEnergy
+        
+            typedef ::SireUnits::Dimension::MolarEnergy ( ::SireMove::OpenMMFrEnergyST::*getPotentialEnergy_function_type )( ::SireSystem::System const & ) ;
+            getPotentialEnergy_function_type getPotentialEnergy_function_value( &::SireMove::OpenMMFrEnergyST::getPotentialEnergy );
+            
+            OpenMMFrEnergyST_exposer.def( 
+                "getPotentialEnergy"
+                , getPotentialEnergy_function_value
+                , ( bp::arg("system") ) );
+        
+        }
         { //::SireMove::OpenMMFrEnergyST::getPrecision
         
             typedef ::QString ( ::SireMove::OpenMMFrEnergyST::*getPrecision_function_type )(  ) ;
