@@ -36,7 +36,7 @@
 #include <QFile>
 
 using namespace SireIO;
-using namespace SireMM;
+using namespace SireVol;
 using namespace SireBase;
 using namespace SireStream;
 

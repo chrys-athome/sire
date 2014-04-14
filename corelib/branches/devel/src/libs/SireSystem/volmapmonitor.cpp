@@ -36,7 +36,7 @@
 #include "SireMol/moleculegroup.h"
 #include "SireMol/mgnum.h"
 
-#include "SireMM/gridinfo.h"
+#include "SireVol/gridinfo.h"
 
 #include "SireSystem/system.h"
 
@@ -49,8 +49,8 @@
 
 using namespace SireSystem;
 using namespace SireMol;
-using namespace SireMM;
 using namespace SireBase;
+using namespace SireVol;
 using namespace SireStream;
 using namespace SireUnits::Dimension;
 using namespace SireUnits;

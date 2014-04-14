@@ -31,13 +31,13 @@
 #include "cljfunction.h"
 #include "cljboxes.h"
 #include "cljdelta.h"
-#include "gridinfo.h"
 #include "switchingfunction.h"
 
 #include "SireMaths/multidouble.h"
 
 #include "SireVol/cartesian.h"
 #include "SireVol/periodicbox.h"
+#include "SireVol/gridinfo.h"
 
 #include "SireError/errors.h"
 

@@ -68,10 +68,13 @@ QDataStream& operator>>(QDataStream&, SireMM::CLJIntraFunction&);
 QDataStream& operator<<(QDataStream&, const SireMM::CLJSoftFunction&);
 QDataStream& operator>>(QDataStream&, SireMM::CLJSoftFunction&);
 
+namespace SireVol
+{
+class GridInfo;
+}
+
 namespace SireMM
 {
-
-class GridInfo;
 
 class CLJBoxes;
 class CLJDelta;
@@ -81,6 +84,7 @@ using SireUnits::Dimension::Length;
 using SireMol::Connectivity;
 
 using SireVol::Space;
+using SireVol::GridInfo;
 
 using SireBase::Property;
 using SireBase::Properties;

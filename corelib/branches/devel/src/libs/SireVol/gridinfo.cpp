@@ -38,7 +38,7 @@
 
 #include <QDebug>
 
-using namespace SireMM;
+using namespace SireVol;
 using namespace SireMaths;
 using namespace SireStream;
 
@@ -48,14 +48,14 @@ using namespace SireStream;
 
 static const RegisterMetaType<GridIndex> r_index(NO_ROOT);
 
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const GridIndex &idx)
+QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const GridIndex &idx)
 {
     writeHeader(ds, r_index, 1);
     ds << idx.i() << idx.j() << idx.k();
     return ds;
 }
 
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridIndex &idx)
+QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, GridIndex &idx)
 {
     VersionID v = readHeader(ds, r_index);
     
@@ -73,7 +73,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridIndex &idx)
 
 const char* GridIndex::typeName()
 {
-    return "SireMM::GridIndex";
+    return "SireVol::GridIndex";
 }
 
 const char* GridIndex::what() const
@@ -96,7 +96,7 @@ QString GridIndex::toString() const
 
 static const RegisterMetaType<GridInfo> r_info(NO_ROOT);
 
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const GridInfo &info)
+QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const GridInfo &info)
 {
     writeHeader(ds, r_info, 1);
     
@@ -106,7 +106,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const GridInfo &info)
     return ds;
 }
 
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridInfo &info)
+QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, GridInfo &info)
 {
     VersionID v = readHeader(ds, r_info);
     

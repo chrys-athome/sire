@@ -49,7 +49,7 @@ namespace SireMol
 class MoleculeGroup;
 }
 
-namespace SireMM
+namespace SireVol
 {
 class GridInfo;
 }
@@ -124,7 +124,7 @@ public:
     
     void setGroup(const MoleculeGroup &group, const PropertyMap &map=PropertyMap());
     
-    SireMM::GridInfo gridInfo() const;
+    SireVol::GridInfo gridInfo() const;
     
     SireUnits::Dimension::Length gridSpacing() const;
     

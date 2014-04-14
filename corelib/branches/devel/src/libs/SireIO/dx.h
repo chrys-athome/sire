@@ -29,7 +29,7 @@
 #ifndef SIREIO_DX_H
 #define SIREIO_DX_H
 
-#include "SireMM/gridinfo.h"
+#include "SireVol/gridinfo.h"
 
 #include "SireBase/property.h"
 #include "SireBase/propertymap.h"
@@ -49,7 +49,7 @@ QDataStream& operator>>(QDataStream&, SireIO::DX&);
 namespace SireIO
 {
 
-using SireMM::GridInfo;
+using SireVol::GridInfo;
 using SireBase::PropertyMap;
 
 /** This IO class is used to read and write grid data in DX format.

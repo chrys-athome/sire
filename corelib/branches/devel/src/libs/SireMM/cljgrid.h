@@ -33,8 +33,7 @@
 #include "cljatoms.h"
 #include "cljboxes.h"
 
-#include "gridinfo.h"
-
+#include "SireVol/gridinfo.h"
 #include "SireVol/aabox.h"
 
 #include <boost/shared_ptr.hpp>
@@ -53,6 +52,7 @@ namespace SireMM
 {
 
 using SireVol::AABox;
+using SireVol::GridInfo;
 
 /** This class holds a 3D grid of the coulomb potential
     at points in space created by a set of atoms, and calculates

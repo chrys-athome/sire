@@ -26,25 +26,25 @@
   *
 \*********************************************/
 
-#ifndef SIREMM_GRIDINFO_H
-#define SIREMM_GRIDINFO_H
+#ifndef SIREVOL_GRIDINFO_H
+#define SIREVOL_GRIDINFO_H
 
 #include "SireVol/aabox.h"
 #include "SireUnits/dimensions.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireMM
+namespace SireVol
 {
 class GridIndex;
 class GridInfo;
 }
 
-QDataStream& operator<<(QDataStream&, const SireMM::GridIndex&);
-QDataStream& operator>>(QDataStream&, SireMM::GridIndex&);
+QDataStream& operator<<(QDataStream&, const SireVol::GridIndex&);
+QDataStream& operator>>(QDataStream&, SireVol::GridIndex&);
 
-QDataStream& operator<<(QDataStream&, const SireMM::GridInfo&);
-QDataStream& operator>>(QDataStream&, SireMM::GridInfo&);
+QDataStream& operator<<(QDataStream&, const SireVol::GridInfo&);
+QDataStream& operator>>(QDataStream&, SireVol::GridInfo&);
 
 namespace SireMaths
 {
@@ -52,7 +52,7 @@ class MultiFloat;
 class MultiInt;
 }
 
-namespace SireMM
+namespace SireVol
 {
 
 using SireMaths::Vector;
@@ -63,7 +63,7 @@ using SireMaths::MultiInt;
 using SireMaths::MultiFloat;
 
 /** Very simple class providing a grid index */
-class SIREMM_EXPORT GridIndex
+class SIREVOL_EXPORT GridIndex
 {
 public:
     GridIndex(int i=0, int j=0, int k=0) : _i(i), _j(j), _k(k)
@@ -139,7 +139,7 @@ private:
 
     @author Christopher Woods
 */
-class SIREMM_EXPORT GridInfo
+class SIREVOL_EXPORT GridInfo
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const GridInfo&);
@@ -372,14 +372,14 @@ inline AABox GridInfo::dimensions() const
 
 }
 
-Q_DECLARE_METATYPE( SireMM::GridIndex )
-Q_DECLARE_METATYPE( SireMM::GridInfo )
+Q_DECLARE_METATYPE( SireVol::GridIndex )
+Q_DECLARE_METATYPE( SireVol::GridInfo )
 
-Q_DECLARE_TYPEINFO( SireMM::GridIndex, Q_MOVABLE_TYPE );
-Q_DECLARE_TYPEINFO( SireMM::GridInfo, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireVol::GridIndex, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireVol::GridInfo, Q_MOVABLE_TYPE );
 
-SIRE_EXPOSE_CLASS( SireMM::GridIndex )
-SIRE_EXPOSE_CLASS( SireMM::GridInfo )
+SIRE_EXPOSE_CLASS( SireVol::GridIndex )
+SIRE_EXPOSE_CLASS( SireVol::GridInfo )
 
 SIRE_END_HEADER
 

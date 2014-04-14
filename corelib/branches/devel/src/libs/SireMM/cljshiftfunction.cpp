@@ -27,7 +27,6 @@
 \*********************************************/
 
 #include "cljshiftfunction.h"
-#include "gridinfo.h"
 
 #include "SireMaths/multifloat.h"
 #include "SireMaths/multidouble.h"
@@ -36,11 +35,14 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include "SireVol/gridinfo.h"
+
 #include <QElapsedTimer>
 #include <QDebug>
 
 using namespace SireMM;
 using namespace SireMaths;
+using namespace SireVol;
 using namespace SireBase;
 using namespace SireStream;
 
