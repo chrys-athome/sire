@@ -232,7 +232,7 @@ void register_CoordGroupEditor_class(){
                 "transform"
                 , transform_function_value
                 , ( bp::arg("t") )
-                    /* undefined call policies */ );
+                , bp::return_self< >() );
         
         }
         { //::SireVol::CoordGroupEditor::transform
@@ -244,7 +244,7 @@ void register_CoordGroupEditor_class(){
                 "transform"
                 , transform_function_value
                 , ( bp::arg("i"), bp::arg("t") )
-                    /* undefined call policies */ );
+                , bp::return_self< >() );
         
         }
         { //::SireVol::CoordGroupEditor::translate
