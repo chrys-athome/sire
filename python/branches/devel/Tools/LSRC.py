@@ -57,7 +57,7 @@ random_seed = Parameter("random seed", None, """Random number seed. Set this if 
 use_fixed_ligand = Parameter("fixed ligand", False,
                              """Whether or not to completely fix the ligand during the simulation.""")
 
-use_rot_trans_ligand = Parameter("ligand rot-trans", False,
+use_rot_trans_ligand = Parameter("ligand rot-trans", True,
                                  """Whether or not the ligand is free to translate and rotate.""")
 
 topology = Parameter("topology", "dual", 
@@ -1470,6 +1470,7 @@ def makeRETI(system, moves):
 
     for i in range(0, len(lambda_values.val)):
         # set the initial lambda value for this replica
+        print("Setting replica %s to lambda %s" % (i, lambda_values.val[i]))
         replicas.setLambdaValue(i, lambda_values.val[i])
 
     for i in range(0, len(lambda_values.val)):
@@ -1487,7 +1488,7 @@ def makeRETI(system, moves):
 
     # now create the replica exchange moves for the replicas
     replica_moves = RepExMove()
-    replica_moves.setDisableSwaps(True)
+    #replica_moves.setDisableSwaps(True)
     replica_moves.setGenerator( RanGenerator(seed+7) )
 
     print("\nReturning the WSRC RETI replicas and moves...")
