@@ -46,11 +46,11 @@ void register_CLJGrid_class(){
         bp::scope CLJGrid_scope( CLJGrid_exposer );
         CLJGrid_exposer.def( bp::init< SireVol::AABox const & >(( bp::arg("grid_dimensions") )) );
         CLJGrid_exposer.def( bp::init< SireVol::AABox const &, SireUnits::Dimension::Length >(( bp::arg("grid_dimensions"), bp::arg("grid_spacing") )) );
-        CLJGrid_exposer.def( bp::init< SireMM::GridInfo const & >(( bp::arg("grid") )) );
+        CLJGrid_exposer.def( bp::init< SireVol::GridInfo const & >(( bp::arg("grid") )) );
         CLJGrid_exposer.def( bp::init< SireMM::CLJFunction const & >(( bp::arg("cljfunc") )) );
         CLJGrid_exposer.def( bp::init< SireMM::CLJFunction const &, SireVol::AABox const & >(( bp::arg("cljfunc"), bp::arg("grid_dimensions") )) );
         CLJGrid_exposer.def( bp::init< SireMM::CLJFunction const &, SireVol::AABox const &, SireUnits::Dimension::Length >(( bp::arg("cljfunc"), bp::arg("grid_dimensions"), bp::arg("grid_spacing") )) );
-        CLJGrid_exposer.def( bp::init< SireMM::CLJFunction const &, SireMM::GridInfo const & >(( bp::arg("cljfunc"), bp::arg("grid") )) );
+        CLJGrid_exposer.def( bp::init< SireMM::CLJFunction const &, SireVol::GridInfo const & >(( bp::arg("cljfunc"), bp::arg("grid") )) );
         CLJGrid_exposer.def( bp::init< SireMM::CLJGrid const & >(( bp::arg("other") )) );
         { //::SireMM::CLJGrid::addFixedAtoms
         
@@ -160,7 +160,7 @@ void register_CLJGrid_class(){
         }
         { //::SireMM::CLJGrid::grid
         
-            typedef ::SireMM::GridInfo ( ::SireMM::CLJGrid::*grid_function_type )(  ) const;
+            typedef ::SireVol::GridInfo ( ::SireMM::CLJGrid::*grid_function_type )(  ) const;
             grid_function_type grid_function_value( &::SireMM::CLJGrid::grid );
             
             CLJGrid_exposer.def( 
@@ -299,7 +299,7 @@ void register_CLJGrid_class(){
         }
         { //::SireMM::CLJGrid::setGrid
         
-            typedef void ( ::SireMM::CLJGrid::*setGrid_function_type )( ::SireMM::GridInfo const & ) ;
+            typedef void ( ::SireMM::CLJGrid::*setGrid_function_type )( ::SireVol::GridInfo const & ) ;
             setGrid_function_type setGrid_function_value( &::SireMM::CLJGrid::setGrid );
             
             CLJGrid_exposer.def( 

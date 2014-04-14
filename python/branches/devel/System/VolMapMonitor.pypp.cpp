@@ -8,8 +8,6 @@
 
 namespace bp = boost::python;
 
-#include "SireMM/gridinfo.h"
-
 #include "SireMol/atomcoords.h"
 
 #include "SireMol/atomelements.h"
@@ -32,7 +30,11 @@ namespace bp = boost::python;
 
 #include "SireUnits/units.h"
 
+#include "SireVol/gridinfo.h"
+
 #include "volmapmonitor.h"
+
+#include <QElapsedTimer>
 
 #include "volmapmonitor.h"
 
@@ -76,7 +78,7 @@ void register_VolMapMonitor_class(){
         }
         { //::SireSystem::VolMapMonitor::gridInfo
         
-            typedef ::SireMM::GridInfo ( ::SireSystem::VolMapMonitor::*gridInfo_function_type )(  ) const;
+            typedef ::SireVol::GridInfo ( ::SireSystem::VolMapMonitor::*gridInfo_function_type )(  ) const;
             gridInfo_function_type gridInfo_function_value( &::SireSystem::VolMapMonitor::gridInfo );
             
             VolMapMonitor_exposer.def( 

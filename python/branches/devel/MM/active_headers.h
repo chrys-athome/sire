@@ -25,7 +25,6 @@
 #include "fouratomfunctions.h"
 #include "gridff.h"
 #include "gridff2.h"
-#include "gridinfo.h"
 #include "intercljff.h"
 #include "intercoulombff.h"
 #include "interff.h"

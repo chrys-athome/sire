@@ -168,7 +168,7 @@ void register_InterFF_class(){
         }
         { //::SireMM::InterFF::grid
         
-            typedef ::SireMM::GridInfo ( ::SireMM::InterFF::*grid_function_type )(  ) const;
+            typedef ::SireVol::GridInfo ( ::SireMM::InterFF::*grid_function_type )(  ) const;
             grid_function_type grid_function_value( &::SireMM::InterFF::grid );
             
             InterFF_exposer.def( 

@@ -131,10 +131,6 @@
 
 #include "GridFF2.pypp.hpp"
 
-#include "GridIndex.pypp.hpp"
-
-#include "GridInfo.pypp.hpp"
-
 #include "GroupInternalParameters.pypp.hpp"
 
 #include "HarmonicSwitchingFunction.pypp.hpp"
@@ -535,10 +531,6 @@ BOOST_PYTHON_MODULE(_MM){
     register_GridFF_class();
 
     register_GridFF2_class();
-
-    register_GridIndex_class();
-
-    register_GridInfo_class();
 
     register_GroupInternalParameters_class();
 

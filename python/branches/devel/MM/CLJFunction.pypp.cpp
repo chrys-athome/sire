@@ -28,6 +28,8 @@ namespace bp = boost::python;
 
 #include "SireVol/cartesian.h"
 
+#include "SireVol/gridinfo.h"
+
 #include "SireVol/periodicbox.h"
 
 #include "cljboxes.h"
@@ -35,8 +37,6 @@ namespace bp = boost::python;
 #include "cljdelta.h"
 
 #include "cljfunction.h"
-
-#include "gridinfo.h"
 
 #include "switchingfunction.h"
 
@@ -124,7 +124,7 @@ void register_CLJFunction_class(){
         }
         { //::SireMM::CLJFunction::calculate
         
-            typedef ::QVector< float > ( ::SireMM::CLJFunction::*calculate_function_type )( ::SireMM::CLJAtoms const &,::SireMM::GridInfo const & ) const;
+            typedef ::QVector< float > ( ::SireMM::CLJFunction::*calculate_function_type )( ::SireMM::CLJAtoms const &,::SireVol::GridInfo const & ) const;
             calculate_function_type calculate_function_value( &::SireMM::CLJFunction::calculate );
             
             CLJFunction_exposer.def( 

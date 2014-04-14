@@ -35,7 +35,6 @@ set ( PYPP_SOURCES
        StretchBendTorsionComponent.pypp.cpp
        InternalComponent.pypp.cpp
        InternalParameters3D.pypp.cpp
-       GridInfo.pypp.cpp
        CHARMMSwitchingFunction.pypp.cpp
        CLJParameterNames.pypp.cpp
        CoulombScaleFactor.pypp.cpp
@@ -136,7 +135,6 @@ set ( PYPP_SOURCES
        InterGroupCoulombFFBase.pypp.cpp
        BondParameterName.pypp.cpp
        CoulombPotentialInterface_IntraCoulombPotential_.pypp.cpp
-       GridIndex.pypp.cpp
        InterCoulombFF.pypp.cpp
        ImproperSymbols.pypp.cpp
        HarmonicSwitchingFunction.pypp.cpp

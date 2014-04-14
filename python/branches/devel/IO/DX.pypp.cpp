@@ -80,7 +80,7 @@ void register_DX_class(){
         }
         { //::SireIO::DX::write
         
-            typedef void ( ::SireIO::DX::*write_function_type )( ::SireMM::GridInfo const &,::QVector< float > const &,::QString const &,::SireBase::PropertyMap const & ) const;
+            typedef void ( ::SireIO::DX::*write_function_type )( ::SireVol::GridInfo const &,::QVector< float > const &,::QString const &,::SireBase::PropertyMap const & ) const;
             write_function_type write_function_value( &::SireIO::DX::write );
             
             DX_exposer.def( 
