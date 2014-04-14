@@ -409,14 +409,28 @@ bool Constraints::apply(Delta &delta)
                 {
                     bool this_changed = cons[j].edit().apply(delta);
                     something_changed = something_changed or this_changed;
-                    
+
                     system_changed = system_changed or this_changed;
                 }
             }
             
             if (not something_changed)
             {
-                return system_changed;
+                bool all_satisfied = true;
+            
+                for (int j=0; j<cons.count(); ++j)
+                {
+                    if (not cons.at(j).read().isSatisfied(delta.deltaSystem()))
+                    {
+                        qDebug() << "Constraint" << cons.at(j).read().toString()
+                                 << "not satisfied. Need to iterate constraints...";
+                        all_satisfied = false;
+                        break;
+                    }
+                }
+            
+                if (all_satisfied)
+                    return system_changed;
             }
         }
     

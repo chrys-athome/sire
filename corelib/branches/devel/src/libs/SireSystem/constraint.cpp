@@ -658,10 +658,17 @@ bool PropertyConstraint::fullApply(Delta &delta)
     BOOST_ASSERT( Constraint::wasLastSystem(delta.deltaSystem()) and
                   Constraint::wasLastSubVersion(delta.deltaSystem()) );
 
+    bool changed = false;
+
     if (ffidxs.isEmpty())
-        return delta.update(propname, VariantProperty(target_value));
+        changed = delta.update(propname, VariantProperty(target_value));
     else
-        return delta.update(propname, ffidxs, VariantProperty(target_value));
+        changed = delta.update(propname, ffidxs, VariantProperty(target_value));
+    
+    if (changed)
+        this->setSystem( delta.deltaSystem() );
+    
+    return changed;
 }
 
 /** Apply this constraint based on the delta, knowing that the 
@@ -748,6 +755,10 @@ bool PropertyConstraint::deltaApply(Delta &delta, quint32 last_subversion)
             else
                 return delta.update(propname, ffidxs, VariantProperty(target_value));
         }
+    }
+    else if (not this->isSatisfied(delta.deltaSystem()))
+    {
+        return this->fullApply(delta);
     }
 
     return false;
@@ -933,7 +944,12 @@ bool ComponentConstraint::fullApply(Delta &delta)
     BOOST_ASSERT( Constraint::wasLastSystem(delta.deltaSystem()) and
                   Constraint::wasLastSubVersion(delta.deltaSystem()) );
 
-    return delta.update(constrained_component, target_value);
+    bool changed = delta.update(constrained_component, target_value);
+    
+    if (changed)
+        this->setSystem(delta.deltaSystem());
+    
+    return changed;
 }
 
 /** Apply this constraint based on the delta, knowing that the 
@@ -991,6 +1007,10 @@ bool ComponentConstraint::deltaApply(Delta &delta, quint32 last_subversion)
         {
             return delta.update(constrained_component, target_value);
         }
+    }
+    else if (not this->isSatisfied(delta.deltaSystem()))
+    {
+        return this->fullApply(delta);
     }
     
     return false;
@@ -1238,7 +1258,7 @@ void WindowedComponent::setSystem(const System &system)
 {
     if ( Constraint::wasLastSystem(system) and Constraint::wasLastSubVersion(system) )
         return;
-        
+    
     Constraint::clearLastSystem();
     
     if (window_values.isEmpty())
@@ -1278,7 +1298,16 @@ bool WindowedComponent::fullApply(Delta &delta)
     BOOST_ASSERT( Constraint::wasLastSystem(delta.deltaSystem()) and
                   Constraint::wasLastSubVersion(delta.deltaSystem()) );
     
-    return delta.update(constrained_component, target_value);
+    constrained_value = target_value;
+    
+    bool changed = delta.update(constrained_component, target_value);
+    
+    if (changed)
+    {
+        this->setSystem(delta.deltaSystem());
+    }
+    
+    return changed;
 }
 
 /** Apply this constraint based on the delta, knowing that the 
@@ -1345,6 +1374,10 @@ bool WindowedComponent::deltaApply(Delta &delta, quint32 last_subversion)
         {
             return delta.update(constrained_component, target_value);
         }
+    }
+    else if (not this->isSatisfied(delta.deltaSystem()))
+    {
+        return this->fullApply(delta);
     }
     
     return false;

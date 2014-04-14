@@ -974,17 +974,20 @@ bool Delta::update(const Molecules &molecules)
     'component' to the value 'value' */
 bool Delta::update(const Symbol &component, double value)
 {
-    if (delta_system.deltaUpdate(component, value))
+    if (delta_system.constant(component) != value)
     {
-        last_change = delta_system.subVersion();
-        last_comp_change = last_change;
-        
-        changed_comps.insert(component, last_comp_change);
-        
-        return true;
+        if (delta_system.deltaUpdate(component, value))
+        {
+            last_change = delta_system.subVersion();
+            last_comp_change = last_change;
+            
+            changed_comps.insert(component, last_comp_change);
+            
+            return true;
+        }
     }
-    else
-        return false;
+    
+    return false;
 }
 
 /** Update the contained system to set the value of the property
