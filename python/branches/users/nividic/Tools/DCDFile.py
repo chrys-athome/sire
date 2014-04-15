@@ -32,7 +32,7 @@ class DCDFile(object):
 
         file = open(strfile,'wb')
 
-        PDB().write(group, "%s.pdb" % strfile)
+        #PDB().write(group, "%s.pdb" % strfile)
 
         self._file = file
         self._group = group
@@ -57,7 +57,7 @@ class DCDFile(object):
 
         #sys.exit(-1)
         boxFlag = 0
-        if space.volume().value() > 0:
+        if space.isPeriodic():
             boxFlag = 1
         header = struct.pack(b'<i4c9if', 84, b'C', b'O', b'R', b'D', 0, firstStep, interval, 0, 0, 0, 0, 0, 0, dt)
         header += struct.pack(b'<13i', boxFlag, 0, 0, 0, 0, 0, 0, 0, 0, 24, 84, 164, 2)
@@ -199,7 +199,9 @@ class DCDFile(object):
         
             file.seek(0, os.SEEK_END)
             # Get buffered space...
-            boxSize = dimensions["buffered_space_%s" % x].dimensions()
+            boxSize = None
+            if ("buffered_space_%s" % x) in dimensions:
+                boxSize = dimensions["buffered_space_%s" % x].dimensions()
             #print "buffered_space_%s" % x, boxSize
             if boxSize is not None:
                 file.write(struct.pack('<i6di', 48, boxSize[0], 0, boxSize[1], 0, 0, boxSize[2], 48))

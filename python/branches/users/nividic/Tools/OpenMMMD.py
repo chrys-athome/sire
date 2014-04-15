@@ -4,6 +4,7 @@
 
 import os,re, sys, shutil
 import math
+import numpy
 
 from Sire.IO import *
 from Sire.Mol import *
@@ -44,7 +45,7 @@ crdfile = Parameter("crdfile", "SYSTEM.crd",
 
 s3file = Parameter("s3file", "SYSTEM.s3",
                     """Name to use for the intermediate s3 file that will contain the 
-                       simulation syste after it has been loaded from the top/crd files.""")
+                       simulation system after it has been loaded from the top/crd files.""")
 
 restart_file = Parameter("restart file", "sim_restart.s3",
                          """Name of the restart file to use to save progress during the simulation.""")
@@ -62,8 +63,11 @@ ncycles_per_snap = Parameter("ncycles_per_snap", 1, """Number of cycles between 
 
 save_coords = Parameter("save coordinates", True, """Whether or not to save coordinates.""")
 
-time_to_skip = Parameter("time to skip", 0*picosecond, """Time to skip?""")
+buffered_coords_freq = Parameter("buffered coordinates frequency", 0, 
+                                 """The number of time steps between saving of coordinates during
+                                 a cycle of MD. 0 disables buffering.""")
 
+time_to_skip = Parameter("time to skip", 0*picosecond, """Time to skip?""")
 
 minimize = Parameter("minimize", False, """Whether or not to perform minimization before the simulation.""")
 
@@ -97,7 +101,7 @@ inverse_friction = Parameter("inverse friction", 0.1*picosecond, """Inverse fric
 
 andersen = Parameter("thermostat", True, """Whether or not to use the Andersen thermostat (needed for NVT or NPT simulation).""")
 
-barostat = Parameter("barostat", True, """Whether or not to use a barostat (needed for NPT simulation).""")
+barostat = Parameter("barostat", False, """Whether or not to use a barostat (needed for NPT simulation).""")
 
 andersen_frequency = Parameter("andersen frequency", 10.0, """Collision frequency in units of (1/ps)""")
 
@@ -121,16 +125,36 @@ freeze_residues = Parameter("freeze residues", True, """Whether or not to freeze
 
 frozen_residues = Parameter("frozen residues", ["LGR", "SIT", "NEG", "POS"], """List of residues to freeze if 'freeze residues' is True.""")
 
+## Free energy specific keywords 
+
+morphfile = Parameter("morphfile", "SYSTEM.morph",
+                      """Name of the morph file containing the perturbation to apply to the system.""")
+
+lambda_val = Parameter("lambda_val", 0.0, 
+                       """Value of the lambda parameter at which to evaluate free energy gradients.""")
+
+delta_lambda = Parameter("delta_lambda", 0.001,
+                         """Value of the lambda interval used to evaluate free energy gradients by finite difference.""")
+
+shift_delta = Parameter("shift delta", 2.0,
+                        """Value of the Lennard-Jones softcore parameter.""")
+
+coulomb_power = Parameter("coulomb power", 0,
+                          """Value of the Coulombic softcore parameter.""")
+
+energy_frequency = Parameter("energy frequency", 10,
+                             """The number of time steps between evaluation of free energy gradients.""")
+
 #####################################
 
 def setupDCD(DCD_root, system):
 
     files = os.listdir(os.getcwd())
 
-    if (save_coords.val):
-        buffer_freq = 500
-    else:
-        buffer_freq = 0
+    #if (save_coords.val):
+    #    buffered_coords_freq = 500
+    #else:
+    #    buffer_freq = 0
     
     dcds = []
     for f in files:
@@ -143,7 +167,7 @@ def setupDCD(DCD_root, system):
     
     dcd_filename = dcd_root.val + "%0009d" % index + ".dcd"
 
-    Trajectory = DCDFile(dcd_filename, system[MGName("all")], system.property("space"), timestep.val, interval=buffer_freq*ncycles_per_snap.val)
+    Trajectory = DCDFile(dcd_filename, system[MGName("all")], system.property("space"), timestep.val, interval=buffered_coords_freq.val*ncycles_per_snap.val)
 
     return Trajectory
 
@@ -153,15 +177,15 @@ def writeSystemData( system, moves, Trajectory, block):
     localtimer = QTime()
     localtimer.start()
 
-    if (save_coords.val):
-        buffer_freq = 500
-    else:
-        buffer_freq = 0
+    #if (save_coords.val):
+    #    buffer_freq = 500
+    #else:
+    #    buffer_freq = 0
 
     if (block % ncycles_per_snap.val == 0):
         #PDB().write(system[MGName("all")], "output%0009d.pdb" % block)
 
-        if buffer_freq > 0:
+        if buffered_coords_freq.val > 0:
             dimensions = {}
             sysprops = system.propertyKeys()
             for prop in sysprops:
@@ -181,7 +205,10 @@ def centerSolute(system, space):
 
     # ! Assuming first molecule in the system is the solute ! 
     
-    box_center = space.dimensions()/2
+    if space.isPeriodic():
+        box_center = space.dimensions()/2
+    else:
+        box_center = Vector( 0.0, 0.0, 0.0 )
 
     solute = system.molecules().at(MolNum(1)) #first().molecule()
 
@@ -202,7 +229,8 @@ def centerSolute(system, space):
 
 
 def createSystem(molecules):
-    print("Applying flexibility and zmatrix templates...")
+    #print("Applying flexibility and zmatrix templates...")
+    print("Creating the system...")
 
     moleculeNumbers = molecules.molNums()
     moleculeList = []
@@ -244,7 +272,7 @@ def setupForcefields(system, space):
     
     # - first solvent-solvent coulomb/LJ (CLJ) energy
     internonbondedff = InterCLJFF("molecules:molecules")
-    if (cutoff_type != "nocutoff") :
+    if (cutoff_type.val != "nocutoff") :
         internonbondedff.setUseReactionField(True)
         internonbondedff.setReactionFieldDielectric(rf_dielectric.val)
     internonbondedff.add(molecules)
@@ -370,12 +398,12 @@ def setupMoves(system, random_seed, GPUS):
 
     Integrator_OpenMM.setCMMremoval_frequency(cmm_removal.val)
 
-    if (save_coords.val):
-        buffer_freq = 500
-    else:
-        buffer_freq = 0
+    #if (save_coords.val):
+    #    buffer_freq = 500
+    #else:
+    #    buffer_freq = 0
 
-    Integrator_OpenMM.setBufferFrequency(buffer_freq)
+    Integrator_OpenMM.setBufferFrequency(buffered_coords_freq.val)
 
     if use_restraints.val:
         Integrator_OpenMM.setRestraint(True)
@@ -535,15 +563,456 @@ def freezeResidues(system):
 
     return system
 
-######## MAIN SCRIPT  #############
+def getDummies(molecule):
+    print ("Selecting dummy groups")
+    natoms = molecule.nAtoms()
+    atoms = molecule.atoms()
+
+    from_dummies = None
+    to_dummies = None
+
+    for x in range(0,natoms):
+        atom = atoms[x]
+        if atom.property("initial_ambertype") == "du":
+            if from_dummies is None:
+                from_dummies = molecule.selectAll( atom.index() )
+            else:
+                from_dummies += molecule.selectAll( atom.index() )
+        elif atom.property("final_ambertype") == "du":
+            if to_dummies is None:
+                to_dummies = molecule.selectAll( atom.index() )
+            else:
+                to_dummies += molecule.selectAll( atom.index() )
+    
+    return to_dummies, from_dummies
+
+def createSystemFreeEnergy(molecules):
+    print ("Create the System...")
+
+    moleculeNumbers = molecules.molNums()
+    moleculeList = []
+
+    for moleculeNumber in moleculeNumbers:
+        molecule = molecules.molecule(moleculeNumber).molecule()
+        moleculeList.append(molecule)
+
+    #
+    # The code below assumes that the solute to be perturbed is 
+    # the first molecule in the top file.
+    # The residue name of the first residue in this molecule is 
+    # used to name the solute. This is used later to match 
+    # templates in the flex/pert files.
+
+    solute = moleculeList[0]
+    lig_name = solute.residue( ResIdx(0) ).name().value()
+        
+    solute = solute.edit().rename(lig_name).commit()
+                    
+    perturbations_lib = PerturbationsLibrary(morphfile.val)
+    solute = perturbations_lib.applyTemplate(solute)
+
+    perturbations = solute.property("perturbations")
+
+    lam = Symbol("lambda")
+
+    initial = Perturbation.symbols().initial()
+    final = Perturbation.symbols().final()
+
+    solute = solute.edit().setProperty("perturbations",
+                perturbations.recreate( (1-lam)*initial + lam*final ) ).commit()
+
+    # We put atoms in three groups depending on what happens in the perturbation
+    # non dummy to non dummy --> the hard group, uses a normal intermolecular FF
+    # non dummy to dummy --> the todummy group, uses SoftFF with alpha = Lambda
+    # dummy to non dummy --> the fromdummy group, uses SoftFF with alpha = 1 - Lambda
+    # We start assuming all atoms are hard atoms. Then we call getDummies to find which atoms 
+    # start/end as dummies and update the hard, todummy and fromdummy groups accordingly
+
+    solute_grp_ref = MoleculeGroup("solute_ref", solute)
+    solute_grp_ref_hard = MoleculeGroup("solute_ref_hard")
+    solute_grp_ref_todummy = MoleculeGroup("solute_ref_todummy")
+    solute_grp_ref_fromdummy = MoleculeGroup("solute_ref_fromdummy")
+
+    solute_ref_hard = solute.selectAllAtoms()
+    solute_ref_todummy = solute_ref_hard.invert()
+    solute_ref_fromdummy = solute_ref_hard.invert()
+
+    to_dummies, from_dummies = getDummies(solute)
+
+    if to_dummies is not None:
+        ndummies = to_dummies.count()
+        dummies = to_dummies.atoms()
+
+        for x in range(0,ndummies):
+            dummy_index = dummies[x].index()
+            solute_ref_hard = solute_ref_hard.subtract( solute.select( dummy_index ) )
+            solute_ref_todummy = solute_ref_todummy.add( solute.select( dummy_index ) )
+
+    if from_dummies is not None:
+        ndummies = from_dummies.count()
+        dummies = from_dummies.atoms()
+
+        for x in range(0,ndummies):
+            dummy_index = dummies[x].index()
+            solute_ref_hard = solute_ref_hard.subtract( solute.select( dummy_index ) )
+            solute_ref_fromdummy = solute_ref_fromdummy.add( solute.select( dummy_index ) )
+
+    solute_grp_ref_hard.add(solute_ref_hard)
+    solute_grp_ref_todummy.add(solute_ref_todummy)
+    solute_grp_ref_fromdummy.add(solute_ref_fromdummy)
+
+    solutes = MoleculeGroup("solutes")
+    solutes.add(solute)
+
+    molecules = MoleculeGroup("molecules")
+    molecules.add(solute)
+
+    solvent = MoleculeGroup("solvent")
+
+    for molecule in moleculeList[1:]:
+        molecules.add(molecule)
+        solvent.add(molecule)
+
+    all = MoleculeGroup("all")
+
+    all.add(molecules)
+    all.add(solvent)
+
+    all.add(solutes)
+    all.add(solute_grp_ref)
+    all.add(solute_grp_ref_hard)
+    all.add(solute_grp_ref_todummy)
+    all.add(solute_grp_ref_fromdummy)
+
+    # Add these groups to the System
+    system = System()
+
+    system.add(solutes)
+    system.add(solute_grp_ref)
+    system.add(solute_grp_ref_hard)
+    system.add(solute_grp_ref_todummy)
+    system.add(solute_grp_ref_fromdummy)
+
+    system.add(molecules)
+
+    system.add(solvent)
+
+    system.add(all)
+
+    return system
+
+def setupForcefieldsFreeEnergy(system, space ):
+
+    print ("Creating force fields... ")
+
+    solutes = system[ MGName("solutes") ]
+
+    solute = system[ MGName("solute_ref") ]
+    solute_hard = system[ MGName("solute_ref_hard") ]
+    solute_todummy = system[ MGName("solute_ref_todummy") ]
+    solute_fromdummy = system[ MGName("solute_ref_fromdummy") ]
+
+    solvent = system [ MGName("solvent") ]
+
+    all = system[ MGName("all") ]
+
+    # ''solvent'' is actually every molecule that isn't perturbed ! 
+    solvent_intraff = InternalFF("solvent_intraff")
+    solvent_intraff.add(solvent)
+
+    # Solute bond, angle, dihedral energy
+    solute_intraff = InternalFF("solute_intraff")
+    solute_intraff.add(solute)
+
+    # Solvent-solvent coulomb/LJ (CLJ) energy
+    solventff = InterCLJFF("solvent:solvent")
+    if (cutoff_type.val != "nocutoff") :
+        solventff.setUseReactionField(True)
+        solventff.setReactionFieldDielectric(rf_dielectric.val)
+    solventff.add(solvent)
+
+    #Solvent intramolecular CLJ energy
+    solvent_intraclj = IntraCLJFF("solvent_intraclj")
+    if (cutoff_type.val != "nocutoff") :
+        solvent_intraclj.setUseReactionField(True)
+        solvent_intraclj.setReactionFieldDielectric(rf_dielectric.val)
+    solvent_intraclj.add(solvent)
+
+    # Solute intramolecular CLJ energy
+    solute_hard_intraclj = IntraCLJFF("solute_hard_intraclj")
+    if (cutoff_type.val != "nocutoff") :
+        solute_hard_intraclj.setUseReactionField(True)
+        solute_hard_intraclj.setReactionFieldDielectric(rf_dielectric.val)
+    solute_hard_intraclj.add(solute_hard)
+
+    solute_todummy_intraclj = IntraSoftCLJFF("solute_todummy_intraclj")
+    solute_todummy_intraclj.setShiftDelta(shift_delta.val)
+    solute_todummy_intraclj.setCoulombPower(coulomb_power.val)
+    if (cutoff_type.val != "nocutoff") :
+        solute_todummy_intraclj.setUseReactionField(True)
+        solute_todummy_intraclj.setReactionFieldDielectric(rf_dielectric.val)
+    solute_todummy_intraclj.add(solute_todummy)
+
+    solute_fromdummy_intraclj = IntraSoftCLJFF("solute_fromdummy_intraclj")
+    solute_fromdummy_intraclj.setShiftDelta(shift_delta.val)
+    solute_fromdummy_intraclj.setCoulombPower(coulomb_power.val)
+    if (cutoff_type.val != "nocutoff") :
+        solute_fromdummy_intraclj.setUseReactionField(True)
+        solute_fromdummy_intraclj.setReactionFieldDielectric(rf_dielectric.val)
+    solute_fromdummy_intraclj.add(solute_fromdummy)
+
+    solute_hard_todummy_intraclj = IntraGroupSoftCLJFF("solute_hard:todummy_intraclj")
+    solute_hard_todummy_intraclj.setShiftDelta(shift_delta.val)
+    solute_hard_todummy_intraclj.setCoulombPower(coulomb_power.val)
+    if (cutoff_type.val != "nocutoff") :
+        solute_hard_todummy_intraclj.setUseReactionField(True)
+        solute_hard_todummy_intraclj.setReactionFieldDielectric(rf_dielectric.val)
+    solute_hard_todummy_intraclj.add(solute_hard, MGIdx(0))
+    solute_hard_todummy_intraclj.add(solute_todummy, MGIdx(1))
+
+    solute_hard_fromdummy_intraclj = IntraGroupSoftCLJFF("solute_hard:fromdummy_intraclj")
+    solute_hard_fromdummy_intraclj.setShiftDelta(shift_delta.val)
+    solute_hard_fromdummy_intraclj.setCoulombPower(coulomb_power.val)
+    if (cutoff_type.val != "nocutoff") :
+        solute_hard_fromdummy_intraclj.setUseReactionField(True)
+        solute_hard_fromdummy_intraclj.setReactionFieldDielectric(rf_dielectric.val)
+    solute_hard_fromdummy_intraclj.add(solute_hard, MGIdx(0))
+    solute_hard_fromdummy_intraclj.add(solute_fromdummy, MGIdx(1))
+
+    solute_todummy_fromdummy_intraclj = IntraGroupSoftCLJFF("solute_todummy:fromdummy_intraclj")
+    solute_todummy_fromdummy_intraclj.setShiftDelta(shift_delta.val)
+    solute_todummy_fromdummy_intraclj.setCoulombPower(coulomb_power.val)
+    if (cutoff_type.val != "nocutoff") :
+        solute_todummy_fromdummy_intraclj.setUseReactionField(True)
+        solute_todummy_fromdummy_intraclj.setReactionFieldDielectric(rf_dielectric.val)
+    solute_todummy_fromdummy_intraclj.add(solute_todummy, MGIdx(0))
+    solute_todummy_fromdummy_intraclj.add(solute_fromdummy, MGIdx(1))
+
+    #Solute-solvent CLJ energy
+    solute_hard_solventff = InterGroupCLJFF("solute_hard:solvent")
+    if (cutoff_type.val != "nocutoff") :
+        solute_hard_solventff.setUseReactionField(True)
+        solute_hard_solventff.setReactionFieldDielectric(rf_dielectric.val)
+    solute_hard_solventff.add(solute_hard, MGIdx(0))
+    solute_hard_solventff.add(solvent, MGIdx(1))
+
+    solute_todummy_solventff = InterGroupSoftCLJFF("solute_todummy:solvent")
+    if (cutoff_type.val != "nocutoff") :
+        solute_todummy_solventff.setUseReactionField(True)
+        solute_todummy_solventff.setReactionFieldDielectric(rf_dielectric.val)
+    solute_todummy_solventff.add(solute_todummy, MGIdx(0))
+    solute_todummy_solventff.add(solvent, MGIdx(1))
+
+
+    solute_fromdummy_solventff = InterGroupSoftCLJFF("solute_fromdummy:solvent")
+    if (cutoff_type.val != "nocutoff") :
+        solute_fromdummy_solventff.setUseReactionField(True)
+        solute_fromdummy_solventff.setReactionFieldDielectric(rf_dielectric.val)
+    solute_fromdummy_solventff.add(solute_fromdummy, MGIdx(0))
+    solute_fromdummy_solventff.add(solvent, MGIdx(1))
+
+
+    # TOTAL
+    forcefields =  [ solute_intraff,
+                  solute_hard_intraclj, solute_todummy_intraclj, solute_fromdummy_intraclj,
+                  solute_hard_todummy_intraclj, solute_hard_fromdummy_intraclj, 
+                  solute_todummy_fromdummy_intraclj, 
+                  solvent_intraff,
+                  solventff,solvent_intraclj,
+                  solute_hard_solventff, solute_todummy_solventff, solute_fromdummy_solventff ]
+
+    # BONDED
+    #   forcefields =  [ solute_intraff, solvent_intraff ]
+
+    # NON BONDED
+    #    forcefields =  [solute_hard_intraclj, solute_todummy_intraclj, solute_fromdummy_intraclj,
+    #                 solute_hard_todummy_intraclj, solute_hard_fromdummy_intraclj, 
+    #                 solute_todummy_fromdummy_intraclj, 
+    #                 solventff, solvent_intraclj,
+    #                 solute_hard_solventff, solute_todummy_solventff, solute_fromdummy_solventff ]
+
+    for forcefield in forcefields:
+        system.add(forcefield)
+
+    system.setProperty( "space", space )
+
+    if (cutoff_type.val != "nocutoff") :
+        system.setProperty( "switchingFunction", CHARMMSwitchingFunction(cutoff_dist.val) )
+    else :
+        system.setProperty( "switchingFunction", NoCutoff())
+
+    system.setProperty( "combiningRules", VariantProperty(combining_rules.val) )
+    system.setProperty( "coulombPower", VariantProperty(coulomb_power.val) )
+    system.setProperty( "shiftDelta", VariantProperty(shift_delta.val) )
+    #system.setProperty( "useReactionField", VariantProperty(True) )
+    #system.setProperty( "reactionFieldDielectric", VariantProperty(rf_dielectric.val) )
+    
+    # TOTAL
+    total_nrg = solute_intraff.components().total() + solute_hard_intraclj.components().total() +\
+        solute_todummy_intraclj.components().total(0) + solute_fromdummy_intraclj.components().total(0) +\
+        solute_hard_todummy_intraclj.components().total(0) + solute_hard_fromdummy_intraclj.components().total(0) +\
+        solute_todummy_fromdummy_intraclj.components().total(0) +\
+        solvent_intraff.components().total() + solventff.components().total() +\
+        solvent_intraclj.components().total() +\
+        solute_hard_solventff.components().total() +\
+        solute_todummy_solventff.components().total(0) +\
+        solute_fromdummy_solventff.components().total(0)
+
+    # BONDED
+    #   total_nrg = solute_intraff.components().total() + solvent_intraff.components().total()
+
+
+    # NON BONDED
+    #   total_nrg = solute_hard_intraclj.components().total() +\
+    #     solute_todummy_intraclj.components().total(0) + solute_fromdummy_intraclj.components().total(0) +\
+    #     solute_hard_todummy_intraclj.components().total(0) + solute_hard_fromdummy_intraclj.components().total(0) +\
+    #     solute_todummy_fromdummy_intraclj.components().total(0) +\
+    #     solventff.components().total() +\
+    #     solute_hard_solventff.components().total() +\
+    #     solute_todummy_solventff.components().total(0) +\
+    #     solute_fromdummy_solventff.components().total(0)
+    
+
+    e_total = system.totalComponent()
+
+    lam = Symbol("lambda")
+
+    system.setComponent( e_total, total_nrg )
+
+    system.setConstant(lam, 0.0)
+
+    system.add( PerturbationConstraint(solutes) )
+
+    # NON BONDED Alpha constraints for the soft force fields
+
+    system.add( PropertyConstraint( "alpha0", FFName("solute_todummy_intraclj"), lam ) )
+    system.add( PropertyConstraint( "alpha0", FFName("solute_fromdummy_intraclj"), 1 - lam ) )
+    system.add( PropertyConstraint( "alpha0", FFName("solute_hard:todummy_intraclj"), lam ) )
+    system.add( PropertyConstraint( "alpha0", FFName("solute_hard:fromdummy_intraclj"), 1 - lam ) )
+    system.add( PropertyConstraint( "alpha0", FFName("solute_todummy:fromdummy_intraclj"), Min( lam, 1 - lam )  ) )
+    system.add( PropertyConstraint( "alpha0", FFName("solute_todummy:solvent"), lam ) )
+    system.add( PropertyConstraint( "alpha0", FFName("solute_fromdummy:solvent"), 1 - lam ) )
+
+    system.setComponent( lam, lambda_val.val )
+
+    # printEnergies( system.componentValues() )
+
+    return system
+
+def setupMovesFreeEnergy(system,random_seed,GPUS,lam_val):
+
+    print ("Setting up moves...")
+
+    molecules = system[ MGName("molecules") ]
+    solute = system[ MGName("solute_ref") ]
+    solute_hard = system[ MGName("solute_ref_hard") ]
+    solute_todummy = system[ MGName("solute_ref_todummy") ]
+    solute_fromdummy = system[ MGName("solute_ref_fromdummy") ]
+
+    Integrator_OpenMM = OpenMMFrEnergyST(molecules,solute,solute_hard,solute_todummy,solute_fromdummy)
+
+    Integrator_OpenMM.setIntegrator(integrator_type.val)
+    Integrator_OpenMM.setFriction(inverse_friction.val )# Only meaningful for Langevin/Brownian integrators
+    Integrator_OpenMM.setPlatform(platform.val)
+    Integrator_OpenMM.setConstraintType(constraint.val)
+    Integrator_OpenMM.setCutoffType(cutoff_type.val)
+    Integrator_OpenMM.setField_dielectric(rf_dielectric.val)
+    Integrator_OpenMM.setAlchemical_value(lambda_val.val)
+    Integrator_OpenMM.setDeviceIndex(str(GPUS))
+    Integrator_OpenMM.setCoulomb_power(coulomb_power.val)
+    Integrator_OpenMM.setShift_delta(shift_delta.val)
+    Integrator_OpenMM.setDeltatAlchemical(delta_lambda.val)
+    Integrator_OpenMM.setPrecision(precision.val)
+    Integrator_OpenMM.setTimetoSkip(time_to_skip.val)
+    Integrator_OpenMM.setMinimization(minimize.val)
+    Integrator_OpenMM.setMinimizeTol(minimize_tol.val)
+    Integrator_OpenMM.setMinimizeIterations(minimize_max_iter.val)
+
+    #if (save_coords.val):
+    #    buffer_freq = 500
+    #else:
+    #    buffer_freq = 0
+
+    Integrator_OpenMM.setBufferFrequency(buffered_coords_freq.val)
+
+    if cutoff_type != "nocutoff":
+        Integrator_OpenMM.setCutoff_distance(cutoff_dist.val)
+
+    Integrator_OpenMM.setCMMremoval_frequency(cmm_removal.val)
+    
+    Integrator_OpenMM.setEnergyFrequency(energy_frequency.val)
+
+
+    if use_restraints.val:
+        Integrator_OpenMM.setRestraint(True)
+
+    if andersen.val:
+        Integrator_OpenMM.setTemperature(temperature.val)
+        Integrator_OpenMM.setAndersen(andersen.val)
+        Integrator_OpenMM.setAndersen_frequency(andersen_frequency.val)
+
+    if barostat.val:
+        Integrator_OpenMM.setPressure(pressure.val)
+        Integrator_OpenMM.setMCBarostat(barostat.val)
+        Integrator_OpenMM.setMCBarostat_frequency(barostat_frequency.val)
+
+
+    Integrator_OpenMM.initialise()
+
+    mdmove = MolecularDynamics(molecules, Integrator_OpenMM, timestep.val , {"velocity generator":MaxwellBoltzmann(temperature.val)})
+
+    #mdmove = MolecularDynamics(molecules, Integrator_OpenMM, time_step)
+
+    print("Created a MD move that uses OpenMM for all molecules on GPU %s " % GPUS)
+
+    moves = WeightedMoves()
+    moves.add(mdmove, 1)
+    
+    if (not random_seed):
+        random_seed = RanGenerator().randInt(100000,1000000)
+
+    print("Generated random seed number %d " % random_seed)
+
+    moves.setGenerator( RanGenerator(random_seed) )
+ 
+    return moves
+
+def clearBuffers( system ):
+
+    print ("Clearing buffers...")
+
+    mols = system[MGName("all")].molecules()
+    molnums = mols.molNums()
+
+    changedmols = MoleculeGroup("changedmols")
+
+    for molnum in molnums:
+        mol = mols.molecule(molnum).molecule()
+        molprops = mol.propertyKeys()
+        editmol = mol.edit()
+        for molprop in molprops:
+            if molprop.startswith("buffered_"):
+                #print "Removing property %s " % molprop
+                editmol.removeProperty( PropertyName(molprop) )
+        mol = editmol.commit()
+        changedmols.add(mol)
+        #system.update(mol)
+
+    system.update(changedmols)
+
+    return system
+
+
+
+######## MAIN SCRIPTS  #############
 
 @resolveParameters
 def run():
 
-    if (save_coords.val):
-        buffer_freq = 500
-    else:
-        buffer_freq = 0
+    #if (save_coords.val):
+    #    buffer_freq = 500
+    #else:
+    #    buffer_freq = 0
 
     try:
         host = os.environ['HOSTNAME']
@@ -612,13 +1081,14 @@ def run():
         trajectory = setupDCD(dcd_root.val, system)
 
     s1 = timer.elapsed()/1000.
-
+    
     print("Running MD simulation ")
 
     for i in range(cycle_start,cycle_end):
         print("\nCycle = ",i,"\n")
 
         print("Energy before = %s kJ mol-1" % (system.energy().to(kJ_per_mol)))
+        # import ipdb; ipdb.set_trace()
         system = moves.move(system, nmoves.val, True)
         print("Energy after = %s kJ mol-1" % (system.energy().to(kJ_per_mol)))
 
@@ -629,5 +1099,125 @@ def run():
     print("Simulation took %d s " % ( s2 - s1))
 
     print("Saving restart")
+    Sire.Stream.save( [system, moves], restart_file.val )
+
+
+@resolveParameters
+def runFreeNrg():
+
+    #if (save_coords.val):
+    #    buffer_freq = 500
+    #else:
+    #    buffer_freq = 0
+
+    try:
+        host = os.environ['HOSTNAME']
+    except KeyError:
+        host = "unknown"
+
+    print(" ### Running Single Topology Molecular Dynamics Free Energy on %s ### " % host)
+
+    timer = QTime()
+    timer.start()
+
+    # Setup the system from scratch if no restart file is available
+
+    if not os.path.exists(restart_file.val):
+
+        print("New run. Loading input and creating restart")
+                
+        print("lambda is %s" % lambda_val.val)
+
+        amber = Amber()
+        
+        if os.path.exists(s3file.val):
+            (molecules, space) = Sire.Stream.load(s3file.val)
+        else:
+            (molecules, space) = amber.readCrdTop(crdfile.val, topfile.val)
+            Sire.Stream.save( (molecules,space), s3file.val )
+
+        system = createSystemFreeEnergy(molecules)
+
+        if (center_solute.val):
+            system = centerSolute(system, space)
+
+        if use_restraints.val:
+            system = setupRestraints(system)
+        
+        # Note that this just set the mass to zero which freezes residues in OpenMM but Sire doesn't known that
+        if freeze_residues.val:
+            system = freezeResidues(system)
+
+        system = setupForcefieldsFreeEnergy(system, space)
+
+        if random_seed.val:
+            ranseed = random_seed.val
+        else:
+            ranseed = RanGenerator().randInt(100000,1000000)
+
+        print("Setting up the simulation with random seed %s" % ranseed)
+
+        moves = setupMovesFreeEnergy(system, ranseed, gpu.val, lambda_val.val)
+
+        print("Saving restart")
+        Sire.Stream.save( [system, moves], restart_file.val )
+    else:
+        system, moves = Sire.Stream.load( restart_file.val )
+        move0 =  moves.moves()[0]
+        integrator = move0.integrator()
+        integrator.setDeviceIndex(str(gpu.val))
+        move0.setIntegrator(integrator)
+        moves = WeightedMoves()
+        moves.add(move0)
+        print("Index GPU = %s " % moves.moves()[0].integrator().getDeviceIndex())
+        print("Loaded a restart file on wich we have performed %d moves." % moves.nMoves())
+
+    cycle_start = int(moves.nMoves() / nmoves.val)  + 1
+    cycle_end = cycle_start + ncycles.val 
+   
+    lam_str = "%7.5f" % lambda_val.val
+    outgradients = open("gradients.dat","a", 1)
+    outgradients.write("# lambba_val.val %s\n" % lam_str)
+
+    if (save_coords.val):
+        trajectory = setupDCD(dcd_root.val, system)
+
+    s1 = timer.elapsed()/1000.
+    
+    print("Running MD simulation ")
+
+    for i in range(cycle_start,cycle_end):
+        print("\nCycle = ",i,"\n")
+
+        print("Energy before = %s kJ mol-1" % (system.energy().to(kJ_per_mol)))
+        # import ipdb; ipdb.set_trace()
+        system = moves.move(system, nmoves.val, True)
+        print("Energy after = %s kJ mol-1" % (system.energy().to(kJ_per_mol)))
+
+        if (save_coords.val):
+            writeSystemData(system, moves, trajectory, i)
+
+        mdmoves = moves.moves()[0]
+        integrator = mdmoves.integrator()
+        gradients = integrator.getGradients()
+        outgradients.write("%5d %20.10f\n" % (i, gradients[i-1]))
+
+    s2 = timer.elapsed()/1000.
+    print("Simulation took %d s " % ( s2 - s1))
+    
+    # average_gradients = numpy.mean(gradients)
+    # stdev_gradients = numpy.std(gradients)
+    # print("*Gradient average = %f" % average_gradients)
+    # print("*STD = %f" % stdev_gradients)
+
+    if buffered_coords_freq.val > 0:
+        system = clearBuffers(system)
+        # Necessary to write correct restart
+        system.mustNowRecalculateFromScratch()
+
+    print("Backing up previous restart")
+    cmd = "cp %s %s.previous" % (restart_file.val, restart_file.val)
+    os.system(cmd)
+    print ("Saving new restart")
     Sire.Stream.save( [system, moves], restart_file.val )
 
