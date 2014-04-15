@@ -467,7 +467,8 @@ void OpenMMMDIntegrator::initialise()
   OpenMM::System *system_openmm = new OpenMM::System();
 
   system_openmm->setDefaultPeriodicBoxVectors(OpenMM::Vec3(4, 0, 0),
-                                              OpenMM::Vec3(0, 5, 0), OpenMM::Vec3(0, 0, 6));
+                                              OpenMM::Vec3(0, 5, 0),
+                                              OpenMM::Vec3(0, 0, 6));
 
   OpenMM::NonbondedForce * nonbond_openmm = new OpenMM::NonbondedForce();
 
@@ -1079,7 +1080,30 @@ void OpenMMMDIntegrator::createContext(IntegratorWorkspace &workspace,
     std::vector<OpenMM::Vec3> velocities_openmm(nats);
 
     AtomicVelocityWorkspace &ws = workspace.asA<AtomicVelocityWorkspace>();
-
+    
+    is_periodic = false;
+    
+    if ( CutoffType == "cutoffperiodic" || CutoffType == "ewald" || CutoffType == "pme"){
+        const System & ptr_sys = ws.system();
+        const PropertyName &space_property = PropertyName("space");
+        const PeriodicBox &space = ptr_sys.property(space_property).asA<PeriodicBox>();
+        
+        const double Box_x_Edge_Length = space.dimensions()[0] * OpenMM::NmPerAngstrom; //units in nm
+        const double Box_y_Edge_Length = space.dimensions()[1] * OpenMM::NmPerAngstrom; //units in nm
+        const double Box_z_Edge_Length = space.dimensions()[2] * OpenMM::NmPerAngstrom; //units in nm
+        
+        if (Debug)
+            qDebug() << "\nBOX SIZE [A] = (" << space.dimensions()[0] << " , " << space.dimensions()[1] << " ,  " << space.dimensions()[2] << ")\n\n";
+        
+        //Set Periodic Box Condition
+        
+        openmm_context->setPeriodicBoxVectors( OpenMM::Vec3(Box_x_Edge_Length,0,0),
+                                              OpenMM::Vec3(0,Box_y_Edge_Length,0),
+                                              OpenMM::Vec3(0,0,Box_z_Edge_Length) );
+        is_periodic = true;
+    }
+    
+    
     double AKMAPerPs = 0.04888821;
     double PsPerAKMA = 1.0 / AKMAPerPs;
 
@@ -1141,27 +1165,7 @@ void OpenMMMDIntegrator::createContext(IntegratorWorkspace &workspace,
     openmm_context->setPositions(positions_openmm);  
     openmm_context->setVelocities(velocities_openmm);
 
-    is_periodic = false;
-
-    if ( CutoffType == "cutoffperiodic" || CutoffType == "ewald" || CutoffType == "pme"){
-        const System & ptr_sys = ws.system();
-        const PropertyName &space_property = PropertyName("space");
-        const PeriodicBox &space = ptr_sys.property(space_property).asA<PeriodicBox>();
-
-        const double Box_x_Edge_Length = space.dimensions()[0] * OpenMM::NmPerAngstrom; //units in nm
-        const double Box_y_Edge_Length = space.dimensions()[1] * OpenMM::NmPerAngstrom; //units in nm
-        const double Box_z_Edge_Length = space.dimensions()[2] * OpenMM::NmPerAngstrom; //units in nm
     
-        if (Debug)
-          qDebug() << "\nBOX SIZE [A] = (" << space.dimensions()[0] << " , " << space.dimensions()[1] << " ,  " << space.dimensions()[2] << ")\n\n";
-
-        //Set Periodic Box Condition
-
-        openmm_context->setPeriodicBoxVectors( OpenMM::Vec3(Box_x_Edge_Length,0,0),
-                          OpenMM::Vec3(0,Box_y_Edge_Length,0),
-                          OpenMM::Vec3(0,0,Box_z_Edge_Length) );
-        is_periodic = true;
-    }
 }
 
 void OpenMMMDIntegrator::destroyContext()
