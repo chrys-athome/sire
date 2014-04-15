@@ -424,6 +424,7 @@ bool Constraints::apply(Delta &delta)
                     {
                         qDebug() << "Constraint" << cons.at(j).read().toString()
                                  << "not satisfied. Need to iterate constraints...";
+                        qDebug() << Sire::toString(delta.deltaSystem().constants());
                         all_satisfied = false;
                         break;
                     }
@@ -433,6 +434,20 @@ bool Constraints::apply(Delta &delta)
                     return system_changed;
             }
         }
+
+        bool all_satisfied = true;
+
+        for (int j=0; j<cons.count(); ++j)
+        {
+            if (not cons.at(j).read().isSatisfied(delta.deltaSystem()))
+            {
+                 all_satisfied = false;
+                 break;
+            }
+        }
+
+        if (all_satisfied)
+            return system_changed;
     
         //the constraints couldn't be satisfied - get the list
         //of unsatisfied constraints
@@ -440,12 +455,9 @@ bool Constraints::apply(Delta &delta)
         
         for (int j=0; j<cons.count(); ++j)
         {
-            if (cons.at(j).read().mayAffect(delta))
+            if (not cons.at(j).read().isSatisfied(delta.deltaSystem()))
             {
-                if (cons[j].edit().apply(delta))
-                {
-                    unsatisfied_constraints.append(cons[j].read().toString());
-                }
+                unsatisfied_constraints.append(cons[j].read().toString());
             }
         }
         

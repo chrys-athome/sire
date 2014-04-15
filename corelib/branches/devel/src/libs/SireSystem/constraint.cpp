@@ -157,6 +157,11 @@ bool Constraint::apply(Delta &delta)
             if ( this->mayChange(delta, last_subversion) )
                 changed = this->deltaApply(delta, last_subversion);
         }
+
+        if (not this->isSatisfied(delta.deltaSystem()))
+            throw SireError::program_bug( QObject::tr(
+                "Constraint %1 is not satisfied despite having just been applied!!!")
+                    .arg(this->toString()), CODELOC );
     
         //the above function *MUST* have set the system to satisfy the constraint
         setSatisfied(delta.deltaSystem(), true);
@@ -1324,7 +1329,7 @@ bool WindowedComponent::deltaApply(Delta &delta, quint32 last_subversion)
     bool changed_sym = delta.sinceChanged(reference_component, last_subversion);
     bool changed_target = false;
     
-    if (changed_comp or changed_sym)
+    if (changed_comp or changed_sym or (constrained_value != target_value))
     {
         const System &system = delta.deltaSystem();
         
@@ -1372,14 +1377,16 @@ bool WindowedComponent::deltaApply(Delta &delta, quint32 last_subversion)
         if ( (changed_target or changed_comp) and not
              (has_constrained_value and (constrained_value == target_value)) )
         {
-            return delta.update(constrained_component, target_value);
+            bool changed = delta.update(constrained_component, target_value);
+            constrained_value = delta.deltaSystem().constant(constrained_component);
+            return changed;
         }
     }
     else if (not this->isSatisfied(delta.deltaSystem()))
     {
         return this->fullApply(delta);
     }
-    
+
     return false;
 }
 
