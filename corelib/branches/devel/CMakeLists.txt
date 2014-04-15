@@ -179,11 +179,11 @@ save_sire_variable( "SIRE_VECTORISE" "${SIRE_VECTORISE}" )
 option ( SIRE_DISABLE_SSE "Prevent use of SSE when compiling" OFF )
 
 # Add option to disable use of AVX
-option ( SIRE_DISABLE_AVX "Prevent use of AVX when compiling" OFF )
+option ( SIRE_DISABLE_AVX "Prevent use of AVX when compiling" ON )
 
 # Add option to enable use of SSE4 (only works if SSE is not disabled)
 # This is on by default as most processors now support SSE4
-option ( SIRE_ENABLE_SSE4 "Enable use of SSE4 when compiling" ON )
+option ( SIRE_ENABLE_SSE4 "Enable use of SSE4 when compiling" OFF )
 
 # Add option to enable use of AVX2 (only works if AVX is not disabled)
 # This is off by default as AVX2 is not widespread

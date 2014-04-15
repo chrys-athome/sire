@@ -128,6 +128,7 @@ set ( SIREMOL_HEADERS
       specifymol.h
       structureeditor.h
       viewsofmol.h
+      volumemap.h
       weightfunction.h
       withatoms.h
       within.h
@@ -218,6 +219,7 @@ set ( SIREMOL_SOURCES
       specifymol.cpp
       structureeditor.cpp
       viewsofmol.cpp
+      volumemap.cpp
       weightfunction.cpp
       withatoms.cpp
       within.cpp

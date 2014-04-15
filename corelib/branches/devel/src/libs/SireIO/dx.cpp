@@ -28,6 +28,8 @@
 
 #include "SireIO/dx.h"
 
+#include "SireMol/volumemap.h"
+
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
@@ -166,4 +168,10 @@ void DX::write(const GridInfo &gridinfo, const QVector<float> &values,
     ts << QString("\nobject \"griddata\" class field\n\n");
 
     f.close();
+}
+
+/** Write the passed volume map to the file 'filename' */
+void DX::write(const VolumeMap &volmap, const QString &filename, const PropertyMap &map) const
+{
+    this->write(volmap.gridInfo(), volmap.occupancy(), filename, map);
 }

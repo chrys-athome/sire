@@ -46,11 +46,17 @@ class DX;
 QDataStream& operator<<(QDataStream&, const SireIO::DX&);
 QDataStream& operator>>(QDataStream&, SireIO::DX&);
 
+namespace SireMol
+{
+class VolumeMap;
+}
+
 namespace SireIO
 {
 
 using SireVol::GridInfo;
 using SireBase::PropertyMap;
+using SireMol::VolumeMap;
 
 /** This IO class is used to read and write grid data in DX format.
     Note that this has only been written to support basic, cubic/rectangular
@@ -83,6 +89,9 @@ public:
     
     void write(const GridInfo &gridinfo, const QVector<float> &values,
                const QString &filename, const PropertyMap &map = PropertyMap()) const;
+
+    void write(const VolumeMap &volumemap, const QString &filename,
+               const PropertyMap &map = PropertyMap()) const;
 };
 
 }
