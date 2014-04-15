@@ -89,14 +89,15 @@ class DCDFile(object):
         # Write the data.
         
         file.seek(0, os.SEEK_END)
-        boxSize = space.dimensions()
-        if boxSize is not None:
+        
+        if space.isPeriodic():
+            boxSize = space.dimensions()
             file.write(struct.pack('<i6di', 48, boxSize[0], 0, boxSize[1], 0, 0, boxSize[2], 48))
 
         natoms = 0
 
         for i in range(0,group.nMolecules()):
-            mol = molecules[MolIdx(i)].molecule()
+            mol = group[MolIdx(i)].molecule()
             nat = mol.nAtoms()
             natoms += nat
 
@@ -108,7 +109,7 @@ class DCDFile(object):
         
         coords = []
 
-        spacedims = space.dimensions()
+        #spacedims = space.dimensions()
 
         wrapmolcoordinates = False
 
