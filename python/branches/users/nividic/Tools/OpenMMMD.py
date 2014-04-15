@@ -87,7 +87,7 @@ timestep = Parameter("timestep", 2 * femtosecond, """Timestep for the dynamics s
 
 platform = Parameter("platform", "CPU", """Which OpenMM platform should be used to perform the dynamics.""")
 
-precision = Parameter("precision", "double", """The floating point precision model to use during dynamics.""")
+precision = Parameter("precision", "mixed", """The floating point precision model to use during dynamics.""")
 
 constraint = Parameter("constraint", "none", """The constraint model to use during dynamics.""")
 
