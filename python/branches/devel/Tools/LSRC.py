@@ -2019,6 +2019,6 @@ def run():
                 print("...save complete (took %d ms)" % t.elapsed())
 
 
-    print("All iterations complete. Total runtime was %d ms" % total_t.elapsed())
+    print("All iterations complete.")
 
     return
