@@ -397,7 +397,7 @@ QString OpenMMMDIntegrator::toString() const
 
 void OpenMMMDIntegrator::initialise()
 {
-  bool Debug = false;
+  bool Debug = true;
 
   if (Debug)
     qDebug() << " initialising OpenMMMDIntegrator";
@@ -478,7 +478,7 @@ void OpenMMMDIntegrator::initialise()
       nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::NoCutoff);
 
       if (Debug)
-    qDebug() << "\nCut off type = " << CutoffType << "\n";
+	qDebug() << "\nCut off type = " << CutoffType << "\n";
     }
   else 
     {
@@ -808,28 +808,45 @@ void OpenMMMDIntegrator::initialise()
             QString atom0 =  molecule.atom(AtomIdx(idx0)).toString();
             QString atom1 =  molecule.atom(AtomIdx(idx1)).toString();
 
+	    // JM 04/14 Skip constraints involving atom named EPW. Necessary for EPW support in T4P in OpenMM >6.0
+	    AtomName atname0 = molecule.atom(bonds[j].atom0()).name();
+	    AtomName atname1 = molecule.atom(bonds[j].atom1()).name();
+	    // A more general fix may be to skip constraints involving an atom with mass 0 g.mol-1
+	    // But need to figure out how to get this info from Sire and should forbid changes to masses between 
+	    // initialisation and integration...
+	    //const PropertyName &mass_property = PropertyName("mass");
+	    //const double mass0 = molecule.atom(AtomIdx(idx0)).property(mass_property).asA<AtomMasses>.value();
+	    //const double mass1 = molecule.atom(AtomIdx(idx1)).property(mass_property).asA<AtomMasses>.value();
+
             idx0 = idx0 + num_atoms_till_i;
             idx1 = idx1 + num_atoms_till_i;
 
             if(flag_constraint == NONE ){
                 bondStretch_openmm->addBond(idx0,idx1,r0 * OpenMM::NmPerAngstrom, 
                 k * 2.0 * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm); 
-
-            //cout << "\nBOND ADDED TO "<< atom0.toStdString() << " AND " << atom1.toStdString() << "\n";
+		if (Debug)
+		  qDebug() << "\nBOND ADDED TO "<< atom0 << " AND " << atom1 << "\n";
             }
             else if ( flag_constraint == ALLBONDS || flag_constraint == HANGLES ){
+	      if (Debug)
+		qDebug() << " atname0 " << atname0.toString() << " atname1 " << atname1.toString();
+	      if (atname0 != AtomName("EPW") && atname1 != AtomName("EPW") ) {
                 system_openmm->addConstraint(idx0,idx1, r0 *  OpenMM::NmPerAngstrom);
-                //cout << "\nALLBONDS or HANGLES ADDED BOND CONSTRAINT TO " << atom0.toStdString() << " AND " << atom1.toStdString() << "\n";
+		if (Debug)
+		  qDebug() << "\nALLBONDS or HANGLES ADDED BOND CONSTRAINT TO " << atom0 << " AND " << atom1 << "\n";
+	      }
             }
             else if ( flag_constraint == HBONDS ) {
                 if ( (atom0[6] == 'H') || (atom1[6] == 'H') ){
                     system_openmm->addConstraint(idx0,idx1, r0 *  OpenMM::NmPerAngstrom);
-                //cout << "\nHBONDS ADDED BOND CONSTRAINT TO " << atom0.toStdString() << " AND " << atom1.toStdString() << "\n";
+		    if (Debug)
+		      qDebug() << "\nHBONDS ADDED BOND CONSTRAINT TO " << atom0 << " AND " << atom1 << "\n";
                 }
                 else{
                     bondStretch_openmm->addBond(idx0,idx1,r0 * OpenMM::NmPerAngstrom, 
                         k * 2.0 * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm);
-                    //cout << "\nHBONDS ADDED BOND TO " << atom0.toStdString() << " AND " << atom1.toStdString() << "\n";
+		    if (Debug)
+		      qDebug() << "\nHBONDS ADDED BOND TO " << atom0 << " AND " << atom1 << "\n";
                 }
             }
             //Bond exclusion List
@@ -852,6 +869,7 @@ void OpenMMMDIntegrator::initialise()
             QString atom0 =  molecule.atom(AtomIdx(idx0)).toString();
             QString atom1 =  molecule.atom(AtomIdx(idx1)).toString();
             QString atom2 =  molecule.atom(AtomIdx(idx2)).toString();
+
             Vector diff = c[idx2] - c[idx0];
 
             idx0 = idx0 + num_atoms_till_i;
@@ -861,16 +879,24 @@ void OpenMMMDIntegrator::initialise()
             if ( flag_constraint == HANGLES ){
                 if( ((atom0[6] == 'H') && (atom2[6] == 'H')) ){
                     system_openmm->addConstraint(idx0,idx2, diff.length() *  OpenMM::NmPerAngstrom);
+		    if (Debug)
+		      qDebug() << "\nHANGLES ANGLE CONSTRAINT TO " << atom0 << " AND " << atom2 << "\n";
                 }
                 else if ( ((atom0[6] == 'H') && (atom1[6] == 'O')) || ((atom1[6] == 'O') && (atom2[6] == 'H')) ){
                     system_openmm->addConstraint(idx0,idx2, diff.length() *  OpenMM::NmPerAngstrom);
+		    if (Debug)
+		      qDebug() << "\n ANGLE CONSTRAINT TO " << atom0 << " AND " << atom2 << "\n";
                 }
                 else{
                     bondBend_openmm->addAngle(idx0,idx1,idx2, theta0 , k * 2.0 * OpenMM::KJPerKcal);
+		    if (Debug)
+		      qDebug() << "\n ANGLE TO " << atom0 << " AND " << atom1 << " AND " << atom2 << "\n";
                 }
             }
             else{
                 bondBend_openmm->addAngle(idx0,idx1,idx2, theta0 , k * 2.0 * OpenMM::KJPerKcal);
+		if (Debug)
+		  qDebug() << "\n ANGLE TO " << atom0 << " AND " << atom1 << " AND " << atom2 << "\n";
             }
         }//end of angles
 
@@ -952,8 +978,9 @@ void OpenMMMDIntegrator::initialise()
 
 void OpenMMMDIntegrator::createContext(IntegratorWorkspace &workspace,
                                        SireUnits::Dimension::Time timestep,
-                                       int nmoves, bool record_stats){
-    bool Debug = false;
+                                       int nmoves, bool record_stats)
+{
+    bool Debug = true;
 
       if(Debug)
         qDebug() << "In OpenMMMDIntegrator::integrate()\n\n" ;
@@ -1169,7 +1196,7 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
                                    SireUnits::Dimension::Time timestep,
                                    int nmoves, bool record_stats)
 {
-    bool Debug = false;
+    bool Debug = true;
 
     createContext(workspace, timestep, nmoves, record_stats);
 
@@ -1279,7 +1306,12 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
 
     if ( coord_freq > 0 ){/** Break nmoves in several steps to buffer coordinates*/
         for (int i=0; i < nmoves ; i = i + coord_freq){
+
+	    if (Debug)
+	        qDebug() << " about to step ";
+
             (openmm_context->getIntegrator()).step(coord_freq);
+
             if (Debug)
                 qDebug() << " i now " << i;
 
@@ -1312,6 +1344,9 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
     positions_openmm = state_openmm.getPositions();
     velocities_openmm = state_openmm.getVelocities();
     double potential_energy = state_openmm.getPotentialEnergy(); 
+
+    if (Debug)
+      qDebug() << " pot nrg " << potential_energy;
 
     IsFiniteNumber = (potential_energy <= DBL_MAX && potential_energy >= -DBL_MAX);
 

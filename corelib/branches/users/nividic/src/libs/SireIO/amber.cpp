@@ -2005,15 +2005,16 @@ tuple<MoleculeGroup,SpacePtr> Amber::readCrdTop(const QString &crdfile,
         }
 
         // Set non bonded pairs
-        if (natoms >1)
-        {
+        // if (natoms >1)
+	// JM 04/14 set NB pairs even if monoatomic
+        //{
             //qDebug() << " Setting up non bonded pairs";
 
-            setNonBondedPairs(editmol, pointers[NEXT],
-                              num_excluded_atoms, exc_atom_list,
-                              nbpairs, nb_property,
-                              atoms14, coul_14scl, lj_14scl);
-        }
+	setNonBondedPairs(editmol, pointers[NEXT],
+			  num_excluded_atoms, exc_atom_list,
+			  nbpairs, nb_property,
+			  atoms14, coul_14scl, lj_14scl);
+	//}
 
         molecule = editmol.commit();
 
