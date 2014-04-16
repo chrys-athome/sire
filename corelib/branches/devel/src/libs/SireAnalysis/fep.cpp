@@ -868,62 +868,26 @@ QVector<DataPoint> FEPDeltas::values() const
         
         if (fwds == 0)
         {
-            double bwdsval = bwds->average();
-            double bwdstay = bwds->taylorExpansion();
-            
-            double maxerr = bwds->histogram().standardError(90);
-            
-            double val = 0.5 * (bwdsval + bwdstay);
-            
-            //get the biggest difference between the four estimates of
-            //the free energy
-            double minerr = 0.5 * ( qMax(bwdsval,bwdstay) -
-                                    qMin(bwdsval,bwdstay) );
-            
-            if (maxerr < minerr)
-                qSwap(maxerr, minerr);
+            double val = bwds->fepFreeEnergy();
+            double minerr = bwds->histogram().standardError(90);
+            double maxerr = minerr;
             
             points.append( DataPoint(lam, val, 0, minerr, 0, maxerr) );
         }
         else if (bwds == 0)
         {
-            double fwdsval = fwds->average();
-            double fwdstay = fwds->taylorExpansion();
-            
-            double maxerr = fwds->histogram().standardError(90);
-            
-            double val = 0.5 * (fwdsval + fwdstay);
-            
-            //get the biggest difference between the four estimates of
-            //the free energy
-            double minerr = 0.5 * ( qMax(fwdsval,fwdstay) -
-                                    qMin(fwdsval,fwdstay) );
-            
-            if (maxerr < minerr)
-                qSwap(maxerr, minerr);
+            double val = fwds->fepFreeEnergy();
+            double minerr = fwds->histogram().standardError(90);
+            double maxerr = minerr;
             
             points.append( DataPoint(lam, val, 0, minerr, 0, maxerr) );
         }
         else
         {
-            double fwdsval = fwds->average();
-            double bwdsval = bwds->average();
-            double fwdstay = fwds->taylorExpansion();
-            double bwdstay = bwds->taylorExpansion();
-            
-            double fwdserr = fwds->histogram().standardError(90);
-            double bwdserr = bwds->histogram().standardError(90);
-            
-            double val = 0.25 * (fwdsval + bwdsval + fwdstay + bwdstay);
-            double maxerr = qMax(fwdserr, bwdserr);
-            
-            //get the biggest difference between the four estimates of
-            //the free energy
-            double minerr = 0.5 * ( qMax(fwdsval,qMax(bwdsval,qMax(fwdstay,bwdstay))) -
-                                    qMin(fwdsval,qMin(bwdsval,qMin(fwdstay,bwdstay))) );
-            
-            if (maxerr < minerr)
-                qSwap(maxerr, minerr);
+            double val = 0.5 * (fwds->fepFreeEnergy() + bwds->fepFreeEnergy());
+            double minerr = std::abs(fwds->fepFreeEnergy() - bwds->fepFreeEnergy());
+            double maxerr = minerr + fwds->histogram().standardError(90)
+                                   + bwds->histogram().standardError(90);
             
             points.append( DataPoint(lam, val, 0, minerr, 0, maxerr) );
         }
@@ -944,21 +908,9 @@ QVector<DataPoint> FEPDeltas::forwardsValues() const
         {
             const FreeEnergyAverage &fwds = *(fwds_deltas.constFind(lamval));
         
-            double fwdsval = fwds.average();
-            double fwdstay = fwds.taylorExpansion();
-            
+            double val = fwds.fepFreeEnergy();
             double maxerr = fwds.histogram().standardError(90);
-            
-            double val = 0.5 * (fwdsval + fwdstay);
-            
-            //get the biggest difference between the four estimates of
-            //the free energy
-            double minerr = 0.5 * ( qMax(fwdsval,fwdstay) -
-                                    qMin(fwdsval,fwdstay) );
-            
-            if (maxerr < minerr)
-                qSwap(maxerr, minerr);
-            
+            double minerr = maxerr;
             points.append( DataPoint(lamval, val, 0, minerr, 0, maxerr) );
         }
     }
@@ -978,21 +930,9 @@ QVector<DataPoint> FEPDeltas::backwardsValues() const
         {
             const FreeEnergyAverage &bwds = *(bwds_deltas.constFind(lamvals.at(i)));
         
-            double bwdsval = bwds.average();
-            double bwdstay = bwds.taylorExpansion();
-            
+            double val = bwds.fepFreeEnergy();
             double maxerr = bwds.histogram().standardError(90);
-            
-            double val = 0.5 * (bwdsval + bwdstay);
-            
-            //get the biggest difference between the four estimates of
-            //the free energy
-            double minerr = 0.5 * ( qMax(bwdsval,bwdstay) -
-                                    qMin(bwdsval,bwdstay) );
-            
-            if (maxerr < minerr)
-                qSwap(maxerr, minerr);
-            
+            double minerr = maxerr;
             points.append( DataPoint(lamvals.at(i-1), val, 0, minerr, 0, maxerr) );
         }
     }
@@ -1057,58 +997,22 @@ PMF FEPDeltas::sum() const
         
         if (fwds == 0)
         {
-            double bwdsval = bwds->average();
-            double bwdstay = bwds->taylorExpansion();
-            
-            maxerr = bwds->histogram().standardError(90);
-            
-            val = 0.5 * (bwdsval + bwdstay);
-            
-            //get the biggest difference between the four estimates of
-            //the free energy
-            minerr = 0.5 * ( qMax(bwdsval,bwdstay) -
-                             qMin(bwdsval,bwdstay) );
-            
-            if (maxerr < minerr)
-                qSwap(maxerr, minerr);
+            val = bwds->fepFreeEnergy();
+            minerr = bwds->histogram().standardError(90);
+            maxerr = minerr;
         }
         else if (bwds == 0)
         {
-            double fwdsval = fwds->average();
-            double fwdstay = fwds->taylorExpansion();
-            
-            maxerr = fwds->histogram().standardError(90);
-            
-            val = 0.5 * (fwdsval + fwdstay);
-            
-            //get the biggest difference between the four estimates of
-            //the free energy
-            minerr = 0.5 * ( qMax(fwdsval,fwdstay) -
-                             qMin(fwdsval,fwdstay) );
-            
-            if (maxerr < minerr)
-                qSwap(maxerr, minerr);
+            val = fwds->fepFreeEnergy();
+            minerr = fwds->histogram().standardError(90);
+            maxerr = minerr;
         }
         else
         {
-            double fwdsval = fwds->average();
-            double bwdsval = bwds->average();
-            double fwdstay = fwds->taylorExpansion();
-            double bwdstay = bwds->taylorExpansion();
-            
-            double fwdserr = fwds->histogram().standardError(90);
-            double bwdserr = bwds->histogram().standardError(90);
-            
-            val = 0.25 * (fwdsval + bwdsval + fwdstay + bwdstay);
-            maxerr = qMax(fwdserr, bwdserr);
-            
-            //get the biggest difference between the four estimates of
-            //the free energy
-            minerr = 0.5 * ( qMax(fwdsval,qMax(bwdsval,qMax(fwdstay,bwdstay))) -
-                             qMin(fwdsval,qMin(bwdsval,qMin(fwdstay,bwdstay))) );
-            
-            if (maxerr < minerr)
-                qSwap(maxerr, minerr);
+            val = 0.5 * (fwds->fepFreeEnergy() + bwds->fepFreeEnergy());
+            minerr = std::abs(fwds->fepFreeEnergy() - bwds->fepFreeEnergy());
+            maxerr = minerr + fwds->histogram().standardError(90) +
+                              bwds->histogram().standardError(90);
         }
         
         total += val;
