@@ -287,6 +287,9 @@ void VolumeMap::clear()
     grid_info = GridInfo();
 }
 
+void VolumeMap::redimensionGrid(Length new_spacing)
+{}
+
 /** Set the desired grid spacing. If this is not the same as the current
     grid, then the current map is re-mapped onto the new grid */
 void VolumeMap::setGridSpacing(Length new_spacing)
@@ -365,20 +368,37 @@ const QVector<float>& VolumeMap::occupancy() const
     return occ;
 }
 
-void VolumeMap::add(const MoleculeView &molecule, const PropertyMap &map = PropertyMap());
+void VolumeMap::add(const MoleculeView &molecule, const PropertyMap &map)
+{}
+
 void VolumeMap::add(const MoleculeView &mol0, const MoleculeView &mol1,
-         const PropertyMap &map = PropertyMap());
-void VolumeMap::add(const QList<PartialMolecule> &molecules, const PropertyMap &map = PropertyMap());
+                    const PropertyMap &map)
+{}
 
-void VolumeMap::add(const Molecules &molecules, const PropertyMap &map = PropertyMap());
-void VolumeMap::add(const Molecules &mols0, const Molecules &mols1,
-         const PropertyMap &map = PropertyMap());
-void VolumeMap::add(const QList<Molecules> &molecules, const PropertyMap &map = PropertyMap());
+void VolumeMap::add(const QList<PartialMolecule> &molecules, const PropertyMap &map)
+{}
 
-void VolumeMap::add(const MoleculeGroup &molecules, const PropertyMap &map = PropertyMap());
+void VolumeMap::add(const Molecules &molecules, const PropertyMap &map)
+{}
+
+void VolumeMap::add(const Molecules &mols0, const Molecules &mols1, const PropertyMap &map)
+{}
+
+void VolumeMap::add(const QList<Molecules> &molecules, const PropertyMap &map)
+{}
+
+void VolumeMap::add(const MoleculeGroup &molecules, const PropertyMap &map)
+{}
+
 void VolumeMap::add(const MoleculeGroup &mols0, const MoleculeGroup &mols1,
-         const PropertyMap &map = PropertyMap());
-void VolumeMap::add(const QList<MoleculeGroup> &molecules, const PropertyMap &map = PropertyMap());
+                    const PropertyMap &map)
+{}
 
-void VolumeMap::add(const VolumeMap &other);
-void VolumeMap::add(const GridInfo &gridinfo, const QVector<float> &values);
+void VolumeMap::add(const QList<MoleculeGroup> &molecules, const PropertyMap &map)
+{}
+
+void VolumeMap::add(const VolumeMap &other)
+{}
+
+void VolumeMap::add(const GridInfo &gridinfo, const QVector<float> &values)
+{}

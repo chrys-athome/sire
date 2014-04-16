@@ -1123,6 +1123,202 @@ PMF FEPDeltas::sum() const
     return PMF(points);
 }
 
+/** Integrate (sum) the forwards deltas across the windows to return the PMF */
+PMF FEPDeltas::sumForwards() const
+{
+    if (lamvals.isEmpty())
+        return PMF();
+
+    QVector<DataPoint> points;
+    
+    double total = 0;
+    double total_err = 0;
+    
+    points.append( DataPoint(lamvals.first(),0) );
+    
+    for (int i=0; i<lamvals.count()-1; ++i)
+    {
+        const FreeEnergyAverage *fwds = 0;
+        const FreeEnergyAverage *bwds = 0;
+        
+        double lam = lamvals.at(i);
+        
+        double val = 0;
+        double err = 0;
+        
+        if (fwds_deltas.contains(lam))
+            fwds = &(*(fwds_deltas.constFind(lam)));
+        
+        if (bwds_deltas.contains(lamvals.at(i+1)))
+            bwds = &(*(bwds_deltas.constFind(lamvals.at(i+1))));
+        
+        if (fwds == 0)
+        {
+            err = bwds->histogram().standardError(90);
+            val = bwds->average();
+        }
+        else
+        {
+            err = fwds->histogram().standardError(90);
+            val = fwds->average();
+        }
+        
+        total += val;
+        total_err += err;
+        
+        points.append( DataPoint(lamvals.at(i+1), total, 0, total_err) );
+    }
+    
+    return PMF(points);
+}
+
+/** Integrate (sum) the backwards deltas across the windows to return the PMF */
+PMF FEPDeltas::sumBackwards() const
+{
+    if (lamvals.isEmpty())
+        return PMF();
+
+    QVector<DataPoint> points;
+    
+    double total = 0;
+    double total_err = 0;
+    
+    points.append( DataPoint(lamvals.first(),0) );
+    
+    for (int i=0; i<lamvals.count()-1; ++i)
+    {
+        const FreeEnergyAverage *fwds = 0;
+        const FreeEnergyAverage *bwds = 0;
+        
+        double lam = lamvals.at(i);
+        
+        double val = 0;
+        double err = 0;
+        
+        if (fwds_deltas.contains(lam))
+            fwds = &(*(fwds_deltas.constFind(lam)));
+        
+        if (bwds_deltas.contains(lamvals.at(i+1)))
+            bwds = &(*(bwds_deltas.constFind(lamvals.at(i+1))));
+        
+        if (bwds == 0)
+        {
+            err = fwds->histogram().standardError(90);
+            val = fwds->average();
+        }
+        else
+        {
+            err = bwds->histogram().standardError(90);
+            val = bwds->average();
+        }
+        
+        total += val;
+        total_err += err;
+        
+        points.append( DataPoint(lamvals.at(i+1), total, 0, total_err) );
+    }
+    
+    return PMF(points);
+}
+
+/** Integrate (sum) the forwards taylor expansions across the windows to return the PMF */
+PMF FEPDeltas::sumForwardsTaylor() const
+{
+    if (lamvals.isEmpty())
+        return PMF();
+
+    QVector<DataPoint> points;
+    
+    double total = 0;
+    double total_err = 0;
+    
+    points.append( DataPoint(lamvals.first(),0) );
+    
+    for (int i=0; i<lamvals.count()-1; ++i)
+    {
+        const FreeEnergyAverage *fwds = 0;
+        const FreeEnergyAverage *bwds = 0;
+        
+        double lam = lamvals.at(i);
+        
+        double val = 0;
+        double err = 0;
+        
+        if (fwds_deltas.contains(lam))
+            fwds = &(*(fwds_deltas.constFind(lam)));
+        
+        if (bwds_deltas.contains(lamvals.at(i+1)))
+            bwds = &(*(bwds_deltas.constFind(lamvals.at(i+1))));
+        
+        if (fwds == 0)
+        {
+            err = bwds->histogram().standardError(90);
+            val = bwds->taylorExpansion();
+        }
+        else
+        {
+            err = fwds->histogram().standardError(90);
+            val = fwds->taylorExpansion();
+        }
+        
+        total += val;
+        total_err += err;
+        
+        points.append( DataPoint(lamvals.at(i+1), total, 0, total_err) );
+    }
+    
+    return PMF(points);
+}
+
+/** Integrate (sum) the backwards Taylor expansions across the windows to return the PMF */
+PMF FEPDeltas::sumBackwardsTaylor() const
+{
+    if (lamvals.isEmpty())
+        return PMF();
+
+    QVector<DataPoint> points;
+    
+    double total = 0;
+    double total_err = 0;
+    
+    points.append( DataPoint(lamvals.first(),0) );
+    
+    for (int i=0; i<lamvals.count()-1; ++i)
+    {
+        const FreeEnergyAverage *fwds = 0;
+        const FreeEnergyAverage *bwds = 0;
+        
+        double lam = lamvals.at(i);
+        
+        double val = 0;
+        double err = 0;
+        
+        if (fwds_deltas.contains(lam))
+            fwds = &(*(fwds_deltas.constFind(lam)));
+        
+        if (bwds_deltas.contains(lamvals.at(i+1)))
+            bwds = &(*(bwds_deltas.constFind(lamvals.at(i+1))));
+        
+        if (bwds == 0)
+        {
+            err = fwds->histogram().standardError(90);
+            val = fwds->taylorExpansion();
+        }
+        else
+        {
+            err = bwds->histogram().standardError(90);
+            val = bwds->taylorExpansion();
+        }
+        
+        total += val;
+        total_err += err;
+        
+        points.append( DataPoint(lamvals.at(i+1), total, 0, total_err) );
+    }
+    
+    return PMF(points);
+}
+
 /** Integrate (sum) the deltas across the windows to return the PMF */
 PMF FEPDeltas::integrate() const
 {

@@ -154,7 +154,7 @@ public:
     void clear();
 
 private:
-    void redimensionGrid();
+    void redimensionGrid(Length new_spacing);
 
     void beginEvaluation();
     void evaluate(const MoleculeView &molecule, const PropertyMap &map);
