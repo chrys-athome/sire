@@ -1275,15 +1275,12 @@ QVector<DataPoint> Gradients::values() const
                     double fwdsval = fwdsavg->average() / delta_lam;
                     double bwdsval = bwdsavg->average() / delta_lam;
                     
-                    double fwdserr = fwdsavg->histogram().standardError(90);
-                    double bwdserr = bwdsavg->histogram().standardError(90);
+                    double fwdserr = fwdsavg->histogram().standardError(90) / delta_lam;
+                    double bwdserr = bwdsavg->histogram().standardError(90) / delta_lam;
                     
                     double val = 0.5 * (fwdsval + bwdsval);
                     double minerr = std::abs( fwdsval - bwdsval );
                     double maxerr = minerr + fwdserr + bwdserr;
-                    
-                    minerr /= delta_lam;
-                    maxerr /= delta_lam;
                     
                     points[i] = DataPoint(lam, val, 0, minerr, 0, maxerr);
                 }
