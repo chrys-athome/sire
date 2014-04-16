@@ -1052,14 +1052,14 @@ def createStage(system, protein_system, ligand_mol0, ligand_mol1, water_system, 
     system.setComponent(total_nrg_prev_sym, total_nrg_prev)
 
     system.setComponent( Symbol("delta_nrg^{F}"), (total_nrg_f_sym - total_nrg_sym) )
-    system.setComponent( Symbol("delta_nrg^{B}"), (total_nrg_sym - total_nrg_b_sym) )
+    system.setComponent( Symbol("delta_nrg^{B}"), (total_nrg_b_sym - total_nrg_sym) )
     system.setComponent( Symbol("delta_nrg^{next}"), (total_nrg_next_sym - total_nrg_sym) )
-    system.setComponent( Symbol("delta_nrg^{prev}"), (total_nrg_sym - total_nrg_prev_sym) )
+    system.setComponent( Symbol("delta_nrg^{prev}"), (total_nrg_prev_sym - total_nrg_sym) )
 
     system.setComponent( Symbol("delta_bound_nrg^{F}"), (bound_nrg_f_sym - bound_nrg_sym) )
-    system.setComponent( Symbol("delta_bound_nrg^{B}"), (bound_nrg_sym - bound_nrg_b_sym) )
+    system.setComponent( Symbol("delta_bound_nrg^{B}"), (bound_nrg_b_sym - bound_nrg_sym) )
     system.setComponent( Symbol("delta_free_nrg^{F}"), (free_nrg_f_sym - free_nrg_sym) )
-    system.setComponent( Symbol("delta_free_nrg^{B}"), (free_nrg_sym - free_nrg_b_sym) )
+    system.setComponent( Symbol("delta_free_nrg^{B}"), (free_nrg_b_sym - free_nrg_sym) )
 
     # Now add constraints. These are used to keep 
     # all lambda values between 0 and 1, and to
@@ -1191,28 +1191,30 @@ def createStage(system, protein_system, ligand_mol0, ligand_mol1, water_system, 
 
     system.add( "delta_g^{B}", MonitorComponent( Symbol("delta_nrg^{B}"),
                                                  FreeEnergyAverage(temperature.val,
-                                                                   dlam * binwidth.val) ) )
+                                                                   dlam * binwidth.val, False) ) )
 
     system.add( "delta_g^{next}", MonitorComponent( Symbol("delta_nrg^{next}"),
-                                                    BennettsFreeEnergyAverage(temperature.val,
+                                                    BennettsFreeEnergyAverage(0 * kcal_per_mol,
+                                                                              temperature.val,
                                                                               0.1 * binwidth.val) ) )
 
     system.add( "delta_g^{prev}", MonitorComponent( Symbol("delta_nrg^{prev}"),
-                                                    BennettsFreeEnergyAverage(temperature.val,
-                                                                              0.1 * binwidth.val) ) )
+                                                    BennettsFreeEnergyAverage(0 * kcal_per_mol,
+                                                                              temperature.val,
+                                                                              0.1 * binwidth.val, False) ) )
     
     system.add( "delta_bound_g^{F}", MonitorComponent( Symbol("delta_bound_nrg^{F}"),
                                                        FreeEnergyAverage(temperature.val,
                                                                          dlam * binwidth.val) ) )
     system.add( "delta_bound_g^{B}", MonitorComponent( Symbol("delta_bound_nrg^{B}"),
                                                        FreeEnergyAverage(temperature.val,
-                                                                         dlam * binwidth.val) ) )
+                                                                         dlam * binwidth.val, False) ) )
     system.add( "delta_free_g^{F}", MonitorComponent( Symbol("delta_free_nrg^{F}"),
                                                       FreeEnergyAverage(temperature.val,
                                                                         dlam * binwidth.val) ) )
     system.add( "delta_free_g^{B}", MonitorComponent( Symbol("delta_free_nrg^{B}"),
                                                       FreeEnergyAverage(temperature.val,
-                                                                        dlam * binwidth.val) ) )
+                                                                        dlam * binwidth.val, False) ) )
 
     # we will monitor the average energy between the two ligands and each
     # residue with mobile sidechain, and each mobile solute

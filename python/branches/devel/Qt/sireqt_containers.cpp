@@ -73,6 +73,8 @@ void register_SireQt_containers()
     register_list< QVector< QVector< QVector<double> > > >();
     register_list< QVector< QVector< QVector< QVector<double> > > > >();
 
+    register_list< QList< QVector<double> > >();
+
     register_list< QVector<bool> >();
     register_list< QVector< QVector<bool> > >();
 
