@@ -58,6 +58,8 @@ using SireVol::GridInfo;
 using SireUnits::Dimension::Length;
 using SireBase::PropertyMap;
 
+namespace detail{ class VolumeMapData; }
+
 /** This class provides a volume map. This is a 3D regular grid,
     with the average occupancy at each grid point recorded. Grid
     points are considered occupied if they are covered by at least
@@ -88,15 +90,17 @@ public:
     };
 
     VolumeMap();
+    VolumeMap(bool skip_light_atoms);
     
-    VolumeMap(const Length &grid_spacing);
-    VolumeMap(MapType map_type);
-    VolumeMap(FillType fill_type);
+    VolumeMap(const Length &grid_spacing, bool skip_light_atoms=false);
+    VolumeMap(MapType map_type, bool skip_light_atoms=false);
+    VolumeMap(FillType fill_type, bool skip_light_atoms=false);
     
-    VolumeMap(const Length &grid_spacing, MapType map_type);
-    VolumeMap(const Length &grid_spacing, FillType fill_type);
-    VolumeMap(FillType fill_type, MapType map_type);
-    VolumeMap(const Length &grid_spacing, FillType fill_type, MapType map_type);
+    VolumeMap(const Length &grid_spacing, MapType map_type, bool skip_light_atoms=false);
+    VolumeMap(const Length &grid_spacing, FillType fill_type, bool skip_light_atoms=false);
+    VolumeMap(FillType fill_type, MapType map_type, bool skip_light_atoms=false);
+    VolumeMap(const Length &grid_spacing, FillType fill_type, MapType map_type,
+              bool skip_light_atoms=false);
     
     VolumeMap(const VolumeMap &other);
     
@@ -129,6 +133,9 @@ public:
     FillType fillType() const;
     void setFillType(FillType fill_type);
     
+    void setSkipLightAtoms(bool on);
+    bool skipLightAtoms() const;
+    
     const GridInfo& gridInfo() const;
     
     const QVector<float>& occupancy() const;
@@ -159,6 +166,8 @@ private:
     void beginEvaluation();
     void evaluate(const MoleculeView &molecule, const PropertyMap &map);
     void evaluate(const Molecules &molecules, const PropertyMap &map);
+    void evaluate(const GridInfo &info, const QVector<float> &vals, qint64 n);
+    void cancelEvaluation();
     void endEvaluation();
 
     /** Information about the grid */
@@ -176,12 +185,18 @@ private:
     /** The actual occupancy map */
     QVector<float> occ;
     
+    /** Pointer to the data object used during grid updates */
+    detail::VolumeMapData *d;
+    
     /** The number of samples in this map */
     qint64 nsamples;
     
     /** The maximum number of grid points - this limits the memory
         used by this map */
     qint32 max_grid_points;
+
+    /** Whether or not to exclude light atoms from the map */
+    bool skip_light_atoms;
 };
 
 }

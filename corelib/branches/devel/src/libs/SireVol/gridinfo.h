@@ -198,6 +198,10 @@ public:
     Length spacing() const;
     AABox dimensions() const;
 
+    bool contains(const Vector &point) const;
+    
+    GridIndex closestIndexTo(const Vector &point) const;
+
     int gridToArrayIndex(int i, int j, int k) const;
     int gridToArrayIndex(const GridIndex &idx) const;
     int pointToArrayIndex(const Vector &point) const;
@@ -213,6 +217,11 @@ public:
 
     GridIndex arrayToGridIndex(int i) const;
     GridIndex pointToGridIndex(const Vector &point) const;
+
+    GridIndex indexOf(int i, const GridInfo &grid) const;
+    GridIndex indexOf(const GridIndex &idx, const GridInfo &grid) const;
+
+    QVector<float> redimension(const QVector<float> &values, const GridInfo &new_grid) const;
 
 private:
     /** The origin of the grid */

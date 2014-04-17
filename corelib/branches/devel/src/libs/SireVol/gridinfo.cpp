@@ -584,3 +584,114 @@ Vector GridInfo::point(const Vector &p) const
 {
     return point( pointToGridIndex(p) );
 }
+
+/** Return whether or not this grid contains the point 'point' */
+bool GridInfo::contains(const Vector &point) const
+{
+    if (this->isEmpty())
+        return false;
+    
+    const Vector mincoords = dimensions().minCoords();
+    const Vector maxcoords = dimensions().maxCoords();
+    
+    for (int i=0; i<3; ++i)
+    {
+        if (point[i] < mincoords[i] or point[i] > maxcoords[i])
+            return false;
+    }
+    
+    return true;
+}
+
+/** Return the grid index that is closest to the point 'point'. Note that
+    if 'point' lies outside the grid, then the closest grid index will 
+    still be returned (it may just lie a long way from the point!) */
+GridIndex GridInfo::closestIndexTo(const Vector &point) const
+{
+    if (isEmpty())
+        return GridIndex::null();
+    
+    float i = (point.x() - grid_origin.x()) * inv_grid_spacing;
+    float j = (point.y() - grid_origin.y()) * inv_grid_spacing;
+    float k = (point.z() - grid_origin.z()) * inv_grid_spacing;
+    
+    if (i < 0)
+        i = 0;
+    
+    if (j < 0)
+        j = 0;
+    
+    if (k < 0)
+        k = 0;
+    
+    if (i >= dimx-1)
+        i = dimx-1;
+    
+    if (j >= dimy-1)
+        j = dimy-1;
+    
+    if (k >= dimz-1)
+        k = dimz-1;
+
+    //round the index to the nearest integer
+    return GridIndex( qint32(i+0.5), qint32(j+0.5), qint32(k+0.5) );
+}
+
+/** Return the index in grid 'grid' of point 'idx' in this grid. This returns
+    a null index if this index does not exist in either grid. Note that this
+    returns the index of the closest grid point if the grids do not exactly 
+    line up */
+GridIndex GridInfo::indexOf(const GridIndex &idx, const GridInfo &grid) const
+{
+    if (idx.isNull())
+        return GridIndex::null();
+    
+    const Vector point = this->point(idx);
+    
+    if (grid.contains(point))
+        return grid.closestIndexTo(point);
+    else
+        return GridIndex::null();
+}
+
+/** Return the index in grid 'grid' of point 'i' in this grid. This returns
+    a null index if this index does not exist in either grid. Note that this
+    returns the index of the closest grid point if the grids do not exactly 
+    line up */
+GridIndex GridInfo::indexOf(int i, const GridInfo &grid) const
+{
+    return indexOf( this->arrayToGridIndex(i), grid );
+}
+
+/** Return the values 'values' that map to this grid, redimensioned to map to
+    the grid 'new_grid' */
+QVector<float> GridInfo::redimension(const QVector<float> &vals, const GridInfo &new_grid) const
+{
+    if (vals.count() != this->nPoints())
+        throw SireError::incompatible_error( QObject::tr(
+                "Cannot redimension the passed values as the number of grid points (%1) "
+                "does not agree with the number of elements in the values array (%2).")
+                    .arg(nPoints()).arg(vals.count()), CODELOC );
+    
+    if (this->operator==(new_grid))
+        //no change in grid
+        return vals;
+    
+    if (this->isEmpty() or new_grid.isEmpty())
+        return QVector<float>();
+
+    //create space to hold the expanded grid
+    QVector<float> new_vals(new_grid.nPoints(), 0.0);
+        
+    for (int i=0; i<this->nPoints(); ++i)
+    {
+        int new_idx = new_grid.gridToArrayIndex( this->indexOf(i, new_grid) );
+        
+        if (new_idx >= 0 and new_idx < new_grid.nPoints())
+        {
+            new_vals.data()[new_idx] += vals.constData()[i];
+        }
+    }
+
+    return new_vals;
+}
