@@ -54,6 +54,9 @@ parser.add_argument('--lambda_values', type=float, nargs='+',
 parser.add_argument('-C', '--config', nargs="?", 
                     help='Supply an optional CONFIG file to control the calculation.')
 
+parser.add_argument('--vacuum', action="store_true",
+                    help="Swap ligands into a vacuum box rather than a water box (for relative hydration calculations.") 
+
 parser.add_argument('--author', action="store_true",
                     help="Get information about the authors of this script.")
 
@@ -124,6 +127,10 @@ elif "topfile1" in params:
 else:
     top_file1 = "complex1.top"
     params["topfile1"] = top_file1
+
+if args.vacuum:
+    params["vacuum calculation"] = True
+    print("\nPerforming a relative hydration free energy calculation.\n")
 
 if not (os.path.exists(coord_file0) and os.path.exists(top_file0) and
         os.path.exists(coord_file1) and os.path.exists(top_file1)):

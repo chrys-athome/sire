@@ -54,6 +54,10 @@ temperature = Parameter("temperature", 25*celsius, """Simulation temperature""")
 random_seed = Parameter("random seed", None, """Random number seed. Set this if you
                          want to have reproducible simulations.""")
 
+vacuum_calc = Parameter("vacuum calculation", False, 
+                        """Whether or not to swap the ligand into vacuum. This is useful if you
+                           want to calculate relative hydration free energies.""")
+
 use_fixed_ligand = Parameter("fixed ligand", False,
                              """Whether or not to completely fix the ligand during the simulation.""")
 
@@ -379,27 +383,31 @@ def createStage(system, protein_system, ligand_mol0, ligand_mol1, water_system, 
 
     # create a group to hold all of the mobile water molecules in the free leg
     mobile_free_water_group = MoleculeGroup("mobile_free")
-    water_mol = None
-    if MGName("mobile_solvents") in water_system.mgNames():
-        mols = water_system[MGName("mobile_solvents")].molecules()
-        for molnum in mols.molNums():
-            # only add this water if it doesn't overlap with ligand1
-            water_mol = mols[molnum].molecule().edit().renumber().commit()
 
-            if getMinimumDistance(ligand_mol1,water_mol) > 1.5:
-                for j in range(0,water_mol.nResidues()):
-                    water_mol = water_mol.residue( ResIdx(j) ).edit() \
-                                               .setProperty( PDB.parameters().pdbResidueName(), "FWT" ) \
-                                               .commit().molecule()
+    if water_system:
+        water_mol = None
+        if MGName("mobile_solvents") in water_system.mgNames():
+            mols = water_system[MGName("mobile_solvents")].molecules()
+            for molnum in mols.molNums():
+                # only add this water if it doesn't overlap with ligand1
+                water_mol = mols[molnum].molecule().edit().renumber().commit()
 
-                mobile_free_water_group.add(water_mol)
+                if getMinimumDistance(ligand_mol1,water_mol) > 1.5:
+                    for j in range(0,water_mol.nResidues()):
+                        water_mol = water_mol.residue( ResIdx(j) ).edit() \
+                                                   .setProperty( PDB.parameters().pdbResidueName(), "FWT" ) \
+                                                   .commit().molecule()
+
+                    mobile_free_water_group.add(water_mol)
 
     # create a group to hold all of the fixed water molecules in the free leg
     fixed_free_water_group = MoleculeGroup("fixed_free")
-    if MGName("fixed_molecules") in water_system.mgNames():
-        mols = water_system[MGName("fixed_molecules")].molecules()
-        for molnum in mols.molNums():
-            fixed_free_water_group.add( mols[molnum].molecule().edit().renumber().commit() )
+
+    if water_system:
+        if MGName("fixed_molecules") in water_system.mgNames():
+            mols = water_system[MGName("fixed_molecules")].molecules()
+            for molnum in mols.molNums():
+                fixed_free_water_group.add( mols[molnum].molecule().edit().renumber().commit() )
 
     # create a group to hold all of the fixed molecules in the bound leg
     fixed_bound_group = MoleculeGroup("fixed_bound")
@@ -1312,7 +1320,10 @@ def createStage(system, protein_system, ligand_mol0, ligand_mol1, water_system, 
 
 def mergeLSRC(sys0, ligand0_mol, sys1, ligand1_mol, watersys):
     
-    print("Merging the two ligand complexes with the water system to create the stage 1 and stage 2 systems...")
+    if watersys:
+        print("Merging the two ligand complexes with the water system to create the stage 1 and stage 2 systems...")
+    else:
+        print("Merging the two ligand complexes with a vacuum box to create the stage 1 and stage 2 systems...")
 
     print("\nFirst, mapping the atoms from the first ligand to the atoms of the second...")
     mapping = AtomMCSMatcher(1*second).match(ligand0_mol, PropertyMap(), ligand1_mol, PropertyMap())
@@ -1333,9 +1344,10 @@ def mergeLSRC(sys0, ligand0_mol, sys1, ligand1_mol, watersys):
             print("Lack of reflection sphere in sys1 when it exists in sys0!")
             sys.exit(-1)
 
-        if not watersys.containsProperty("reflection center"):
-            print("Lack of reflection sphere in the water system when it exists in sys0 and sys1!")
-            sys.exit(-1)
+        if watersys:
+            if not watersys.containsProperty("reflection center"):
+                print("Lack of reflection sphere in the water system when it exists in sys0 and sys1!")
+                sys.exit(-1)
 
         reflection_center0 = sys0.property("reflection center").toVector()[0]
         reflection_radius0 = float(str(sys0.property("reflection sphere radius")))
@@ -1343,8 +1355,12 @@ def mergeLSRC(sys0, ligand0_mol, sys1, ligand1_mol, watersys):
         reflection_center1 = sys1.property("reflection center").toVector()[0]
         reflection_radius1 = float(str(sys1.property("reflection sphere radius")))
 
-        reflection_center_wat = watersys.property("reflection center").toVector()[0]
-        reflection_radius_wat = float(str(watersys.property("reflection sphere radius")))
+        if watersys:
+            reflection_center_wat = watersys.property("reflection center").toVector()[0]
+            reflection_radius_wat = float(str(watersys.property("reflection sphere radius")))
+        else:
+            reflection_center_wat = reflection_center0
+            reflection_radius_wat = reflection_radius0
 
         if reflection_center0 != reflection_center1 or \
            reflection_center0 != reflection_center_wat or \
@@ -1392,6 +1408,10 @@ def mergeLSRC(sys0, ligand0_mol, sys1, ligand1_mol, watersys):
 
 def loadWater():
     """Load the the water box used for the free leg"""
+
+    if vacuum_calc.val:
+        print("Using a vacuum box, so calculating a relative hydration free energy.")
+        return None
 
     if os.path.exists(water_s3file.val):
         print("Restoring from Sire Streamed Save file %s..." % water_s3file.val)
