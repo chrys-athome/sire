@@ -107,6 +107,7 @@
 #include "segproperty.hpp"
 #include "specifymol.h"
 #include "viewsofmol.h"
+#include "volumemap.h"
 #include "weightfunction.h"
 #include "withatoms.h"
 #include "within.h"

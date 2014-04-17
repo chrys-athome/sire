@@ -127,6 +127,28 @@ void register_GridInfo_class(){
                 , ( bp::arg("point") ) );
         
         }
+        { //::SireVol::GridInfo::closestIndexTo
+        
+            typedef ::SireVol::GridIndex ( ::SireVol::GridInfo::*closestIndexTo_function_type )( ::SireMaths::Vector const & ) const;
+            closestIndexTo_function_type closestIndexTo_function_value( &::SireVol::GridInfo::closestIndexTo );
+            
+            GridInfo_exposer.def( 
+                "closestIndexTo"
+                , closestIndexTo_function_value
+                , ( bp::arg("point") ) );
+        
+        }
+        { //::SireVol::GridInfo::contains
+        
+            typedef bool ( ::SireVol::GridInfo::*contains_function_type )( ::SireMaths::Vector const & ) const;
+            contains_function_type contains_function_value( &::SireVol::GridInfo::contains );
+            
+            GridInfo_exposer.def( 
+                "contains"
+                , contains_function_value
+                , ( bp::arg("point") ) );
+        
+        }
         { //::SireVol::GridInfo::count
         
             typedef int ( ::SireVol::GridInfo::*count_function_type )(  ) const;
@@ -208,6 +230,28 @@ void register_GridInfo_class(){
                 "gridToArrayIndex"
                 , gridToArrayIndex_function_value
                 , ( bp::arg("idx") ) );
+        
+        }
+        { //::SireVol::GridInfo::indexOf
+        
+            typedef ::SireVol::GridIndex ( ::SireVol::GridInfo::*indexOf_function_type )( int,::SireVol::GridInfo const & ) const;
+            indexOf_function_type indexOf_function_value( &::SireVol::GridInfo::indexOf );
+            
+            GridInfo_exposer.def( 
+                "indexOf"
+                , indexOf_function_value
+                , ( bp::arg("i"), bp::arg("grid") ) );
+        
+        }
+        { //::SireVol::GridInfo::indexOf
+        
+            typedef ::SireVol::GridIndex ( ::SireVol::GridInfo::*indexOf_function_type )( ::SireVol::GridIndex const &,::SireVol::GridInfo const & ) const;
+            indexOf_function_type indexOf_function_value( &::SireVol::GridInfo::indexOf );
+            
+            GridInfo_exposer.def( 
+                "indexOf"
+                , indexOf_function_value
+                , ( bp::arg("idx"), bp::arg("grid") ) );
         
         }
         { //::SireVol::GridInfo::isEmpty
@@ -374,6 +418,17 @@ void register_GridInfo_class(){
                 "pointToGridIndex"
                 , pointToGridIndex_function_value
                 , ( bp::arg("point") ) );
+        
+        }
+        { //::SireVol::GridInfo::redimension
+        
+            typedef ::QVector< float > ( ::SireVol::GridInfo::*redimension_function_type )( ::QVector< float > const &,::SireVol::GridInfo const & ) const;
+            redimension_function_type redimension_function_value( &::SireVol::GridInfo::redimension );
+            
+            GridInfo_exposer.def( 
+                "redimension"
+                , redimension_function_value
+                , ( bp::arg("values"), bp::arg("new_grid") ) );
         
         }
         { //::SireVol::GridInfo::size

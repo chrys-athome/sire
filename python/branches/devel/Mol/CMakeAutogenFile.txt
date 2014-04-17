@@ -115,6 +115,7 @@ set ( PYPP_SOURCES
        ChemicalBondHunter.pypp.cpp
        MoleculeGroup.pypp.cpp
        AtomIdxMatcher.pypp.cpp
+       VolumeMap.pypp.cpp
        MolStructureEditor.pypp.cpp
        Mover_PartialMolecule_.pypp.cpp
        ResName.pypp.cpp

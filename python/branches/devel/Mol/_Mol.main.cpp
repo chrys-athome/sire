@@ -451,6 +451,8 @@
 
 #include "ViewsOfMol.pypp.hpp"
 
+#include "VolumeMap.pypp.hpp"
+
 #include "WeightFunction.pypp.hpp"
 
 #include "Within.pypp.hpp"
@@ -925,6 +927,8 @@ BOOST_PYTHON_MODULE(_Mol){
     register_SpecifyMol_class();
 
     register_UserBeading_class();
+
+    register_VolumeMap_class();
 
     register_Within_class();
 
