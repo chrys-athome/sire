@@ -226,6 +226,16 @@ void register_VolMapMonitor_class(){
                 , typeName_function_value );
         
         }
+        { //::SireSystem::VolMapMonitor::volumeMap
+        
+            typedef ::SireMol::VolumeMap ( ::SireSystem::VolMapMonitor::*volumeMap_function_type )(  ) const;
+            volumeMap_function_type volumeMap_function_value( &::SireSystem::VolMapMonitor::volumeMap );
+            
+            VolMapMonitor_exposer.def( 
+                "volumeMap"
+                , volumeMap_function_value );
+        
+        }
         { //::SireSystem::VolMapMonitor::what
         
             typedef char const * ( ::SireSystem::VolMapMonitor::*what_function_type )(  ) const;

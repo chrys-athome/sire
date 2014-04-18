@@ -263,6 +263,16 @@ void register_VolumeMap_class(){
                 , nMaxGridPoints_function_value );
         
         }
+        { //::SireMol::VolumeMap::nSamples
+        
+            typedef ::qint64 ( ::SireMol::VolumeMap::*nSamples_function_type )(  ) const;
+            nSamples_function_type nSamples_function_value( &::SireMol::VolumeMap::nSamples );
+            
+            VolumeMap_exposer.def( 
+                "nSamples"
+                , nSamples_function_value );
+        
+        }
         { //::SireMol::VolumeMap::occupancy
         
             typedef ::QVector< float > const & ( ::SireMol::VolumeMap::*occupancy_function_type )(  ) const;

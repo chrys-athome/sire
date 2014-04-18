@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "SireIO/dx.h"
 
+#include "SireMol/volumemap.h"
+
 #include "SireStream/datastream.h"
 
 #include "dx.h"
@@ -87,6 +89,17 @@ void register_DX_class(){
                 "write"
                 , write_function_value
                 , ( bp::arg("gridinfo"), bp::arg("values"), bp::arg("filename"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireIO::DX::write
+        
+            typedef void ( ::SireIO::DX::*write_function_type )( ::SireMol::VolumeMap const &,::QString const &,::SireBase::PropertyMap const & ) const;
+            write_function_type write_function_value( &::SireIO::DX::write );
+            
+            DX_exposer.def( 
+                "write"
+                , write_function_value
+                , ( bp::arg("volumemap"), bp::arg("filename"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         DX_exposer.staticmethod( "typeName" );
