@@ -268,6 +268,12 @@ void VolMapMonitor::clearStatistics()
     volmap.clear();
 }
 
+/** Return the actual volume map */
+VolumeMap VolMapMonitor::volumeMap() const
+{
+    return volmap;
+}
+
 /** Monitor the system */
 void VolMapMonitor::monitor(System &system)
 {
