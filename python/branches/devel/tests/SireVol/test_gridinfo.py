@@ -1,5 +1,4 @@
 
-from Sire.MM import *
 from Sire.Vol import *
 from Sire.Maths import *
 from Sire.Units import *
