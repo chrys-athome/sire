@@ -140,6 +140,8 @@ public:
     
     const GridInfo& gridInfo() const;
     
+    qint64 nSamples() const;
+    
     const QVector<float>& occupancy() const;
     
     void add(const MoleculeView &molecule, const PropertyMap &map = PropertyMap());

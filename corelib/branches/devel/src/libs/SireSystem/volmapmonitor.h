@@ -33,6 +33,7 @@
 
 #include "SireUnits/dimensions.h"
 #include "SireBase/propertymap.h"
+#include "SireMol/volumemap.h"
 
 SIRE_BEGIN_HEADER
 
@@ -44,25 +45,11 @@ class VolMapMonitor;
 QDataStream& operator<<(QDataStream&, const SireSystem::VolMapMonitor&);
 QDataStream& operator>>(QDataStream&, SireSystem::VolMapMonitor&);
 
-namespace SireMol
-{
-class MoleculeGroup;
-}
-
-namespace SireVol
-{
-class GridInfo;
-}
-
 namespace SireSystem
 {
 
-namespace detail
-{
-    class VolMapMonitorData;
-}
-
 using SireMol::MoleculeGroup;
+using SireMol::VolumeMap;
 using SireBase::PropertyMap;
 
 /** This class create an occupation volume map showing the 
@@ -138,10 +125,19 @@ public:
     
     void clearStatistics();
     
+    VolumeMap volumeMap() const;
+    
     void monitor(System &system);
 
 private:
-    QSharedDataPointer<detail::VolMapMonitorData> d;
+    /** The molecule group being monitored */
+    SireMol::MolGroupPtr molgroup;
+    
+    /** The PropertyMap used to find the right properties of the atoms */
+    SireBase::PropertyMap propmap;
+    
+    /** The volume map under construction */
+    VolumeMap volmap;
 };
 
 }

@@ -463,6 +463,12 @@ const QVector<float>& VolumeMap::occupancy() const
     return occ;
 }
 
+/** Return the number of samples used to create this map */
+qint64 VolumeMap::nSamples() const
+{
+    return nsamples;
+}
+
 AABox VolumeMap::presize(const Vector &coords, const Element &element, const AABox &box) const
 {
     float rad;
