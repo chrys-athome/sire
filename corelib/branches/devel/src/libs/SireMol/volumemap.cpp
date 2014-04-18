@@ -463,6 +463,112 @@ const QVector<float>& VolumeMap::occupancy() const
     return occ;
 }
 
+AABox VolumeMap::presize(const Vector &coords, const Element &element, const AABox &box) const
+{
+    float rad;
+    
+    switch (fill_type)
+    {
+        case VolumeMap::VDW_RADIUS:
+            rad = element.vdwRadius();
+            break;
+        case VolumeMap::COVALENT_RADIUS:
+            rad = element.covalentRadius();
+            break;
+        case VolumeMap::BOND_ORDER_RADIUS:
+            rad = element.bondOrderRadius();
+            break;
+        case VolumeMap::POINT_ATOMS:
+        default:
+            rad = 0;
+    }
+    
+    //ensure that the grid contains the atom
+    const AABox atombox = AABox(coords, Vector(rad+2.5));
+
+    if (box.isNull())
+        return atombox;
+    
+    else if (box.contains(atombox))
+        return box;
+    
+    else
+    {
+        return box + atombox;
+    }
+}
+
+/** Internal function called to presize the grid (to prevent lots of memory
+    reallocation when adding in the first block of molecules) */
+void VolumeMap::presize(const Molecules &molecules, const PropertyMap &map)
+{
+    if (not occ.isEmpty())
+        return;
+
+    AABox box;
+    
+    for (Molecules::const_iterator it = molecules.constBegin();
+         it != molecules.constEnd();
+         ++it)
+    {
+        const MoleculeView &molecule = it.value();
+    
+        //extract the coordinates and element properties from the molecule
+        const AtomCoords &coords = molecule.data().property( map["coordinates"] ).asA<AtomCoords>();
+        const AtomElements &elems = molecule.data().property( map["element"] ).asA<AtomElements>();
+        
+        if (molecule.selectedAll())
+        {
+            //loop over all atoms and add them to the grid
+            for (int i=0; i<coords.nCutGroups(); ++i)
+            {
+                const Vector *ca = coords.data(CGIdx(i));
+                const Element *ea = elems.data(CGIdx(i));
+                
+                for (int j=0; j<coords.nAtoms(CGIdx(i)); ++j)
+                {
+                    if ((not skipLightAtoms()) or ea[j].nProtons() >= 6)
+                    {
+                        box = presize(ca[j], ea[j], box);
+                    }
+                }
+            }
+        }
+        else
+        {
+            //not selected all atoms...
+            const AtomSelection selected_atoms = molecule.selection();
+            
+            for (int i=0; i<coords.nCutGroups(); ++i)
+            {
+                const Vector *ca = coords.data(CGIdx(i));
+                const Element *ea = elems.data(CGIdx(i));
+
+                if (selected_atoms.selectedAll(CGIdx(i)))
+                {
+                    for (int j=0; j<coords.nAtoms(CGIdx(i)); ++j)
+                    {
+                        if ((not skipLightAtoms()) or ea[j].nProtons() >= 6)
+                        {
+                            box = presize(ca[j], ea[j], box);
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (Index j, selected_atoms.selectedAtoms(CGIdx(i)))
+                    {
+                        if ((not skipLightAtoms()) or ea[j.value()].nProtons() >= 6)
+                        {
+                            box = presize(ca[j], ea[j], box);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /** Begin a new evaluation */
 void VolumeMap::beginEvaluation()
 {
@@ -505,7 +611,29 @@ void SireMol::detail::VolumeMapData::addToGrid(const Vector &coords, const Eleme
     //ensure that the grid contains the atom
     const AABox atombox = AABox(coords, Vector(rad+2.5));
     
-    if (not grid_info.dimensions().contains(atombox))
+    if (occ.isEmpty())
+    {
+        grid_info = GridInfo(atombox, grid_spacing);
+        
+        if (grid_info.nPoints() > max_points)
+        {
+            grid_info = GridInfo();
+            throw SireError::unavailable_resource( QObject::tr(
+                    "Unable to add the atoms as doing so would increase the number of grid points "
+                    "to beyond the maximum supported size. Adding the atom at position %1, radius "
+                    "%2 would create the grid %3, requiring %4 grid points. This is "
+                    "greater than the maximum number of grid points supported (%5). To add "
+                    "this atom, either increase the grid spacing, or increase the maximum number "
+                    "of allowable grid points.")
+                        .arg(coords.toString()).arg(rad)
+                        .arg(grid_info.dimensions().toString())
+                        .arg(grid_info.nPoints())
+                        .arg(max_points), CODELOC );
+        }
+        
+        occ = QVector<float>(grid_info.nPoints(), 0.0);
+    }
+    else if (not grid_info.dimensions().contains(atombox))
     {
         //must redimension
         Vector mincoords = grid_info.dimensions().minCoords();
@@ -558,6 +686,7 @@ void SireMol::detail::VolumeMapData::addToGrid(const Vector &coords, const Eleme
                         .arg(max_points), CODELOC );
 
         occ = grid_info.redimension(occ, new_grid_info);
+
         grid_info = new_grid_info;
     }
     
@@ -607,7 +736,7 @@ void SireMol::detail::VolumeMapData::addToGrid(const Vector &coords, const Eleme
 
 void VolumeMap::evaluate(const MoleculeView &molecule, const PropertyMap &map)
 {
-    if (not d)
+    if (not d or molecule.isEmpty())
         return;
 
     //extract the coordinates and element properties from the molecule
@@ -711,6 +840,10 @@ void VolumeMap::endEvaluation()
         
         grid_info = d->grid_info;
     }
+    else if (occ.isEmpty())
+    {
+        occ = QVector<float>(grid_info.nPoints(), 0.0);
+    }
 
     if (occ.count() != d->occ.count())
         throw SireError::program_bug( QObject::tr(
@@ -750,10 +883,12 @@ void VolumeMap::endEvaluation()
         break;
     }
 
+    nsamples += 1;
+
+    qint64 nsecs = d->t.nsecsElapsed();
     delete d;
     d = 0;
 
-    qint64 nsecs = d->t.nsecsElapsed();
     qDebug() << "VolumeMapping took" << (0.000001*nsecs) << "ms";
 }
 
@@ -813,6 +948,9 @@ void VolumeMap::add(const QList<PartialMolecule> &molecules, const PropertyMap &
 /** Add a set of molecules to the map */
 void VolumeMap::add(const Molecules &molecules, const PropertyMap &map)
 {
+    if (occ.isEmpty())
+        presize(molecules, map);
+
     try
     {
         beginEvaluation();
@@ -829,6 +967,14 @@ void VolumeMap::add(const Molecules &molecules, const PropertyMap &map)
 /** Add two sets of molecules to the map */
 void VolumeMap::add(const Molecules &mols0, const Molecules &mols1, const PropertyMap &map)
 {
+    if (occ.isEmpty())
+    {
+        if (mols0.nMolecules() >= mols1.nMolecules())
+            presize(mols0, map);
+        else
+            presize(mols1, map);
+    }
+
     try
     {
         beginEvaluation();
@@ -846,6 +992,24 @@ void VolumeMap::add(const Molecules &mols0, const Molecules &mols1, const Proper
 /** Add a whole list of sets of molecules to the map */
 void VolumeMap::add(const QList<Molecules> &molecules, const PropertyMap &map)
 {
+    if (occ.isEmpty())
+    {
+        int biggest = -1;
+        int nbiggest = 0;
+        
+        for (int i=0; i<molecules.count(); ++i)
+        {
+            if (molecules.at(i).nMolecules() > nbiggest)
+            {
+                biggest = i;
+                nbiggest = molecules.at(i).nMolecules();
+            }
+        }
+        
+        if (biggest >= 0)
+            presize( molecules.at(biggest), map );
+    }
+
     try
     {
         beginEvaluation();
@@ -865,6 +1029,9 @@ void VolumeMap::add(const QList<Molecules> &molecules, const PropertyMap &map)
 /** Add a moleculegroup to the map */
 void VolumeMap::add(const MoleculeGroup &molecules, const PropertyMap &map)
 {
+    if (occ.isEmpty())
+        presize(molecules.molecules(), map);
+
     try
     {
         beginEvaluation();
@@ -882,6 +1049,14 @@ void VolumeMap::add(const MoleculeGroup &molecules, const PropertyMap &map)
 void VolumeMap::add(const MoleculeGroup &mols0, const MoleculeGroup &mols1,
                     const PropertyMap &map)
 {
+    if (occ.isEmpty())
+    {
+        if (mols0.nMolecules() >= mols1.nMolecules())
+            presize(mols0.molecules(), map);
+        else
+            presize(mols1.molecules(), map);
+    }
+
     try
     {
         beginEvaluation();
@@ -899,6 +1074,24 @@ void VolumeMap::add(const MoleculeGroup &mols0, const MoleculeGroup &mols1,
 /** Add a whole list of molecule groups to the map */
 void VolumeMap::add(const QList<MoleculeGroup> &molecules, const PropertyMap &map)
 {
+    if (occ.isEmpty())
+    {
+        int biggest = -1;
+        int nbiggest = 0;
+        
+        for (int i=0; i<molecules.count(); ++i)
+        {
+            if (molecules.at(i).nMolecules() > nbiggest)
+            {
+                biggest = i;
+                nbiggest = molecules.at(i).nMolecules();
+            }
+        }
+        
+        if (biggest >= 0)
+            presize( molecules.at(biggest).molecules(), map );
+    }
+
     try
     {
         beginEvaluation();

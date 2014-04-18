@@ -54,6 +54,8 @@ QDataStream& operator>>(QDataStream&, SireMol::VolumeMap&);
 namespace SireMol
 {
 
+class Element;
+
 using SireVol::GridInfo;
 using SireUnits::Dimension::Length;
 using SireBase::PropertyMap;
@@ -162,6 +164,9 @@ public:
 
 private:
     void redimensionGrid(Length new_spacing);
+
+    void presize(const Molecules &molecules, const PropertyMap &map);
+    AABox presize(const Vector &coords, const SireMol::Element &element, const AABox &box) const;
 
     void beginEvaluation();
     void evaluate(const MoleculeView &molecule, const PropertyMap &map);
