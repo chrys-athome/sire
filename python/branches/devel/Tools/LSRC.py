@@ -159,7 +159,7 @@ nequilmoves = Parameter("nequilmoves", 50000,
                         """Number of equilibration moves to perform before setting up the free energy simulation.""")
 
 coul_power = Parameter("coulomb power", 0,
-                        """The soft-core coulomb power parameter""")
+                        """The soft-core coulomb power parameter (integer)""")
 
 shift_delta = Parameter("shift delta", 1.2,
                         """The soft-core shift delta parameter""")
@@ -177,7 +177,7 @@ save_all_pdbs = Parameter("save all pdbs", False,
                           """Whether or not to write all of the PDBs. If not, only PDBs at the two 
                              end points of the simulation will be written.""")
 
-pdb_frequency = Parameter("pdb frequency", 100,
+pdb_frequency = Parameter("pdb frequency", 50,
                           """The frequency (number of iterations between) saving PDBs""")
 
 binwidth = Parameter("free energy bin width", 1 * kcal_per_mol,
@@ -356,10 +356,18 @@ def createLSRCMoves(system):
     return moves    
 
 
-def createStage(system, protein_system, ligand_mol0, ligand_mol1, water_system, mapper):
+def createStage(system, protein_system, ligand_mol0, ligand_mol1, water_system, mapper, stage):
 
     # align ligand1 against ligand0
     ligand_mol1 = ligand_mol1.move().align(ligand_mol0, AtomMatchInverter(mapper))
+
+    # write out the aligned ligands to a PDB file
+    mols = Molecules()
+    mols.add(ligand_mol0)
+    mols.add(ligand_mol1)
+    print("\nPLEASE CHECK: Writing alignment of ligands for %s to the file %s.pdb." % (stage,stage))
+    print("PLEASE CHECK: View this file in a PDB viewer to check that the ligands are aligned.\n")
+    PDB().write(mols, "%s.pdb" % stage )
 
     # create a molecule group for the ligand
     ligand_group0 = MoleculeGroup("ligand0")
@@ -1398,10 +1406,10 @@ def mergeLSRC(sys0, ligand0_mol, sys1, ligand1_mol, watersys):
                            sys0.property("average solute rotation delta"))
 
     # first create stage 1
-    (stage1,moves1) = createStage(stage1, sys0, ligand0_mol, ligand1_mol, watersys, AtomResultMatcher(mapping))
+    (stage1,moves1) = createStage(stage1, sys0, ligand0_mol, ligand1_mol, watersys, AtomResultMatcher(mapping), "stage1")
 
     # now create stage 2
-    (stage2,moves2) = createStage(stage2, sys1, ligand1_mol, ligand0_mol, watersys, AtomResultMatcher(mapping,True))
+    (stage2,moves2) = createStage(stage2, sys1, ligand1_mol, ligand0_mol, watersys, AtomResultMatcher(mapping,True), "stage2")
 
     return (stage1, moves1, stage2, moves2)
 
