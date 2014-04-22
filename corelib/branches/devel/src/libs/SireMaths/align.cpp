@@ -449,11 +449,25 @@ namespace SireMaths
 
         if (det_vw < 0)
         {
-            v(2,2) = -v(2,2);
+            for (int i=0; i<3; ++i)
+            {
+                v(i,2) = -v(i,2);
+            }
         }
 
         //now create the rotation matrix
         Matrix r = v * w;
+
+        //ensure that this is a rotation matrix (has a determinant of 1)
+        const double det = r.determinant();
+        
+        if (not SireMaths::areEqual(det, 1.0))
+        {
+            throw SireError::program_bug( QObject::tr(
+                    "Attempt to find the alignment matrix failed to produce a valid "
+                    "rotation matrix. Determinant should be 1. It is equal to %1.")
+                        .arg(det), CODELOC );
+        }
 
         return r;
     }
@@ -517,7 +531,7 @@ namespace SireMaths
         
         QVector<Vector> q2(q);
     
-        q2 = translate(q, Vector(0.2,0,0) );
+        q2 = translate(q, Vector(0,0,0) );
     
         Matrix rotmat_best = kabasch(p,q2);
         
@@ -527,8 +541,6 @@ namespace SireMaths
         
         while (true)
         {
-            //qDebug() << "STEP" << delta.toString();
-        
             for (int i=0; i<3; ++i)
             {
                 Vector tmp = delta;
@@ -538,15 +550,12 @@ namespace SireMaths
                 Matrix rotmat = kabasch(p,q2);
                 double rmsd = getRMSD( p, rotate(q2,rotmat) );
                 
-                //qDebug() << "rmsd" << rmsd << rmsd_best;
-                
                 if (rmsd < rmsd_best)
                 {
                     //this has improved the fit
                     rmsd_best = rmsd;
                     rotmat_best = rotmat;
                     delta = tmp;
-                    //qDebug() << "NEW BEST" << rmsd_best << delta.toString();
                 }
                 else
                 {
@@ -558,15 +567,12 @@ namespace SireMaths
                     rotmat = kabasch(p,q2);
                     rmsd = getRMSD( p, rotate(q2,rotmat) );
                     
-                    //qDebug() << "rmsd" << rmsd << rmsd_best;
-                    
                     if (rmsd < rmsd_best)
                     {
                         //this has improved the fit
                         rmsd_best = rmsd;
                         rotmat_best = rotmat;
                         delta = tmp;
-                        //qDebug() << "NEW BEST" << rmsd_best << delta.toString();
                     }
                     else
                     {
@@ -590,7 +596,7 @@ namespace SireMaths
             if (finished)
                 break;
         }
-
+        
         return Transform(delta, rotmat_best, Vector(0));
     }
 
@@ -625,11 +631,13 @@ namespace SireMaths
         if (fit)
         {
             Transform a = kabaschFit(pc, qc);
+            
             return Transform(a.translationDelta() + cp - cq, a.rotationQuaternion(), cq);
         }
         else
         {
             Matrix rotmat = kabasch(pc, qc);
+            
             return Transform(cp-cq, rotmat, cq);
         }
     }
@@ -646,9 +654,6 @@ namespace SireMaths
             return q;
         
         Transform a = getAlignment(p, q, fit);
-        
-        //Vector c = getCentroid(q, qMin(p.count(),q.count()));
-        //qDebug() << "centroid" << c.toString();
         
         return a.apply(q);
     }

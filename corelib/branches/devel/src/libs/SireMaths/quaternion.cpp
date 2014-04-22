@@ -34,6 +34,8 @@
 #include <QRegExp>
 #include <cmath>
 
+#include <QDebug>
+
 #include "SireStream/datastream.h"
 
 using namespace SireMaths;
@@ -274,6 +276,12 @@ Quaternion Quaternion::identity()
 /** Get from a matrix */
 void Quaternion::fromMatrix(const Matrix &m)
 {
+    if (not SireMaths::areEqual(m.determinant(), 1.0))
+        throw SireMaths::domain_error( QObject::tr(
+                "You can only convert a rotation matrix to a quaternion. Rotation matrices "
+                "have a determinant of 1.0, while the matrix you passed has a determinant of "
+                "%1\n%2").arg(m.determinant()).arg(m.toString()), CODELOC );
+
   /* Thanks to http://www.flipcode.com/documents/matrfaq.html#Q54
   
   A rotation may be converted back to a quaternion through the use of
@@ -283,16 +291,9 @@ void Quaternion::fromMatrix(const Matrix &m)
 
     Calculate the trace of the matrix T from the equation:
 
-                2     2     2
-      T = 4 - 4x  - 4y  - 4z
-
-                 2    2    2
-        = 4( 1 -x  - y  - z )
-
-        = mat[0] + mat[5] + mat[10] + 1
+      T = mat[0] + mat[5] + mat[10] + 1
 
    */
-    //const double trace = 4 * (1 - m.xx()*m.xx() - m.yy()*m.yy() - m.zz()*m.zz());
     const double trace = m.xx() + m.yy() + m.zz() + 1;
 
     /*
@@ -309,7 +310,7 @@ void Quaternion::fromMatrix(const Matrix &m)
 
       Z = ( mat[4] - mat[1] ) * S
     */
-    if (trace > 0.0001)  // use 0.00001 to avoid numerical instability near 0
+    if (trace > 0.00001)  // use 0.00001 to avoid numerical instability near 0
     {
         double s = 0.5 / sqrt(trace);
         sc[3] = 0.25 / s;
