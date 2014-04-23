@@ -102,6 +102,7 @@ set ( SIREMOL_HEADERS
       molnum.h
       molresid.h
       molviewproperty.h
+      molwithresid.h
       mover.h
       mover.hpp
       mover_metaid.h
@@ -201,6 +202,7 @@ set ( SIREMOL_SOURCES
       molid.cpp
       molidentifier.cpp
       molresid.cpp
+      molwithresid.cpp
       molviewproperty.cpp
       mover.cpp
       partialmolecule.cpp
