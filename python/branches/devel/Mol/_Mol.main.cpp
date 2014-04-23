@@ -285,6 +285,8 @@
 
 #include "MolViewProperty.pypp.hpp"
 
+#include "MolWithResID.pypp.hpp"
+
 #include "Molecule.pypp.hpp"
 
 #include "MoleculeBeading.pypp.hpp"
@@ -805,6 +807,8 @@ BOOST_PYTHON_MODULE(_Mol){
     register_MolResNum_class();
 
     register_MolStructureEditor_class();
+
+    register_MolWithResID_class();
 
     register_MoleculeBeading_class();
 

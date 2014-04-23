@@ -85,6 +85,7 @@
 #include "molnum.h"
 #include "molresid.h"
 #include "molviewproperty.h"
+#include "molwithresid.h"
 #include "mover.h"
 #include "mover_metaid.h"
 #include "partialmolecule.h"

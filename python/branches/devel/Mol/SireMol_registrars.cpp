@@ -57,6 +57,7 @@
 #include "cgname.h"
 #include "mgname.h"
 #include "chainidx.h"
+#include "molwithresid.h"
 #include "cgatomidx.h"
 #include "beads.h"
 #include "bead.h"
@@ -208,6 +209,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::CGName >();
     ObjectRegistry::registerConverterFor< SireMol::MGName >();
     ObjectRegistry::registerConverterFor< SireMol::ChainIdx >();
+    ObjectRegistry::registerConverterFor< SireMol::MolWithResID >();
     ObjectRegistry::registerConverterFor< SireMol::CGAtomIdx >();
     ObjectRegistry::registerConverterFor< SireMol::Beads >();
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::Beads> >();

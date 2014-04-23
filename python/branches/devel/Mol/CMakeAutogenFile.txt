@@ -212,6 +212,7 @@ set ( PYPP_SOURCES
        AtomsIn_ResID_.pypp.cpp
        Velocity3D.pypp.cpp
        MoverBase.pypp.cpp
+       MolWithResID.pypp.cpp
        SegStringProperty.pypp.cpp
        IDOrSet_ChainID_.pypp.cpp
        AtomMatchInverter.pypp.cpp
