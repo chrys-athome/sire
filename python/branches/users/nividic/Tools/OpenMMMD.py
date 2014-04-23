@@ -4,7 +4,6 @@
 
 import os,re, sys, shutil
 import math
-import numpy
 
 from Sire.IO import *
 from Sire.Mol import *
@@ -198,7 +197,7 @@ def writeSystemData( system, moves, Trajectory, block):
     FILE = open("moves.dat", "w")
     print("%s" % moves, file=FILE)
 
-    print(" Time to write coordinates %s ms " % localtimer.elapsed())
+    #print(" Time to write coordinates %s ms " % localtimer.elapsed())
 
 
 def centerSolute(system, space):
@@ -423,7 +422,7 @@ def setupMoves(system, random_seed, GPUS):
 
     mdmove = MolecularDynamics(molecules, Integrator_OpenMM, timestep.val, {"velocity generator":MaxwellBoltzmann(temperature.val)})
 
-    print("Created a MD move that uses OpenMM for all molecules on GPU %s " % GPUS)
+    print("Created a MD move that uses OpenMM for all molecules on %s " % GPUS)
 
     moves = WeightedMoves()
     moves.add(mdmove, 1)
@@ -928,10 +927,6 @@ def setupMovesFreeEnergy(system,random_seed,GPUS,lam_val):
     Integrator_OpenMM.setMinimizeTol(minimize_tol.val)
     Integrator_OpenMM.setMinimizeIterations(minimize_max_iter.val)
 
-    #if (save_coords.val):
-    #    buffer_freq = 500
-    #else:
-    #    buffer_freq = 0
 
     Integrator_OpenMM.setBufferFrequency(buffered_coords_freq.val)
 
@@ -963,7 +958,7 @@ def setupMovesFreeEnergy(system,random_seed,GPUS,lam_val):
 
     #mdmove = MolecularDynamics(molecules, Integrator_OpenMM, time_step)
 
-    print("Created a MD move that uses OpenMM for all molecules on GPU %s " % GPUS)
+    print("Created a MD move that uses OpenMM for all molecules on %s " % GPUS)
 
     moves = WeightedMoves()
     moves.add(mdmove, 1)
@@ -1008,11 +1003,6 @@ def clearBuffers( system ):
 
 @resolveParameters
 def run():
-
-    #if (save_coords.val):
-    #    buffer_freq = 500
-    #else:
-    #    buffer_freq = 0
 
     try:
         host = os.environ['HOSTNAME']
@@ -1087,10 +1077,10 @@ def run():
     for i in range(cycle_start,cycle_end):
         print("\nCycle = ",i,"\n")
 
-        print("Energy before = %s kJ mol-1" % (system.energy().to(kJ_per_mol)))
+        #print("Energy before = %s kJ mol-1" % (system.energy().to(kJ_per_mol)))
         # import ipdb; ipdb.set_trace()
         system = moves.move(system, nmoves.val, True)
-        print("Energy after = %s kJ mol-1" % (system.energy().to(kJ_per_mol)))
+        #print("Energy after = %s kJ mol-1" % (system.energy().to(kJ_per_mol)))
 
         if (save_coords.val):
             writeSystemData(system, moves, trajectory, i)
@@ -1189,10 +1179,10 @@ def runFreeNrg():
     for i in range(cycle_start,cycle_end):
         print("\nCycle = ",i,"\n")
 
-        print("Energy before = %s kJ mol-1" % (system.energy().to(kJ_per_mol)))
+        #print("Energy before = %s kJ mol-1" % (system.energy().to(kJ_per_mol)))
         # import ipdb; ipdb.set_trace()
         system = moves.move(system, nmoves.val, True)
-        print("Energy after = %s kJ mol-1" % (system.energy().to(kJ_per_mol)))
+        #print("Energy after = %s kJ mol-1" % (system.energy().to(kJ_per_mol)))
 
         if (save_coords.val):
             writeSystemData(system, moves, trajectory, i)
@@ -1205,11 +1195,6 @@ def runFreeNrg():
     s2 = timer.elapsed()/1000.
     print("Simulation took %d s " % ( s2 - s1))
     
-    # average_gradients = numpy.mean(gradients)
-    # stdev_gradients = numpy.std(gradients)
-    # print("*Gradient average = %f" % average_gradients)
-    # print("*STD = %f" % stdev_gradients)
-
     if buffered_coords_freq.val > 0:
         system = clearBuffers(system)
         # Necessary to write correct restart
