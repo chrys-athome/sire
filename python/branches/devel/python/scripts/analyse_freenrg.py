@@ -1,0 +1,216 @@
+
+from Sire.Analysis import *
+import Sire.Stream
+
+import argparse
+import sys
+import os
+
+parser = argparse.ArgumentParser(description="Analyse free energy files to calculate "
+                                             "free energies, PMFs and to view convergence.",
+                                 epilog="analyse_freenrg is built using Sire and is distributed "
+                                        "under the GPL. For more information please visit "
+                                        "http://siremol.org/analyse_freenrg",
+                                 prog="analyse_freenrg")
+
+parser.add_argument('-i', '--input', nargs=1,
+                    help="Supply the name of the Sire Streamed Save (.s3) file containing the "
+                         "free energies to be analysed.")
+
+parser.add_argument('-o', '--output', nargs=1,
+                    help="""Supply the name of the file in which to write the output.""")
+
+parser.add_argument('-r', '--range', nargs=2,
+                    help="Supply the range of iterations over which to average. "
+                         "By default, this will be over the last 60 percent of iterations.")
+
+parser.add_argument('-p', '--percent', nargs=1,
+                    help="Supply the percentage of iterations over which to average. By default "
+                         "the average will be over the last 60 percent of iterations.")
+
+parser.add_argument('--author', action="store_true",
+                    help="Get information about the authors of this script.")
+
+parser.add_argument('--version', action="store_true",
+                    help="Get version information about this script.")
+
+sys.stdout.write("\n")
+args = parser.parse_args()
+
+must_exit = False
+
+if args.author:
+    print("\nanalyse_freenrg was written by Christopher Woods (C) 2014")
+    print("It is based on the analysis tools in Sire.Analysis")
+    must_exit = True
+
+if args.version:
+    print("\analyse_freenrg version 0.1")
+    print(Sire.Config.versionString())
+    must_exit = True
+
+if must_exit:
+    sys.exit(0)
+
+if args.input:
+    input_file = args.input[0]
+else:
+    input_file = None
+
+if args.output:
+    output_file = args.output[0]
+else:
+    output_file = None
+
+if args.range:
+    range_start = int(args.range[0])
+    range_end = int(args.range[1])
+    if range_end < 1:
+        range_end = 1
+    if range_start < 1:
+        range_start = 1
+    if range_start > range_end:
+        tmp = range_start
+        range_start = range_end
+        range_end = tmp
+else:
+    range_start = None
+    range_end = None
+
+if args.percent:
+    percent = float(args.percent[0])
+else:
+    percent = 60.0
+
+if not input_file:
+    parser.print_help()
+    print("\nPlease supply the name of the .s3 file containing the free energies to be analysed.")
+    sys.exit(-1)
+
+elif not os.path.exists(input_file):
+    parser.print_help()
+    print("\nPlease supply the name of the .s3 file containing the free energies to be analysed.")
+    print("(cannot find file %s)" % input_file)
+    sys.exit(-1)
+
+if output_file:
+    print("Writing all output to file %s\n" % output_file)
+    FILE = open(output_file, "w")
+else:
+    print("Writing all output to stdout\n")
+    FILE = sys.stdout
+
+input_file = os.path.realpath(input_file)
+
+FILE.write("Analysing free energies contained in file \"%s\"\n" % input_file)
+
+freenrgs = Sire.Stream.load(input_file)
+
+results = []
+
+def processFreeEnergies(nrgs, FILE):
+
+    # try to merge the free enegies - this will raise an exception
+    # if this object is not a free energy collection
+    nrgs.merge(0,1)
+
+    FILE.write("\nProcessing object %s\n" % nrgs)
+
+    name = nrgs.typeName().split("::")[-1]
+
+    nits = nrgs.count()
+
+    # get the convergence of the free energy
+    convergence = {}
+
+    for i in range(1,nits):
+        try:
+            convergence[i] = nrgs[i].sum().values()[-1].y()
+        except:
+            try:
+                convergence[i] = nrgs[i].integrate().values()[-1].y()
+            except:
+                pass
+
+    # now get the averaged PMF
+    if range_start:
+        if range_start > nits-1:
+            start = nits-1
+        else:
+            start = range_start
+
+        if range_end > nits-1:
+            end = nits-1
+        else:
+            end = range_end
+
+    else:
+        end = nits-1
+        start = end - int(percent * end / 100.0)
+
+    FILE.write("Averaging over iterations %s to %s\n" % (start, end))
+
+    nrg = nrgs.merge(start,end)
+
+    try:
+        pmf = nrg.sum()
+    except:
+        pmf = nrg.integrate()
+
+    return (name, convergence, pmf)
+    
+
+try:
+    results.append( processFreeEnergies(freenrgs, FILE) )
+except:
+    for freenrg in freenrgs:
+        results.append( processFreeEnergies(freenrg, FILE) )
+
+FILE.write("\nConvergence\n")
+FILE.write("Iteration ")
+for result in results:
+    FILE.write("%s " % result[0])
+FILE.write("\n")
+
+i = 1
+has_value = True
+while has_value:
+    values = []
+    has_value = False
+    for result in results:
+        if i in result[1]:
+            has_value = True
+            values.append(result[1][i])
+        else:
+            values.append(0.0)
+
+    if has_value:
+        FILE.write("%s " % i)
+
+        for value in values:
+            FILE.write("%s " % value)
+
+        FILE.write("\n")
+        i += 1
+
+FILE.write("\nPMFs")
+
+for result in results:
+    FILE.write("\n%s\n" % result[0])
+    FILE.write("Lambda  PMF  Maximum  Minimum\n")
+
+    for value in result[2].values():
+        FILE.write("%s  %s  %s  %s\n" % (value.x(), value.y(), value.y()+value.yMaxError(), value.y()-value.yMaxError()))
+
+FILE.write("\nFree energies\n")
+
+for result in results:
+    FILE.write("%s = %s +/- %s kcal mol-1" % (result[0], result[2].deltaG(), result[2].values()[-1].yMaxError()))
+
+    try:
+        FILE.write(" (quadrature = %s kcal mol-1)" % result[2].quadrature())
+    except:
+        pass
+
+    FILE.write("\n")
+
