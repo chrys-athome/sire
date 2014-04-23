@@ -127,6 +127,11 @@ MolWithResID& MolWithResID::operator=(const MolWithResID &other)
     return *this;
 }
 
+MolWithResID* MolWithResID::clone() const
+{
+    return new MolWithResID(*this);
+}
+
 bool MolWithResID::operator==(const SireID::ID &other) const
 {
     return SireID::ID::compare<MolWithResID>(*this, other);
