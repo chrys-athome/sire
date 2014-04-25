@@ -15,6 +15,7 @@ set ( SCRIPTS
         QuantumToMM.py
         Plot.py
         WaterChanger.py
+        WaterView.py
         WSRC.py
     )
 
