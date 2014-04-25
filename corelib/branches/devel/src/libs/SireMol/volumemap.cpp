@@ -589,7 +589,7 @@ void VolumeMap::beginEvaluation()
     d->map_type = map_type;
     d->fill_type = fill_type;
     d->max_points = max_grid_points;
-    d->t.start();
+    //d->t.start();
 }
 
 void SireMol::detail::VolumeMapData::addToGrid(const Vector &coords, const Element &element)
@@ -891,11 +891,11 @@ void VolumeMap::endEvaluation()
 
     nsamples += 1;
 
-    qint64 nsecs = d->t.nsecsElapsed();
+    //qint64 nsecs = d->t.nsecsElapsed();
     delete d;
     d = 0;
 
-    qDebug() << "VolumeMapping took" << (0.000001*nsecs) << "ms";
+    //qDebug() << "VolumeMapping took" << (0.000001*nsecs) << "ms";
 }
 
 /** Add a single molecule to the map */
