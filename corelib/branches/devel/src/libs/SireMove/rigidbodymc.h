@@ -33,6 +33,10 @@
 #include "sampler.h"
 #include "getpoint.h"
 
+#include "SireMol/molnum.h"
+
+#include <QHash>
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
@@ -47,6 +51,7 @@ namespace SireMol
 {
 class MoleculeGroup;
 class PartialMolecule;
+class MoleculeView;
 }
 
 namespace SireMove
@@ -54,8 +59,10 @@ namespace SireMove
 
 class Sampler;
 
+using SireMol::MolNum;
 using SireMol::MoleculeGroup;
 using SireMol::PartialMolecule;
+using SireMol::MoleculeView;
 
 /** This class implements a rigid body Monte Carlo move that
     may be applied to a random molecule within a MoleculeGroup
@@ -110,6 +117,21 @@ public:
     Vector reflectionSphereCenter() const;
     SireUnits::Dimension::Length reflectionSphereRadius() const;
 
+    void setReflectionSphere(MolNum molnum, Vector sphere_center,
+                             SireUnits::Dimension::Length sphere_radius);
+    
+    void setReflectionSphere(const MoleculeView &molview, Vector sphere_center,
+                             SireUnits::Dimension::Length sphere_radius);
+    
+    bool usesReflectionMoves(MolNum molnum) const;
+    bool usesReflectionMoves(const MoleculeView &molview) const;
+    
+    Vector reflectionSphereCenter(MolNum molnum) const;
+    Vector reflectionSphereCenter(const MoleculeView &molview) const;
+    
+    SireUnits::Dimension::Length reflectionSphereRadius(MolNum molnum) const;
+    SireUnits::Dimension::Length reflectionSphereRadius(const MoleculeView &molview) const;
+
     void setSynchronisedTranslation(bool on);
     void setSynchronisedRotation(bool on);
     void setSharedRotationCenter(bool on);
@@ -152,6 +174,9 @@ private:
 
     /** The radius of the reflection sphere */
     double reflect_radius;
+
+    /** The molecule-specific reflection spheres and radii */
+    QHash< MolNum,QPair<SireMaths::Vector,double> > mol_reflectors;
 
     /** Whether or not to reflect the moves */
     bool reflect_moves;

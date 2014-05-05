@@ -64,7 +64,7 @@ static const RegisterMetaType<RigidBodyMC> r_rbmc;
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
                                         const RigidBodyMC &rbmc)
 {
-    writeHeader(ds, r_rbmc, 5);
+    writeHeader(ds, r_rbmc, 6);
 
     SharedDataStream sds(ds);
 
@@ -72,8 +72,18 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
         << rbmc.adel << rbmc.rdel
         << rbmc.reflect_center << rbmc.reflect_radius
         << rbmc.reflect_moves
-        << rbmc.sync_trans << rbmc.sync_rot << rbmc.common_center
-        << static_cast<const MonteCarlo&>(rbmc);
+        << rbmc.sync_trans << rbmc.sync_rot << rbmc.common_center;
+    
+    sds << quint32( rbmc.mol_reflectors.count() );
+    
+    for (QHash< MolNum,QPair<Vector,double> >::const_iterator it = rbmc.mol_reflectors.constBegin();
+         it != rbmc.mol_reflectors.constEnd();
+         ++it)
+    {
+        sds << it.key() << it.value().first << it.value().second;
+    }
+    
+    sds << static_cast<const MonteCarlo&>(rbmc);
 
     return ds;
 }
@@ -83,9 +93,44 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
 {
     VersionID v = readHeader(ds, r_rbmc);
 
+    rbmc = RigidBodyMC();
+
     rbmc.center_function = GetCOGPoint();
 
-    if (v == 5)
+    if (v == 6)
+    {
+        SharedDataStream sds(ds);
+
+        sds >> rbmc.smplr >> rbmc.center_function
+            >> rbmc.adel >> rbmc.rdel
+            >> rbmc.reflect_center >> rbmc.reflect_radius
+            >> rbmc.reflect_moves
+            >> rbmc.sync_trans >> rbmc.sync_rot
+            >> rbmc.common_center;
+        
+        quint32 nreflect;
+        
+        sds >> nreflect;
+        
+        if (nreflect > 0)
+            rbmc.mol_reflectors.reserve(nreflect);
+        else
+            rbmc.mol_reflectors.clear();
+        
+        for (int i=0; i<nreflect; ++i)
+        {
+            MolNum molnum;
+            Vector center;
+            double radius;
+            
+            sds >> molnum >> center >> radius;
+            
+            rbmc.mol_reflectors.insert(molnum, QPair<Vector,double>(center,radius));
+        }
+        
+        sds >> static_cast<MonteCarlo&>(rbmc);
+    }
+    else if (v == 5)
     {
         SharedDataStream sds(ds);
 
@@ -193,6 +238,7 @@ RigidBodyMC::RigidBodyMC(const RigidBodyMC &other)
               adel(other.adel), rdel(other.rdel),
               reflect_center(other.reflect_center), 
               reflect_radius(other.reflect_radius),
+              mol_reflectors(other.mol_reflectors),
               reflect_moves(other.reflect_moves),
               sync_trans(other.sync_trans), sync_rot(other.sync_rot),
               common_center(other.common_center)
@@ -218,6 +264,7 @@ RigidBodyMC& RigidBodyMC::operator=(const RigidBodyMC &other)
         rdel = other.rdel;
         reflect_center = other.reflect_center;
         reflect_radius = other.reflect_radius;
+        mol_reflectors = other.mol_reflectors;
         reflect_moves = other.reflect_moves;
         sync_trans = other.sync_trans;
         sync_rot = other.sync_rot;
@@ -235,6 +282,7 @@ bool RigidBodyMC::operator==(const RigidBodyMC &other) const
            adel == other.adel and rdel == other.rdel and
            reflect_center == other.reflect_center and
            reflect_radius == other.reflect_radius and
+           mol_reflectors == other.mol_reflectors and
            reflect_moves == other.reflect_moves and 
            sync_trans == other.sync_trans and sync_rot == other.sync_rot and
            common_center == other.common_center and
@@ -390,6 +438,78 @@ SireUnits::Dimension::Length RigidBodyMC::reflectionSphereRadius() const
     return SireUnits::Dimension::Length( reflect_radius );
 }
 
+/** Turn on rigid body move reflections for molecule 'molnum'. This makes sure
+    this molecule is moved only within the sphere centered at 'sphere_center'
+    with radius 'sphere_radius'. Any moves are reflected so that 
+    this molecule will always remain within the sphere */
+void RigidBodyMC::setReflectionSphere(MolNum molnum, Vector sphere_center,
+                                      SireUnits::Dimension::Length sphere_radius)
+{
+    if (molnum.isNull())
+        return;
+
+    if (sphere_radius.value() < 0)
+        sphere_radius = SireUnits::Dimension::Length(0);
+
+    mol_reflectors.insert( molnum, QPair<Vector,double>(sphere_center,sphere_radius.value()) );
+}
+
+/** Turn on rigid body move reflections for molecule 'mol'. This makes sure
+    this molecule is moved only within the sphere centered at 'sphere_center'
+    with radius 'sphere_radius'. Any moves are reflected so that 
+    this molecule will always remain within the sphere */
+void RigidBodyMC::setReflectionSphere(const MoleculeView &mol, Vector sphere_center,
+                                      SireUnits::Dimension::Length sphere_radius)
+{
+    this->setReflectionSphere(mol.data().number(), sphere_center, sphere_radius);
+}
+
+/** Return whether or not these moves use a reflection sphere for molecule molnum */
+bool RigidBodyMC::usesReflectionMoves(MolNum molnum) const
+{
+    return reflect_moves or mol_reflectors.contains(molnum);
+}
+
+/** Return whether or not these moves use a reflection sphere for molecule 'mol' */
+bool RigidBodyMC::usesReflectionMoves(const MoleculeView &mol) const
+{
+    return this->usesReflectionMoves(mol.data().number());
+}
+
+/** Return the center of the reflection sphere for molecule 'molnum'. Returns a null vector
+    if a reflection sphere is not being used */
+Vector RigidBodyMC::reflectionSphereCenter(MolNum molnum) const
+{
+    if (mol_reflectors.contains(molnum))
+        return mol_reflectors.value(molnum).first;
+    else
+        return reflect_center;
+}
+
+/** Return the center of the reflection sphere for molecule 'mol'. Returns a null vector
+    if a reflection sphere is not being used */
+Vector RigidBodyMC::reflectionSphereCenter(const MoleculeView &mol) const
+{
+    return this->reflectionSphereCenter(mol.data().number());
+}
+
+/** Return the radius of the reflection sphere for molecule 'molnum'. This returns zero
+    if the reflection sphere is not being used */
+SireUnits::Dimension::Length RigidBodyMC::reflectionSphereRadius(MolNum molnum) const
+{
+    if (mol_reflectors.contains(molnum))
+        return SireUnits::Dimension::Length( mol_reflectors.value(molnum).second );
+    else
+        return SireUnits::Dimension::Length( reflect_radius );
+}
+
+/** Return the radius of the reflection sphere for molecule 'mol'. This returns zero
+    if the reflection sphere is not being used */
+SireUnits::Dimension::Length RigidBodyMC::reflectionSphereRadius(const MoleculeView &mol) const
+{
+    return this->reflectionSphereRadius(mol.data().number());
+}
+
 /** Return whether or not translation of all molecules is synchronised */
 bool RigidBodyMC::synchronisedTranslation() const
 {
@@ -469,12 +589,21 @@ void RigidBodyMC::performMove(System &system,
 
         //if we are reflecting moves in a sphere, then check that this move
         //won't take us out of the sphere.
-        if (reflect_moves)
+        if (reflect_moves or mol_reflectors.contains(oldmol.number()))
         {
             //moves are constrained into a sphere of radius reflect_radius
             //around reflect_center. If the center of geometry moves outside
             //the sphere, then the molecule will bounce off the edge of 
             //the sphere and back into the sphere volume
+
+            Vector reflect_cent = reflect_center;
+            double reflect_rad = reflect_radius;
+            
+            if (mol_reflectors.contains(oldmol.number()))
+            {
+                reflect_cent = mol_reflectors.value(oldmol.number()).first;
+                reflect_rad = mol_reflectors.value(oldmol.number()).second;
+            }
 
             Vector old_center;
             
@@ -487,13 +616,13 @@ void RigidBodyMC::performMove(System &system,
                 old_center = oldmol.evaluate().center();
             }
 
-            if ( (old_center-reflect_center).length() > reflect_radius )
+            if ( (old_center-reflect_cent).length() > reflect_rad )
             {
                 //the molecule is already outside the sphere, so cannot be moved
                 old_bias = 1;
                 new_bias = 1;
                 qDebug() << "HOW IS THE MOLECULE OUTSIDE THE SPHERE?";
-                qDebug() << (old_center-reflect_center).length() << reflect_radius;
+                qDebug() << (old_center-reflect_cent).length() << reflect_rad;
                 return;
             }
 
@@ -508,9 +637,9 @@ void RigidBodyMC::performMove(System &system,
                 new_center = newmol.evaluate().center();
             }
 
-            double dist = (new_center - reflect_center).length();
+            double dist = (new_center - reflect_cent).length();
 
-            if (dist > reflect_radius)
+            if (dist > reflect_rad)
             {
                 delta = new_center - old_center;
             
@@ -523,8 +652,8 @@ void RigidBodyMC::performMove(System &system,
                 // is at origin C, with radius R
                 Vector D = delta.normalise();
                 Vector O = old_center;
-                Vector C = reflect_center;
-                double R2 = reflect_radius*reflect_radius;
+                Vector C = reflect_cent;
+                double R2 = reflect_rad*reflect_rad;
 
                 //a point P is on the surface of the sphere if (P-C).(P-C) = R^2
                 //this means that the intersection of the vector with the sphere
@@ -630,20 +759,20 @@ void RigidBodyMC::performMove(System &system,
                 newmol = newmol.move().translate(new_new_center-new_center,map).commit();
 
                 new_center = newmol.evaluate().center();
-                double dist = (new_center - reflect_center).length();
+                double dist = (new_center - reflect_cent).length();
                 
                 int check_count = 0;
                 
-                while (dist > reflect_radius)
+                while (dist > reflect_rad)
                 {
-                    qDebug() << "MOVED MOLECULE OUTSIDE SPHERE" << dist << reflect_radius;
+                    qDebug() << "MOVED MOLECULE OUTSIDE SPHERE" << dist << reflect_rad;
                     qDebug() 
                         << "FIXING THE PROBLEM (MOSTLY CAUSED BY NUMERICAL IMPRECISION)";
                     
                     //this will be due to a little numerical imprecision
                     newmol = newmol.move().translate( 
-                            (1.01*(dist-reflect_radius))
-                                * ((reflect_center-new_center).normalise()) ).commit();
+                            (1.01*(dist-reflect_rad))
+                                * ((reflect_cent-new_center).normalise()) ).commit();
                     
                     if (has_center_property)
                     {
@@ -654,7 +783,7 @@ void RigidBodyMC::performMove(System &system,
                         new_center = newmol.evaluate().center();
                     }
                     
-                    dist = (new_center - reflect_center).length();
+                    dist = (new_center - reflect_cent).length();
                     
                     check_count += 1;
                     
