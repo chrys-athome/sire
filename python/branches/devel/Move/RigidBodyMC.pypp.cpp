@@ -134,6 +134,28 @@ void register_RigidBodyMC_class(){
                 , reflectionSphereCenter_function_value );
         
         }
+        { //::SireMove::RigidBodyMC::reflectionSphereCenter
+        
+            typedef ::SireMaths::Vector ( ::SireMove::RigidBodyMC::*reflectionSphereCenter_function_type )( ::SireMol::MolNum ) const;
+            reflectionSphereCenter_function_type reflectionSphereCenter_function_value( &::SireMove::RigidBodyMC::reflectionSphereCenter );
+            
+            RigidBodyMC_exposer.def( 
+                "reflectionSphereCenter"
+                , reflectionSphereCenter_function_value
+                , ( bp::arg("molnum") ) );
+        
+        }
+        { //::SireMove::RigidBodyMC::reflectionSphereCenter
+        
+            typedef ::SireMaths::Vector ( ::SireMove::RigidBodyMC::*reflectionSphereCenter_function_type )( ::SireMol::MoleculeView const & ) const;
+            reflectionSphereCenter_function_type reflectionSphereCenter_function_value( &::SireMove::RigidBodyMC::reflectionSphereCenter );
+            
+            RigidBodyMC_exposer.def( 
+                "reflectionSphereCenter"
+                , reflectionSphereCenter_function_value
+                , ( bp::arg("molview") ) );
+        
+        }
         { //::SireMove::RigidBodyMC::reflectionSphereRadius
         
             typedef ::SireUnits::Dimension::Length ( ::SireMove::RigidBodyMC::*reflectionSphereRadius_function_type )(  ) const;
@@ -142,6 +164,28 @@ void register_RigidBodyMC_class(){
             RigidBodyMC_exposer.def( 
                 "reflectionSphereRadius"
                 , reflectionSphereRadius_function_value );
+        
+        }
+        { //::SireMove::RigidBodyMC::reflectionSphereRadius
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMove::RigidBodyMC::*reflectionSphereRadius_function_type )( ::SireMol::MolNum ) const;
+            reflectionSphereRadius_function_type reflectionSphereRadius_function_value( &::SireMove::RigidBodyMC::reflectionSphereRadius );
+            
+            RigidBodyMC_exposer.def( 
+                "reflectionSphereRadius"
+                , reflectionSphereRadius_function_value
+                , ( bp::arg("molnum") ) );
+        
+        }
+        { //::SireMove::RigidBodyMC::reflectionSphereRadius
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMove::RigidBodyMC::*reflectionSphereRadius_function_type )( ::SireMol::MoleculeView const & ) const;
+            reflectionSphereRadius_function_type reflectionSphereRadius_function_value( &::SireMove::RigidBodyMC::reflectionSphereRadius );
+            
+            RigidBodyMC_exposer.def( 
+                "reflectionSphereRadius"
+                , reflectionSphereRadius_function_value
+                , ( bp::arg("molview") ) );
         
         }
         { //::SireMove::RigidBodyMC::sampler
@@ -208,6 +252,28 @@ void register_RigidBodyMC_class(){
                 "setReflectionSphere"
                 , setReflectionSphere_function_value
                 , ( bp::arg("sphere_center"), bp::arg("sphere_radius") ) );
+        
+        }
+        { //::SireMove::RigidBodyMC::setReflectionSphere
+        
+            typedef void ( ::SireMove::RigidBodyMC::*setReflectionSphere_function_type )( ::SireMol::MolNum,::SireMaths::Vector,::SireUnits::Dimension::Length ) ;
+            setReflectionSphere_function_type setReflectionSphere_function_value( &::SireMove::RigidBodyMC::setReflectionSphere );
+            
+            RigidBodyMC_exposer.def( 
+                "setReflectionSphere"
+                , setReflectionSphere_function_value
+                , ( bp::arg("molnum"), bp::arg("sphere_center"), bp::arg("sphere_radius") ) );
+        
+        }
+        { //::SireMove::RigidBodyMC::setReflectionSphere
+        
+            typedef void ( ::SireMove::RigidBodyMC::*setReflectionSphere_function_type )( ::SireMol::MoleculeView const &,::SireMaths::Vector,::SireUnits::Dimension::Length ) ;
+            setReflectionSphere_function_type setReflectionSphere_function_value( &::SireMove::RigidBodyMC::setReflectionSphere );
+            
+            RigidBodyMC_exposer.def( 
+                "setReflectionSphere"
+                , setReflectionSphere_function_value
+                , ( bp::arg("molview"), bp::arg("sphere_center"), bp::arg("sphere_radius") ) );
         
         }
         { //::SireMove::RigidBodyMC::setSampler
@@ -323,6 +389,28 @@ void register_RigidBodyMC_class(){
             RigidBodyMC_exposer.def( 
                 "usesReflectionMoves"
                 , usesReflectionMoves_function_value );
+        
+        }
+        { //::SireMove::RigidBodyMC::usesReflectionMoves
+        
+            typedef bool ( ::SireMove::RigidBodyMC::*usesReflectionMoves_function_type )( ::SireMol::MolNum ) const;
+            usesReflectionMoves_function_type usesReflectionMoves_function_value( &::SireMove::RigidBodyMC::usesReflectionMoves );
+            
+            RigidBodyMC_exposer.def( 
+                "usesReflectionMoves"
+                , usesReflectionMoves_function_value
+                , ( bp::arg("molnum") ) );
+        
+        }
+        { //::SireMove::RigidBodyMC::usesReflectionMoves
+        
+            typedef bool ( ::SireMove::RigidBodyMC::*usesReflectionMoves_function_type )( ::SireMol::MoleculeView const & ) const;
+            usesReflectionMoves_function_type usesReflectionMoves_function_value( &::SireMove::RigidBodyMC::usesReflectionMoves );
+            
+            RigidBodyMC_exposer.def( 
+                "usesReflectionMoves"
+                , usesReflectionMoves_function_value
+                , ( bp::arg("molview") ) );
         
         }
         RigidBodyMC_exposer.staticmethod( "typeName" );
