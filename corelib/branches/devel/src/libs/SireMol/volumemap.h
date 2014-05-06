@@ -164,8 +164,25 @@ public:
     
     void clear();
 
+    bool isMasked() const;
+
+    Length maskDistance() const;
+    QVector<Vector> maskPoints() const;
+
+    void setMaskWithinDistance(Length dist, const Vector &point,
+                               bool clear_points = true);
+
+    void setMaskWithinDistance(Length dist, const MoleculeView &molecule,
+                               const PropertyMap &map = PropertyMap());
+
+    void setMaskWithinDistance(Length dist, const MoleculeView &molecule,
+                               bool clear_points, const PropertyMap &map = PropertyMap());
+
+    void clearMask();
+
 private:
     void redimensionGrid(Length new_spacing);
+    void applyMask();
 
     void presize(const Molecules &molecules, const PropertyMap &map);
     AABox presize(const Vector &coords, const SireMol::Element &element, const AABox &box) const;
@@ -201,6 +218,12 @@ private:
     /** The maximum number of grid points - this limits the memory
         used by this map */
     qint32 max_grid_points;
+
+    /** The set of points used to provide a distance mask */
+    QVector<Vector> mask_points;
+    
+    /** The distance used for the distance mask */
+    float mask_dist;
 
     /** Whether or not to exclude light atoms from the map */
     bool skip_light_atoms;

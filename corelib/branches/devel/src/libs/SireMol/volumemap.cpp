@@ -33,6 +33,8 @@
 #include "atomcoords.h"
 #include "atomelements.h"
 
+#include "SireVol/cartesian.h"
+
 #include "SireUnits/units.h"
 
 #include "SireStream/datastream.h"
@@ -50,13 +52,14 @@ static const RegisterMetaType<VolumeMap> r_volmap;
 
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const VolumeMap &volmap)
 {
-    writeHeader(ds, r_volmap, 1);
+    writeHeader(ds, r_volmap, 2);
     
     SharedDataStream sds(ds);
     
     sds << volmap.grid_info << volmap.grid_spacing.to(angstrom)
         << qint32(volmap.map_type) << qint32(volmap.fill_type)
         << volmap.occ << volmap.nsamples << volmap.max_grid_points
+        << volmap.mask_points << volmap.mask_dist
         << volmap.skip_light_atoms
         << static_cast<const Property&>(volmap);
     
@@ -67,12 +70,33 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, VolumeMap &volmap)
 {
     VersionID v = readHeader(ds, r_volmap);
     
-    if (v == 1)
+    if (v == 2)
     {
         SharedDataStream sds(ds);
         
         double grid_spacing;
         qint32 map_type, fill_type;
+        
+        sds >> volmap.grid_info >> grid_spacing
+            >> map_type >> fill_type
+            >> volmap.occ >> volmap.nsamples >> volmap.max_grid_points
+            >> volmap.mask_points >> volmap.mask_dist
+            >> volmap.skip_light_atoms
+            >> static_cast<Property&>(volmap);
+        
+        volmap.grid_spacing = grid_spacing * angstrom;
+        volmap.map_type = VolumeMap::MapType(map_type);
+        volmap.fill_type = VolumeMap::FillType(fill_type);
+    }
+    else if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        double grid_spacing;
+        qint32 map_type, fill_type;
+        
+        volmap.mask_dist = 0;
+        volmap.mask_points.clear();
         
         sds >> volmap.grid_info >> grid_spacing
             >> map_type >> fill_type
@@ -85,7 +109,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, VolumeMap &volmap)
         volmap.fill_type = VolumeMap::FillType(fill_type);
     }
     else
-        throw version_error(v, "1", r_volmap, CODELOC);
+        throw version_error(v, "1,2", r_volmap, CODELOC);
     
     return ds;
 }
@@ -112,6 +136,9 @@ namespace SireMol
             VolumeMap::MapType map_type;
             VolumeMap::FillType fill_type;
             
+            QVector<Vector> mask_points;
+            float mask_dist;
+            
             qint32 max_points;
             
             QElapsedTimer t;
@@ -132,6 +159,7 @@ VolumeMap::VolumeMap() : ConcreteProperty<VolumeMap,Property>(),
                          map_type(default_map_type),
                          fill_type(default_fill_type),
                          d(0), nsamples(0), max_grid_points(default_max_grid_points),
+                         mask_dist(0),
                          skip_light_atoms(false)
 {}
 
@@ -141,6 +169,7 @@ VolumeMap::VolumeMap(bool skip) : ConcreteProperty<VolumeMap,Property>(),
                                   map_type(default_map_type),
                                   fill_type(default_fill_type),
                                   d(0), nsamples(0), max_grid_points(default_max_grid_points),
+                                  mask_dist(0),
                                   skip_light_atoms(skip)
 {}
 
@@ -151,6 +180,7 @@ VolumeMap::VolumeMap(const Length &spacing, bool skip)
             map_type(default_map_type),
             fill_type(default_fill_type),
             d(0), nsamples(0), max_grid_points(default_max_grid_points),
+            mask_dist(0),
             skip_light_atoms(skip)
 {
     if (grid_spacing.value() < min_grid_spacing)
@@ -166,6 +196,7 @@ VolumeMap::VolumeMap(MapType map_type, bool skip)
             map_type(map_type),
             fill_type(default_fill_type),
             d(0), nsamples(0), max_grid_points(default_max_grid_points),
+            mask_dist(0),
             skip_light_atoms(skip)
 {}
 
@@ -176,6 +207,7 @@ VolumeMap::VolumeMap(FillType fill_type, bool skip)
             map_type(default_map_type),
             fill_type(fill_type),
             d(0), nsamples(0), max_grid_points(default_max_grid_points),
+            mask_dist(0),
             skip_light_atoms(skip)
 {}
 
@@ -186,6 +218,7 @@ VolumeMap::VolumeMap(const Length &spacing, MapType map_type, bool skip)
             map_type(map_type),
             fill_type(default_fill_type),
             d(0), nsamples(0), max_grid_points(default_max_grid_points),
+            mask_dist(0),
             skip_light_atoms(skip)
 {
     if (grid_spacing.value() < min_grid_spacing)
@@ -201,6 +234,7 @@ VolumeMap::VolumeMap(const Length &spacing, FillType fill_type, bool skip)
             map_type(default_map_type),
             fill_type(fill_type),
             d(0), nsamples(0), max_grid_points(default_max_grid_points),
+            mask_dist(0),
             skip_light_atoms(skip)
 {
     if (grid_spacing.value() < min_grid_spacing)
@@ -216,6 +250,7 @@ VolumeMap::VolumeMap(FillType fill_type, MapType map_type, bool skip)
             map_type(map_type),
             fill_type(fill_type),
             d(0), nsamples(0), max_grid_points(default_max_grid_points),
+            mask_dist(0),
             skip_light_atoms(skip)
 {}
 
@@ -226,6 +261,7 @@ VolumeMap::VolumeMap(const Length &spacing, FillType fill_type, MapType map_type
             map_type(map_type),
             fill_type(fill_type),
             d(0), nsamples(0), max_grid_points(default_max_grid_points),
+            mask_dist(0),
             skip_light_atoms(skip)
 {
     if (grid_spacing.value() < min_grid_spacing)
@@ -240,6 +276,7 @@ VolumeMap::VolumeMap(const VolumeMap &other)
             grid_info(other.grid_info), grid_spacing(other.grid_spacing),
             map_type(other.map_type), fill_type(other.fill_type),
             occ(other.occ), d(0), nsamples(other.nsamples), max_grid_points(other.max_grid_points),
+            mask_points(other.mask_points), mask_dist(other.mask_dist),
             skip_light_atoms(other.skip_light_atoms)
 {}
 
@@ -261,6 +298,8 @@ VolumeMap& VolumeMap::operator=(const VolumeMap &other)
         occ = other.occ;
         nsamples = other.nsamples;
         max_grid_points = other.max_grid_points;
+        mask_points = other.mask_points;
+        mask_dist = other.mask_dist;
         skip_light_atoms = other.skip_light_atoms;
         
         delete d;
@@ -278,6 +317,8 @@ bool VolumeMap::operator==(const VolumeMap &other) const
             map_type == other.map_type and fill_type == other.fill_type and
             occ == other.occ and nsamples == other.nsamples and
             max_grid_points == other.max_grid_points and
+            mask_points == other.mask_points and
+            mask_dist == other.mask_dist and
             skip_light_atoms == other.skip_light_atoms);
 }
 
@@ -589,6 +630,8 @@ void VolumeMap::beginEvaluation()
     d->map_type = map_type;
     d->fill_type = fill_type;
     d->max_points = max_grid_points;
+    d->mask_points = mask_points;
+    d->mask_dist = mask_dist;
     //d->t.start();
 }
 
@@ -641,6 +684,27 @@ void SireMol::detail::VolumeMapData::addToGrid(const Vector &coords, const Eleme
     }
     else if (not grid_info.dimensions().contains(atombox))
     {
+        //see if this atom is within the mask distance (if it is masked)
+        if (not mask_points.isEmpty())
+        {
+            bool is_masked = true;
+            
+            Cartesian space;
+            
+            for (int i=0; i<mask_points.count(); ++i)
+            {
+                if (space.minimumDistance(mask_points.at(i),atombox) <= mask_dist)
+                {
+                    is_masked = false;
+                    break;
+                }
+            }
+            
+            if (is_masked)
+                //this atom will be masked, so don't bother evaluating it
+                return;
+        }
+    
         //must redimension
         Vector mincoords = grid_info.dimensions().minCoords();
         Vector maxcoords = grid_info.dimensions().maxCoords();
@@ -736,7 +800,25 @@ void SireMol::detail::VolumeMapData::addToGrid(const Vector &coords, const Eleme
     
     for (int i=0; i<occupied_points.count(); ++i)
     {
-        o[ occupied_points.constData()[i] ] = 1;
+        if (not mask_points.isEmpty())
+        {
+            bool is_masked = true;
+            
+            for (int j=0; j<mask_points.count(); ++j)
+            {
+                if (Vector::distance(mask_points.at(j),
+                                     grid_info.point(occupied_points.at(i))) <= mask_dist)
+                {
+                    is_masked = false;
+                    break;
+                }
+            }
+        
+            if (not is_masked)
+                o[ occupied_points.constData()[i] ] = 1;
+        }
+        else
+            o[ occupied_points.constData()[i] ] = 1;
     }
 }
 
@@ -1145,3 +1227,145 @@ void VolumeMap::add(const GridInfo &gridinfo, const QVector<float> &values)
         throw;
     }
 }
+
+/** Return whether or not this volume map is masked */
+bool VolumeMap::isMasked() const
+{
+    return not mask_points.isEmpty();
+}
+
+/** Return the mask distance. Grid points are only evaluated if they are
+    within this distance of any of the masking points */
+Length VolumeMap::maskDistance() const
+{
+    return Length(mask_dist);
+}
+
+/** Return all of the masking points. Grid points are only evaluated if
+    they are within the mask distance of any of these points */
+QVector<Vector> VolumeMap::maskPoints() const
+{
+    return mask_points;
+}
+
+/** Internal function used to clear points that lie outside the current mask */
+void VolumeMap::applyMask()
+{
+    if (mask_points.isEmpty())
+        return;
+
+    for (int i=0; i<grid_info.nPoints(); ++i)
+    {
+        Vector c = grid_info.point(i);
+        
+        bool should_be_masked = true;
+        
+        for (int j=0; j<mask_points.count(); ++j)
+        {
+            Vector m = mask_points.at(j);
+            
+            if (Vector::distance(c,m) <= mask_dist)
+            {
+                should_be_masked = false;
+                break;
+            }
+        }
+        
+        if (should_be_masked)
+            occ[i] = 0;
+    }
+}
+
+/** Set the mask such that grid points are only evaluated if they are within
+    'dist' distance of point 'point'. If 'clear_points' is true (default), then this
+    will clear any points that are outside this mask */
+void VolumeMap::setMaskWithinDistance(Length dist, const Vector &point, bool clear_points)
+{
+    mask_points.clear();
+    mask_points.append(point);
+    mask_dist = dist.value();
+    
+    if (mask_dist < 0)
+        mask_dist = 0;
+    
+    if (clear_points)
+        applyMask();
+}
+
+/** Set the mask such that grid points are only evaluated if they are within
+    distance 'dist' of any atom in the view 'molecule'. If 'clear_points' is true
+    (default) then this will clear any points that are outside the mask */
+void VolumeMap::setMaskWithinDistance(Length dist, const MoleculeView &molecule,
+                                      bool clear_points, const PropertyMap &map)
+{
+    const AtomCoords &coords = molecule.data().property( map["coordinates"] )
+                                              .asA<AtomCoords>();
+    
+    mask_points.clear();
+    mask_dist = dist.value();
+
+    if (mask_dist < 0)
+        mask_dist = 0;
+    
+    if (molecule.selectedAll())
+    {
+        for (int i=0; i<coords.nCutGroups(); ++i)
+        {
+            const Vector *c = coords.data(CGIdx(i));
+        
+            for (int j=0; j<coords.nAtoms(CGIdx(i)); ++j)
+            {
+                mask_points.append( c[j] );
+            }
+        }
+    }
+    else
+    {
+        AtomSelection selected_atoms = molecule.selection();
+        
+        for (int i=0; i<coords.nCutGroups(); ++i)
+        {
+            CGIdx ci(i);
+        
+            if (selected_atoms.selected(ci))
+            {
+                const Vector *c = coords.data(ci);
+            
+                if (selected_atoms.selectedAll(ci))
+                {
+                    for (int j=0; j<coords.nAtoms(ci); ++j)
+                    {
+                        mask_points.append( c[j] );
+                    }
+                }
+                else
+                {
+                    foreach (Index j, selected_atoms.selectedAtoms(ci))
+                    {
+                        mask_points.append( c[j] );
+                    }
+                }
+            }
+        }
+    }
+    
+    if (clear_points)
+        applyMask();
+}
+
+/** Set the mask such that grid points are only evaluated if they are within
+    distance 'dist' of any atom in the view 'molecule'. If 'clear_points' is true
+    (default) then this will clear any points that are outside the mask */
+void VolumeMap::setMaskWithinDistance(Length dist, const MoleculeView &molecule,
+                                      const PropertyMap &map)
+{
+    setMaskWithinDistance(dist, molecule, true, map);
+}
+
+/** Clear the set of mask points and mask distance */
+void VolumeMap::clearMask()
+{
+    mask_points.clear();
+    mask_dist = 0;
+}
+
