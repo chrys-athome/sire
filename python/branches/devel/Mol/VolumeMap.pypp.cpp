@@ -192,6 +192,16 @@ void register_VolumeMap_class(){
                 , clear_function_value );
         
         }
+        { //::SireMol::VolumeMap::clearMask
+        
+            typedef void ( ::SireMol::VolumeMap::*clearMask_function_type )(  ) ;
+            clearMask_function_type clearMask_function_value( &::SireMol::VolumeMap::clearMask );
+            
+            VolumeMap_exposer.def( 
+                "clearMask"
+                , clearMask_function_value );
+        
+        }
         { //::SireMol::VolumeMap::fillType
         
             typedef ::SireMol::VolumeMap::FillType ( ::SireMol::VolumeMap::*fillType_function_type )(  ) const;
@@ -233,6 +243,16 @@ void register_VolumeMap_class(){
                 , isEmpty_function_value );
         
         }
+        { //::SireMol::VolumeMap::isMasked
+        
+            typedef bool ( ::SireMol::VolumeMap::*isMasked_function_type )(  ) const;
+            isMasked_function_type isMasked_function_value( &::SireMol::VolumeMap::isMasked );
+            
+            VolumeMap_exposer.def( 
+                "isMasked"
+                , isMasked_function_value );
+        
+        }
         { //::SireMol::VolumeMap::mapType
         
             typedef ::SireMol::VolumeMap::MapType ( ::SireMol::VolumeMap::*mapType_function_type )(  ) const;
@@ -241,6 +261,26 @@ void register_VolumeMap_class(){
             VolumeMap_exposer.def( 
                 "mapType"
                 , mapType_function_value );
+        
+        }
+        { //::SireMol::VolumeMap::maskDistance
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMol::VolumeMap::*maskDistance_function_type )(  ) const;
+            maskDistance_function_type maskDistance_function_value( &::SireMol::VolumeMap::maskDistance );
+            
+            VolumeMap_exposer.def( 
+                "maskDistance"
+                , maskDistance_function_value );
+        
+        }
+        { //::SireMol::VolumeMap::maskPoints
+        
+            typedef ::QVector< SireMaths::Vector > ( ::SireMol::VolumeMap::*maskPoints_function_type )(  ) const;
+            maskPoints_function_type maskPoints_function_value( &::SireMol::VolumeMap::maskPoints );
+            
+            VolumeMap_exposer.def( 
+                "maskPoints"
+                , maskPoints_function_value );
         
         }
         { //::SireMol::VolumeMap::nGridPoints
@@ -329,6 +369,39 @@ void register_VolumeMap_class(){
                 "setMapType"
                 , setMapType_function_value
                 , ( bp::arg("map_type") ) );
+        
+        }
+        { //::SireMol::VolumeMap::setMaskWithinDistance
+        
+            typedef void ( ::SireMol::VolumeMap::*setMaskWithinDistance_function_type )( ::SireUnits::Dimension::Length,::SireMaths::Vector const &,bool ) ;
+            setMaskWithinDistance_function_type setMaskWithinDistance_function_value( &::SireMol::VolumeMap::setMaskWithinDistance );
+            
+            VolumeMap_exposer.def( 
+                "setMaskWithinDistance"
+                , setMaskWithinDistance_function_value
+                , ( bp::arg("dist"), bp::arg("point"), bp::arg("clear_points")=(bool)(true) ) );
+        
+        }
+        { //::SireMol::VolumeMap::setMaskWithinDistance
+        
+            typedef void ( ::SireMol::VolumeMap::*setMaskWithinDistance_function_type )( ::SireUnits::Dimension::Length,::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) ;
+            setMaskWithinDistance_function_type setMaskWithinDistance_function_value( &::SireMol::VolumeMap::setMaskWithinDistance );
+            
+            VolumeMap_exposer.def( 
+                "setMaskWithinDistance"
+                , setMaskWithinDistance_function_value
+                , ( bp::arg("dist"), bp::arg("molecule"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::VolumeMap::setMaskWithinDistance
+        
+            typedef void ( ::SireMol::VolumeMap::*setMaskWithinDistance_function_type )( ::SireUnits::Dimension::Length,::SireMol::MoleculeView const &,bool,::SireBase::PropertyMap const & ) ;
+            setMaskWithinDistance_function_type setMaskWithinDistance_function_value( &::SireMol::VolumeMap::setMaskWithinDistance );
+            
+            VolumeMap_exposer.def( 
+                "setMaskWithinDistance"
+                , setMaskWithinDistance_function_value
+                , ( bp::arg("dist"), bp::arg("molecule"), bp::arg("clear_points"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::VolumeMap::setNMaxGridPoints
