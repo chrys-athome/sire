@@ -982,9 +982,28 @@ bool ComponentConstraint::deltaApply(Delta &delta, quint32 last_subversion)
                 target_value = new_target;
                 changed_target = true;
             }
+            
+            if (system.hasConstantComponent(constrained_component))
+            {
+                double new_comp = system.constant(constrained_component);
+                
+                if ( (not has_constrained_value) or constrained_value != new_comp )
+                {
+                    has_constrained_value = true;
+                    constrained_value = new_comp;
+                    changed_comp = true;
+                }
+                else
+                    changed_comp = false;
+            }
+            else
+            {
+                has_constrained_value = false;
+                constrained_value = 0;
+                changed_comp = true;
+            }
         }
-        
-        if (changed_comp)
+        else if (changed_comp)
         {
             if (system.hasConstantComponent(constrained_component))
             {
@@ -1007,7 +1026,7 @@ bool ComponentConstraint::deltaApply(Delta &delta, quint32 last_subversion)
             }
         }
 
-        if ( (changed_target or changed_comp) and not 
+        if ( (changed_target or changed_comp) and not
              (has_constrained_value and (constrained_value == target_value)) )
         {
             return delta.update(constrained_component, target_value);
