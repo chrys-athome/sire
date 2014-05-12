@@ -160,6 +160,8 @@ def createQMMMMoves(system):
     except:
         pass
 
+    use_reflection_sphere = False
+
     try:
         mobile_ligand = system[MGName("ligand")]
 
@@ -169,7 +171,8 @@ def createQMMMMoves(system):
             # get the amount to translate and rotate from the ligand's flexibility object
             flex = mobile_ligand.moleculeAt(0).molecule().property("flexibility")
 
-            if (flex.translation().value() != 0 or flex.rotation().value() != 0):
+            # only move the solute if it is not the only molecule in the system
+            if system.nMolecules() > 1 and (flex.translation().value() != 0 or flex.rotation().value() != 0):
                 rb_moves = RigidBodyMC(mobile_ligand)
                 rb_moves.setMaximumTranslation(flex.translation())
                 rb_moves.setMaximumRotation(flex.rotation())
@@ -178,6 +181,8 @@ def createQMMMMoves(system):
                     reflection_radius = float(str(system.property("reflection sphere radius"))) * angstroms
                     reflection_center = system.property("reflection center").toVector()[0]
                     rb_moves.setReflectionSphere(reflection_center, reflection_radius)
+                    use_reflection_sphere = True
+                    print("Using the reflection sphere to constrain solvent moves...")
 
                 scale_moves = scale_moves / 2
                 moves.add( rb_moves, scale_moves * mobile_ligand.nViews() )
@@ -242,14 +247,18 @@ def createQMMMMoves(system):
     print("SETTING TEMPERATURE")
     moves.setTemperature(temperature.val)
 
-    if pressure.val:
-        if not system.containsProperty("reflection sphere radius"):
-            all = system[MGName("all")]
-            volume_move = VolumeMove(all)
-            volume_move.setTemperature(temperature.val)
-            volume_move.setPressure(pressure.val)
-            volume_move.setMaximumVolumeChange( 0.1 * all.nMolecules() * angstrom3 )
-            moves.add(volume_move, 1)
+    try:
+        if pressure.val and system.nMolecules() > 1 and system.property("space").isPeriodic():
+            if not use_reflection_sphere:
+                print("Running a constant pressure calculation")
+                all = system[MGName("all")]
+                volume_move = VolumeMove(all)
+                volume_move.setTemperature(temperature.val)
+                volume_move.setPressure(pressure.val)
+                volume_move.setMaximumVolumeChange( 0.1 * all.nMolecules() * angstrom3 )
+                moves.add(volume_move, 1)
+    except:
+        pass
 
     # Now create a multiple-timestep Monte Carlo move that
     # uses the above weighted moves for the fast energy
