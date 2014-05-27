@@ -124,12 +124,12 @@ namespace SireMol
                         ViewsOfMol mol(oldmol);
                         mol.update(newmol);
                         views.push_back(mol);
-                        qDebug() << "RETURNING UPDATED";
+                        //qDebug() << "RETURNING UPDATED";
                         return views.last();
                     }
                 }
                 
-                qDebug() << "RETURNING ORIGINAL?";
+                //qDebug() << "RETURNING ORIGINAL?";
                 return oldmol;
             }
             
@@ -369,13 +369,13 @@ void MolGroupWorkspace::push(const MoleculeData &molecule)
 /** Return the updated view of the passed molecule */
 const ViewsOfMol& MolGroupWorkspace::getUpdated(const ViewsOfMol &oldmol) const
 {
-    qDebug() << "MolGroupWorkspace::getUpdated(" << oldmol.number().value() << ")";
+    //qDebug() << "MolGroupWorkspace::getUpdated(" << oldmol.number().value() << ")";
 
     if (d.get())
     {
         if (d->contains(oldmol.number()))
         {
-            qDebug() << "DOING SOME WORK";
+            //qDebug() << "DOING SOME WORK";
             MolGroupWorkspace *nonconst_this = const_cast<MolGroupWorkspace*>(this);
             nonconst_this->detach();
             return nonconst_this->d->getUpdated(oldmol);

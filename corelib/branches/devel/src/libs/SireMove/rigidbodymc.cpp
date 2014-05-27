@@ -64,13 +64,14 @@ static const RegisterMetaType<RigidBodyMC> r_rbmc;
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
                                         const RigidBodyMC &rbmc)
 {
-    writeHeader(ds, r_rbmc, 6);
+    writeHeader(ds, r_rbmc, 7);
 
     SharedDataStream sds(ds);
 
     sds << rbmc.smplr << rbmc.center_function
         << rbmc.adel << rbmc.rdel
         << rbmc.reflect_center << rbmc.reflect_radius
+        << rbmc.vol_points
         << rbmc.reflect_moves
         << rbmc.sync_trans << rbmc.sync_rot << rbmc.common_center;
     
@@ -96,8 +97,43 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
     rbmc = RigidBodyMC();
 
     rbmc.center_function = GetCOGPoint();
+    rbmc.vol_points.clear();
 
-    if (v == 6)
+    if (v == 7)
+    {
+        SharedDataStream sds(ds);
+
+        sds >> rbmc.smplr >> rbmc.center_function
+            >> rbmc.adel >> rbmc.rdel
+            >> rbmc.reflect_center >> rbmc.reflect_radius
+            >> rbmc.vol_points
+            >> rbmc.reflect_moves
+            >> rbmc.sync_trans >> rbmc.sync_rot
+            >> rbmc.common_center;
+        
+        quint32 nreflect;
+        
+        sds >> nreflect;
+        
+        if (nreflect > 0)
+            rbmc.mol_reflectors.reserve(nreflect);
+        else
+            rbmc.mol_reflectors.clear();
+        
+        for (int i=0; i<nreflect; ++i)
+        {
+            MolNum molnum;
+            Vector center;
+            double radius;
+            
+            sds >> molnum >> center >> radius;
+            
+            rbmc.mol_reflectors.insert(molnum, QPair<Vector,double>(center,radius));
+        }
+        
+        sds >> static_cast<MonteCarlo&>(rbmc);
+    }
+    else if (v == 6)
     {
         SharedDataStream sds(ds);
 
@@ -238,6 +274,7 @@ RigidBodyMC::RigidBodyMC(const RigidBodyMC &other)
               adel(other.adel), rdel(other.rdel),
               reflect_center(other.reflect_center), 
               reflect_radius(other.reflect_radius),
+              vol_points(other.vol_points),
               mol_reflectors(other.mol_reflectors),
               reflect_moves(other.reflect_moves),
               sync_trans(other.sync_trans), sync_rot(other.sync_rot),
@@ -264,6 +301,7 @@ RigidBodyMC& RigidBodyMC::operator=(const RigidBodyMC &other)
         rdel = other.rdel;
         reflect_center = other.reflect_center;
         reflect_radius = other.reflect_radius;
+        vol_points = other.vol_points;
         mol_reflectors = other.mol_reflectors;
         reflect_moves = other.reflect_moves;
         sync_trans = other.sync_trans;
@@ -282,6 +320,7 @@ bool RigidBodyMC::operator==(const RigidBodyMC &other) const
            adel == other.adel and rdel == other.rdel and
            reflect_center == other.reflect_center and
            reflect_radius == other.reflect_radius and
+           vol_points == other.vol_points and
            mol_reflectors == other.mol_reflectors and
            reflect_moves == other.reflect_moves and 
            sync_trans == other.sync_trans and sync_rot == other.sync_rot and
@@ -409,6 +448,7 @@ void RigidBodyMC::setReflectionSphere(Vector sphere_center,
     reflect_moves = true;
     reflect_center = sphere_center;
     reflect_radius = sphere_radius.value();
+    vol_points.clear();
 
     if (reflect_radius < 0.01)
     {
@@ -445,6 +485,8 @@ SireUnits::Dimension::Length RigidBodyMC::reflectionSphereRadius() const
 void RigidBodyMC::setReflectionSphere(MolNum molnum, Vector sphere_center,
                                       SireUnits::Dimension::Length sphere_radius)
 {
+    vol_points.clear();
+
     if (molnum.isNull())
         return;
 
@@ -510,6 +552,51 @@ SireUnits::Dimension::Length RigidBodyMC::reflectionSphereRadius(const MoleculeV
     return this->reflectionSphereRadius(mol.data().number());
 }
 
+/** Turn on use of restricted volume sampling. This ensures that moves will only
+    move the center of the molecules being sampled within the volume specified. The
+    volume is specified as a series of points, with the radius allowed to be sampled
+    around each point. For example, you could supply the coordinates of the heavy
+    atoms of a molecule and use a radius of 1.7 A (radius of carbon) and this will
+    confine sampling to within the volume occupied by that molecule. Note that turning
+    on this option will turn off use of the reflection sphere. */
+void RigidBodyMC::setRestrictedVolume(const QVector<Vector> &points,
+                                      SireUnits::Dimension::Length radius)
+{
+    reflect_moves = false;
+    reflect_center = Vector(0);
+    mol_reflectors.clear();
+
+    if (points.isEmpty() or radius.value() < 0)
+        radius = SireUnits::Dimension::Length(0);
+    
+    reflect_radius = radius;
+    vol_points = points;
+}
+
+/** Return whether or not rigid body moves are confined to a restricted volume of space */
+bool RigidBodyMC::usesRestrictedVolume() const
+{
+    return not vol_points.isEmpty();
+}
+
+/** Return the points used to define the restricted volume if sampling is confined
+    to a restricted volume. This returns an empty list if sampling is not restricted */
+QVector<Vector> RigidBodyMC::restrictedVolumePoints() const
+{
+    return vol_points;
+}
+
+/** Return the radius around each volume point used to define the restricted volume
+    if sampling is confined to a restricted volume. This returns 0 if restricted
+    volume sampling is not used. */
+SireUnits::Dimension::Length RigidBodyMC::restrictedVolumeRadius() const
+{
+    if (usesRestrictedVolume())
+        return SireUnits::Dimension::Length(reflect_radius);
+    else
+        return SireUnits::Dimension::Length(0);
+}
+
 /** Return whether or not translation of all molecules is synchronised */
 bool RigidBodyMC::synchronisedTranslation() const
 {
@@ -567,241 +654,353 @@ void RigidBodyMC::performMove(System &system,
 
         //move the molecule
         PartialMolecule newmol;
-        
-        if (has_center_property)
+
+        if (usesRestrictedVolume())
         {
-            newmol = oldmol.move()
-                           .rotate(rotdelta,
-                                   oldmol.property(center_property).asA<VectorProperty>(),
-                                   map)
-                           .translate(delta, map)
-                           .commit();
-        }
-        else
-        {
-            newmol = oldmol.move()
-                           .rotate(rotdelta,
-                                   center_function.read()(oldmol,map),
-                                   map)
-                           .translate(delta, map)
-                           .commit();
-        }
-
-        //if we are reflecting moves in a sphere, then check that this move
-        //won't take us out of the sphere.
-        if (reflect_moves or mol_reflectors.contains(oldmol.number()))
-        {
-            //moves are constrained into a sphere of radius reflect_radius
-            //around reflect_center. If the center of geometry moves outside
-            //the sphere, then the molecule will bounce off the edge of 
-            //the sphere and back into the sphere volume
-
-            Vector reflect_cent = reflect_center;
-            double reflect_rad = reflect_radius;
-            
-            if (mol_reflectors.contains(oldmol.number()))
+            if (reflect_radius == 0)
             {
-                reflect_cent = mol_reflectors.value(oldmol.number()).first;
-                reflect_rad = mol_reflectors.value(oldmol.number()).second;
-            }
-
-            Vector old_center;
-            
-            if (has_center_property)
-            {
-                old_center = oldmol.property(center_property).asA<VectorProperty>();
-            }
-            else
-            {
-                old_center = oldmol.evaluate().center();
-            }
-
-            if ( (old_center-reflect_cent).length() > reflect_rad )
-            {
-                //the molecule is already outside the sphere, so cannot be moved
                 old_bias = 1;
                 new_bias = 1;
-                qDebug() << "HOW IS THE MOLECULE OUTSIDE THE SPHERE?";
-                qDebug() << (old_center-reflect_cent).length() << reflect_rad;
+                qDebug() << "CANNOT MOVE MOLECULE AS RESTRICT VOLUME RADIUS IS ZERO"
+                         << oldmol.number().toString();
                 return;
             }
-
-            Vector new_center;
-            
-            if (has_center_property)
+        
+            const double reflect_rad = reflect_radius;
+        
+            //make sure that the molecule starts from within this volume
             {
-                new_center = newmol.property(center_property).asA<VectorProperty>();
-            }
-            else
-            {
-                new_center = newmol.evaluate().center();
-            }
-
-            double dist = (new_center - reflect_cent).length();
-
-            if (dist > reflect_rad)
-            {
-                delta = new_center - old_center;
-            
-                //this would move the molecule out of the sphere. We need
-                //to work out where the molecule would intersect the surface
-                //of the sphere, and then reflect the molecule back inside
-
-                //first, find the intersection of the delta vector with the sphere.
-                // The delta vector has origin at O, direction D. The sphere
-                // is at origin C, with radius R
-                Vector D = delta.normalise();
-                Vector O = old_center;
-                Vector C = reflect_cent;
-                double R2 = reflect_rad*reflect_rad;
-
-                //a point P is on the surface of the sphere if (P-C).(P-C) = R^2
-                //this means that the intersection of the vector with the sphere
-                //must satisfy ( (O + xD) - C ).( (O + xD) - C ) = R^2
-                // This gives;
-                // (D.D) x^2 + 2 ( O-C ).D x + (O-C).(O-C) - R^2 = 0
-                // which is A x^2 + B x + C = 0, where
-                //
-                // A = D.D
-                // B = 2 (O-C).D
-                // C = (O-C).(O-C) - R^2
-                //
-                // which can be solved using the quadratic formula
-                //
-                // roots = [-B - sqrt(B^2 - 4AC)] / 2A
-                //       = [-B + sqrt(B^2 - 4AC)] / 2A
-                //
-                // To avoid numerical instability, we use;
-                //
-                // roots = Q / A and C / Q where
-                //
-                // Q = [-B + sqrt(B^2 - 4AC)] / 2   if B < 0
-                // Q = [-B - sqrt(B^2 - 4AC)] / 2   otherwise
-
-                double QA = Vector::dot(D,D);
-                double QB = 2.0 * Vector::dot( O-C, D );
-                double QC = Vector::dot(O-C, O-C) - R2;
-
-                double B2_minus_4AC = QB*QB - 4*QA*QC;
-
-                if (B2_minus_4AC < 0)
+                Vector old_center;
+                
+                if (has_center_property)
                 {
-                    //the move does not intersect with the sphere... weird...
-                    old_bias = 1;
-                    new_bias = 1;
-                    qDebug() << "WEIRD: MOVE DOES NOT INTERSECT WITH SPHERE";
-                    return;
-                }
-
-                double Q;
-
-                if (QB < 0)
-                {
-                    Q = (-QB - std::sqrt(B2_minus_4AC)) * 0.5;
+                    old_center = oldmol.property(center_property).asA<VectorProperty>();
                 }
                 else
                 {
-                    Q = (-QB + std::sqrt(B2_minus_4AC)) * 0.5;
+                    old_center = oldmol.evaluate().center();
                 }
 
-                double x0 = Q / QA;
-                double x1 = QC / Q;
-
-                if (x0 > x1){ qSwap(x0,x1); }
-
-                if (x1 < 0)
+                bool in_volume = false;
+                
+                for (int i=0; i<vol_points.count(); ++i)
                 {
-                    //the intersection is behind us...
-                    qDebug() << "Intersection behind us..." << x1;
-                    old_bias = 1.0;
-                    new_bias = 1.0;
+                    if ( (old_center-vol_points.constData()[i]).length() <= reflect_rad )
+                    {
+                        in_volume = true;
+                        break;
+                    }
+                }
+
+                if (not in_volume)
+                {
+                    //the molecule is already outside the volume, so cannot be moved
+                    old_bias = 1;
+                    new_bias = 1;
+                    qDebug() << "HOW IS THE MOLECULE OUTSIDE THE VOLUME?"
+                             << oldmol.number().toString();
                     return;
                 }
+            }
 
-                double x = x0;
+            int nattempts = 0;
+        
+            while (true)
+            {
+                Vector new_center;
 
-                if (x0 < 0){ x = x1; }
-
-                //the intersection point, X, is O + xD
-                Vector X = O + x*D;
-
-                //qDebug() << "Reflect at " << X.toString() << (X-C).length() << std::sqrt(R2);
-
-                //ok - now we have the intersection point, the next step is to 
-                //get the normal (N) to the sphere at this point, as this defines the
-                //reflection plane
-                Vector N = (X - C).normalise();
-
-                //We want to reflect the unit vector that intersects with the 
-                //sphere about this normal
-                Vector X1 = X - D;
-                Vector X2 = X1 + 2 * ( (X - Vector::dot(D,N)*N) - X1 );
-
-                //X2 is the reflected vector. Now work out how much we have
-                //moved along X1, and then move that same amount along X2
-                double dist_x1 = (X-O).length();
-                double dist_x2 = delta.length() - dist_x1;
-
-                if (dist_x2 < 0)
+                if (has_center_property)
                 {
-                    qDebug() << "WEIRD. NEGATIVE REFLECTION DISTANCE??? " 
-                             << dist_x2;
-                    
-                    old_bias = 1.0;
-                    new_bias = 1.0;
-                    return;
+                    newmol = oldmol.move()
+                                   .rotate(rotdelta,
+                                           oldmol.property(center_property).asA<VectorProperty>(),
+                                           map)
+                                   .translate(delta, map)
+                                   .commit();
+
+                    new_center = newmol.property(center_property).asA<VectorProperty>();
+                }
+                else
+                {
+                    newmol = oldmol.move()
+                                   .rotate(rotdelta,
+                                           center_function.read()(oldmol,map),
+                                           map)
+                                   .translate(delta, map)
+                                   .commit();
+
+                    new_center = newmol.evaluate().center();
                 }
 
-                //work out where the new center of the molecule should lie
-                Vector new_new_center = X + dist_x2*((X2-X).normalise());
-
-                //now translate the molecule to the new position
-                newmol = newmol.move().translate(new_new_center-new_center,map).commit();
-
-                new_center = newmol.evaluate().center();
-                double dist = (new_center - reflect_cent).length();
+                bool in_volume = false;
                 
-                int check_count = 0;
-                
-                while (dist > reflect_rad)
+                for (int i=0; i<vol_points.count(); ++i)
                 {
-                    qDebug() << "MOVED MOLECULE OUTSIDE SPHERE" << dist << reflect_rad;
-                    qDebug() 
-                        << "FIXING THE PROBLEM (MOSTLY CAUSED BY NUMERICAL IMPRECISION)";
-                    
-                    //this will be due to a little numerical imprecision
-                    newmol = newmol.move().translate( 
-                            (1.01*(dist-reflect_rad))
-                                * ((reflect_cent-new_center).normalise()) ).commit();
-                    
-                    if (has_center_property)
+                    if ( (new_center-vol_points.constData()[i]).length() <= reflect_rad )
                     {
-                        new_center = newmol.property(center_property).asA<VectorProperty>();
+                        in_volume = true;
+                        break;
                     }
-                    else
+                }
+                
+                if (in_volume)
+                {
+                    //we have successfully moved the molecule :-)
+                    break;
+                }
+                else
+                {
+                    nattempts += 1;
+                    
+                    if (nattempts > 1000)
                     {
-                        new_center = newmol.evaluate().center();
-                    }
-                    
-                    dist = (new_center - reflect_cent).length();
-                    
-                    check_count += 1;
-                    
-                    if (check_count > 100)
-                    {
-                        qDebug() << "WARNING: SOMETHING WEIRD GOING ON."
-                                 << "SKIPPING THIS MOVE.";
-                                 
+                        qDebug() << "Cannot move molecule as the number of restrict volume"
+                                    "attempts has exceeded 1000." << oldmol.number().toString();
+                        
                         old_bias = 1;
                         new_bias = 1;
                         return;
                     }
                 }
-            } 
+            }
+        }
+        else
+        {
+            if (has_center_property)
+            {
+                newmol = oldmol.move()
+                               .rotate(rotdelta,
+                                       oldmol.property(center_property).asA<VectorProperty>(),
+                                       map)
+                               .translate(delta, map)
+                               .commit();
+            }
+            else
+            {
+                newmol = oldmol.move()
+                               .rotate(rotdelta,
+                                       center_function.read()(oldmol,map),
+                                       map)
+                               .translate(delta, map)
+                               .commit();
+            }
+
+            //if we are reflecting moves in a sphere, then check that this move
+            //won't take us out of the sphere.
+            if (reflect_moves or mol_reflectors.contains(oldmol.number()))
+            {
+                //moves are constrained into a sphere of radius reflect_radius
+                //around reflect_center. If the center of geometry moves outside
+                //the sphere, then the molecule will bounce off the edge of 
+                //the sphere and back into the sphere volume
+
+                Vector reflect_cent = reflect_center;
+                double reflect_rad = reflect_radius;
+                
+                if (mol_reflectors.contains(oldmol.number()))
+                {
+                    reflect_cent = mol_reflectors.value(oldmol.number()).first;
+                    reflect_rad = mol_reflectors.value(oldmol.number()).second;
+                }
+
+                Vector old_center;
+                
+                if (has_center_property)
+                {
+                    old_center = oldmol.property(center_property).asA<VectorProperty>();
+                }
+                else
+                {
+                    old_center = oldmol.evaluate().center();
+                }
+
+                if ( (old_center-reflect_cent).length() > reflect_rad )
+                {
+                    //the molecule is already outside the sphere, so cannot be moved
+                    old_bias = 1;
+                    new_bias = 1;
+                    qDebug() << "HOW IS THE MOLECULE OUTSIDE THE SPHERE?";
+                    qDebug() << (old_center-reflect_cent).length() << reflect_rad;
+                    return;
+                }
+
+                Vector new_center;
+                
+                if (has_center_property)
+                {
+                    new_center = newmol.property(center_property).asA<VectorProperty>();
+                }
+                else
+                {
+                    new_center = newmol.evaluate().center();
+                }
+
+                double dist = (new_center - reflect_cent).length();
+
+                if (dist > reflect_rad)
+                {
+                    delta = new_center - old_center;
+                
+                    //this would move the molecule out of the sphere. We need
+                    //to work out where the molecule would intersect the surface
+                    //of the sphere, and then reflect the molecule back inside
+
+                    //first, find the intersection of the delta vector with the sphere.
+                    // The delta vector has origin at O, direction D. The sphere
+                    // is at origin C, with radius R
+                    Vector D = delta.normalise();
+                    Vector O = old_center;
+                    Vector C = reflect_cent;
+                    double R2 = reflect_rad*reflect_rad;
+
+                    //a point P is on the surface of the sphere if (P-C).(P-C) = R^2
+                    //this means that the intersection of the vector with the sphere
+                    //must satisfy ( (O + xD) - C ).( (O + xD) - C ) = R^2
+                    // This gives;
+                    // (D.D) x^2 + 2 ( O-C ).D x + (O-C).(O-C) - R^2 = 0
+                    // which is A x^2 + B x + C = 0, where
+                    //
+                    // A = D.D
+                    // B = 2 (O-C).D
+                    // C = (O-C).(O-C) - R^2
+                    //
+                    // which can be solved using the quadratic formula
+                    //
+                    // roots = [-B - sqrt(B^2 - 4AC)] / 2A
+                    //       = [-B + sqrt(B^2 - 4AC)] / 2A
+                    //
+                    // To avoid numerical instability, we use;
+                    //
+                    // roots = Q / A and C / Q where
+                    //
+                    // Q = [-B + sqrt(B^2 - 4AC)] / 2   if B < 0
+                    // Q = [-B - sqrt(B^2 - 4AC)] / 2   otherwise
+
+                    double QA = Vector::dot(D,D);
+                    double QB = 2.0 * Vector::dot( O-C, D );
+                    double QC = Vector::dot(O-C, O-C) - R2;
+
+                    double B2_minus_4AC = QB*QB - 4*QA*QC;
+
+                    if (B2_minus_4AC < 0)
+                    {
+                        //the move does not intersect with the sphere... weird...
+                        old_bias = 1;
+                        new_bias = 1;
+                        qDebug() << "WEIRD: MOVE DOES NOT INTERSECT WITH SPHERE";
+                        return;
+                    }
+
+                    double Q;
+
+                    if (QB < 0)
+                    {
+                        Q = (-QB - std::sqrt(B2_minus_4AC)) * 0.5;
+                    }
+                    else
+                    {
+                        Q = (-QB + std::sqrt(B2_minus_4AC)) * 0.5;
+                    }
+
+                    double x0 = Q / QA;
+                    double x1 = QC / Q;
+
+                    if (x0 > x1){ qSwap(x0,x1); }
+
+                    if (x1 < 0)
+                    {
+                        //the intersection is behind us...
+                        qDebug() << "Intersection behind us..." << x1;
+                        old_bias = 1.0;
+                        new_bias = 1.0;
+                        return;
+                    }
+
+                    double x = x0;
+
+                    if (x0 < 0){ x = x1; }
+
+                    //the intersection point, X, is O + xD
+                    Vector X = O + x*D;
+
+                    //qDebug() << "Reflect at " << X.toString() << (X-C).length() << std::sqrt(R2);
+
+                    //ok - now we have the intersection point, the next step is to 
+                    //get the normal (N) to the sphere at this point, as this defines the
+                    //reflection plane
+                    Vector N = (X - C).normalise();
+
+                    //We want to reflect the unit vector that intersects with the 
+                    //sphere about this normal
+                    Vector X1 = X - D;
+                    Vector X2 = X1 + 2 * ( (X - Vector::dot(D,N)*N) - X1 );
+
+                    //X2 is the reflected vector. Now work out how much we have
+                    //moved along X1, and then move that same amount along X2
+                    double dist_x1 = (X-O).length();
+                    double dist_x2 = delta.length() - dist_x1;
+
+                    if (dist_x2 < 0)
+                    {
+                        qDebug() << "WEIRD. NEGATIVE REFLECTION DISTANCE??? " 
+                                 << dist_x2;
+                        
+                        old_bias = 1.0;
+                        new_bias = 1.0;
+                        return;
+                    }
+
+                    //work out where the new center of the molecule should lie
+                    Vector new_new_center = X + dist_x2*((X2-X).normalise());
+
+                    //now translate the molecule to the new position
+                    newmol = newmol.move().translate(new_new_center-new_center,map).commit();
+
+                    new_center = newmol.evaluate().center();
+                    double dist = (new_center - reflect_cent).length();
+                    
+                    int check_count = 0;
+                    
+                    while (dist > reflect_rad)
+                    {
+                        qDebug() << "MOVED MOLECULE OUTSIDE SPHERE" << dist << reflect_rad;
+                        qDebug() 
+                            << "FIXING THE PROBLEM (MOSTLY CAUSED BY NUMERICAL IMPRECISION)";
+                        
+                        //this will be due to a little numerical imprecision
+                        newmol = newmol.move().translate( 
+                                (1.01*(dist-reflect_rad))
+                                    * ((reflect_cent-new_center).normalise()) ).commit();
+                        
+                        if (has_center_property)
+                        {
+                            new_center = newmol.property(center_property).asA<VectorProperty>();
+                        }
+                        else
+                        {
+                            new_center = newmol.evaluate().center();
+                        }
+                        
+                        dist = (new_center - reflect_cent).length();
+                        
+                        check_count += 1;
+                        
+                        if (check_count > 100)
+                        {
+                            qDebug() << "WARNING: SOMETHING WEIRD GOING ON."
+                                     << "SKIPPING THIS MOVE.";
+                                     
+                            old_bias = 1;
+                            new_bias = 1;
+                            return;
+                        }
+                    }
+                } 
+            }
         }
 
         //update the system with the new coordinates
-        system.update(newmol, false);
+        system.update(newmol);
 
         //get the new bias on this molecule
         new_bias = smplr.read().probabilityOf(newmol);

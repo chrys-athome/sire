@@ -132,6 +132,14 @@ public:
     SireUnits::Dimension::Length reflectionSphereRadius(MolNum molnum) const;
     SireUnits::Dimension::Length reflectionSphereRadius(const MoleculeView &molview) const;
 
+    void setRestrictedVolume(const QVector<SireMaths::Vector> &points,
+                             SireUnits::Dimension::Length radius);
+    
+    bool usesRestrictedVolume() const;
+    
+    QVector<SireMaths::Vector> restrictedVolumePoints() const;
+    SireUnits::Dimension::Length restrictedVolumeRadius() const;
+
     void setSynchronisedTranslation(bool on);
     void setSynchronisedRotation(bool on);
     void setSharedRotationCenter(bool on);
@@ -172,8 +180,12 @@ private:
     /** The center of the reflection sphere */
     SireMaths::Vector reflect_center;
 
-    /** The radius of the reflection sphere */
+    /** The radius of the reflection sphere (or restricted volume,
+        if restricted volume points are used) */
     double reflect_radius;
+
+    /** The set of points used to define the restricted volume */
+    QVector<SireMaths::Vector> vol_points;
 
     /** The molecule-specific reflection spheres and radii */
     QHash< MolNum,QPair<SireMaths::Vector,double> > mol_reflectors;
