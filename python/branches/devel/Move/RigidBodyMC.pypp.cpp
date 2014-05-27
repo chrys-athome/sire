@@ -188,6 +188,26 @@ void register_RigidBodyMC_class(){
                 , ( bp::arg("molview") ) );
         
         }
+        { //::SireMove::RigidBodyMC::restrictedVolumePoints
+        
+            typedef ::QVector< SireMaths::Vector > ( ::SireMove::RigidBodyMC::*restrictedVolumePoints_function_type )(  ) const;
+            restrictedVolumePoints_function_type restrictedVolumePoints_function_value( &::SireMove::RigidBodyMC::restrictedVolumePoints );
+            
+            RigidBodyMC_exposer.def( 
+                "restrictedVolumePoints"
+                , restrictedVolumePoints_function_value );
+        
+        }
+        { //::SireMove::RigidBodyMC::restrictedVolumeRadius
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMove::RigidBodyMC::*restrictedVolumeRadius_function_type )(  ) const;
+            restrictedVolumeRadius_function_type restrictedVolumeRadius_function_value( &::SireMove::RigidBodyMC::restrictedVolumeRadius );
+            
+            RigidBodyMC_exposer.def( 
+                "restrictedVolumeRadius"
+                , restrictedVolumeRadius_function_value );
+        
+        }
         { //::SireMove::RigidBodyMC::sampler
         
             typedef ::SireMove::Sampler const & ( ::SireMove::RigidBodyMC::*sampler_function_type )(  ) const;
@@ -274,6 +294,17 @@ void register_RigidBodyMC_class(){
                 "setReflectionSphere"
                 , setReflectionSphere_function_value
                 , ( bp::arg("molview"), bp::arg("sphere_center"), bp::arg("sphere_radius") ) );
+        
+        }
+        { //::SireMove::RigidBodyMC::setRestrictedVolume
+        
+            typedef void ( ::SireMove::RigidBodyMC::*setRestrictedVolume_function_type )( ::QVector< SireMaths::Vector > const &,::SireUnits::Dimension::Length ) ;
+            setRestrictedVolume_function_type setRestrictedVolume_function_value( &::SireMove::RigidBodyMC::setRestrictedVolume );
+            
+            RigidBodyMC_exposer.def( 
+                "setRestrictedVolume"
+                , setRestrictedVolume_function_value
+                , ( bp::arg("points"), bp::arg("radius") ) );
         
         }
         { //::SireMove::RigidBodyMC::setSampler
@@ -411,6 +442,16 @@ void register_RigidBodyMC_class(){
                 "usesReflectionMoves"
                 , usesReflectionMoves_function_value
                 , ( bp::arg("molview") ) );
+        
+        }
+        { //::SireMove::RigidBodyMC::usesRestrictedVolume
+        
+            typedef bool ( ::SireMove::RigidBodyMC::*usesRestrictedVolume_function_type )(  ) const;
+            usesRestrictedVolume_function_type usesRestrictedVolume_function_value( &::SireMove::RigidBodyMC::usesRestrictedVolume );
+            
+            RigidBodyMC_exposer.def( 
+                "usesRestrictedVolume"
+                , usesRestrictedVolume_function_value );
         
         }
         RigidBodyMC_exposer.staticmethod( "typeName" );
