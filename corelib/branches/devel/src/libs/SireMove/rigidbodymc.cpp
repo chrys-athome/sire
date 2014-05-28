@@ -34,6 +34,10 @@
 
 #include "SireMol/partialmolecule.h"
 #include "SireMol/molecule.h"
+#include "SireMol/moleculedata.h"
+#include "SireMol/atomcoords.h"
+#include "SireMol/atomelements.h"
+#include "SireMol/atomselection.h"
 
 #include "SireVol/space.h"
 
@@ -72,8 +76,8 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
 
     sds << rbmc.smplr << rbmc.center_function
         << rbmc.adel << rbmc.rdel
-        << rbmc.reflect_center << rbmc.reflect_radius
-        << rbmc.vol_points
+        << rbmc.reflect_radius
+        << rbmc.reflect_points
         << rbmc.reflect_moves
         << rbmc.sync_trans << rbmc.sync_rot << rbmc.common_center;
     
@@ -99,7 +103,11 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
     rbmc = RigidBodyMC();
 
     rbmc.center_function = GetCOGPoint();
-    rbmc.vol_points.clear();
+    rbmc.reflect_points.clear();
+    rbmc.sync_trans = false;
+    rbmc.sync_rot = false;
+    rbmc.common_center = false;
+    rbmc.reflect_moves = false;
 
     if (v == 7)
     {
@@ -107,8 +115,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
 
         sds >> rbmc.smplr >> rbmc.center_function
             >> rbmc.adel >> rbmc.rdel
-            >> rbmc.reflect_center >> rbmc.reflect_radius
-            >> rbmc.vol_points
+            >> rbmc.reflect_radius
+            >> rbmc.reflect_points
             >> rbmc.reflect_moves
             >> rbmc.sync_trans >> rbmc.sync_rot
             >> rbmc.common_center;
@@ -139,12 +147,17 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
     {
         SharedDataStream sds(ds);
 
+        Vector reflect_center;
+
         sds >> rbmc.smplr >> rbmc.center_function
             >> rbmc.adel >> rbmc.rdel
-            >> rbmc.reflect_center >> rbmc.reflect_radius
+            >> reflect_center >> rbmc.reflect_radius
             >> rbmc.reflect_moves
             >> rbmc.sync_trans >> rbmc.sync_rot
             >> rbmc.common_center;
+        
+        if (rbmc.reflect_moves)
+            rbmc.reflect_points.append(reflect_center);
         
         quint32 nreflect;
         
@@ -172,13 +185,18 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
     {
         SharedDataStream sds(ds);
 
+        Vector reflect_center;
+
         sds >> rbmc.smplr >> rbmc.center_function
             >> rbmc.adel >> rbmc.rdel
-            >> rbmc.reflect_center >> rbmc.reflect_radius
+            >> reflect_center >> rbmc.reflect_radius
             >> rbmc.reflect_moves
             >> rbmc.sync_trans >> rbmc.sync_rot
             >> rbmc.common_center
             >> static_cast<MonteCarlo&>(rbmc);
+
+        if (rbmc.reflect_moves)
+            rbmc.reflect_points.append(reflect_center);
     }
     else if (v == 4)
     {
@@ -218,10 +236,6 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
         sds >> rbmc.smplr
             >> rbmc.adel >> rbmc.rdel
             >> static_cast<MonteCarlo&>(rbmc);
-            
-        rbmc.sync_trans = false;
-        rbmc.sync_rot = false;
-        rbmc.common_center = false;
     }
     else
         throw version_error(v, "1-5", r_rbmc, CODELOC);
@@ -234,7 +248,7 @@ RigidBodyMC::RigidBodyMC(const PropertyMap &map)
             : ConcreteProperty<RigidBodyMC,MonteCarlo>(map),
               center_function( GetCOGPoint() ),
               adel( 0.15 * angstrom ), rdel( 15 * degrees ),
-              reflect_center(0), reflect_radius(0), reflect_moves(false),
+              reflect_radius(0), reflect_moves(false),
               sync_trans(false), sync_rot(false), common_center(false)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
@@ -246,7 +260,7 @@ RigidBodyMC::RigidBodyMC(const Sampler &sampler, const PropertyMap &map)
               smplr(sampler), center_function( GetCOGPoint() ),
               adel( 0.15 * angstrom ),
               rdel( 15 * degrees ), 
-              reflect_center(0), reflect_radius(0), reflect_moves(false),
+              reflect_radius(0), reflect_moves(false),
               sync_trans(false), sync_rot(false), common_center(false)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
@@ -262,7 +276,7 @@ RigidBodyMC::RigidBodyMC(const MoleculeGroup &molgroup,
               smplr( UniformSampler(molgroup) ),
               center_function( GetCOGPoint() ),
               adel( 0.15 * angstrom ), rdel( 15 * degrees ),
-              reflect_center(0), reflect_radius(0), reflect_moves(false),
+              reflect_radius(0), reflect_moves(false),
               sync_trans(false), sync_rot(false), common_center(false)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
@@ -274,9 +288,8 @@ RigidBodyMC::RigidBodyMC(const RigidBodyMC &other)
             : ConcreteProperty<RigidBodyMC,MonteCarlo>(other), 
               smplr(other.smplr), center_function(other.center_function),
               adel(other.adel), rdel(other.rdel),
-              reflect_center(other.reflect_center), 
               reflect_radius(other.reflect_radius),
-              vol_points(other.vol_points),
+              reflect_points(other.reflect_points),
               mol_reflectors(other.mol_reflectors),
               reflect_moves(other.reflect_moves),
               sync_trans(other.sync_trans), sync_rot(other.sync_rot),
@@ -301,9 +314,8 @@ RigidBodyMC& RigidBodyMC::operator=(const RigidBodyMC &other)
         center_function = other.center_function;
         adel = other.adel;
         rdel = other.rdel;
-        reflect_center = other.reflect_center;
         reflect_radius = other.reflect_radius;
-        vol_points = other.vol_points;
+        reflect_points = other.reflect_points;
         mol_reflectors = other.mol_reflectors;
         reflect_moves = other.reflect_moves;
         sync_trans = other.sync_trans;
@@ -320,9 +332,8 @@ bool RigidBodyMC::operator==(const RigidBodyMC &other) const
 {
     return smplr == other.smplr and center_function == other.center_function and
            adel == other.adel and rdel == other.rdel and
-           reflect_center == other.reflect_center and
            reflect_radius == other.reflect_radius and
-           vol_points == other.vol_points and
+           reflect_points == other.reflect_points and
            mol_reflectors == other.mol_reflectors and
            reflect_moves == other.reflect_moves and 
            sync_trans == other.sync_trans and sync_rot == other.sync_rot and
@@ -421,16 +432,37 @@ void RigidBodyMC::setGenerator(const RanGenerator &rangenerator)
     smplr.edit().setGenerator(this->generator());
 }
 
+/** Completely switch off use of the reflection sphere or volume */
+void RigidBodyMC::disableReflectionVolume()
+{
+    reflect_moves = false;
+    reflect_points.clear();
+    reflect_radius = 0;
+    mol_reflectors.clear();
+}
+
+/** Completely switch off use of the reflection sphere or volume */
+void RigidBodyMC::disableReflectionSphere()
+{
+    disableReflectionVolume();
+}
+
 /** Set whether or not to synchronise translation of all of the views */
 void RigidBodyMC::setSynchronisedTranslation(bool on)
 {
     sync_trans = on;
+    
+    if (sync_trans)
+        disableReflectionVolume();
 }
 
 /** Set whether or not to synchronise rotation of all of the views */
 void RigidBodyMC::setSynchronisedRotation(bool on)
 {
     sync_rot = on;
+    
+    if (sync_rot)
+        disableReflectionVolume();
 }
 
 /** Set whether or not to use the same rotation center for all
@@ -447,16 +479,21 @@ void RigidBodyMC::setSharedRotationCenter(bool on)
 void RigidBodyMC::setReflectionSphere(Vector sphere_center,
                                       SireUnits::Dimension::Length sphere_radius)
 {
-    reflect_moves = true;
-    reflect_center = sphere_center;
-    reflect_radius = sphere_radius.value();
-    vol_points.clear();
-
     if (reflect_radius < 0.01)
     {
         reflect_moves = false;
-        reflect_center = Vector(0);
+        reflect_points.clear();
         reflect_radius = 0;
+    }
+    else
+    {
+        reflect_moves = true;
+        reflect_radius = sphere_radius.value();
+        reflect_points.clear();
+        reflect_points.append(sphere_center);
+        
+        sync_trans = false;
+        sync_rot = false;
     }
 }
 
@@ -466,11 +503,14 @@ bool RigidBodyMC::usesReflectionMoves() const
     return reflect_moves;
 }
 
-/** Return the center of the reflection sphere. Returns a null vector
+/** Return the center of the reflection sphere. Returns a zero vector
     if a reflection sphere is not being used */
 Vector RigidBodyMC::reflectionSphereCenter() const
 {
-    return reflect_center;
+    if (reflect_points.count() == 1)
+        return reflect_points.at(0);
+    else
+        return Vector(0);
 }
 
 /** Return the radius of the reflection sphere. This returns zero
@@ -487,8 +527,6 @@ SireUnits::Dimension::Length RigidBodyMC::reflectionSphereRadius() const
 void RigidBodyMC::setReflectionSphere(MolNum molnum, Vector sphere_center,
                                       SireUnits::Dimension::Length sphere_radius)
 {
-    vol_points.clear();
-
     if (molnum.isNull())
         return;
 
@@ -496,6 +534,9 @@ void RigidBodyMC::setReflectionSphere(MolNum molnum, Vector sphere_center,
         sphere_radius = SireUnits::Dimension::Length(0);
 
     mol_reflectors.insert( molnum, QPair<Vector,double>(sphere_center,sphere_radius.value()) );
+    
+    sync_trans = false;
+    sync_rot = false;
 }
 
 /** Turn on rigid body move reflections for molecule 'mol'. This makes sure
@@ -520,14 +561,14 @@ bool RigidBodyMC::usesReflectionMoves(const MoleculeView &mol) const
     return this->usesReflectionMoves(mol.data().number());
 }
 
-/** Return the center of the reflection sphere for molecule 'molnum'. Returns a null vector
+/** Return the center of the reflection sphere for molecule 'molnum'. Returns a zero vector
     if a reflection sphere is not being used */
 Vector RigidBodyMC::reflectionSphereCenter(MolNum molnum) const
 {
     if (mol_reflectors.contains(molnum))
         return mol_reflectors.value(molnum).first;
     else
-        return reflect_center;
+        return reflectionSphereCenter();
 }
 
 /** Return the center of the reflection sphere for molecule 'mol'. Returns a null vector
@@ -544,7 +585,7 @@ SireUnits::Dimension::Length RigidBodyMC::reflectionSphereRadius(MolNum molnum) 
     if (mol_reflectors.contains(molnum))
         return SireUnits::Dimension::Length( mol_reflectors.value(molnum).second );
     else
-        return SireUnits::Dimension::Length( reflect_radius );
+        return reflectionSphereRadius();
 }
 
 /** Return the radius of the reflection sphere for molecule 'mol'. This returns zero
@@ -554,46 +595,144 @@ SireUnits::Dimension::Length RigidBodyMC::reflectionSphereRadius(const MoleculeV
     return this->reflectionSphereRadius(mol.data().number());
 }
 
-/** Turn on use of restricted volume sampling. This ensures that moves will only
-    move the center of the molecules being sampled within the volume specified. The
-    volume is specified as a series of points, with the radius allowed to be sampled
-    around each point. For example, you could supply the coordinates of the heavy
-    atoms of a molecule and use a radius of 1.7 A (radius of carbon) and this will
-    confine sampling to within the volume occupied by that molecule. Note that turning
-    on this option will turn off use of the reflection sphere. */
-void RigidBodyMC::setRestrictedVolume(const QVector<Vector> &points,
+/** Turn on and specify a reflection volume. This is like a reflection sphere,
+    except now the reflection volume is formed as the intersection of the spheres
+    whose centers are in 'points', all with radii 'radius'. This replaces any
+    reflection sphere set (although not molecule-specific reflection spheres) */
+void RigidBodyMC::setReflectionVolume(const QVector<Vector> &points,
                                       SireUnits::Dimension::Length radius)
 {
-    reflect_moves = false;
-    reflect_center = Vector(0);
-    mol_reflectors.clear();
+    if (reflect_radius < 0.01 or points.isEmpty())
+    {
+        reflect_moves = false;
+        reflect_points.clear();
+        reflect_radius = 0;
+    }
+    else
+    {
+        reflect_moves = true;
+        reflect_points = points;
+        reflect_radius = radius.value();
+        
+        sync_trans = false;
+        sync_rot = false;
+    }
+}
 
-    if (points.isEmpty() or radius.value() < 0)
-        radius = SireUnits::Dimension::Length(0);
+/** Turn on and specify the reflection volume by using the coordinates of 
+    all of the atoms in the passed molecule view (excluding light atoms
+    if "heavy_atoms_only" is true) */
+void RigidBodyMC::setReflectionVolume(const MoleculeView &mol,
+                                      SireUnits::Dimension::Length radius,
+                                      bool heavy_atoms_only,
+                                      const PropertyMap &map)
+{
+    //get all of the coordinates
+    QVector<Vector> points;
     
-    reflect_radius = radius;
-    vol_points = points;
+    const AtomCoords &coords = mol.data().property( map["coordinates"] ).asA<AtomCoords>();
+    
+    if (heavy_atoms_only)
+    {
+        const AtomElements &elems = mol.data().property( map["element"] ).asA<AtomElements>();
+        
+        if (mol.selectedAll())
+        {
+            for (int i=0; i<coords.nCutGroups(); ++i)
+            {
+                CGIdx ci(i);
+            
+                const Vector *coords_array = coords.constData(ci);
+                const Element *elems_array = elems.constData(ci);
+            
+                for (int j=0; j<coords.nAtoms(ci); ++j)
+                {
+                    if (elems_array[j].nProtons() > 5)
+                        points.append(coords_array[j]);
+                }
+            }
+        }
+        else
+        {
+            AtomSelection selected_atoms = mol.selection();
+            
+            foreach (CGIdx ci, selected_atoms.selectedCutGroups())
+            {
+                const Vector *coords_array = coords.constData(ci);
+                const Element *elems_array = elems.constData(ci);
+                
+                foreach (Index j, selected_atoms.selectedAtoms(ci))
+                {
+                    if (elems_array[j].nProtons() > 5)
+                        points.append(coords_array[j]);
+                }
+            }
+        }
+    }
+    else
+    {
+        if (mol.selectedAll())
+        {
+            for (int i=0; i<coords.nCutGroups(); ++i)
+            {
+                CGIdx ci(i);
+            
+                const Vector *coords_array = coords.constData(ci);
+            
+                for (int j=0; j<coords.nAtoms(ci); ++j)
+                {
+                    points.append(coords_array[j]);
+                }
+            }
+        }
+        else
+        {
+            AtomSelection selected_atoms = mol.selection();
+            
+            foreach (CGIdx ci, selected_atoms.selectedCutGroups())
+            {
+                const Vector *coords_array = coords.constData(ci);
+                
+                foreach (Index j, selected_atoms.selectedAtoms(ci))
+                {
+                    points.append(coords_array[j]);
+                }
+            }
+        }
+    }
+
+    this->setReflectionVolume(points, radius);
 }
 
-/** Return whether or not rigid body moves are confined to a restricted volume of space */
-bool RigidBodyMC::usesRestrictedVolume() const
+/** Turn on and specify the reflection volume by using the coordinates of 
+    all of the heavy atoms in the passed molecule view */
+void RigidBodyMC::setReflectionVolume(const MoleculeView &mol,
+                                      SireUnits::Dimension::Length radius,
+                                      const PropertyMap &map)
 {
-    return not vol_points.isEmpty();
+    this->setReflectionVolume(mol, radius, true, map);
 }
 
-/** Return the points used to define the restricted volume if sampling is confined
-    to a restricted volume. This returns an empty list if sampling is not restricted */
-QVector<Vector> RigidBodyMC::restrictedVolumePoints() const
+/** Return whether or not rigid body moves are confined to a reflection volume.
+    Note that this also returns true if we are using a reflection sphere
+    (as a sphere is just a special case of a reflection volume) */
+bool RigidBodyMC::usesReflectionVolume() const
 {
-    return vol_points;
+    return not reflect_points.isEmpty();
 }
 
-/** Return the radius around each volume point used to define the restricted volume
-    if sampling is confined to a restricted volume. This returns 0 if restricted
-    volume sampling is not used. */
-SireUnits::Dimension::Length RigidBodyMC::restrictedVolumeRadius() const
+/** Return the points used to define the reflection volume. This will
+    be a single point if a reflection sphere is used. If a reflection
+    sphere or volume is not used then this returns an empty list */
+QVector<Vector> RigidBodyMC::reflectionVolumePoints() const
 {
-    if (usesRestrictedVolume())
+    return reflect_points;
+}
+
+/** Return the reflection volume radius (same as the reflection sphere radius) */
+SireUnits::Dimension::Length RigidBodyMC::reflectionVolumeRadius() const
+{
+    if (usesReflectionVolume())
         return SireUnits::Dimension::Length(reflect_radius);
     else
         return SireUnits::Dimension::Length(0);
@@ -911,7 +1050,12 @@ void RigidBodyMC::performMove(System &system,
     Quaternion rotdelta( rdel * generator().rand(),
                          generator().vectorOnSphere() );
 
-    if ( (not sync_trans) and (not sync_rot) )
+    if (reflect_moves and (sync_trans or sync_rot))
+        throw SireError::incomplete_code( QObject::tr(
+                "Sire does not yet support using the reflection sphere together with "
+                "synchronised translation or rotation of molecules."), CODELOC );
+
+    if ( not (sync_trans or sync_rot) )
     {
         //randomly select a molecule to move
         tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
@@ -933,7 +1077,10 @@ void RigidBodyMC::performMove(System &system,
         //move the molecule
         PartialMolecule newmol;
 
-        if (usesRestrictedVolume())
+        // only use a reflection volume if there are more than one reflection points
+        // and the molecule does not have its own reflector
+        if (reflect_moves and reflect_points.count() > 1
+                    and not mol_reflectors.contains(oldmol.number()))
         {
             if (reflect_radius == 0)
             {
@@ -958,7 +1105,7 @@ void RigidBodyMC::performMove(System &system,
                 old_center = center_function.read()(oldmol,map);
             }
 
-            if (not ::inVolume(old_center,vol_points,reflect_rad))
+            if (not ::inVolume(old_center,reflect_points,reflect_rad))
             {
                 //the molecule is already outside the volume, so cannot be moved
                 old_bias = 1;
@@ -997,7 +1144,7 @@ void RigidBodyMC::performMove(System &system,
                     new_center = center_function.read()(newmol,map);
                 }
                 
-                if (::inVolume(new_center,vol_points,reflect_rad))
+                if (::inVolume(new_center,reflect_points,reflect_rad))
                 {
                     //we have successfully moved the molecule :-)
                     break;
@@ -1010,9 +1157,10 @@ void RigidBodyMC::performMove(System &system,
                     //work out which spheres contained the molecule before the move
                     QVarLengthArray<int> spheres_with_point;
                     
-                    for (int i=0; i<vol_points.count(); ++i)
+                    for (int i=0; i<reflect_points.count(); ++i)
                     {
-                        if (Vector::distance(vol_points.constData()[i], old_center) <= reflect_rad)
+                        if (Vector::distance(reflect_points.constData()[i], old_center)
+                                                                                <= reflect_rad)
                         {
                             spheres_with_point.append(i);
                         }
@@ -1027,7 +1175,7 @@ void RigidBodyMC::performMove(System &system,
                     
                     for (int i=0; i<spheres_with_point.count(); ++i)
                     {
-                        const Vector reflect_cent = vol_points.at( spheres_with_point[i] );
+                        const Vector reflect_cent = reflect_points.at( spheres_with_point[i] );
                         
                         bool ok;
                         
@@ -1062,7 +1210,7 @@ void RigidBodyMC::performMove(System &system,
                         {
                             if (i != j)
                             {
-                                Vector cent = vol_points.constData()[spheres_with_point[j]];
+                                Vector cent = reflect_points.constData()[spheres_with_point[j]];
                                 
                                 if (Vector::distance(cent,intersect) <= reflect_rad)
                                 {
@@ -1100,7 +1248,7 @@ void RigidBodyMC::performMove(System &system,
                         //now we know from which sphere we bounced, work out the new
                         //position
                         newmol = ::reflectMolecule(oldmol, newmol,
-                                                   vol_points.at(reflect_sphere_id),
+                                                   reflect_points.at(reflect_sphere_id),
                                                    reflect_rad,
                                                    old_center, new_center, has_center_property,
                                                    center_property, center_function, map, &ok);
@@ -1120,7 +1268,7 @@ void RigidBodyMC::performMove(System &system,
                             new_center = center_function.read()(newmol,map);
                         }
                         
-                        if (::inVolume(new_center,vol_points,reflect_rad))
+                        if (::inVolume(new_center,reflect_points,reflect_rad))
                         {
                             //yes - everything is ok
                             break;
@@ -1135,8 +1283,6 @@ void RigidBodyMC::performMove(System &system,
 
                     rotdelta = Quaternion( rdel * generator().rand(),
                                            generator().vectorOnSphere() );
-                    
-                    qDebug() << "Problem - trying again (attempt" << nattempts << ")";
                     
                     if (nattempts > 50)
                     {
@@ -1180,14 +1326,24 @@ void RigidBodyMC::performMove(System &system,
                 //the sphere, then the molecule will bounce off the edge of 
                 //the sphere and back into the sphere volume
 
-                Vector reflect_cent = reflect_center;
-                double reflect_rad = reflect_radius;
+                Vector reflect_cent;
+                double reflect_rad = 0;
                 
                 if (mol_reflectors.contains(oldmol.number()))
                 {
                     reflect_cent = mol_reflectors.value(oldmol.number()).first;
                     reflect_rad = mol_reflectors.value(oldmol.number()).second;
                 }
+                else if (reflect_points.count() == 1)
+                {
+                    reflect_cent = reflect_points.at(0);
+                    reflect_rad = reflect_radius;
+                }
+                else
+                    throw SireError::program_bug( QObject::tr(
+                            "Should not be possible to get here? %1 %2")
+                                .arg(reflect_moves).arg( Sire::toString(reflect_points) ),
+                                    CODELOC );
 
                 Vector old_center;
                 

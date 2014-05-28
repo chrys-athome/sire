@@ -132,13 +132,25 @@ public:
     SireUnits::Dimension::Length reflectionSphereRadius(MolNum molnum) const;
     SireUnits::Dimension::Length reflectionSphereRadius(const MoleculeView &molview) const;
 
-    void setRestrictedVolume(const QVector<SireMaths::Vector> &points,
+    void setReflectionVolume(const QVector<SireMaths::Vector> &points,
                              SireUnits::Dimension::Length radius);
     
-    bool usesRestrictedVolume() const;
+    void setReflectionVolume(const MoleculeView &molecule,
+                             SireUnits::Dimension::Length radius,
+                             bool heavy_atoms_only,
+                             const PropertyMap &map = PropertyMap());
     
-    QVector<SireMaths::Vector> restrictedVolumePoints() const;
-    SireUnits::Dimension::Length restrictedVolumeRadius() const;
+    void setReflectionVolume(const MoleculeView &molecule,
+                             SireUnits::Dimension::Length radius,
+                             const PropertyMap &map = PropertyMap());
+    
+    bool usesReflectionVolume() const;
+    
+    void disableReflectionSphere();
+    void disableReflectionVolume();
+    
+    QVector<SireMaths::Vector> reflectionVolumePoints() const;
+    SireUnits::Dimension::Length reflectionVolumeRadius() const;
 
     void setSynchronisedTranslation(bool on);
     void setSynchronisedRotation(bool on);
@@ -176,16 +188,13 @@ private:
     /** The maximum rotation */
     SireUnits::Dimension::Angle rdel;
     #endif
-    
-    /** The center of the reflection sphere */
-    SireMaths::Vector reflect_center;
 
-    /** The radius of the reflection sphere (or restricted volume,
-        if restricted volume points are used) */
+    /** The radius of the reflection sphere / volume */
     double reflect_radius;
 
-    /** The set of points used to define the restricted volume */
-    QVector<SireMaths::Vector> vol_points;
+    /** The set of points used to define the reflection volume.
+        If only a single point, then this is the center of the reflection sphere */
+    QVector<SireMaths::Vector> reflect_points;
 
     /** The molecule-specific reflection spheres and radii */
     QHash< MolNum,QPair<SireMaths::Vector,double> > mol_reflectors;
