@@ -765,7 +765,7 @@ PartialMolecule reflectMolecule(const PartialMolecule &oldmol, PartialMolecule n
         {
             //the move does not intersect with the sphere... weird...
             *ok = false;
-            qDebug() << "WEIRD: MOVE DOES NOT INTERSECT WITH SPHERE";
+            qDebug() << "WEIRD: MOVE DOES NOT INTERSECT WITH SPHERE" << B2_minus_4AC;
             return oldmol;
         }
 
@@ -908,8 +908,8 @@ void RigidBodyMC::performMove(System &system,
     //rotate the molecule(s)
     Vector delta = generator().vectorOnSphere(adel);
 
-    const Quaternion rotdelta( rdel * generator().rand(),
-                               generator().vectorOnSphere() );
+    Quaternion rotdelta( rdel * generator().rand(),
+                         generator().vectorOnSphere() );
 
     if ( (not sync_trans) and (not sync_rot) )
     {
@@ -1100,7 +1100,7 @@ void RigidBodyMC::performMove(System &system,
                         //now we know from which sphere we bounced, work out the new
                         //position
                         newmol = ::reflectMolecule(oldmol, newmol,
-                                                   intersect_points[reflect_sphere_id],
+                                                   vol_points.at(reflect_sphere_id),
                                                    reflect_rad,
                                                    old_center, new_center, has_center_property,
                                                    center_property, center_function, map, &ok);
@@ -1128,6 +1128,15 @@ void RigidBodyMC::performMove(System &system,
                     }
                     
                     nattempts += 1;
+
+                    //randomly generate new amounts by which to translate and
+                    //rotate the molecule
+                    delta = generator().vectorOnSphere(adel);
+
+                    rotdelta = Quaternion( rdel * generator().rand(),
+                                           generator().vectorOnSphere() );
+                    
+                    qDebug() << "Problem - trying again (attempt" << nattempts << ")";
                     
                     if (nattempts > 50)
                     {
