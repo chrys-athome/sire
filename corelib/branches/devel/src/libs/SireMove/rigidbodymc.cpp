@@ -479,7 +479,7 @@ void RigidBodyMC::setSharedRotationCenter(bool on)
 void RigidBodyMC::setReflectionSphere(Vector sphere_center,
                                       SireUnits::Dimension::Length sphere_radius)
 {
-    if (reflect_radius < 0.01)
+    if (sphere_radius.value() < 0.01)
     {
         reflect_moves = false;
         reflect_points.clear();
@@ -602,7 +602,7 @@ SireUnits::Dimension::Length RigidBodyMC::reflectionSphereRadius(const MoleculeV
 void RigidBodyMC::setReflectionVolume(const QVector<Vector> &points,
                                       SireUnits::Dimension::Length radius)
 {
-    if (reflect_radius < 0.01 or points.isEmpty())
+    if (radius.value() < 0.01 or points.isEmpty())
     {
         reflect_moves = false;
         reflect_points.clear();
@@ -986,9 +986,12 @@ PartialMolecule reflectMolecule(const PartialMolecule &oldmol, PartialMolecule n
         
         while (dist > reflect_rad)
         {
-            qDebug() << "MOVED MOLECULE OUTSIDE SPHERE" << dist << reflect_rad;
-            qDebug() 
-                << "FIXING THE PROBLEM (MOSTLY CAUSED BY NUMERICAL IMPRECISION)";
+            if ( dist - reflect_rad > 0.2 )
+            {
+                qDebug() << "MOVED MOLECULE OUTSIDE SPHERE" << dist << reflect_rad;
+                qDebug()
+                    << "FIXING THE PROBLEM (MOSTLY CAUSED BY NUMERICAL IMPRECISION)";
+            }
             
             //this will be due to a little numerical imprecision
             newmol = newmol.move().translate( 
@@ -1704,7 +1707,7 @@ Molecules RigidBodyMC::extract(const Molecules &mols, SireUnits::Dimension::Leng
             
             //is this molecule within any of the spheres
             bool in_buffer = false;
-            bool in_sphere = true;
+            bool in_sphere = false;
             
             for (int i=0; i<reflect_points.count(); ++i)
             {
