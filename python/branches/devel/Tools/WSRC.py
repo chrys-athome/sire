@@ -68,28 +68,24 @@ use_fixed_ligand = Parameter("fixed ligand", False,
 use_rot_trans_ligand = Parameter("ligand rot-trans", False,
                                  """Whether or not the ligand is free to translate and rotate.""")
 
-use_overlap_waters = Parameter("overlap waters", False,
-                               """Whether or not to generate the swap cluster based on looking
-                                  at which water molecules overlap with the ligand. Note that this 
-                                  option is only used if 'reflect waters' is True""")
+use_reflect_volume = Parameter("reflect volume", False,
+                               """Use the reflection volume instead of the identity constraint to hold
+                                  the swap water cluster in place.""")
 
-overlap_water_radius = Parameter("overlap water radius", 2*angstrom,
-                                 """The minimum distance used to determine whether a water molecule overlaps
-                                    with the ligand. Note that this option is only used if 'overlap waters'
-                                    is True and 'reflect waters' is True""")
+reflect_volume_radius = Parameter("reflect volume radius", 1.5*angstrom,
+                                  """The radius of the reflection volume, used only if the reflection volume
+                                     is used to hold the swap water cluster in place.""")
 
-reflect_waters = Parameter("reflect waters", False,
-                           """Use the reflection sphere instead of the identity constraint to hold
-                              the swap water cluster in position.""")
+reflect_volume_buffer = Parameter("reflect volume buffer", 1*angstrom,
+                                  """The buffer beyond the reflection volume radius that is used when selecting
+                                     the water molecules that will be swapped. Swapped water molecules will be those
+                                     that are within 'reflect volume radius + reflect volume buffer' of any of 
+                                     the heavy atoms of the swapped ligand.""")
 
-reflect_water_radius = Parameter("reflect water radius", 1*angstrom,
-                                 """The reflection sphere radius for the swap water cluster. Note that this
-                                    option is only used if 'reflect waters' is True""")
-
-n_equil_reflect = Parameter("reflect waters nequilmoves", 1000,
+n_equil_reflect = Parameter("reflect volume nequilmoves", 100000,
                             """The number of moves to equilibrate the swap water cluster before applying
-                               the reflection sphere constraint. Note that this option is only used if 
-                               'reflect waters' is True""")
+                               the reflection volume constraint. Note that this option is only used if 
+                               'reflect volume' is True""")
 
 alpha_scale = Parameter("alpha_scale", 1.0,
                         """Amount by which to scale the alpha parameter. The lower the value,
@@ -448,10 +444,8 @@ def createWSRCMoves(system):
         rb_moves.setMaximumTranslation(max_water_translation)
         rb_moves.setMaximumRotation(max_water_rotation)
 
-        if use_overlap_waters.val:
-            for molnum in mobile_swap.molNums():
-                center = mobile_swap[molnum].molecule().evaluate().center()
-                rb_moves.setReflectionSphere(molnum, center, reflect_water_radius.val)
+        if use_reflect_volume.val:
+            rb_moves.setReflectionVolume( mobile_ligand[MolIdx(0)], reflect_volume_radius.val )
 
         moves.add(rb_moves, 4 * mobile_swap.nViews())
 
@@ -721,9 +715,9 @@ def mergeSystems(protein_system, water_system, ligand_mol):
 
     # finished adding in all of the protein groups
 
-    use_identity_constraint = not reflect_waters.val
+    use_identity_constraint = not use_reflect_volume.val
 
-    if use_identity_constraint or (not use_overlap_waters.val):
+    if use_identity_constraint:
         # get the identity points for the ligand
         print("\nObtaining the identity points...")
 
@@ -764,13 +758,21 @@ def mergeSystems(protein_system, water_system, ligand_mol):
 
             swap_water_group.add(swap_water_mol)
     else:
-        # find the swap water cluster by looking at overlapping waters
-        swap_waters = getOverlapWaters(ligand_mol, mobile_free_water_group, overlap_water_radius.val)
-
+        # we will be using the reflection volume to get the swap water cluster
         swap_water_group = MoleculeGroup("swap water")
-        print("Swap water cluster based on the %d water molecules overlapping with the ligand." % len(swap_waters))
+        move = RigidBodyMC(swap_water_group)
+        move.setMaximumTranslation(0.15*angstrom)
+        move.setMaximumRotation(15*degrees)
+        move.setReflectionVolume(ligand_mol, reflect_volume_radius.val)
 
-        for swap_water in swap_waters:
+        # find the swap water cluster by looking at overlapping waters
+        swap_waters = move.extract(mobile_free_water_group.molecules(), reflect_volume_buffer.val)
+
+        print("Swap water cluster based on the %d water molecules overlapping with the ligand." % swap_waters.nMolecules())
+
+        for molnum in swap_waters.molNums():
+            swap_water = swap_waters[molnum].molecule()
+
             for j in range(0,swap_water.nResidues()):
                 swap_water = swap_water.residue( ResIdx(j) ).edit() \
                                        .setProperty( PDB.parameters().pdbResidueName(), "SWP" ) \
@@ -778,6 +780,30 @@ def mergeSystems(protein_system, water_system, ligand_mol):
 
             swap_water_group.add( swap_water )
             mobile_free_water_group.remove(swap_water.number())
+
+        # now equilibrate the swap cluster, if requested
+        if n_equil_reflect.val:
+             equil_system = System()
+             ff = InterCLJFF("ff")
+             ff.add(swap_water_group)
+             liggroup = MoleculeGroup("liggroup")
+             liggroup.add(ligand_mol)
+             equil_system.add(ff)
+             equil_system.add(swap_water_group)
+             equil_system.add(liggroup)
+
+             PDB().write(equil_system.molecules(), "swapcluster00.pdb")
+
+             n = n_equil_reflect.val
+             if n > 10:
+                 for i in range(1,11):
+                     move.move(equil_system, int(n / 10), False)
+                     PDB().write(equil_system.molecules(), "swapcluster%02d.pdb" % i)
+             else:
+                 move.move(equil_system, n, False)
+                 PDB().write(equil_system.molecules(), "swapcluster01.pdb")
+
+             swap_water_group = equil_system[ swap_water_group.name() ]
 
     bound_leg.add(swap_water_group)
     bound_leg.add(mobile_bound_solvents_group)
@@ -1526,26 +1552,8 @@ def mergeSystems(protein_system, water_system, ligand_mol):
         # Apply all of the constraints
         system.applyConstraints()
     else:
-        print("Using the reflection sphere to hold the swap water in place. Equilibrating...")
+        print("Using the reflection volume to hold the swap water in place.")
         system.applyConstraints()
-
-        if n_equil_reflect.val > 0:
-            # Equilibrate the swap water cluster at lambda=1 (fully in protein) before we choose
-            # the reflection sphere centers
-            oldlam = system.constant(lam)
-            system.setConstant(lam, 1.0)
-
-            PDB().write(system.molecules(), "test0000.pdb")
-
-            moves = RigidBodyMC(swap_water_group)
-
-            for i in range(1,11):
-                print("Move %d" % i)
-                moves.move(system, n_equil_reflect.val, False)
-                PDB().write(system.molecules(), "test%0004d.pdb" % i)
-
-            system.setConstant(lam, oldlam)
-            system.applyConstraints()           
 
     ###
     ### ADD THE SYSTEM MONITORS
