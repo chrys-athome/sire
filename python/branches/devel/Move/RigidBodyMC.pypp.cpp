@@ -68,6 +68,26 @@ void register_RigidBodyMC_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireMove::RigidBodyMC::disableReflectionSphere
+        
+            typedef void ( ::SireMove::RigidBodyMC::*disableReflectionSphere_function_type )(  ) ;
+            disableReflectionSphere_function_type disableReflectionSphere_function_value( &::SireMove::RigidBodyMC::disableReflectionSphere );
+            
+            RigidBodyMC_exposer.def( 
+                "disableReflectionSphere"
+                , disableReflectionSphere_function_value );
+        
+        }
+        { //::SireMove::RigidBodyMC::disableReflectionVolume
+        
+            typedef void ( ::SireMove::RigidBodyMC::*disableReflectionVolume_function_type )(  ) ;
+            disableReflectionVolume_function_type disableReflectionVolume_function_value( &::SireMove::RigidBodyMC::disableReflectionVolume );
+            
+            RigidBodyMC_exposer.def( 
+                "disableReflectionVolume"
+                , disableReflectionVolume_function_value );
+        
+        }
         { //::SireMove::RigidBodyMC::maximumRotation
         
             typedef ::SireUnits::Dimension::Angle ( ::SireMove::RigidBodyMC::*maximumRotation_function_type )(  ) const;
@@ -188,24 +208,24 @@ void register_RigidBodyMC_class(){
                 , ( bp::arg("molview") ) );
         
         }
-        { //::SireMove::RigidBodyMC::restrictedVolumePoints
+        { //::SireMove::RigidBodyMC::reflectionVolumePoints
         
-            typedef ::QVector< SireMaths::Vector > ( ::SireMove::RigidBodyMC::*restrictedVolumePoints_function_type )(  ) const;
-            restrictedVolumePoints_function_type restrictedVolumePoints_function_value( &::SireMove::RigidBodyMC::restrictedVolumePoints );
+            typedef ::QVector< SireMaths::Vector > ( ::SireMove::RigidBodyMC::*reflectionVolumePoints_function_type )(  ) const;
+            reflectionVolumePoints_function_type reflectionVolumePoints_function_value( &::SireMove::RigidBodyMC::reflectionVolumePoints );
             
             RigidBodyMC_exposer.def( 
-                "restrictedVolumePoints"
-                , restrictedVolumePoints_function_value );
+                "reflectionVolumePoints"
+                , reflectionVolumePoints_function_value );
         
         }
-        { //::SireMove::RigidBodyMC::restrictedVolumeRadius
+        { //::SireMove::RigidBodyMC::reflectionVolumeRadius
         
-            typedef ::SireUnits::Dimension::Length ( ::SireMove::RigidBodyMC::*restrictedVolumeRadius_function_type )(  ) const;
-            restrictedVolumeRadius_function_type restrictedVolumeRadius_function_value( &::SireMove::RigidBodyMC::restrictedVolumeRadius );
+            typedef ::SireUnits::Dimension::Length ( ::SireMove::RigidBodyMC::*reflectionVolumeRadius_function_type )(  ) const;
+            reflectionVolumeRadius_function_type reflectionVolumeRadius_function_value( &::SireMove::RigidBodyMC::reflectionVolumeRadius );
             
             RigidBodyMC_exposer.def( 
-                "restrictedVolumeRadius"
-                , restrictedVolumeRadius_function_value );
+                "reflectionVolumeRadius"
+                , reflectionVolumeRadius_function_value );
         
         }
         { //::SireMove::RigidBodyMC::sampler
@@ -296,15 +316,37 @@ void register_RigidBodyMC_class(){
                 , ( bp::arg("molview"), bp::arg("sphere_center"), bp::arg("sphere_radius") ) );
         
         }
-        { //::SireMove::RigidBodyMC::setRestrictedVolume
+        { //::SireMove::RigidBodyMC::setReflectionVolume
         
-            typedef void ( ::SireMove::RigidBodyMC::*setRestrictedVolume_function_type )( ::QVector< SireMaths::Vector > const &,::SireUnits::Dimension::Length ) ;
-            setRestrictedVolume_function_type setRestrictedVolume_function_value( &::SireMove::RigidBodyMC::setRestrictedVolume );
+            typedef void ( ::SireMove::RigidBodyMC::*setReflectionVolume_function_type )( ::QVector< SireMaths::Vector > const &,::SireUnits::Dimension::Length ) ;
+            setReflectionVolume_function_type setReflectionVolume_function_value( &::SireMove::RigidBodyMC::setReflectionVolume );
             
             RigidBodyMC_exposer.def( 
-                "setRestrictedVolume"
-                , setRestrictedVolume_function_value
+                "setReflectionVolume"
+                , setReflectionVolume_function_value
                 , ( bp::arg("points"), bp::arg("radius") ) );
+        
+        }
+        { //::SireMove::RigidBodyMC::setReflectionVolume
+        
+            typedef void ( ::SireMove::RigidBodyMC::*setReflectionVolume_function_type )( ::SireMol::MoleculeView const &,::SireUnits::Dimension::Length,bool,::SireBase::PropertyMap const & ) ;
+            setReflectionVolume_function_type setReflectionVolume_function_value( &::SireMove::RigidBodyMC::setReflectionVolume );
+            
+            RigidBodyMC_exposer.def( 
+                "setReflectionVolume"
+                , setReflectionVolume_function_value
+                , ( bp::arg("molecule"), bp::arg("radius"), bp::arg("heavy_atoms_only"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMove::RigidBodyMC::setReflectionVolume
+        
+            typedef void ( ::SireMove::RigidBodyMC::*setReflectionVolume_function_type )( ::SireMol::MoleculeView const &,::SireUnits::Dimension::Length,::SireBase::PropertyMap const & ) ;
+            setReflectionVolume_function_type setReflectionVolume_function_value( &::SireMove::RigidBodyMC::setReflectionVolume );
+            
+            RigidBodyMC_exposer.def( 
+                "setReflectionVolume"
+                , setReflectionVolume_function_value
+                , ( bp::arg("molecule"), bp::arg("radius"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMove::RigidBodyMC::setSampler
@@ -444,14 +486,14 @@ void register_RigidBodyMC_class(){
                 , ( bp::arg("molview") ) );
         
         }
-        { //::SireMove::RigidBodyMC::usesRestrictedVolume
+        { //::SireMove::RigidBodyMC::usesReflectionVolume
         
-            typedef bool ( ::SireMove::RigidBodyMC::*usesRestrictedVolume_function_type )(  ) const;
-            usesRestrictedVolume_function_type usesRestrictedVolume_function_value( &::SireMove::RigidBodyMC::usesRestrictedVolume );
+            typedef bool ( ::SireMove::RigidBodyMC::*usesReflectionVolume_function_type )(  ) const;
+            usesReflectionVolume_function_type usesReflectionVolume_function_value( &::SireMove::RigidBodyMC::usesReflectionVolume );
             
             RigidBodyMC_exposer.def( 
-                "usesRestrictedVolume"
-                , usesRestrictedVolume_function_value );
+                "usesReflectionVolume"
+                , usesReflectionVolume_function_value );
         
         }
         RigidBodyMC_exposer.staticmethod( "typeName" );
