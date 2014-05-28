@@ -88,6 +88,28 @@ void register_RigidBodyMC_class(){
                 , disableReflectionVolume_function_value );
         
         }
+        { //::SireMove::RigidBodyMC::extract
+        
+            typedef ::SireMol::Molecules ( ::SireMove::RigidBodyMC::*extract_function_type )( ::SireMol::Molecules const & ) const;
+            extract_function_type extract_function_value( &::SireMove::RigidBodyMC::extract );
+            
+            RigidBodyMC_exposer.def( 
+                "extract"
+                , extract_function_value
+                , ( bp::arg("molecules") ) );
+        
+        }
+        { //::SireMove::RigidBodyMC::extract
+        
+            typedef ::SireMol::Molecules ( ::SireMove::RigidBodyMC::*extract_function_type )( ::SireMol::Molecules const &,::SireUnits::Dimension::Length ) const;
+            extract_function_type extract_function_value( &::SireMove::RigidBodyMC::extract );
+            
+            RigidBodyMC_exposer.def( 
+                "extract"
+                , extract_function_value
+                , ( bp::arg("molecules"), bp::arg("buffer") ) );
+        
+        }
         { //::SireMove::RigidBodyMC::maximumRotation
         
             typedef ::SireUnits::Dimension::Angle ( ::SireMove::RigidBodyMC::*maximumRotation_function_type )(  ) const;
