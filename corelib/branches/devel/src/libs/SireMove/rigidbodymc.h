@@ -165,6 +165,9 @@ public:
 
     const GetPoint& centerOfRotation() const;
 
+    Molecules extract(const Molecules &molecules) const;
+    Molecules extract(const Molecules &molecules, SireUnits::Dimension::Length buffer) const;
+
     void move(System &system, int nmoves, bool record_stats=true);
 
 protected:

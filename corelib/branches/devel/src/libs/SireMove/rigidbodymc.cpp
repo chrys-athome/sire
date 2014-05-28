@@ -1625,6 +1625,153 @@ void RigidBodyMC::performMove(System &system,
     }
 }
 
+/** Extract from 'mols' all molecules that are within the reflection sphere / volume
+    described by this move. This allows the molecules that will be affected by this
+    move to be separated out from the rest. 
+    
+    If 'buffer' is greater than zero, then this will also extract molecules that are
+    within 'buffer' of the reflection volume, and will additionally translate those
+    molecules so that they are moved into the volume. The buffer can be used
+    to pack more molecules into the volume than would be achieved just with a simple
+    selection.
+    
+    Note that this returns all molecules if a reflection sphere or volume is not used
+*/
+Molecules RigidBodyMC::extract(const Molecules &mols, SireUnits::Dimension::Length buffer) const
+{
+    if (reflect_points.isEmpty())
+        return mols;
+    
+    Molecules extracted;
+
+    const PropertyMap &map = propertyMap();
+    const PropertyName center_property = map["center"];
+
+    if (buffer.value() <= 0)
+    {
+        for (Molecules::const_iterator it = mols.constBegin();
+             it != mols.constEnd();
+             ++it)
+        {
+            Vector center;
+        
+            if (it.value().hasProperty(center_property))
+            {
+                center = it.value().data().property(center_property).asA<VectorProperty>();
+            }
+            else
+            {
+                center = center_function.read()(it.value(),map);
+            }
+            
+            //is this molecule within any of the spheres
+            bool in_sphere = false;
+            
+            for (int i=0; i<reflect_points.count(); ++i)
+            {
+                if (Vector::distance(reflect_points.at(i),center) <= reflect_radius)
+                {
+                    in_sphere = true;
+                    break;
+                }
+            }
+            
+            if (in_sphere)
+            {
+                extracted.add(it.value());
+            }
+        }
+    }
+    else
+    {
+        //need to add on the buffer and move molecules if necessary
+        double reflect_plus_buffer = reflect_radius + buffer.value();
+        
+        for (Molecules::const_iterator it = mols.constBegin();
+             it != mols.constEnd();
+             ++it)
+        {
+            Vector center;
+        
+            if (it.value().hasProperty(center_property))
+            {
+                center = it.value().data().property(center_property).asA<VectorProperty>();
+            }
+            else
+            {
+                center = center_function.read()(it.value(),map);
+            }
+            
+            //is this molecule within any of the spheres
+            bool in_buffer = false;
+            bool in_sphere = true;
+            
+            for (int i=0; i<reflect_points.count(); ++i)
+            {
+                double dist = Vector::distance(reflect_points.at(i),center);
+            
+                if (dist <= reflect_plus_buffer)
+                {
+                    in_buffer = true;
+                    
+                    if (dist <= reflect_radius)
+                    {
+                        in_sphere = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (in_sphere)
+            {
+                extracted.add(it.value());
+            }
+            else if (in_buffer)
+            {
+                //we need to translate this molecule into the volume - find the closest
+                //reflection sphere and translate the molecule along the vector from the
+                //sphere center to molecule center
+                double shortest_dist = -1;
+                int closest_sphere = -1;
+                
+                for (int i=0; i<reflect_points.count(); ++i)
+                {
+                    double dist = Vector::distance(reflect_points.at(i),center);
+                    
+                    if (closest_sphere == -1 or dist < shortest_dist)
+                    {
+                        shortest_dist = dist;
+                        closest_sphere = i;
+                    }
+                }
+                
+                //to move the molecule into the sphere, we need to translate by
+                // (reflect_radius - shortest_dist - 0.05) * vector(sphere_center -> mol_center)
+                // (we use 0.05 so that the molecule is placed 'just' inside the sphere)
+                Vector delta = (reflect_radius - shortest_dist - 0.05) *
+                                (center - reflect_points.at(closest_sphere)).normalise();
+                
+                ViewsOfMol mol = it.value().move().translate(delta).commit();
+                
+                extracted.add(mol);
+            }
+        }
+    }
+    
+    return extracted;
+}
+
+/** Extract from 'mols' all molecules that are within the reflection sphere / volume
+    described by this move. This allows the molecules that will be affected by this
+    move to be separated out from the rest. 
+ 
+    Note that this returns all molecules if a reflection sphere or volume is not used
+*/
+Molecules RigidBodyMC::extract(const Molecules &mols) const
+{
+    return this->extract(mols, SireUnits::Dimension::Length(0));
+}
+
 /** Attempt 'n' rigid body moves of the views of the system 'system' */
 void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
 {
