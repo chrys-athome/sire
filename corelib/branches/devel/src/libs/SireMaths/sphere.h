@@ -31,7 +31,7 @@
 
 #include "vector.h"
 
-#include "sireglobal.h"
+#include <QVector>
 
 SIRE_BEGIN_HEADER
 

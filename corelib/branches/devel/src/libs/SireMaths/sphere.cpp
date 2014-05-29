@@ -193,12 +193,83 @@ double Sphere::intersectionVolume(const Sphere &other) const
         const double h1 = r0 - h0 + r1 - d;
         
         //we can check this is true by calculating x...
-        const double x0 = r0*r0 - SireMaths::pow_2(r0-h0);
-        const double x1 = r1*r1 - SireMaths::pow_2(r1-h1);
+        //const double x0 = r0*r0 - SireMaths::pow_2(r0-h0);
+        //const double x1 = r1*r1 - SireMaths::pow_2(r1-h1);
+        //qDebug() << h0 << h1 << x0 << x1;
         
-        qDebug() << h0 << h1 << x0 << x1;
+        // now the volume will be
+        // volume(sphere 0) + volume(sphere 1) - cap(sphere 0) - cap(sphere 1)
+        //
+        // (where the cap has volume (1/3) pi h**2 (3r - h)
+        const double cap0 = (1.0/3.0) * SireMaths::pi * h0 * h0 * (3*r0 - h0);
+        const double cap1 = (1.0/3.0) * SireMaths::pi * h1 * h1 * (3*r1 - h1);
         
+        return cap0 + cap1;
+    }
+}
+
+/** Return the combined volume of the passed array of spheres */
+double Sphere::combinedVolume(const QVector<SireMaths::Sphere> &spheres)
+{
+    if (spheres.isEmpty())
+    {
         return 0;
+    }
+    else if (spheres.count() == 1)
+    {
+        return spheres.at(0).volume();
+    }
+    else if (spheres.count() == 2)
+    {
+        //volume is sum of volumes minus the volume of overlap
+        return spheres.at(0).volume() + spheres.at(1).volume()
+                 - spheres.at(0).intersectionVolume(spheres.at(1));
+    }
+    else
+    {
+        //calculate the volume of all spheres
+        double total_volume = 0;
+        
+        for (int i=0; i<spheres.count(); ++i)
+        {
+            total_volume += spheres.constData()[i].volume();
+        }
+        
+        //now find all intersecting pairs of spheres and subtract their volume
+        //from the total
+        QVector< QSet<int> > intersecting_pairs( spheres.count() );
+        
+        for (int i=0; i<spheres.count()-1; ++i)
+        {
+            const Sphere &sphere0 = spheres.constData()[i];
+        
+            for (int j=i+1; j<spheres.count(); ++j)
+            {
+                const Sphere &sphere1 = spheres.constData()[j];
+            
+                if (sphere0.intersects(sphere1))
+                {
+                    total_volume -= sphere0.intersectionVolume(sphere1);
+                    intersecting_pairs[i].insert(j);
+                    intersecting_pairs[j].insert(i);
+                }
+            }
+        }
+        
+        //now find all of the sets of 3+ intersections
+        for (int i=0; i<spheres.count(); ++i)
+        {
+            if (intersecting_pairs[i].count() > 1)
+            {
+                //this sphere is intersecting with more than one other sphere - are
+                //these spheres intersecting with each other too? If they are, then
+                //there is a good chance that there is a combined volume between these
+                //spheres
+                const QSet<int> &intersects = intersecting_pairs[i];
+            }
+        }
+        
+        return total_volume;
     }
 }
 
