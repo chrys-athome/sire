@@ -51,6 +51,7 @@
 #include "SireMaths/multiuint.h"
 #include "SireMaths/histogram.h"
 #include "SireMaths/freeenergyaverage.h"
+#include "SireMaths/sphere.h"
 
 using namespace SireMaths;
 
@@ -70,6 +71,8 @@ void register_SireMaths_containers()
     register_list< QVector<FreeEnergyAverage> >();
 
     register_list< QVector<HistogramValue> >();
+
+    register_list< QVector<Sphere> >();
 
     register_pair< NVector,NMatrix >();
 
