@@ -80,9 +80,18 @@ public:
     const Vector& center() const;
     double radius() const;
 
+    double volume() const;
+    double surfaceArea() const;
+
     void setPosition(const Vector &position);
     void setCenter(const Vector &center);
     void setRadius(double radius);
+
+    bool intersects(const Sphere &other) const;
+    
+    double intersectionVolume(const Sphere &other) const;
+    
+    static double combinedVolume(const QVector<Sphere> &spheres);
 
 private:
 

@@ -1289,7 +1289,7 @@ void RigidBodyMC::performMove(System &system,
                     
                     if (nattempts > 50)
                     {
-                        qDebug() << "Cannot move molecule as the number of restrict volume"
+                        qDebug() << "Cannot move molecule as the number of volume reflection "
                                     "attempts has exceeded 50." << oldmol.number().toString();
                         
                         old_bias = 1;

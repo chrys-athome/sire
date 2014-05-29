@@ -40,7 +40,7 @@ set ( SIREVOL_SOURCES
       patching.cpp
       periodicbox.cpp
       space.cpp
-    
+
       ${SIREVOL_HEADERS}
     )
 

@@ -30,6 +30,8 @@
 
 #include "SireStream/datastream.h"
 
+#include <QDebug>
+
 using namespace SireStream;
 using namespace SireMaths;
 
@@ -117,6 +119,87 @@ void Sphere::setRadius(double radius)
 
     if (radius < 0.0)
         _radius = 0.0;
+}
+
+/** Return the volume of this sphere */
+double Sphere::volume() const
+{
+    return (4.0/3.0) * SireMaths::pi * SireMaths::pow_3(_radius);
+}
+
+/** Return the surface area of this sphere */
+double Sphere::surfaceArea() const
+{
+    return 4.0 * SireMaths::pi * SireMaths::pow_2(_radius);
+}
+
+/** Return whether or not this sphere intersects with 'other' */
+bool Sphere::intersects(const Sphere &other) const
+{
+    return Vector::distance(_center, other._center) < (_radius + other._radius);
+}
+
+/** Return the volume of space formed at the intersection of this sphere with 'other' */
+double Sphere::intersectionVolume(const Sphere &other) const
+{
+    const double dist = Vector::distance(_center, other._center);
+    const double sum_radii = _radius + other._radius;
+    const double big_radius = qMax(_radius, other._radius);
+    const double small_radius = qMin(_radius, other._radius);
+    
+    if (dist >= sum_radii)
+    {
+        //no intersection
+        return 0;
+    }
+    else if (dist + small_radius <= big_radius)
+    {
+        //the small sphere is entirely enclosed in the big sphere
+        return (4.0/3.0) * SireMaths::pi * SireMaths::pow_3(big_radius);
+    }
+    else
+    {
+        //the intersection volume is the two spherical caps cut off at
+        //the top of two spheres
+        
+        // we can work out the height of the two caps by imagining
+        // two triangles formed by the intersection of the spheres
+        // (x axis is along the sphere centers, r0 is radius 0, r1 is radius 1,
+        //  h0 is the cap distance for sphere 0, h1 is the cap distance for sphere 1,
+        //  and d is the distance between the center of the spheres
+        
+        //         *         *
+        //   r0  / |  x    x | \  r1
+        //     /   |         |   \
+        //    *----*         *----*
+        //     r0-h0         r1-h1
+        
+        //  this gives us three equations with three unknowns (x, h0 and h1)
+        //
+        //  (1) d = r0 - h0 + r1 - h1
+        //  (2) (r0-h0)**2 + x**2 = r0**2
+        //  (3) (r1-h1)**2 + x**2 = r1**2
+        //
+        //  Rearranging these to solve for h0 and h1 gives us;
+        //
+        //  (i)  h0 = [ r1**2 - (d - r0)**2 ] / 2d
+        //  (ii) h1 = r0 - h0 + r1 - d
+        
+        const double d = dist;
+        const double r0 = _radius;
+        const double r1 = other._radius;
+        
+        const double h0 = (r1*r1 - SireMaths::pow_2(d-r0)) / (2*d);
+        const double h1 = r0 - h0 + r1 - d;
+        
+        //we can check this is true by calculating x...
+        const double x0 = r0*r0 - SireMaths::pow_2(r0-h0);
+        const double x1 = r1*r1 - SireMaths::pow_2(r1-h1);
+        
+        qDebug() << h0 << h1 << x0 << x1;
+        
+        return 0;
+    }
 }
 
 const char* Sphere::typeName()
