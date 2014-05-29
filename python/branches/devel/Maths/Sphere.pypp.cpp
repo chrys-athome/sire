@@ -39,6 +39,39 @@ void register_Sphere_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireMaths::Sphere::combinedVolume
+        
+            typedef double ( *combinedVolume_function_type )( ::QVector< SireMaths::Sphere > const & );
+            combinedVolume_function_type combinedVolume_function_value( &::SireMaths::Sphere::combinedVolume );
+            
+            Sphere_exposer.def( 
+                "combinedVolume"
+                , combinedVolume_function_value
+                , ( bp::arg("spheres") ) );
+        
+        }
+        { //::SireMaths::Sphere::intersectionVolume
+        
+            typedef double ( ::SireMaths::Sphere::*intersectionVolume_function_type )( ::SireMaths::Sphere const & ) const;
+            intersectionVolume_function_type intersectionVolume_function_value( &::SireMaths::Sphere::intersectionVolume );
+            
+            Sphere_exposer.def( 
+                "intersectionVolume"
+                , intersectionVolume_function_value
+                , ( bp::arg("other") ) );
+        
+        }
+        { //::SireMaths::Sphere::intersects
+        
+            typedef bool ( ::SireMaths::Sphere::*intersects_function_type )( ::SireMaths::Sphere const & ) const;
+            intersects_function_type intersects_function_value( &::SireMaths::Sphere::intersects );
+            
+            Sphere_exposer.def( 
+                "intersects"
+                , intersects_function_value
+                , ( bp::arg("other") ) );
+        
+        }
         Sphere_exposer.def( bp::self != bp::self );
         Sphere_exposer.def( bp::self == bp::self );
         { //::SireMaths::Sphere::position
@@ -95,6 +128,16 @@ void register_Sphere_class(){
                 , ( bp::arg("radius") ) );
         
         }
+        { //::SireMaths::Sphere::surfaceArea
+        
+            typedef double ( ::SireMaths::Sphere::*surfaceArea_function_type )(  ) const;
+            surfaceArea_function_type surfaceArea_function_value( &::SireMaths::Sphere::surfaceArea );
+            
+            Sphere_exposer.def( 
+                "surfaceArea"
+                , surfaceArea_function_value );
+        
+        }
         { //::SireMaths::Sphere::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -103,6 +146,16 @@ void register_Sphere_class(){
             Sphere_exposer.def( 
                 "typeName"
                 , typeName_function_value );
+        
+        }
+        { //::SireMaths::Sphere::volume
+        
+            typedef double ( ::SireMaths::Sphere::*volume_function_type )(  ) const;
+            volume_function_type volume_function_value( &::SireMaths::Sphere::volume );
+            
+            Sphere_exposer.def( 
+                "volume"
+                , volume_function_value );
         
         }
         { //::SireMaths::Sphere::what
@@ -115,6 +168,7 @@ void register_Sphere_class(){
                 , what_function_value );
         
         }
+        Sphere_exposer.staticmethod( "combinedVolume" );
         Sphere_exposer.staticmethod( "typeName" );
         Sphere_exposer.def( "__copy__", &__copy__);
         Sphere_exposer.def( "__deepcopy__", &__copy__);
