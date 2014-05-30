@@ -52,13 +52,13 @@ void register_Sphere_class(){
         }
         { //::SireMaths::Sphere::combinedVolumeMC
         
-            typedef double ( *combinedVolumeMC_function_type )( ::QVector< SireMaths::Sphere > const &,int );
+            typedef double ( *combinedVolumeMC_function_type )( ::QVector< SireMaths::Sphere > const &,qint64 );
             combinedVolumeMC_function_type combinedVolumeMC_function_value( &::SireMaths::Sphere::combinedVolumeMC );
             
             Sphere_exposer.def( 
                 "combinedVolumeMC"
                 , combinedVolumeMC_function_value
-                , ( bp::arg("spheres"), bp::arg("nsamples")=(int)(-0x00000000000000001) ) );
+                , ( bp::arg("spheres"), bp::arg("nsamples")=(qint64)(-0x00000000000000001) ) );
         
         }
         { //::SireMaths::Sphere::contains
