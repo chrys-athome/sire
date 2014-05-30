@@ -92,6 +92,8 @@ public:
     void setRadius(double radius);
 
     bool intersects(const Sphere &other) const;
+    
+    bool contains(const Vector &point) const;
     bool contains(const Sphere &other) const;
     
     double intersectionVolume(const Sphere &other) const;
@@ -100,7 +102,7 @@ public:
     static double combinedVolume(const QVector<Sphere> &spheres);
 
     static double combinedVolumeMC(const QVector<Sphere> &spheres,
-                                   int nsamples=-1);
+                                   qint64 nsamples=-1);
 
 private:
 

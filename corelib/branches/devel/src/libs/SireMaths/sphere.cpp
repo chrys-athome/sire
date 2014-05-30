@@ -27,12 +27,14 @@
 \*********************************************/
 
 #include "sphere.h"
+#include "rangenerator.h"
 
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 
 #include <QDebug>
+#include <QElapsedTimer>
 
 using namespace SireStream;
 using namespace SireMaths;
@@ -153,6 +155,13 @@ bool Sphere::intersects(const Sphere &other) const
     return Vector::distance(_center, other._center) < (_radius + other._radius);
 }
 
+/** Return whether or not this sphere contains the point 'point'
+    (returns true even if the point is just on the surface of the sphere) */
+bool Sphere::contains(const Vector &point) const
+{
+    return Vector::distance(_center, point) <= _radius;
+}
+
 /** Return whether or not this sphere contains 'other' */
 bool Sphere::contains(const Sphere &other) const
 {
@@ -178,7 +187,7 @@ double Sphere::intersectionVolume(const Sphere &other) const
     else if (dist + small_radius <= big_radius)
     {
         //the small sphere is entirely enclosed in the big sphere
-        return (4.0/3.0) * SireMaths::pi * SireMaths::pow_3(big_radius);
+        return (4.0/3.0) * SireMaths::pi * SireMaths::pow_3(small_radius);
     }
     else
     {
@@ -350,6 +359,7 @@ double Sphere::intersectionVolume(const Sphere &sphere1, const Sphere &sphere2) 
                       (a2*b2*c2*(epsilon1*epsilon2 + epsilon2*epsilon3 + epsilon3*epsilon1 - 1.0));
     
     //we can use w2 to work out how the spheres intersect
+    qDebug() << "w2" << w2;
     
     // if w2 == 0 then the spheres intersect at a single point, and the volume is zero
     if (w2 == 0)
@@ -415,11 +425,113 @@ double Sphere::intersectionVolume(const Sphere &sphere1, const Sphere &sphere2) 
     }
     else
     {
-        return 0;
+        qDebug() << "SPECIAL CASE";
+
+        //special cases... there are three possibilities
+        //define;
+        //t^2 = (a+b+c)(-a+b+c)(a-b+c)(a+b-c)
+        const double t2 = (a+b+c)*(-a+b+c)*(a-b+c)*(a+b-c);
+        
+        //t_abg^2 = (a+beta+gamma)(-a+beta+gamma)(a-beta+gamma)(a+beta-gamma)
+        const double t_abg2 = (a+beta+gamma)*(-a+beta+gamma)*(a-beta+gamma)*(a+beta-gamma);
+        
+        //cyclically permute a,b,c alpha,beta,gamma in above to get t_bga^2 and t_cab
+        const double t_bga2 = (b+gamma+alpha)*(-b+gamma+alpha)*(b-gamma+alpha)*(b+gamma-alpha);
+        const double t_cab2 = (c+alpha+beta)*(-c+alpha+beta)*(c-alpha+beta)*(c+alpha-beta);
+        
+        //now set p1 and p2 via
+        //p1 = [(b^2 - c^2 + beta^2 - gamma^2)^2 + (t - t_abg)^2] / 4 a^2 - alpha^2
+        //p2 = [(b^2 - c^2 + beta^2 - gamma^2)^2 + (t + t_abg)^2] / 4 a^2 - alpha^2
+        
+        const double p1 = (SireMaths::pow_2(b2 - c2 + beta2 - gamma2) +
+                            SireMaths::pow_2(std::sqrt(t2) - std::sqrt(t_abg2))) / (4.0*a2)
+                                - alpha2;
+        const double p2 = (SireMaths::pow_2(b2 - c2 + beta2 - gamma2) +
+                            SireMaths::pow_2(std::sqrt(t2) + std::sqrt(t_abg2))) / (4.0*a2)
+                                - alpha2;
+    
+        //now calculate p3 and p4 by cyclically permuting a,b,c and alpha,beta,gamma
+        const double p3 = (SireMaths::pow_2(c2 - a2 + gamma2 - alpha2) +
+                            SireMaths::pow_2(std::sqrt(t2) - std::sqrt(t_bga2))) / (4.0*b2)
+                                - beta2;
+        const double p4 = (SireMaths::pow_2(c2 - a2 + gamma2 - alpha2) +
+                            SireMaths::pow_2(std::sqrt(t2) + std::sqrt(t_bga2))) / (4.0*b2)
+                                - beta2;
+
+        //repeat again to get p5 and p6
+        const double p5 = (SireMaths::pow_2(a2 - b2 + alpha2 - beta2) +
+                            SireMaths::pow_2(std::sqrt(t2) - std::sqrt(t_cab2))) / (4.0*c2)
+                                - gamma2;
+        const double p6 = (SireMaths::pow_2(a2 - b2 + alpha2 - beta2) +
+                            SireMaths::pow_2(std::sqrt(t2) + std::sqrt(t_cab2))) / (4.0*c2)
+                                - gamma2;
+    
+        qDebug() << p1 << p2 << p3 << p4 << p5 << p6;
+    
+        // if all pi are > 0 then we have case 1 - each pairwise intersection lies outside
+        // the third sphere, and so there is no triple intersection
+        if (p1 >= 0 and p2 >= 0 and p3 >= 0 and p4 >= 0 and p5 >= 0 and p6 >= 0)
+        {
+            return 0;
+        }
+        //if p1 and p2 < 0, and all others and > 0 we have case 2 - the sphere centered
+        // on C contains the pairwise intersection of A and B
+        else if (p1 < 0 and p2 < 0 and p3 >= 0 and p4 >= 0 and p5 >= 0 and p6 >= 0)
+        {
+            return A.intersectionVolume(B);
+        }
+        //similarly, if p3 and p4 are < 0 but the others are greater, then have case 2
+        // where sphere A contains the intersection of B and C
+        else if (p3 < 0 and p4 < 0 and p1 >= 0 and p2 >= 0 and p5 >= 0 and p6 >= 0)
+        {
+            return B.intersectionVolume(C);
+        }
+        //similarly, if p5 and p6 are < 0 but the others are greater, then have case 2
+        // where sphere B contains the intersection of C and A
+        else if (p5 < 0 and p6 < 0 and p1 >= 0 and p2 >= 0 and p3 >= 0 and p4 >= 0)
+        {
+            return C.intersectionVolume(A);
+        }
+        //else if p1 and p2 > 0 but the others are negative, then we have a triple
+        //intersection even though the surfaces of the spheres have no common point
+        else if (p1 > 0 and p2 > 0 and p3 <= 0 and p4 <= 0 and p5 <= 0 and p6 <= 0)
+        {
+            return A.intersectionVolume(B) + A.intersectionVolume(C) - A.volume();
+        }
+        //else if p3 and p4 > 0 then we have the same case, but cyclically permuted
+        else if (p3 > 0 and p4 > 0 and p1 <= 0 and p2 <= 0 and p5 <= 0 and p6 <= 0)
+        {
+            return B.intersectionVolume(C) + B.intersectionVolume(A) - B.volume();
+        }
+        //else if p5 and p6 > 0 then we have the same case, but cyclically permuted
+        else if (p5 > 0 and p6 > 0 and p1 <= 0 and p2 <= 0 and p3 <= 0 and p4 <= 0)
+        {
+            return C.intersectionVolume(A) + C.intersectionVolume(B) - C.volume();
+        }
+        else
+        {
+            //don't know how we got here
+            qDebug() << "HOW DID WE GET HERE?"
+                     << p1 << p2 << p3 << p4 << p5 << p6;
+            
+            return 0;
+        }
     }
 }
 
-/** Return the combined volume of the passed array of spheres */
+/** Return the combined volume of the passed array of spheres. This calculates the volume
+    analytically using the inclusion/exclusion principle only up to third order
+    (intersections of three spheres). The volume is calculated as;
+    
+     sum{ volume of all spheres - 
+          volume of all pair intersections + 
+          volume of all triple intersections } 
+          
+    This performs quite well in most cases, but will have increasing error as
+    the number of quadruple or higher intersections increases. If this would be a problem,
+    (e.g. exact vdw volume of benzene rings) then use combinedVolumeMC that 
+    uses Monte Carlo integration to find the approximate volume of the spheres.
+*/
 double Sphere::combinedVolume(const QVector<SireMaths::Sphere> &spheres)
 {
     if (spheres.isEmpty())
@@ -438,6 +550,9 @@ double Sphere::combinedVolume(const QVector<SireMaths::Sphere> &spheres)
     }
     else
     {
+        QElapsedTimer timer;
+        timer.start();
+    
         //calculate the volume of all spheres
         double total_volume = 0;
         
@@ -477,6 +592,7 @@ double Sphere::combinedVolume(const QVector<SireMaths::Sphere> &spheres)
                 //there is a good chance that there is a combined volume between these
                 //spheres
                 QList<int> intersects = intersecting_pairs[i].toList();
+                qSort(intersects);
                 
                 const int sphere0 = i;
                 
@@ -484,22 +600,32 @@ double Sphere::combinedVolume(const QVector<SireMaths::Sphere> &spheres)
                 {
                     const int sphere1 = intersects[j];
                     
-                    for (int k=j+1; k<intersects.count(); ++k)
+                    if (sphere1 > sphere0)
                     {
-                        const int sphere2 = intersects[k];
-                        
-                        if (intersecting_pairs[sphere1].contains(sphere2))
+                        for (int k=j+1; k<intersects.count(); ++k)
                         {
-                            //sphere0 intersects with sphere1 and sphere2
-                            //sphere1 intersects with sphere2
-                            //so all three are intersecting together
-                            total_volume += spheres[sphere0].intersectionVolume(spheres[sphere1],
-                                                                                spheres[sphere2]);
+                            //sphere2 must be larger than sphere1 as we sorted the
+                            //intersects list
+                            const int sphere2 = intersects[k];
+                        
+                            if (intersecting_pairs[sphere1].contains(sphere2))
+                            {
+                                //sphere0 intersects with sphere1 and sphere2
+                                //sphere1 intersects with sphere2
+                                //so all three are intersecting together
+                                total_volume += spheres[sphere0]
+                                                    .intersectionVolume(spheres[sphere1],
+                                                                        spheres[sphere2]);
+                            }
                         }
                     }
                 }
             }
         }
+        
+        qint64 nsecs = timer.nsecsElapsed();
+        
+        qDebug() << "Analytic volume calculation took" << (0.000001*nsecs) << "ms";
         
         return total_volume;
     }
@@ -509,9 +635,105 @@ double Sphere::combinedVolume(const QVector<SireMaths::Sphere> &spheres)
     Monte Carlo sampling. If 'nsamples' is greater than zero, then the set number of
     samples will be used. Otherwise, enough samples will be used to converge the volume
     to within a good approximation */
-double Sphere::combinedVolumeMC(const QVector<Sphere> &spheres, int nsamples)
+double Sphere::combinedVolumeMC(const QVector<Sphere> &spheres, qint64 nsamples)
 {
-    return 0;
+    if (spheres.isEmpty())
+        return 0;
+
+    //create a box that encompasses all of the spheres
+    Vector minbox = spheres.at(0).center();
+    Vector maxbox = spheres.at(1).center();
+    
+    for (int i=0; i<spheres.count(); ++i)
+    {
+        minbox = minbox.min( spheres.at(i).center() - Vector(spheres.at(i).radius()) );
+        maxbox = maxbox.max( spheres.at(i).center() + Vector(spheres.at(i).radius()) );
+    }
+
+    //now generate points randomly in this box...
+    RanGenerator rand;
+    
+    quint64 n_in_sphere = 0;
+    quint64 n_tests = 0;
+    
+    if (nsamples > 0)
+    {
+        for (qint64 i=0; i<nsamples; ++i)
+        {
+            Vector test( rand.rand( minbox.x(), maxbox.x() ),
+                         rand.rand( minbox.y(), maxbox.y() ),
+                         rand.rand( minbox.z(), maxbox.z() ) );
+            
+            //is this point inside any of the spheres?
+            for (int j=0; j<spheres.count(); ++j)
+            {
+                if (spheres.constData()[j].contains(test))
+                {
+                    n_in_sphere += 1;
+                    break;
+                }
+            }
+        }
+        
+        n_tests = nsamples;
+    }
+    else
+    {
+        double ratio = 0;
+        double old_ratio = 0;
+        
+        QElapsedTimer t;
+        t.start();
+        qint64 last_timeout = 2000;
+        
+        while (true)
+        {
+            n_tests += 1;
+        
+            Vector test( rand.rand( minbox.x(), maxbox.x() ),
+                         rand.rand( minbox.y(), maxbox.y() ),
+                         rand.rand( minbox.z(), maxbox.z() ) );
+            
+            //is this point inside any of the spheres?
+            for (int j=0; j<spheres.count(); ++j)
+            {
+                if (spheres.constData()[j].contains(test))
+                {
+                    n_in_sphere += 1;
+                    break;
+                }
+            }
+            
+            if (n_tests > 1000 and (n_tests % 1000 == 0))
+            {
+                ratio = double(n_in_sphere) / double(n_tests);
+                
+                const double conv_level = 1e-8;
+                
+                if (std::abs(ratio - old_ratio) < conv_level)
+                {
+                    //converged
+                    break;
+                }
+                
+                if (t.elapsed() > last_timeout)
+                {
+                    last_timeout += 2000;
+                    qDebug() << "Solving... SAMPLES:" << n_tests
+                             << "CONVERGENCE:" << std::abs(ratio-old_ratio)
+                             << "DESIRED LEVEL:" << conv_level;
+                }
+                
+                old_ratio = ratio;
+            }
+        }
+    }
+
+    const double total_volume = double(n_in_sphere) * (maxbox.x()-minbox.x()) *
+                                                      (maxbox.y()-minbox.y()) *
+                                                      (maxbox.z()-minbox.z()) / double(n_tests);
+
+    return total_volume;
 }
 
 const char* Sphere::typeName()
