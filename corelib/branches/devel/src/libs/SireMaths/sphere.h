@@ -76,9 +76,13 @@ public:
     bool operator==(const Sphere &other) const;
     bool operator!=(const Sphere &other) const;
 
+    QString toString() const;
+
     const Vector& position() const;
     const Vector& center() const;
     double radius() const;
+
+    Sphere translate(const Vector &delta) const;
 
     double volume() const;
     double surfaceArea() const;
@@ -88,8 +92,10 @@ public:
     void setRadius(double radius);
 
     bool intersects(const Sphere &other) const;
+    bool contains(const Sphere &other) const;
     
     double intersectionVolume(const Sphere &other) const;
+    double intersectionVolume(const Sphere &other0, const Sphere &other1) const;
     
     static double combinedVolume(const QVector<Sphere> &spheres);
 
