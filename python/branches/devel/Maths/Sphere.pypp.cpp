@@ -50,6 +50,17 @@ void register_Sphere_class(){
                 , ( bp::arg("spheres") ) );
         
         }
+        { //::SireMaths::Sphere::combinedVolumeMC
+        
+            typedef double ( *combinedVolumeMC_function_type )( ::QVector< SireMaths::Sphere > const &,int );
+            combinedVolumeMC_function_type combinedVolumeMC_function_value( &::SireMaths::Sphere::combinedVolumeMC );
+            
+            Sphere_exposer.def( 
+                "combinedVolumeMC"
+                , combinedVolumeMC_function_value
+                , ( bp::arg("spheres"), bp::arg("nsamples")=(int)(-0x00000000000000001) ) );
+        
+        }
         { //::SireMaths::Sphere::contains
         
             typedef bool ( ::SireMaths::Sphere::*contains_function_type )( ::SireMaths::Sphere const & ) const;
@@ -212,6 +223,7 @@ void register_Sphere_class(){
         
         }
         Sphere_exposer.staticmethod( "combinedVolume" );
+        Sphere_exposer.staticmethod( "combinedVolumeMC" );
         Sphere_exposer.staticmethod( "typeName" );
         Sphere_exposer.def( "__copy__", &__copy__);
         Sphere_exposer.def( "__deepcopy__", &__copy__);
