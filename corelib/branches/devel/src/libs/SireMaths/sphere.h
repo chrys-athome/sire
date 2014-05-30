@@ -99,6 +99,9 @@ public:
     
     static double combinedVolume(const QVector<Sphere> &spheres);
 
+    static double combinedVolumeMC(const QVector<Sphere> &spheres,
+                                   int nsamples=-1);
+
 private:
 
     /** The location of the center of the sphere */

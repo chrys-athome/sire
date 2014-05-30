@@ -313,29 +313,14 @@ double Sphere::intersectionVolume(const Sphere &sphere1, const Sphere &sphere2) 
     
     //quote from paper; From figure 1, a, b, and c are the distances between the centers
     //of the spheres B and C, C and A, and A and B respectively
-    const double a = 4.0; //Vector::distance(B.center(), C.center());
-    const double b = 3.0; //Vector::distance(C.center(), A.center());
-    const double c = 2.0; //Vector::distance(A.center(), B.center());
+    const double a = Vector::distance(B.center(), C.center());
+    const double b = Vector::distance(C.center(), A.center());
+    const double c = Vector::distance(A.center(), B.center());
     
     //alpha, beta and gamma are the radii of the spheres centered at A, B and C
-    const double alpha = 1.0; //A.radius();
-    const double beta = 2.0; //B.radius();
-    const double gamma = 3.0; //C.radius();
-    
-    //to simplify the expression of the volume of the triple intersection we define
-    
-    //epsilon1 = (beta^2 - gamma^2) / a^2
-    const double epsilon1 = (beta*beta - gamma*gamma) / a*a;
-    
-    //epsilon2 = (gamma^2 - alpha^2) / b^2
-    const double epsilon2 = (gamma*gamma - alpha*alpha) / b*b;
-    
-    //epsilon3 = (alpha^2 - beta^2) / c^2
-    const double epsilon3 = (alpha*alpha - beta*beta) / c*c;
-    
-    //w^2 = (alpha^2 a^2 + beta^2 b^2 + gamma^2 c^2)(a^2 + b^2 + c^2) -
-    //         2(alpha^2 a^4 + beta^2 b^4 + gamma^2 c^4) +
-    //             a^2 b^2 c^2 (epsilon1 epsilon2 + epsilon2 epsilon3 + epsilon3 epsilon1 - 1)
+    const double alpha = A.radius();
+    const double beta = B.radius();
+    const double gamma = C.radius();
     
     const double a2 = a*a;
     const double b2 = b*b;
@@ -344,10 +329,25 @@ double Sphere::intersectionVolume(const Sphere &sphere1, const Sphere &sphere2) 
     const double alpha2 = alpha*alpha;
     const double beta2 = beta*beta;
     const double gamma2 = gamma*gamma;
+
+    //to simplify the expression of the volume of the triple intersection we define
     
-    const double w2 = ((alpha2*a2 + beta2*b2 * gamma2*c2)*(a2 + b2 + c2)) -
-                        (2.0*(alpha2*a2*a2 + beta2*b2*b2 + gamma2*c2*c2)) +
-                    (a2*b2*c2*(epsilon1*epsilon2 + epsilon2*epsilon3 + epsilon3*epsilon1 - 1.0));
+    //epsilon1 = (beta^2 - gamma^2) / a^2
+    const double epsilon1 = (beta2 - gamma2) / a2;
+    
+    //epsilon2 = (gamma^2 - alpha^2) / b^2
+    const double epsilon2 = (gamma2 - alpha2) / b2;
+    
+    //epsilon3 = (alpha^2 - beta^2) / c^2
+    const double epsilon3 = (alpha2 - beta2) / c2;
+    
+    //w^2 = (alpha^2 a^2 + beta^2 b^2 + gamma^2 c^2)(a^2 + b^2 + c^2) -
+    //         2(alpha^2 a^4 + beta^2 b^4 + gamma^2 c^4) +
+    //             a^2 b^2 c^2 (epsilon1 epsilon2 + epsilon2 epsilon3 + epsilon3 epsilon1 - 1)
+    
+    const double w2 = ((alpha2*a2 + beta2*b2 + gamma2*c2)*(a2 + b2 + c2)) -
+                      (2.0*(alpha2*a2*a2 + beta2*b2*b2 + gamma2*c2*c2)) +
+                      (a2*b2*c2*(epsilon1*epsilon2 + epsilon2*epsilon3 + epsilon3*epsilon1 - 1.0));
     
     //we can use w2 to work out how the spheres intersect
     
@@ -395,7 +395,7 @@ double Sphere::intersectionVolume(const Sphere &sphere1, const Sphere &sphere2) 
         const double gamma3 = gamma2 * gamma;
         const double two_thirds = 2.0 / 3.0;
         const double one_sixth = 1.0 / 6.0;
-        
+
         const double v_abc = (w / 6.0) -
                     ((a / 2.0) * (beta2 + gamma2 - a2*(one_sixth - 0.5*epsilon1*epsilon1))
                                * my_arctan( two_w / q1 )) -
@@ -503,6 +503,15 @@ double Sphere::combinedVolume(const QVector<SireMaths::Sphere> &spheres)
         
         return total_volume;
     }
+}
+
+/** Return an approximation of the combined volume of the set of passed spheres using
+    Monte Carlo sampling. If 'nsamples' is greater than zero, then the set number of
+    samples will be used. Otherwise, enough samples will be used to converge the volume
+    to within a good approximation */
+double Sphere::combinedVolumeMC(const QVector<Sphere> &spheres, int nsamples)
+{
+    return 0;
 }
 
 const char* Sphere::typeName()
