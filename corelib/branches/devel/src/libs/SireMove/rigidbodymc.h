@@ -47,6 +47,11 @@ class RigidBodyMC;
 QDataStream& operator<<(QDataStream&, const SireMove::RigidBodyMC&);
 QDataStream& operator>>(QDataStream&, SireMove::RigidBodyMC&);
 
+namespace SireMaths
+{
+class Sphere;
+}
+
 namespace SireMol
 {
 class MoleculeGroup;
@@ -151,6 +156,9 @@ public:
     
     QVector<SireMaths::Vector> reflectionVolumePoints() const;
     SireUnits::Dimension::Length reflectionVolumeRadius() const;
+
+    QVector<SireMaths::Sphere> reflectionVolume() const;
+    double reflectedVolume() const;
 
     void setSynchronisedTranslation(bool on);
     void setSynchronisedRotation(bool on);

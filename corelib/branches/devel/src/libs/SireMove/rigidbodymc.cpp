@@ -43,6 +43,7 @@
 
 #include "SireMaths/quaternion.h"
 #include "SireMaths/vectorproperty.h"
+#include "SireMaths/sphere.h"
 
 #include "SireUnits/units.h"
 #include "SireUnits/temperature.h"
@@ -727,6 +728,29 @@ bool RigidBodyMC::usesReflectionVolume() const
 QVector<Vector> RigidBodyMC::reflectionVolumePoints() const
 {
     return reflect_points;
+}
+
+/** Return the set of spheres that are used to define the reflection volume.
+    This returns an empty list if the reflection volume / sphere is not used */
+QVector<Sphere> RigidBodyMC::reflectionVolume() const
+{
+    QVector<Sphere> spheres;
+    
+    for (int i=0; i<reflect_points.count(); ++i)
+    {
+        spheres.append( Sphere(reflect_points.at(i), reflect_radius) );
+    }
+    
+    return spheres;
+}
+
+/** Return the volume of space occupied by the reflection volume */
+double RigidBodyMC::reflectedVolume() const
+{
+    if (reflect_points.isEmpty())
+        return 0;
+    else
+        return Sphere::combinedVolume( this->reflectionVolume() );
 }
 
 /** Return the reflection volume radius (same as the reflection sphere radius) */
