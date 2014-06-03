@@ -23,7 +23,7 @@ def _pvt_anaVolume(s0,s1,s2):
 def _pvt_checkEqual(val0, val1, verbose):
     delta = abs(val0 - val1)
 
-    if delta > 0.1:
+    if delta > 0.25:
         if verbose:
             print("LARGE DELTA == %s  (%s vs. %s)" % (delta, val0, val1))
 
@@ -32,7 +32,30 @@ def _pvt_checkEqual(val0, val1, verbose):
         return 0
 
 
-def test_sphere_volume(verbose = False):
+def test_pair_volume(verbose = False):
+
+    s0 = Sphere(Vector(0), 0.8)
+    s1 = Sphere(Vector(-2,0,0), 1.1)
+
+    nerrors = 0
+
+    for i in range(0,41):
+        v_an = Sphere.combinedVolume( [s0,s1] )
+        v_mc = Sphere.combinedVolumeMC( [s0,s1] )
+
+        if verbose:
+            print("%s: %s vs. %s" % (s1.center().x(), v_an, v_mc))
+
+        nerrors += _pvt_checkEqual(v_an, v_mc, verbose)
+
+        s1 = s1.translate( Vector(0.1,0,0) )
+
+    if verbose:
+        print("Number of analytic / MC disagreements: %s" % nerrors)
+
+    assert( nerrors < 10 )
+
+def test_triple_volume(verbose = False):
 
     s0 = Sphere(Vector(0), 0.5)
     s1 = Sphere(Vector(0), 0.7)
@@ -86,5 +109,5 @@ def test_sphere_volume(verbose = False):
     assert( nerrors < 10 )
 
 if __name__ == "__main__":
-    test_sphere_volume(True)
-
+    test_pair_volume(True)
+    test_triple_volume(True)
