@@ -8,11 +8,23 @@
 
 namespace bp = boost::python;
 
+#include "SireError/errors.h"
+
 #include "SireMaths/quaternion.h"
+
+#include "SireMaths/sphere.h"
 
 #include "SireMaths/vectorproperty.h"
 
+#include "SireMol/atomcoords.h"
+
+#include "SireMol/atomelements.h"
+
+#include "SireMol/atomselection.h"
+
 #include "SireMol/molecule.h"
+
+#include "SireMol/moleculedata.h"
 
 #include "SireMol/partialmolecule.h"
 
@@ -166,6 +178,16 @@ void register_RigidBodyMC_class(){
         
         }
         RigidBodyMC_exposer.def( bp::self == bp::self );
+        { //::SireMove::RigidBodyMC::reflectedVolume
+        
+            typedef double ( ::SireMove::RigidBodyMC::*reflectedVolume_function_type )(  ) const;
+            reflectedVolume_function_type reflectedVolume_function_value( &::SireMove::RigidBodyMC::reflectedVolume );
+            
+            RigidBodyMC_exposer.def( 
+                "reflectedVolume"
+                , reflectedVolume_function_value );
+        
+        }
         { //::SireMove::RigidBodyMC::reflectionSphereCenter
         
             typedef ::SireMaths::Vector ( ::SireMove::RigidBodyMC::*reflectionSphereCenter_function_type )(  ) const;
@@ -228,6 +250,16 @@ void register_RigidBodyMC_class(){
                 "reflectionSphereRadius"
                 , reflectionSphereRadius_function_value
                 , ( bp::arg("molview") ) );
+        
+        }
+        { //::SireMove::RigidBodyMC::reflectionVolume
+        
+            typedef ::QVector< SireMaths::Sphere > ( ::SireMove::RigidBodyMC::*reflectionVolume_function_type )(  ) const;
+            reflectionVolume_function_type reflectionVolume_function_value( &::SireMove::RigidBodyMC::reflectionVolume );
+            
+            RigidBodyMC_exposer.def( 
+                "reflectionVolume"
+                , reflectionVolume_function_value );
         
         }
         { //::SireMove::RigidBodyMC::reflectionVolumePoints
