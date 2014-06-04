@@ -170,6 +170,14 @@ soften_water = Parameter("soften water", 1.1,
                             the swap-water cluster between lambda=0 and lambda=1. This helps keep the cluster
                             together as it is swapped between the two boxes.""")
 
+uncharge_ligand = Parameter("uncharge ligand", False,
+                            """Whether or not to uncharge the ligand (and swap water cluster) before 
+                               swapping them. They are then recharged at the end of the swap.""")
+
+uncharge_lambda_values = Parameter("uncharge lambda values", [0.0, 0.1, 0.25, 0.45, 0.55, 0.75, 0.9, 1.0],
+                                   """Lambda values to use when uncharging (and then recharging) the ligand. These will be 
+                                      added onto the swapped lambda values to give a new range squashed between 0 and 1.""")
+
 save_pdb = Parameter("save pdb", True,
                      """Whether or not to write a PDB of the system after each iteration.""")
 
@@ -484,6 +492,51 @@ def renumberMolecules(molgroup):
         newgroup.add( ViewsOfMol(newmol,mol.selections()) )
 
     return newgroup
+
+
+def getLambdaValues():
+    """Return the lambda values to use for the simulation. Lambda scale from 0 to 1
+       and will include the discharging and charging steps. The values are set such
+       that, if no charging is used, then return lambda_values.val (the lambda values
+       set by the user). If discharging / charging is used, then discharging is from
+       lambda = 0-0.25, swapping from 0.25-0.75 and recharging from 0.75-1.0"""
+
+    if uncharge_ligand.val:
+        lamvals = []
+
+        charge_lams = copy.deepcopy( uncharge_lambda_values.val )
+        charge_lams.sort()
+
+        swap_lams = copy.deepcopy( lambda_values.val )
+        swap_lams.sort()
+
+        for lam in charge_lams:
+            if lam >= 0.0 and lam <= 1.0:
+                lamvals.append( 0.25 * lam )
+
+        for lam in swap_lams:
+            if lam >= 0.0 and lam <= 1.0:
+                lamvals.append( 0.25 + (0.5*lam) )
+
+        swap_lams.reverse()
+
+        for lam in swap_lams:
+            if lam >= 0.0 and lam <= 1.0:
+                lamvals.append( 0.75 + (0.25*(1.0-lam)) )
+
+        return lamvals
+
+    else:
+        swap_lams = copy.deepcopy( lambda_values.val )
+        swap_lams.sort()
+
+        lamvals = []
+
+        for lam in swap_lams:
+            if lam >= 0.0 and lam <= 1.0:
+                lamvals.append(lam)
+
+        return lamvals
 
 
 def mergeSystems(protein_system, water_system, ligand_mol):
@@ -862,8 +915,9 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     ligand_intraff.add(ligand_mols)
 
     # intramolecular energy of the swap water cluster
-    swap_interclj = InterCLJFF("swap:interclj")
+    swap_interclj = InterSoftCLJFF("swap:interclj")
     swap_interclj = setCLJProperties(swap_interclj)
+    swap_interclj = setSoftCoreProperties(swap_interclj)
     swap_interclj.add(swap_water_mols)
 
     ###
@@ -1091,10 +1145,17 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     ### SETTING THE FORCEFIELD EXPRESSIONS
     ###
 
-    bound_ligand_fixed_nrg = bound_ligand_fixed.components().total()
-    free_ligand_fixed_nrg = free_ligand_fixed.components().total()
-    bound_swap_fixed_nrg = bound_swap_fixed.components().total()
-    free_swap_fixed_nrg = free_swap_fixed.components().total()
+    bound_ligand_fixed_coul_nrg = bound_ligand_fixed.components().coulomb()
+    bound_ligand_fixed_lj_nrg = bound_ligand_fixed.components().lj()
+
+    free_ligand_fixed_coul_nrg = free_ligand_fixed.components().total()
+    free_ligand_fixed_lj_nrg = free_ligand_fixed.components().lj()
+
+    bound_swap_fixed_coul_nrg = bound_swap_fixed.components().coulomb()
+    bound_swap_fixed_lj_nrg = bound_swap_fixed.components().lj()
+
+    free_swap_fixed_coul_nrg = free_swap_fixed.components().coulomb()
+    free_swap_fixed_lj_nrg = free_swap_fixed.components().lj()
 
     ligand_int_nrg_sym = Symbol("E_{ligand:internal}")
     ligand_int_nrg = ligand_intraclj.components().total() + \
@@ -1116,52 +1177,127 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     ligand_int_nrg_prev = ligand_intraclj.components().total() + \
                           ligand_intraff.components().total()
 
-    ligand_bound_nrg_sym = Symbol("E_{ligand:bound}")
+    ligand_bound_coul_nrg_sym = Symbol("E_{ligand:bound_coul}")
+    ligand_bound_coul_nrg = bound_ligand_mobile.components().coulomb(0) + \
+                            bound_ligand_fixed_coul_nrg
 
-    ligand_bound_nrg = bound_ligand_mobile.components().total(0) + \
-                       bound_ligand_fixed_nrg
+    ligand_bound_lj_nrg_sym = Symbol("E_{ligand:bound_lj}")
+    ligand_bound_lj_nrg = bound_ligand_mobile.components().lj(0) + \
+                          bound_ligand_fixed_lj_nrg
 
-    ligand_bound_nrg_f_sym = Symbol("E_{ligand:bound_{f}}")
-    ligand_bound_nrg_f = bound_ligand_mobile.components().total(1) + \
-                         bound_ligand_fixed_nrg
+    ligand_bound_coul_nrg_f_sym = Symbol("E_{ligand:bound_coul{f}}")
+    ligand_bound_coul_nrg_f = bound_ligand_mobile.components().coulomb(1) + \
+                              bound_ligand_fixed_coul_nrg
 
-    ligand_bound_nrg_b_sym = Symbol("E_{ligand:bound_{b}}")
-    ligand_bound_nrg_b = bound_ligand_mobile.components().total(2) + \
-                         bound_ligand_fixed_nrg
+    ligand_bound_lj_nrg_f_sym = Symbol("E_{ligand:bound_lj{f}}")
+    ligand_bound_lj_nrg_f = bound_ligand_mobile.components().lj(1) + \
+                            bound_ligand_fixed_lj_nrg
 
-    ligand_bound_nrg_next_sym = Symbol("E_{ligand:bound_{next}}")
-    ligand_bound_nrg_next = bound_ligand_mobile.components().total(3) + \
-                            bound_ligand_fixed_nrg
+    ligand_bound_coul_nrg_b_sym = Symbol("E_{ligand:bound_coul{b}}")
+    ligand_bound_coul_nrg_b = bound_ligand_mobile.components().coulomb(2) + \
+                              bound_ligand_fixed_coul_nrg
 
-    ligand_bound_nrg_prev_sym = Symbol("E_{ligand:bound_{prev}}")
-    ligand_bound_nrg_prev = bound_ligand_mobile.components().total(4) + \
-                            bound_ligand_fixed_nrg
+    ligand_bound_lj_nrg_b_sym = Symbol("E_{ligand:bound_lj{b}}")
+    ligand_bound_lj_nrg_b = bound_ligand_mobile.components().lj(2) + \
+                            bound_ligand_fixed_lj_nrg
 
-    ligand_free_nrg_sym = Symbol("E_{ligand:free}")
-    ligand_free_nrg = free_ligand_mobile.components().total(0) + \
-                      free_ligand_fixed_nrg
+    ligand_bound_coul_nrg_next_sym = Symbol("E_{ligand:bound_coul{next}}")
+    ligand_bound_coul_nrg_next = bound_ligand_mobile.components().coulomb(3) + \
+                                 bound_ligand_fixed_coul_nrg
 
-    ligand_free_nrg_f_sym = Symbol("E_{ligand:free_{f}}")
-    ligand_free_nrg_f = free_ligand_mobile.components().total(1) + \
-                        free_ligand_fixed_nrg
+    ligand_bound_lj_nrg_next_sym = Symbol("E_{ligand:bound_lj{next}}")
+    ligand_bound_lj_nrg_next = bound_ligand_mobile.components().lj(3) + \
+                               bound_ligand_fixed_lj_nrg
 
-    ligand_free_nrg_b_sym = Symbol("E_{ligand:free_{b}}")
-    ligand_free_nrg_b = free_ligand_mobile.components().total(2) + \
-                        free_ligand_fixed_nrg
+    ligand_bound_coul_nrg_prev_sym = Symbol("E_{ligand:bound_coul{prev}}")
+    ligand_bound_coul_nrg_prev = bound_ligand_mobile.components().coulomb(4) + \
+                                 bound_ligand_fixed_coul_nrg
 
-    ligand_free_nrg_next_sym = Symbol("E_{ligand:free_{next}}")
-    ligand_free_nrg_next = free_ligand_mobile.components().total(3) + \
-                           free_ligand_fixed_nrg
+    ligand_bound_lj_nrg_prev_sym = Symbol("E_{ligand:bound_lj{prev}}")
+    ligand_bound_lj_nrg_prev = bound_ligand_mobile.components().lj(4) + \
+                               bound_ligand_fixed_lj_nrg
 
-    ligand_free_nrg_prev_sym = Symbol("E_{ligand:free_{prev}}")
-    ligand_free_nrg_prev = free_ligand_mobile.components().total(4) + \
-                           free_ligand_fixed_nrg
+    ligand_free_coul_nrg_sym = Symbol("E_{ligand:free_coul}")
+    ligand_free_coul_nrg = free_ligand_mobile.components().coulomb(0) + \
+                           free_ligand_fixed_coul_nrg
+
+    ligand_free_lj_nrg_sym = Symbol("E_{ligand:free_lj}")
+    ligand_free_lj_nrg = free_ligand_mobile.components().lj(0) + \
+                         free_ligand_fixed_lj_nrg
+
+    ligand_free_coul_nrg_f_sym = Symbol("E_{ligand:free_coul{f}}")
+    ligand_free_coul_nrg_f = free_ligand_mobile.components().coulomb(1) + \
+                             free_ligand_fixed_coul_nrg
+
+    ligand_free_lj_nrg_f_sym = Symbol("E_{ligand:free_lj{f}}")
+    ligand_free_lj_nrg_f = free_ligand_mobile.components().lj(1) + \
+                           free_ligand_fixed_lj_nrg
+
+    ligand_free_coul_nrg_b_sym = Symbol("E_{ligand:free_coul{b}}")
+    ligand_free_coul_nrg_b = free_ligand_mobile.components().coulomb(2) + \
+                             free_ligand_fixed_coul_nrg
+ 
+    ligand_free_lj_nrg_b_sym = Symbol("E_{ligand:free_lj{b}}")
+    ligand_free_lj_nrg_b = free_ligand_mobile.components().lj(2) + \
+                           free_ligand_fixed_lj_nrg
+
+    ligand_free_coul_nrg_next_sym = Symbol("E_{ligand:free_coul{next}}")
+    ligand_free_coul_nrg_next = free_ligand_mobile.components().coulomb(3) + \
+                                free_ligand_fixed_coul_nrg
+
+    ligand_free_lj_nrg_next_sym = Symbol("E_{ligand:free_lj{next}}")
+    ligand_free_lj_nrg_next = free_ligand_mobile.components().lj(3) + \
+                              free_ligand_fixed_lj_nrg
+
+    ligand_free_coul_nrg_prev_sym = Symbol("E_{ligand:free_coul{prev}}")
+    ligand_free_coul_nrg_prev = free_ligand_mobile.components().coulomb(4) + \
+                                free_ligand_fixed_coul_nrg
+
+    ligand_free_lj_nrg_prev_sym = Symbol("E_{ligand:free_lj{prev}}")
+    ligand_free_lj_nrg_prev = free_ligand_mobile.components().lj(4) + \
+                              free_ligand_fixed_lj_nrg
 
     lam = Symbol("lambda")
     lam_f = Symbol("lambda_{f}")
     lam_b = Symbol("lambda_{b}")
     lam_next = Symbol("lambda_{next}")
     lam_prev = Symbol("lambda_{prev}")
+
+    lam_coul_on = Symbol("lambda_coul_on")
+    lam_coul_on_f = Symbol("lambda_coul_on_f")
+    lam_coul_on_b = Symbol("lambda_coul_on_b")
+    lam_coul_on_next = Symbol("lambda_coul_on_next")
+    lam_coul_on_prev = Symbol("lambda_coul_on_prev")
+
+    lam_coul_off = Symbol("lambda_coul_off")
+    lam_coul_off_f = Symbol("lambda_coul_off_f")
+    lam_coul_off_b = Symbol("lambda_coul_off_b")
+    lam_coul_off_next = Symbol("lambda_coul_off_next")
+    lam_coul_off_prev = Symbol("lambda_coul_off_prev")
+
+    lam_lj_on = Symbol("lambda_lj_on")
+    lam_lj_on_f = Symbol("lambda_lj_on_f")
+    lam_lj_on_b = Symbol("lambda_lj_on_b")
+    lam_lj_on_next = Symbol("lambda_lj_on_next")
+    lam_lj_on_prev = Symbol("lambda_lj_on_prev")
+
+    lam_lj_off = Symbol("lambda_lj_off")
+    lam_lj_off_f = Symbol("lambda_lj_off_f")
+    lam_lj_off_b = Symbol("lambda_lj_off_b")
+    lam_lj_off_next = Symbol("lambda_lj_off_next")
+    lam_lj_off_prev = Symbol("lambda_lj_off_prev")
+
+    lam_coul_swap = Symbol("lambda_coul_swap")
+    lam_coul_swap_f = Symbol("lambda_coul_swap_f")
+    lam_coul_swap_b = Symbol("lambda_coul_swap_b")
+    lam_coul_swap_next = Symbol("lambda_coul_swap_next")
+    lam_coul_swap_prev = Symbol("lambda_coul_swap_prev")
+
+    lam_lj_swap = Symbol("lambda_coul_swap")
+    lam_lj_swap_f = Symbol("lambda_lj_swap_f")
+    lam_lj_swap_b = Symbol("lambda_lj_swap_b")
+    lam_lj_swap_next = Symbol("lambda_lj_swap_next")
+    lam_lj_swap_prev = Symbol("lambda_lj_swap_prev")
 
     S_sym = Symbol("S")
     S_scl = S_sym - 4*(S_sym-1)*(lam-0.5)**2
@@ -1171,64 +1307,104 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     S_scl_prev = S_sym - 4*(S_sym-1)*(lam_prev-0.5)**2
 
     swap_int_nrg_sym = Symbol("E_{swap:internal}")
-    swap_int_nrg = ((S_scl) * swap_interclj.components().coulomb()) + \
-                              swap_interclj.components().lj()
+    swap_int_nrg = (lam_coul_swap * S_scl * swap_interclj.components().coulomb(0)) + \
+                   (lam_lj_swap * swap_interclj.components().lj(0))
 
     swap_int_nrg_f_sym = Symbol("E_{swap:internal_{f}}")
-    swap_int_nrg_f = ((S_scl_f) * swap_interclj.components().coulomb()) + \
-                              swap_interclj.components().lj()
+    swap_int_nrg_f = (lam_coul_swap_f * S_scl_f * swap_interclj.components().coulomb(1)) + \
+                     (lam_lj_swap_f * swap_interclj.components().lj(1))
 
     swap_int_nrg_b_sym = Symbol("E_{swap:internal_{b}}")
-    swap_int_nrg_b = ((S_scl_b) * swap_interclj.components().coulomb()) + \
-                              swap_interclj.components().lj()
+    swap_int_nrg_b = (lam_coul_swap_b * S_scl_b * swap_interclj.components().coulomb(2)) + \
+                     (lam_lj_swap_b * swap_interclj.components().lj(2))
 
     swap_int_nrg_next_sym = Symbol("E_{swap:internal_{next}}")
-    swap_int_nrg_next = ((S_scl_next) * swap_interclj.components().coulomb()) + \
-                              swap_interclj.components().lj()
+    swap_int_nrg_next = (lam_coul_swap_next * S_scl_next * swap_interclj.components().coulomb(3)) + \
+                        (lam_lj_swap_next * swap_interclj.components().lj(3))
 
     swap_int_nrg_prev_sym = Symbol("E_{swap:internal_{prev}}")
-    swap_int_nrg_prev = ((S_scl_prev) * swap_interclj.components().coulomb()) + \
-                              swap_interclj.components().lj()
+    swap_int_nrg_prev = (lam_coul_swap_prev * S_scl_prev * swap_interclj.components().coulomb(4)) + \
+                        (lam_lj_swap_prev * swap_interclj.components().lj(4))
 
-    swap_bound_nrg_sym = Symbol("E_{swap:bound}")
-    swap_bound_nrg = bound_swap_mobile.components().total(0) + \
-                     bound_swap_fixed_nrg
+    swap_bound_coul_nrg_sym = Symbol("E_{swap:bound_coul}")
+    swap_bound_coul_nrg = bound_swap_mobile.components().coulomb(0) + \
+                          bound_swap_fixed_coul_nrg
 
-    swap_bound_nrg_f_sym = Symbol("E_{swap:bound_{f}}")
-    swap_bound_nrg_f = bound_swap_mobile.components().total(1) + \
-                       bound_swap_fixed_nrg
+    swap_bound_lj_nrg_sym = Symbol("E_{swap:bound_lj}")
+    swap_bound_lj_nrg = bound_swap_mobile.components().lj(0) + \
+                        bound_swap_fixed_lj_nrg
 
-    swap_bound_nrg_b_sym = Symbol("E_{swap:bound_{b}}")
-    swap_bound_nrg_b = bound_swap_mobile.components().total(2) + \
-                       bound_swap_fixed_nrg
+    swap_bound_coul_nrg_f_sym = Symbol("E_{swap:bound_coul{f}}")
+    swap_bound_coul_nrg_f = bound_swap_mobile.components().coulomb(1) + \
+                            bound_swap_fixed_coul_nrg
 
-    swap_bound_nrg_next_sym = Symbol("E_{swap:bound_{next}}")
-    swap_bound_nrg_next = bound_swap_mobile.components().total(3) + \
-                          bound_swap_fixed_nrg
+    swap_bound_lj_nrg_f_sym = Symbol("E_{swap:bound_lj{f}}")
+    swap_bound_lj_nrg_f = bound_swap_mobile.components().lj(1) + \
+                          bound_swap_fixed_lj_nrg
 
-    swap_bound_nrg_prev_sym = Symbol("E_{swap:bound_{prev}}")
-    swap_bound_nrg_prev = bound_swap_mobile.components().total(4) + \
-                          bound_swap_fixed_nrg
+    swap_bound_coul_nrg_b_sym = Symbol("E_{swap:bound_coul{b}}")
+    swap_bound_coul_nrg_b = bound_swap_mobile.components().coulomb(2) + \
+                            bound_swap_fixed_coul_nrg
 
-    swap_free_nrg_sym = Symbol("E_{swap:free}")
-    swap_free_nrg = free_swap_mobile.components().total(0) + \
-                    free_swap_fixed_nrg
+    swap_bound_lj_nrg_b_sym = Symbol("E_{swap:bound_lj{b}}")
+    swap_bound_lj_nrg_b = bound_swap_mobile.components().lj(2) + \
+                          bound_swap_fixed_lj_nrg
 
-    swap_free_nrg_f_sym = Symbol("E_{swap:free_{f}}")
-    swap_free_nrg_f = free_swap_mobile.components().total(1) + \
-                      free_swap_fixed_nrg
+    swap_bound_coul_nrg_next_sym = Symbol("E_{swap:bound_coul{next}}")
+    swap_bound_coul_nrg_next = bound_swap_mobile.components().coulomb(3) + \
+                               bound_swap_fixed_coul_nrg
 
-    swap_free_nrg_b_sym = Symbol("E_{swap:free_{b}}")
-    swap_free_nrg_b = free_swap_mobile.components().total(2) + \
-                      free_swap_fixed_nrg
+    swap_bound_lj_nrg_next_sym = Symbol("E_{swap:bound_lj{next}}")
+    swap_bound_lj_nrg_next = bound_swap_mobile.components().lj(3) + \
+                             bound_swap_fixed_lj_nrg
 
-    swap_free_nrg_next_sym = Symbol("E_{swap:free_{next}}")
-    swap_free_nrg_next = free_swap_mobile.components().total(3) + \
-                         free_swap_fixed_nrg
+    swap_bound_coul_nrg_prev_sym = Symbol("E_{swap:bound_coul{prev}}")
+    swap_bound_coul_nrg_prev = bound_swap_mobile.components().coulomb(4) + \
+                               bound_swap_fixed_coul_nrg
 
-    swap_free_nrg_prev_sym = Symbol("E_{swap:free_{prev}}")
-    swap_free_nrg_prev = free_swap_mobile.components().total(4) + \
-                         free_swap_fixed_nrg
+    swap_bound_lj_nrg_prev_sym = Symbol("E_{swap:bound_lj{prev}}")
+    swap_bound_lj_nrg_prev = bound_swap_mobile.components().lj(4) + \
+                             bound_swap_fixed_lj_nrg
+
+    swap_free_coul_nrg_sym = Symbol("E_{swap:free_coul}")
+    swap_free_coul_nrg = free_swap_mobile.components().coulomb(0) + \
+                         free_swap_fixed_coul_nrg
+
+    swap_free_lj_nrg_sym = Symbol("E_{swap:free_lj}")
+    swap_free_lj_nrg = free_swap_mobile.components().lj(0) + \
+                       free_swap_fixed_lj_nrg
+
+    swap_free_coul_nrg_f_sym = Symbol("E_{swap:free_coul{f}}")
+    swap_free_coul_nrg_f = free_swap_mobile.components().coulomb(1) + \
+                           free_swap_fixed_coul_nrg
+
+    swap_free_lj_nrg_f_sym = Symbol("E_{swap:free_lj{f}}")
+    swap_free_lj_nrg_f = free_swap_mobile.components().lj(1) + \
+                         free_swap_fixed_lj_nrg
+
+    swap_free_coul_nrg_b_sym = Symbol("E_{swap:free_coul{b}}")
+    swap_free_coul_nrg_b = free_swap_mobile.components().coulomb(2) + \
+                           free_swap_fixed_coul_nrg
+
+    swap_free_lj_nrg_b_sym = Symbol("E_{swap:free_lj{b}}")
+    swap_free_lj_nrg_b = free_swap_mobile.components().lj(2) + \
+                         free_swap_fixed_lj_nrg
+
+    swap_free_coul_nrg_next_sym = Symbol("E_{swap:free_coul{next}}")
+    swap_free_coul_nrg_next = free_swap_mobile.components().coulomb(3) + \
+                              free_swap_fixed_coul_nrg
+ 
+    swap_free_lj_nrg_next_sym = Symbol("E_{swap:free_lj{next}}")
+    swap_free_lj_nrg_next = free_swap_mobile.components().lj(3) + \
+                            free_swap_fixed_lj_nrg
+
+    swap_free_coul_nrg_prev_sym = Symbol("E_{swap:free_coul{prev}}")
+    swap_free_coul_nrg_prev = free_swap_mobile.components().coulomb(4) + \
+                              free_swap_fixed_coul_nrg
+
+    swap_free_lj_nrg_prev_sym = Symbol("E_{swap:free_lj{prev}}")
+    swap_free_lj_nrg_prev = free_swap_mobile.components().lj(4) + \
+                            free_swap_fixed_lj_nrg
 
     system.add(ligand_intraclj)
     system.add(ligand_intraff)
@@ -1248,7 +1424,46 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     system.setConstant(lam_next, 0.0)
     system.setConstant(lam_prev, 0.0)
 
-    system.setComponent(S_sym, soften_water.val)
+    system.setConstant(lam_coul_on, 1.0)
+    system.setConstant(lam_coul_on_f, 1.0)
+    system.setConstant(lam_coul_on_b, 1.0)
+    system.setConstant(lam_coul_on_next, 1.0)
+    system.setConstant(lam_coul_on_prev, 1.0)
+
+    system.setConstant(lam_coul_off, 0.0)
+    system.setConstant(lam_coul_off_f, 0.0)
+    system.setConstant(lam_coul_off_b, 0.0)
+    system.setConstant(lam_coul_off_next, 0.0)
+    system.setConstant(lam_coul_off_prev, 0.0)
+
+    system.setConstant(lam_lj_on, 1.0)
+    system.setConstant(lam_lj_on_f, 1.0)
+    system.setConstant(lam_lj_on_b, 1.0)
+    system.setConstant(lam_lj_on_next, 1.0)
+    system.setConstant(lam_lj_on_prev, 1.0)
+
+    system.setConstant(lam_lj_off, 0.0)
+    system.setConstant(lam_lj_off_f, 0.0)
+    system.setConstant(lam_lj_off_b, 0.0)
+    system.setConstant(lam_lj_off_next, 0.0)
+    system.setConstant(lam_lj_off_prev, 0.0)
+
+    system.setConstant(lam_coul_swap, 1.0)
+    system.setConstant(lam_coul_swap_f, 1.0)
+    system.setConstant(lam_coul_swap_b, 1.0)
+    system.setConstant(lam_coul_swap_next, 1.0)
+    system.setConstant(lam_coul_swap_prev, 1.0)
+
+    system.setConstant(lam_lj_swap, 1.0)
+    system.setConstant(lam_lj_swap_f, 1.0)
+    system.setConstant(lam_lj_swap_b, 1.0)
+    system.setConstant(lam_lj_swap_next, 1.0)
+    system.setConstant(lam_lj_swap_prev, 1.0)
+
+    if uncharge_ligand.val:
+        system.setComponent(S_sym, 0.0)
+    else:
+        system.setComponent(S_sym, soften_water.val)
 
     system.setComponent(ligand_int_nrg_sym, ligand_int_nrg)
     system.setComponent(ligand_int_nrg_f_sym, ligand_int_nrg_f)
@@ -1256,17 +1471,29 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     system.setComponent(ligand_int_nrg_next_sym, ligand_int_nrg_next)
     system.setComponent(ligand_int_nrg_prev_sym, ligand_int_nrg_prev)
 
-    system.setComponent(ligand_bound_nrg_sym, ligand_bound_nrg)
-    system.setComponent(ligand_bound_nrg_f_sym, ligand_bound_nrg_f)
-    system.setComponent(ligand_bound_nrg_b_sym, ligand_bound_nrg_b)
-    system.setComponent(ligand_bound_nrg_next_sym, ligand_bound_nrg_next)
-    system.setComponent(ligand_bound_nrg_prev_sym, ligand_bound_nrg_prev)
+    system.setComponent(ligand_bound_coul_nrg_sym, ligand_bound_coul_nrg)
+    system.setComponent(ligand_bound_coul_nrg_f_sym, ligand_bound_coul_nrg_f)
+    system.setComponent(ligand_bound_coul_nrg_b_sym, ligand_bound_coul_nrg_b)
+    system.setComponent(ligand_bound_coul_nrg_next_sym, ligand_bound_coul_nrg_next)
+    system.setComponent(ligand_bound_coul_nrg_prev_sym, ligand_bound_coul_nrg_prev)
 
-    system.setComponent(ligand_free_nrg_sym, ligand_free_nrg)
-    system.setComponent(ligand_free_nrg_f_sym, ligand_free_nrg_f)
-    system.setComponent(ligand_free_nrg_b_sym, ligand_free_nrg_b)
-    system.setComponent(ligand_free_nrg_next_sym, ligand_free_nrg_next)
-    system.setComponent(ligand_free_nrg_prev_sym, ligand_free_nrg_prev)
+    system.setComponent(ligand_bound_lj_nrg_sym, ligand_bound_lj_nrg)
+    system.setComponent(ligand_bound_lj_nrg_f_sym, ligand_bound_lj_nrg_f)
+    system.setComponent(ligand_bound_lj_nrg_b_sym, ligand_bound_lj_nrg_b)
+    system.setComponent(ligand_bound_lj_nrg_next_sym, ligand_bound_lj_nrg_next)
+    system.setComponent(ligand_bound_lj_nrg_prev_sym, ligand_bound_lj_nrg_prev)
+
+    system.setComponent(ligand_free_coul_nrg_sym, ligand_free_coul_nrg)
+    system.setComponent(ligand_free_coul_nrg_f_sym, ligand_free_coul_nrg_f)
+    system.setComponent(ligand_free_coul_nrg_b_sym, ligand_free_coul_nrg_b)
+    system.setComponent(ligand_free_coul_nrg_next_sym, ligand_free_coul_nrg_next)
+    system.setComponent(ligand_free_coul_nrg_prev_sym, ligand_free_coul_nrg_prev)
+
+    system.setComponent(ligand_free_lj_nrg_sym, ligand_free_lj_nrg)
+    system.setComponent(ligand_free_lj_nrg_f_sym, ligand_free_lj_nrg_f)
+    system.setComponent(ligand_free_lj_nrg_b_sym, ligand_free_lj_nrg_b)
+    system.setComponent(ligand_free_lj_nrg_next_sym, ligand_free_lj_nrg_next)
+    system.setComponent(ligand_free_lj_nrg_prev_sym, ligand_free_lj_nrg_prev)
 
     system.setComponent(swap_int_nrg_sym, swap_int_nrg)
     system.setComponent(swap_int_nrg_f_sym, swap_int_nrg_f)
@@ -1274,17 +1501,29 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     system.setComponent(swap_int_nrg_next_sym, swap_int_nrg_next)
     system.setComponent(swap_int_nrg_prev_sym, swap_int_nrg_prev)
 
-    system.setComponent(swap_bound_nrg_sym, swap_bound_nrg)
-    system.setComponent(swap_bound_nrg_f_sym, swap_bound_nrg_f)
-    system.setComponent(swap_bound_nrg_b_sym, swap_bound_nrg_b)
-    system.setComponent(swap_bound_nrg_next_sym, swap_bound_nrg_next)
-    system.setComponent(swap_bound_nrg_prev_sym, swap_bound_nrg_prev)
+    system.setComponent(swap_bound_coul_nrg_sym, swap_bound_coul_nrg)
+    system.setComponent(swap_bound_coul_nrg_f_sym, swap_bound_coul_nrg_f)
+    system.setComponent(swap_bound_coul_nrg_b_sym, swap_bound_coul_nrg_b)
+    system.setComponent(swap_bound_coul_nrg_next_sym, swap_bound_coul_nrg_next)
+    system.setComponent(swap_bound_coul_nrg_prev_sym, swap_bound_coul_nrg_prev)
 
-    system.setComponent(swap_free_nrg_sym, swap_free_nrg)
-    system.setComponent(swap_free_nrg_f_sym, swap_free_nrg_f)
-    system.setComponent(swap_free_nrg_b_sym, swap_free_nrg_b)
-    system.setComponent(swap_free_nrg_next_sym, swap_free_nrg_next)
-    system.setComponent(swap_free_nrg_prev_sym, swap_free_nrg_prev)
+    system.setComponent(swap_bound_lj_nrg_sym, swap_bound_lj_nrg)
+    system.setComponent(swap_bound_lj_nrg_f_sym, swap_bound_lj_nrg_f)
+    system.setComponent(swap_bound_lj_nrg_b_sym, swap_bound_lj_nrg_b)
+    system.setComponent(swap_bound_lj_nrg_next_sym, swap_bound_lj_nrg_next)
+    system.setComponent(swap_bound_lj_nrg_prev_sym, swap_bound_lj_nrg_prev)
+
+    system.setComponent(swap_free_coul_nrg_sym, swap_free_coul_nrg)
+    system.setComponent(swap_free_coul_nrg_f_sym, swap_free_coul_nrg_f)
+    system.setComponent(swap_free_coul_nrg_b_sym, swap_free_coul_nrg_b)
+    system.setComponent(swap_free_coul_nrg_next_sym, swap_free_coul_nrg_next)
+    system.setComponent(swap_free_coul_nrg_prev_sym, swap_free_coul_nrg_prev)
+
+    system.setComponent(swap_free_lj_nrg_sym, swap_free_lj_nrg)
+    system.setComponent(swap_free_lj_nrg_f_sym, swap_free_lj_nrg_f)
+    system.setComponent(swap_free_lj_nrg_b_sym, swap_free_lj_nrg_b)
+    system.setComponent(swap_free_lj_nrg_next_sym, swap_free_lj_nrg_next)
+    system.setComponent(swap_free_lj_nrg_prev_sym, swap_free_lj_nrg_prev)
 
     bound_bound_nrg_sym = Symbol("E_{bound-bound}")
     bound_bound_nrg = None
@@ -1313,34 +1552,44 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     system.setComponent(free_free_nrg_sym, free_free_nrg)
 
     bound_nrg_sym = Symbol("E_{bound}")
-    bound_nrg = ((1-lam) * ligand_bound_nrg_sym) + (lam * swap_bound_nrg_sym)
+    bound_nrg = (lam_coul_on * ligand_bound_coul_nrg_sym) + (lam_coul_off * swap_bound_coul_nrg_sym) + \
+                (lam_lj_on * ligand_bound_lj_nrg_sym) + (lam_lj_off * swap_bound_lj_nrg_sym)
 
     bound_nrg_f_sym = Symbol("E_{bound_{f}}")
-    bound_nrg_f = ((1-lam_f) * ligand_bound_nrg_f_sym) + (lam_f * swap_bound_nrg_f_sym)
+    bound_nrg_f = (lam_coul_on_f * ligand_bound_coul_nrg_f_sym) + (lam_coul_off_f * swap_bound_coul_nrg_f_sym) + \
+                  (lam_lj_on_f * ligand_bound_lj_nrg_f_sym) + (lam_lj_off_f * swap_bound_lj_nrg_f_sym)
 
     bound_nrg_b_sym = Symbol("E_{bound_{b}}")
-    bound_nrg_b = ((1-lam_b) * ligand_bound_nrg_b_sym) + (lam_b * swap_bound_nrg_b_sym)
+    bound_nrg_b = (lam_coul_on_b * ligand_bound_coul_nrg_b_sym) + (lam_coul_off_b * swap_bound_coul_nrg_b_sym) + \
+                  (lam_lj_on_b * ligand_bound_lj_nrg_b_sym) + (lam_lj_off_b * swap_bound_lj_nrg_b_sym)
 
     bound_nrg_next_sym = Symbol("E_{bound_{next}}")
-    bound_nrg_next = ((1-lam_next) * ligand_bound_nrg_next_sym) + (lam_next * swap_bound_nrg_next_sym)
+    bound_nrg_next = (lam_coul_on_next * ligand_bound_coul_nrg_next_sym) + (lam_coul_off_next * swap_bound_coul_nrg_next_sym) + \
+                     (lam_lj_on_next * ligand_bound_lj_nrg_next_sym) + (lam_lj_off_next * swap_bound_lj_nrg_next_sym)
 
     bound_nrg_prev_sym = Symbol("E_{bound_{prev}}")
-    bound_nrg_prev = ((1-lam_prev) * ligand_bound_nrg_prev_sym) + (lam_prev * swap_bound_nrg_prev_sym)
+    bound_nrg_prev = (lam_coul_on_prev * ligand_bound_coul_nrg_prev_sym) + (lam_coul_off_next * swap_bound_coul_nrg_prev_sym) + \
+                     (lam_lj_on_prev * ligand_bound_lj_nrg_prev_sym) + (lam_lj_off_prev * swap_bound_lj_nrg_prev_sym)
     
     free_nrg_sym = Symbol("E_{free}")
-    free_nrg = (lam * ligand_free_nrg_sym) + ((1-lam) * swap_free_nrg_sym)
+    free_nrg = (lam_coul_off * ligand_free_coul_nrg_sym) + (lam_coul_on * swap_free_coul_nrg_sym) + \
+               (lam_lj_off * ligand_free_lj_nrg_sym) + (lam_lj_on * swap_free_lj_nrg_sym)
 
     free_nrg_f_sym = Symbol("E_{free_{f}}")
-    free_nrg_f = (lam_f * ligand_free_nrg_f_sym) + ((1-lam_f) * swap_free_nrg_f_sym)
+    free_nrg_f = (lam_coul_off_f * ligand_free_coul_nrg_f_sym) + (lam_coul_on_f * swap_free_coul_nrg_f_sym) + \
+                 (lam_lj_off_f * ligand_free_lj_nrg_f_sym) + (lam_lj_on_f * swap_free_lj_nrg_f_sym)
 
     free_nrg_b_sym = Symbol("E_{free_{b}}")
-    free_nrg_b = (lam_b * ligand_free_nrg_b_sym) + ((1-lam_b) * swap_free_nrg_b_sym)
+    free_nrg_b = (lam_coul_off_b * ligand_free_coul_nrg_b_sym) + (lam_coul_on_b * swap_free_coul_nrg_b_sym) + \
+                 (lam_lj_off_b * ligand_free_lj_nrg_b_sym) + (lam_lj_on_b * swap_free_lj_nrg_b_sym)
 
     free_nrg_next_sym = Symbol("E_{free_{next}}")
-    free_nrg_next = (lam_next * ligand_free_nrg_next_sym) + ((1-lam_next) * swap_free_nrg_next_sym)
+    free_nrg_next = (lam_coul_off_next * ligand_free_coul_nrg_next_sym) + (lam_coul_on_next * swap_free_coul_nrg_next_sym) + \
+                    (lam_lj_off_next * ligand_free_lj_nrg_next_sym) + (lam_lj_on_next * swap_free_lj_nrg_next_sym)
 
     free_nrg_prev_sym = Symbol("E_{free_{prev}}")
-    free_nrg_prev = (lam_prev * ligand_free_nrg_prev_sym) + ((1-lam_prev) * swap_free_nrg_prev_sym)
+    free_nrg_prev = (lam_coul_off_prev * ligand_free_coul_nrg_prev_sym) + (lam_coul_on_prev * swap_free_coul_nrg_prev_sym) + \
+                    (lam_lj_off_prev * ligand_free_lj_nrg_prev_sym) + (lam_lj_on_prev * swap_free_lj_nrg_prev_sym)
 
     box_nrg_sym = Symbol("E_{box}")
     box_nrg = bound_bound_nrg_sym + free_free_nrg_sym + ligand_int_nrg_sym + swap_int_nrg_sym
@@ -1427,7 +1676,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
 
     # Constrain lam_next and lam_prev to be equal to the next and previous
     # windows lambda values
-    lamvals = copy.deepcopy( lambda_values.val )
+    lamvals = getLambdaValues()
 
     if lamvals[-1] != 1:
         lamvals.append(1)
@@ -1438,6 +1687,62 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     system.add( WindowedComponent( lam_next, lam, lamvals, 1 ) )
     system.add( WindowedComponent( lam_prev, lam, lamvals, -1 ) )
     system.setConstant( lam, lambda_values.val[0] )
+
+    # now constrain lam_coul_on, lam_coul_off, lam_lj_on and lam_lj_off to follow lambda
+    if uncharge_ligand.val:
+        system.add( ComponentConstraint( lam_coul_on, Max( 1 - 4*lam, 0 ) ) )      # scale from 1 to 0 from lam=0 to 0.25
+        system.add( ComponentConstraint( lam_coul_off, Max( 1 - 4*(1-lam), 0 ) ) ) # scale from 0 to 1 from lam=0.75 to 1
+        system.add( ComponentConstraint( lam_coul_on_f, Max( 1 - 4*lam_f, 0 ) ) )      # scale from 1 to 0 from lam=0 to 0.25
+        system.add( ComponentConstraint( lam_coul_off_f, Max( 1 - 4*(1-lam_f), 0 ) ) ) # scale from 0 to 1 from lam=0.75 to 1
+        system.add( ComponentConstraint( lam_coul_on_b, Max( 1 - 4*lam_b, 0 ) ) )      # scale from 1 to 0 from lam=0 to 0.25
+        system.add( ComponentConstraint( lam_coul_off_b, Max( 1 - 4*(1-lam_b), 0 ) ) ) # scale from 0 to 1 from lam=0.75 to 1
+        system.add( ComponentConstraint( lam_coul_on_next, Max( 1 - 4*lam_next, 0 ) ) )      # scale from 1 to 0 from lam=0 to 0.25
+        system.add( ComponentConstraint( lam_coul_off_next, Max( 1 - 4*(1-lam_next), 0 ) ) ) # scale from 0 to 1 from lam=0.75 to 1
+        system.add( ComponentConstraint( lam_coul_on_prev, Max( 1 - 4*lam_prev, 0 ) ) )      # scale from 1 to 0 from lam=0 to 0.25
+        system.add( ComponentConstraint( lam_coul_off_prev, Max( 1 - 4*(1-lam_prev), 0 ) ) ) # scale from 0 to 1 from lam=0.75 to 1
+
+        system.add( ComponentConstraint( lam_lj_on, Max( Min( 2 * ((1-lam)-0.25), 1 ), 0 ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_off, Max( Min( 2 * (lam-0.25), 1 ), 0 ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_on_f, Max( Min( 2 * ((1-lam_f)-0.25), 1 ), 0 ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_off_f, Max( Min( 2 * (lam_f-0.25), 1 ), 0 ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_on_b, Max( Min( 2 * ((1-lam_b)-0.25), 1 ), 0 ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_off_b, Max( Min( 2 * (lam_b-0.25), 1 ), 0 ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_on_next, Max( Min( 2 * ((1-lam_next)-0.25), 1 ), 0 ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_off_next, Max( Min( 2 * (lam_next-0.25), 1 ), 0 ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_on_prev, Max( Min( 2 * ((1-lam_prev)-0.25), 1 ), 0 ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_off_prev, Max( Min( 2 * (lam_prev-0.25), 1 ), 0 ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
+
+        system.add( ComponentConstraint( lam_coul_swap, Max( Max( 1 - 4*lam, 0 ), Max( 1 - 4*(1-lam), 0 ) ) ) ) # scale from 1 to 0 from lam=0 to 0.25,
+                                                                                                                # then 0 to 1 from lam=0.75 to 1
+        system.add( ComponentConstraint( lam_coul_swap_f, Max( Max( 1 - 4*lam_f, 0 ), Max( 1 - 4*(1-lam_f), 0 ) ) ) )
+        system.add( ComponentConstraint( lam_coul_swap_b, Max( Max( 1 - 4*lam_b, 0 ), Max( 1 - 4*(1-lam_b), 0 ) ) ) )
+        system.add( ComponentConstraint( lam_coul_swap_next, Max( Max( 1 - 4*lam_next, 0 ), Max( 1 - 4*(1-lam_next), 0 ) ) ) )
+        system.add( ComponentConstraint( lam_coul_swap_prev, Max( Max( 1 - 4*lam_prev, 0 ), Max( 1 - 4*(1-lam_prev), 0 ) ) ) )
+    else:
+        system.add( ComponentConstraint( lam_coul_on, 1-lam ) )
+        system.add( ComponentConstraint( lam_coul_off, lam ) )
+        system.add( ComponentConstraint( lam_lj_on, 1-lam ) )
+        system.add( ComponentConstraint( lam_lj_off, lam ) )
+
+        system.add( ComponentConstraint( lam_coul_on_f, 1-lam_f ) )
+        system.add( ComponentConstraint( lam_coul_off_f, lam_f ) )
+        system.add( ComponentConstraint( lam_lj_on_f, 1-lam_f ) )
+        system.add( ComponentConstraint( lam_lj_off_f, lam_f ) )
+
+        system.add( ComponentConstraint( lam_coul_on_b, 1-lam_b ) )
+        system.add( ComponentConstraint( lam_coul_off_b, lam_b ) )
+        system.add( ComponentConstraint( lam_lj_on_b, 1-lam_b ) )
+        system.add( ComponentConstraint( lam_lj_off_b, lam_b ) )
+
+        system.add( ComponentConstraint( lam_coul_on_next, 1-lam_next ) )
+        system.add( ComponentConstraint( lam_coul_off_next, lam_next ) )
+        system.add( ComponentConstraint( lam_lj_on_next, 1-lam_next ) )
+        system.add( ComponentConstraint( lam_lj_off_next, lam_next ) )
+
+        system.add( ComponentConstraint( lam_coul_on_prev, 1-lam_prev ) )
+        system.add( ComponentConstraint( lam_coul_off_prev, lam_prev ) )
+        system.add( ComponentConstraint( lam_lj_on_prev, 1-lam_prev ) )
+        system.add( ComponentConstraint( lam_lj_off_prev, lam_prev ) )
 
     # now add alpha variables that can be used by the EnergyMonitors
     alpha_on = Symbol("alpha_on")
@@ -1485,6 +1790,18 @@ def mergeSystems(protein_system, water_system, ligand_mol):
 
     system.add( PropertyConstraint( "alpha4", FFName("bound:ligand-mobile"),  alpha_scale.val * lam_prev ) )
     system.add( PropertyConstraint( "alpha4", FFName("free:ligand-mobile"),  alpha_scale.val * (1 - lam_prev) ) )
+
+    # Now soften the swap-water-swap-water interactions around lambda = 0.5 (used if decharging the ligand)
+    if uncharge_ligand.val:
+        s_scl = soften_water.val
+    else:
+        s_scl = 0
+
+    system.add( PropertyConstraint( "alpha0", FFName("swap:interclj"), s_scl * (1 - 2*Abs(lam - 0.5)) ) )
+    system.add( PropertyConstraint( "alpha1", FFName("swap:interclj"), s_scl * (1 - 2*Abs(lam_f - 0.5)) ) )
+    system.add( PropertyConstraint( "alpha2", FFName("swap:interclj"), s_scl * (1 - 2*Abs(lam_b - 0.5)) ) )
+    system.add( PropertyConstraint( "alpha3", FFName("swap:interclj"), s_scl * (1 - 2*Abs(lam_next - 0.5)) ) )
+    system.add( PropertyConstraint( "alpha4", FFName("swap:interclj"), s_scl * (1 - 2*Abs(lam_prev - 0.5)) ) )
 
     # Now lets create all of the groups for moves based on the above
 
@@ -1671,7 +1988,9 @@ def makeRETI(system, moves):
 
     lam = Symbol("lambda")
 
-    replicas = Replicas( len(lambda_values.val) )
+    lamvals = getLambdaValues()
+
+    replicas = Replicas( len(lamvals) )
 
     replicas.setSubSystem(system)
     replicas.setSubMoves(moves)
@@ -1689,12 +2008,12 @@ def makeRETI(system, moves):
     
     replicas.setGenerator( RanGenerator(seed+5) )
 
-    for i in range(0, len(lambda_values.val)):
+    for i in range(0, len(lamvals)):
         # set the initial lambda value for this replica
-        replicas.setLambdaValue(i, lambda_values.val[i])
+        replicas.setLambdaValue(i, lamvals[i])
 
-    for i in range(0, len(lambda_values.val)):
-        print(lambda_values.val[i])
+    for i in range(0, len(lamvals)):
+        print(lamvals[i])
         print(replicas[i].subSystem().constants())
 
     # Now add monitors for each replica that will copy back
