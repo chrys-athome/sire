@@ -518,9 +518,9 @@ def getLambdaValues():
             if lam >= 0.0 and lam <= 1.0:
                 lamvals.append( 0.25 + (0.5*lam) )
 
-        swap_lams.reverse()
+        charge_lams.reverse()
 
-        for lam in swap_lams:
+        for lam in charge_lams:
             if lam >= 0.0 and lam <= 1.0:
                 lamvals.append( 0.75 + (0.25*(1.0-lam)) )
 
