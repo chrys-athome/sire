@@ -1293,7 +1293,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     lam_coul_swap_next = Symbol("lambda_coul_swap_next")
     lam_coul_swap_prev = Symbol("lambda_coul_swap_prev")
 
-    lam_lj_swap = Symbol("lambda_coul_swap")
+    lam_lj_swap = Symbol("lambda_lj_swap")
     lam_lj_swap_f = Symbol("lambda_lj_swap_f")
     lam_lj_swap_b = Symbol("lambda_lj_swap_b")
     lam_lj_swap_next = Symbol("lambda_lj_swap_next")
@@ -1461,7 +1461,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     system.setConstant(lam_lj_swap_prev, 1.0)
 
     if uncharge_ligand.val:
-        system.setComponent(S_sym, 0.0)
+        system.setComponent(S_sym, 1.0)
     else:
         system.setComponent(S_sym, soften_water.val)
 
