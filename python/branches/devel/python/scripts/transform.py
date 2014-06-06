@@ -1,3 +1,11 @@
+description = """
+transform is a simple app that is used to perform geometric transformations on a molecule taken from a PDB file.
+Assuming you have a PDB file, “sys.pdb” that contains a molecule with residue name “MOL” then;
+sire.app/bin/transform -p sys.pdb -l MOL --translate 0*nanometer 3*nanometer -0.5*nanometer -o output.pdb
+will translate MOL by 0*nanometers along the x axis, 3 nanometers on the y axis and -0.5 nanometers on the z axis and will write the result to “output.pdb”. transform recognises all of the length units recognised by Sire (although translating by meters is perhaps a bit over the top!).
+You can also rotate molecules, using the “--rotate” option. By default this will use the center of mass (via the “--com” option) or center of geometry (via the “--cog” option), or you can manually specify the center using the “--rotcent” option. Rotations can be specified in degrees or radians.If you supply both a translation and rotation, then the rotation is performed first, and the translation is performed second.
+If you need more help understanding or using align then please feel free to get in touch via the Sire users mailing list.
+"""
 
 from Sire.IO import *
 from Sire.Mol import *
@@ -18,6 +26,15 @@ parser = argparse.ArgumentParser(description="Transform ligands/small molecules/
                                         "http://siremol.org/transform",
                                  prog="transform")
 
+parser.add_argument('--description', action="store_true",
+                    help="Print a complete description of this program.")
+
+parser.add_argument('--author', action="store_true",
+                    help="Get information about the authors of this script.")
+
+parser.add_argument('--version', action="store_true",
+                    help="Get version information about this script.")
+
 parser.add_argument('-l', '--ligand', nargs=1,
                     help="Supply the name of the ligand you want to translate/rotate.")
 
@@ -31,7 +48,7 @@ parser.add_argument('-t', '--translate', nargs=3,
 
 parser.add_argument('-r', '--rotate', nargs=1,
                     help="How must to rotate the ligand around the rotation axis, e.g. "
-                         "30*degrees. If not units are supplied, then they are assumed "
+                         "30*degrees. If no units are supplied, then they are assumed "
                          "to be degrees.")
 
 parser.add_argument('-ra', '--rotaxis', type=float, nargs=3,
@@ -56,16 +73,14 @@ parser.add_argument('-o', '--output', nargs=1,
                     help="Name of the PDB file in which to output the transformed copy of the "
                          "ligand.")
 
-parser.add_argument('--author', action="store_true",
-                    help="Get information about the authors of this script.")
-
-parser.add_argument('--version', action="store_true",
-                    help="Get version information about this script.")
-
 sys.stdout.write("\n")
 args = parser.parse_args()
 
 must_exit = False
+
+if args.description:
+    print("%s\n" % description)
+    must_exit = True
 
 if args.author:
     print("\ntransform was written by Christopher Woods (C) 2014")
@@ -73,7 +88,8 @@ if args.author:
     must_exit = True
 
 if args.version:
-    print("\ntransform version 0.1")
+    print("\ntransform version 0.2")
+    print(Sire.Config.versionString())
     must_exit = True
 
 if must_exit:
@@ -104,8 +120,7 @@ rotstring = "center of geometry"
 def stringToValue(val):
     # see if we have to turn the value from a string into a python object
     try:
-        exec("testval = %s" % val, globals())
-        return val.value()
+        return eval(val).value()
     except:
         try:
             words = val.split("*")
@@ -116,8 +131,7 @@ def stringToValue(val):
 def stringToAngle(val):
     # see if we have to turn the value from a string into a python object
     try:
-        exec("testval = %s" % val, globals())
-        return val.to(degrees)
+        return eval(val).to(degrees)
     except:
         words = val.split("*")
         return float(words[0])
