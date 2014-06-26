@@ -28,11 +28,14 @@
 
 #include "latticecharges.h"
 
+#include "SireMol/element.h"
+
 #include "SireID/index.h"
 
 #include "SireBase/quickcopy.hpp"
 
 using namespace Squire;
+using namespace SireMol;
 using namespace SireID;
 using namespace SireBase;
 
@@ -47,6 +50,8 @@ LatticeCharge::LatticeCharge()
     {
         d[i] = 0;
     }
+    
+    nprotons = 0;
 }
 
 /** Create a point charge at the specified location with the specified
@@ -57,6 +62,18 @@ LatticeCharge::LatticeCharge(double x, double y, double z, double charge)
     d[1] = y;
     d[2] = z;
     d[3] = charge;
+    nprotons = 0;
+}
+
+/** Create a point charge at the specified location with the specified
+    value */
+LatticeCharge::LatticeCharge(double x, double y, double z, double charge, const Element &element)
+{
+    d[0] = x;
+    d[1] = y;
+    d[2] = z;
+    d[3] = charge;
+    nprotons = element.nProtons();
 }
 
 /** Create a point charge at the specified location with the specified charge */
@@ -66,12 +83,25 @@ LatticeCharge::LatticeCharge(const Vector &point, double charge)
     d[1] = point.y();
     d[2] = point.z();
     d[3] = charge;
+    nprotons = 0;
+}
+
+/** Create a point charge at the specified location with the specified charge
+    and specified element */
+LatticeCharge::LatticeCharge(const Vector &point, double charge, const Element &element)
+{
+    d[0] = point.x();
+    d[1] = point.y();
+    d[2] = point.z();
+    d[3] = charge;
+    nprotons = element.nProtons();
 }
 
 /** Copy constructor */
 LatticeCharge::LatticeCharge(const LatticeCharge &other)
 {
     quickCopy<double>(d, other.d, 4);
+    nprotons = other.nprotons;
 }
 
 /** Destructor */
@@ -84,6 +114,7 @@ LatticeCharge& LatticeCharge::operator=(const LatticeCharge &other)
     if (this != &other)
     {
         quickCopy<double>(d, other.d, 4);
+        nprotons = other.nprotons;
     }
 
     return *this;
@@ -93,14 +124,20 @@ LatticeCharge& LatticeCharge::operator=(const LatticeCharge &other)
 bool LatticeCharge::operator==(const LatticeCharge &other) const
 {
     return d[0] == other.d[0] and d[1] == other.d[1] and
-           d[2] == other.d[2] and d[3] == other.d[3];
+           d[2] == other.d[2] and d[3] == other.d[3] and nprotons == other.nprotons;
 }
 
 /** Comparison operator */
 bool LatticeCharge::operator!=(const LatticeCharge &other) const
 {
     return d[0] != other.d[0] or d[1] != other.d[1] or
-           d[2] != other.d[2] or d[3] != other.d[3];
+           d[2] != other.d[2] or d[3] != other.d[3] or nprotons != other.nprotons;
+}
+
+/** Return the element associated with this lattice point (may be dummy) */
+Element LatticeCharge::element() const
+{
+    return Element(nprotons);
 }
 
 ////////

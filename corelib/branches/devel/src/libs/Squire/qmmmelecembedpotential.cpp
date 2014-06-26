@@ -33,6 +33,8 @@
 
 #include "SireUnits/units.h"
 
+#include "SireMol/atomelements.h"
+
 #include "SireFF/errors.h"
 #include "SireBase/errors.h"
 
@@ -347,6 +349,12 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
         const CoordGroup *cgroup_array = mmmol.coordinates().constData();
         const MMParameters::Array *charge_array = mmmol.parameters()
                                                        .atomicParameters().constData();
+
+        // nasty code - I need the atom elements and am going to have to assume they
+        // are correct. I need to update the QMMM potential to properly get the
+        // charge and element property from each atom so that this nasty hack is not needed.
+        const AtomElements &elems = mmmol.molecule().molecule().property("element")
+                                         .asA<AtomElements>();
         
         BOOST_ASSERT( ngroups == mmmol.parameters().atomicParameters().nArrays() );
         
@@ -368,13 +376,14 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
 
             double mindist = std::numeric_limits<double>::max();
 
+            const CGIdx cgidx = mmmol.cgIdx(j);
+
             for (QList< tuple<double,CoordGroup> >::const_iterator
                                                         it = mapped_groups.constBegin();
                  it != mapped_groups.constEnd();
                  ++it)
             {
                 const double sqrt_4pieps0 = std::sqrt(SireUnits::four_pi_eps0);
-                const double bohr_factor = 1.0 / bohr_radii;
 
                 //get any scaling feather factor for this group (and to convert
                 //the charge from reduced units to mod_electrons)
@@ -404,15 +413,16 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
                     
                     if (chg != 0)
                     {
+                        const CGAtomIdx cgatomidx(cgidx, Index(k));
+                    
                         if (index_this_group and (lattice_indicies != 0))
-                            lattice_idxs.set( CGAtomIdx(mmmol.cgIdx(j),Index(k)), 
-                                              lattice_charges.count() );
+                            lattice_idxs.set( cgatomidx, lattice_charges.count() );
                         
                         //lattice charges are electron charges, with coordinates
-                        //in bohr
+                        //in angstroms
                         lattice_charges.add( 
-                                LatticeCharge(bohr_factor * mapped_group_array[k], 
-                                              chg) );
+                                LatticeCharge(mapped_group_array[k],
+                                              chg, elems[cgatomidx]) );
                     }
                 }
             }

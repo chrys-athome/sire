@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2008  Christopher Woods
+  *  Copyright (C) 2014  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SQUIRE_MOLPRO_H
-#define SQUIRE_MOLPRO_H
+#ifndef SQUIRE_SQM_H
+#define SQUIRE_SQM_H
 
 #include <QHash>
 #include <QString>
@@ -40,11 +40,11 @@ SIRE_BEGIN_HEADER
 
 namespace Squire 
 {
-class Molpro;
+class SQM;
 }
 
-QDataStream& operator<<(QDataStream&, const Squire::Molpro&);
-QDataStream& operator>>(QDataStream&, Squire::Molpro&);
+QDataStream& operator<<(QDataStream&, const Squire::SQM&);
+QDataStream& operator>>(QDataStream&, Squire::SQM&);
 
 class QFile;
 
@@ -56,42 +56,35 @@ class TempDir;
 namespace Squire
 {
 
-/** This is a wrapper that allows Molpro to be used to calculate
-    QM and QM/MM energies
+/** This is a wrapper that allows SQM to be used to calculate
+    QM and QM/MM energies (SQM is the semiempirical QM program
+    that comes free with AmberTools)
     
     @author Christopher Woods
 */
-class SQUIRE_EXPORT Molpro : public SireBase::ConcreteProperty<Molpro,QMProgram>
+class SQUIRE_EXPORT SQM : public SireBase::ConcreteProperty<SQM,QMProgram>
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const Molpro&);
-friend QDataStream& ::operator>>(QDataStream&, Molpro&);
+friend QDataStream& ::operator<<(QDataStream&, const SQM&);
+friend QDataStream& ::operator>>(QDataStream&, SQM&);
 
 public:
-    Molpro();
-    Molpro(const QString &molpro);
+    SQM();
+    SQM(const QString &SQM);
     
-    Molpro(const Molpro &other);
+    SQM(const SQM &other);
     
-    ~Molpro();
+    ~SQM();
     
     static const char* typeName();
     
-    Molpro& operator=(const Molpro &other);
+    SQM& operator=(const SQM &other);
     
-    bool operator==(const Molpro &other) const;
-    bool operator!=(const Molpro &other) const;
+    bool operator==(const SQM &other) const;
+    bool operator!=(const SQM &other) const;
     
-    void setExecutable(const QString &molpro_exe);
+    void setExecutable(const QString &SQM_exe);
     void setEnvironment(const QString &variable, const QString &value);
-    
-    void setMemoryRequirement(int nbytes);
-    
-    int memoryRequirement() const;
-    
-    void setLatticeInBohrRadii(bool on);
-    
-    bool latticeInBohrRadii() const;
     
     void setMaximumRunTime(int max_runtime);
     
@@ -102,10 +95,6 @@ public:
     const QHash<QString,QString>& environment() const;
     
     QString environment(const QString &variable) const;
-    
-    void setBasisSet(const QString &basis_set);
-    
-    const QString& basisSet() const;
     
     void setMethod(const QString &method);
     
@@ -184,21 +173,16 @@ private:
 
     QString writeShellFile(const SireBase::TempDir &tempdir) const;
 
-    double extractEnergy(QFile &molpro_output) const;
-
-    QHash<QString,double> extractPotentials(QFile &molpro_output) const;
+    double extractEnergy(QFile &SQM_output) const;
 
     double calculateEnergy(const QString &cmd_file, int ntries) const;
 
-    /** The environmental variables to hold when running Molpro */
+    /** The environmental variables to hold when running SQM */
     QHash<QString,QString> env_variables;
     
-    /** The full path to the molpro executable to run (including
+    /** The full path to the SQM executable to run (including
         any necessary command line arguments) */
-    QString molpro_exe;
-    
-    /** The basis set to use during this calculation */
-    QString basis_set;
+    QString sqm_exe;
     
     /** The QM method to use to calculate the energy */
     QString qm_method;
@@ -216,24 +200,16 @@ private:
     /** The total charge of the system */
     qint32 total_charge;
     
-    /** The amount of memory (in bytes) to reserve for the 
-        QM calculation */
-    quint32 memory_requirement;
-    
-    /** The maximum amount of time to wait for a molpro
+    /** The maximum amount of time to wait for a SQM
         job to complete (15 minutes) in milliseconds */
-    quint32 max_molpro_runtime;
-    
-    /** Whether or not the units of lattice charges in a molpro
-        input file are in bohr radii (otherwise in angstroms) */
-    bool lattice_in_bohr_radii;
+    quint32 max_sqm_runtime;
 };
 
 }
 
-Q_DECLARE_METATYPE( Squire::Molpro )
+Q_DECLARE_METATYPE( Squire::SQM )
 
-SIRE_EXPOSE_CLASS( Squire::Molpro )
+SIRE_EXPOSE_CLASS( Squire::SQM )
 
 SIRE_END_HEADER
 
