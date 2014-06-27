@@ -102,6 +102,16 @@ void register_SQM_class(){
                 , executable_function_value );
         
         }
+        { //::Squire::SQM::expectedNumberOfQMAtoms
+        
+            typedef int ( ::Squire::SQM::*expectedNumberOfQMAtoms_function_type )(  ) const;
+            expectedNumberOfQMAtoms_function_type expectedNumberOfQMAtoms_function_value( &::Squire::SQM::expectedNumberOfQMAtoms );
+            
+            SQM_exposer.def( 
+                "expectedNumberOfQMAtoms"
+                , expectedNumberOfQMAtoms_function_value );
+        
+        }
         { //::Squire::SQM::forceTemplate
         
             typedef ::QString const & ( ::Squire::SQM::*forceTemplate_function_type )(  ) const;
@@ -111,6 +121,16 @@ void register_SQM_class(){
                 "forceTemplate"
                 , forceTemplate_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::Squire::SQM::maximumNumberOfSQMInputLines
+        
+            typedef int ( ::Squire::SQM::*maximumNumberOfSQMInputLines_function_type )(  ) const;
+            maximumNumberOfSQMInputLines_function_type maximumNumberOfSQMInputLines_function_value( &::Squire::SQM::maximumNumberOfSQMInputLines );
+            
+            SQM_exposer.def( 
+                "maximumNumberOfSQMInputLines"
+                , maximumNumberOfSQMInputLines_function_value );
         
         }
         { //::Squire::SQM::maximumRunTime
@@ -132,6 +152,16 @@ void register_SQM_class(){
                 "method"
                 , method_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::Squire::SQM::numberOfMMAtomsLimit
+        
+            typedef int ( ::Squire::SQM::*numberOfMMAtomsLimit_function_type )(  ) const;
+            numberOfMMAtomsLimit_function_type numberOfMMAtomsLimit_function_value( &::Squire::SQM::numberOfMMAtomsLimit );
+            
+            SQM_exposer.def( 
+                "numberOfMMAtomsLimit"
+                , numberOfMMAtomsLimit_function_value );
         
         }
         SQM_exposer.def( bp::self != bp::self );
@@ -181,6 +211,17 @@ void register_SQM_class(){
                 , ( bp::arg("SQM_exe") ) );
         
         }
+        { //::Squire::SQM::setExpectedNumberOfQMAtoms
+        
+            typedef void ( ::Squire::SQM::*setExpectedNumberOfQMAtoms_function_type )( int ) ;
+            setExpectedNumberOfQMAtoms_function_type setExpectedNumberOfQMAtoms_function_value( &::Squire::SQM::setExpectedNumberOfQMAtoms );
+            
+            SQM_exposer.def( 
+                "setExpectedNumberOfQMAtoms"
+                , setExpectedNumberOfQMAtoms_function_value
+                , ( bp::arg("natoms") ) );
+        
+        }
         { //::Squire::SQM::setForceTemplate
         
             typedef void ( ::Squire::SQM::*setForceTemplate_function_type )( ::QString const & ) ;
@@ -190,6 +231,17 @@ void register_SQM_class(){
                 "setForceTemplate"
                 , setForceTemplate_function_value
                 , ( bp::arg("force_template") ) );
+        
+        }
+        { //::Squire::SQM::setMaximumNumberOfSQMInputLines
+        
+            typedef void ( ::Squire::SQM::*setMaximumNumberOfSQMInputLines_function_type )( int ) ;
+            setMaximumNumberOfSQMInputLines_function_type setMaximumNumberOfSQMInputLines_function_value( &::Squire::SQM::setMaximumNumberOfSQMInputLines );
+            
+            SQM_exposer.def( 
+                "setMaximumNumberOfSQMInputLines"
+                , setMaximumNumberOfSQMInputLines_function_value
+                , ( bp::arg("numlines") ) );
         
         }
         { //::Squire::SQM::setMaximumRunTime
