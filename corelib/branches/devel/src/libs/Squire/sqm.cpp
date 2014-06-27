@@ -107,14 +107,14 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, SQM &sqm)
 
 static const QString default_energy_template =
        "single point energy calculation created for QM or QM/MM calcs using Sire\n"
-       "@qmmm\n"
+       "&qmmm\n"
        " qm_theory = '@QM_METHOD@',\n"
        " qmcharge = @QM_CHARGE@,\n"
        " maxcyc = 0,\n"
        " qmmm_int = @USE_LATTICE_POINTS@,\n"
-       "/\n"
-       "@QM_COORDS@@LATTICE_POINTS@\n"
-       "#END\n";
+       " /\n"
+       "@QM_COORDS@\n"
+       "@LATTICE_POINTS@\n";
 
 static const QString default_force_template = "! NEEDS TO BE WRITTEN";
 
@@ -422,7 +422,7 @@ QString SQM::createCommandFile(QString cmd_template,
                               QString::number(1), Qt::CaseInsensitive );
             
         cmd_template.replace( QLatin1String("@LATTICE_POINTS@"),
-                              QString("\n#EXCHARGES\n%1").arg(charges.join("\n")),
+                              QString("#EXCHARGES\n%1\n#END").arg(charges.join("\n")),
                               Qt::CaseInsensitive );
     }
                                        
@@ -530,7 +530,9 @@ double SQM::extractEnergy(QFile &sqm_output) const
 {
     QTextStream ts(&sqm_output);
 
-    QRegExp regexp("SIRE_FINAL_ENERGY\\s*=\\s*([-\\d\\.]+)");
+    //the energy is written on the line that looks like this;
+    //Total SCF energy    =      -8037.75735154 kcal/mol  (     -348.54331345 eV)
+    QRegExp regexp("Total\\s+SCF\\s+energy\\s*=\\s*([-\\d\\.]+)", Qt::CaseInsensitive);
 
     QStringList lines;
     
@@ -541,7 +543,7 @@ double SQM::extractEnergy(QFile &sqm_output) const
 
         if (regexp.indexIn(line) != -1)
         {
-            //we've found the SIRE_FINAL_ENERGY line
+            //we've found the "Total SCF energy" line
             QString num = regexp.cap(1);
         
             bool ok;
@@ -553,8 +555,8 @@ double SQM::extractEnergy(QFile &sqm_output) const
                     "The energy obtained from SQM is garbled (%1) - %2.")
                         .arg(regexp.cap(1), regexp.cap(0)), CODELOC );
         
-            //the energy is in hartrees - convert it to kcal per mol
-            return nrg * hartree;
+            //the energy is already in kcal mol-1
+            return nrg;
         }
     }
 
@@ -572,7 +574,7 @@ double SQM::extractEnergy(QFile &sqm_output) const
 
         if (regexp.indexIn(line) != -1)
         {
-            //we've found the SIRE_FINAL_ENERGY line
+            //we've found the "SCF energy" line
             QString num = regexp.cap(1);
         
             bool ok;
@@ -584,12 +586,12 @@ double SQM::extractEnergy(QFile &sqm_output) const
                     "The energy obtained from SQM is garbled (%1) - %2.")
                         .arg(regexp.cap(1), regexp.cap(0)), CODELOC );
         
-            //the energy is in hartrees - convert it to kcal per mol
-            return nrg * hartree;
+            //the energy is already in kcal mol-1
+            return nrg;
         }
     }
 
-    //the SIRE_FINAL_ENERGY line was not found!
+    //the "SCF energy" line was not found!
     throw SireError::process_error( QObject::tr(
             "Could not find the total energy in the SQM output!\n"
                 "%1").arg(lines.join("\n")), CODELOC );
@@ -663,7 +665,7 @@ double SQM::calculateEnergy(const QString &cmdfile, int ntries) const
         tmppath = QDir::temp().absolutePath();
 
     TempDir tmpdir(tmppath);
-    tmpdir.doNotDelete();
+    //tmpdir.doNotDelete();
 
     //write the file processed by the shell used to run the job
     QString shellfile = this->writeShellFile(tmpdir);
@@ -680,9 +682,9 @@ double SQM::calculateEnergy(const QString &cmdfile, int ntries) const
     }
 
     //run the shell file...
-    QTime t;
-    qDebug() << "Running SQM...";
-    t.start();
+    //QTime t;
+    //qDebug() << "Running SQM...";
+    //t.start();
     Process p = Process::run( "sh", shellfile );
 
     //wait until the job has finished
@@ -695,8 +697,8 @@ double SQM::calculateEnergy(const QString &cmdfile, int ntries) const
             return this->calculateEnergy(cmdfile, ntries-1);
     }
     
-    int ms = t.elapsed();
-    qDebug() << "SQM finised. Took" << ms << "ms";
+    //int ms = t.elapsed();
+    //qDebug() << "SQM finised. Took" << ms << "ms";
     
     if (p.wasKilled())
     {
@@ -763,8 +765,8 @@ double SQM::calculateEnergy(const QString &cmdfile, int ntries) const
     {
         qDebug() << "SQM process error. Number of remaining attempts = " << ntries;
 
-        //print out the last twenty lines of output
-        const int nlines_to_print = 20;
+        //print out the last 150 lines of output
+        const int nlines_to_print = 150;
 
         qDebug() << "Printing out the last" << nlines_to_print << "lines of output...";
 
