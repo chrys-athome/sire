@@ -109,6 +109,8 @@ public:
         return false;
     }
     
+    virtual int numberOfMMAtomsLimit() const;
+    
     virtual AtomCharges calculateCharges(const Molecule &molecule,
                                          const PropertyMap &map) const;
 

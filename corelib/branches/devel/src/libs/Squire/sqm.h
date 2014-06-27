@@ -87,8 +87,15 @@ public:
     void setEnvironment(const QString &variable, const QString &value);
     
     void setMaximumRunTime(int max_runtime);
-    
     int maximumRunTime() const;
+    
+    void setMaximumNumberOfSQMInputLines(int numlines);
+    void setExpectedNumberOfQMAtoms(int natoms);
+    
+    int maximumNumberOfSQMInputLines() const;
+    int expectedNumberOfQMAtoms() const;
+    
+    int numberOfMMAtomsLimit() const;
     
     QString executable() const;
     
@@ -203,6 +210,14 @@ private:
     /** The maximum amount of time to wait for a SQM
         job to complete (15 minutes) in milliseconds */
     quint32 max_sqm_runtime;
+    
+    /** The maximum number of lines that can be parsed in an SQM command file */
+    qint32 max_sqm_lines;
+    
+    /** The expected number of QM atoms. This is used, together with the maximum
+        number of SQM command file lines, to work out the maximum number of MM
+        atoms that can be supported */
+    qint32 expected_n_qm;
 };
 
 }

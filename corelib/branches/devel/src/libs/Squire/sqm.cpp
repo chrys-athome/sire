@@ -80,7 +80,9 @@ QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const SQM &sqm)
         << sqm.sqm_exe << sqm.qm_method
         << sqm.energy_template << sqm.force_template
         << sqm.total_charge
-        << sqm.max_sqm_runtime;
+        << sqm.max_sqm_runtime
+        << sqm.max_sqm_lines
+        << sqm.expected_n_qm;
         
     return ds;
 }
@@ -97,7 +99,8 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, SQM &sqm)
         sds >> sqm.env_variables
             >> sqm.sqm_exe >> sqm.qm_method
             >> sqm.energy_template >> sqm.force_template
-            >> sqm.total_charge >> sqm.max_sqm_runtime;
+            >> sqm.total_charge >> sqm.max_sqm_runtime
+            >> sqm.max_sqm_lines >> sqm.expected_n_qm;
     }
     else
         throw version_error(v, "1", r_sqm, CODELOC);
@@ -105,16 +108,19 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, SQM &sqm)
     return ds;
 }
 
+//here is the template for the energy command file. We try to save as many lines
+//as possible as SQM has a 1000 line limit for the command file!!!
 static const QString default_energy_template =
-       "single point energy calculation created for QM or QM/MM calcs using Sire\n"
-       "&qmmm\n"
-       " qm_theory = '@QM_METHOD@',\n"
-       " qmcharge = @QM_CHARGE@,\n"
-       " maxcyc = 0,\n"
-       " qmmm_int = @USE_LATTICE_POINTS@,\n"
-       " /\n"
-       "@QM_COORDS@\n"
-       "@LATTICE_POINTS@\n";
+"single point energy calculation created for QM or QM/MM calcs using Sire\n"
+"&qmmm\n"
+" qm_theory = '@QM_METHOD@', qmcharge = @QM_CHARGE@, maxcyc = 0, qmmm_int = @USE_LATTICE_POINTS@,\n"
+" /\n"  // need space before backslash or it is not recognised
+"@QM_COORDS@\n"
+"@LATTICE_POINTS@\n";
+
+//the number of lines in the energy template command file, excluding the lines needed
+//for the QM atoms or MM atoms
+static const int n_energy_template_lines = 4;
 
 static const QString default_force_template = "! NEEDS TO BE WRITTEN";
 
@@ -125,7 +131,9 @@ SQM::SQM()
          energy_template(default_energy_template),
          force_template(default_force_template),
          total_charge(0),
-         max_sqm_runtime( 15 * 60 * 1000 )
+         max_sqm_runtime( 5 * 60 * 1000 ),
+         max_sqm_lines(1000),
+         expected_n_qm(50)
 {}
 
 /** Construct, passing in the location of the SQM executable */
@@ -135,7 +143,9 @@ SQM::SQM(const QString &sqm_exe)
          energy_template(default_energy_template),
          force_template(default_force_template),
          total_charge(0),
-         max_sqm_runtime( 15 * 60 * 1000 )
+         max_sqm_runtime( 5 * 60 * 1000 ),
+         max_sqm_lines(1000),
+         expected_n_qm(50)
 {
     this->setExecutable(sqm_exe);
 }
@@ -148,7 +158,9 @@ SQM::SQM(const SQM &other)
          energy_template(other.energy_template),
          force_template(other.force_template),
          total_charge(other.total_charge),
-         max_sqm_runtime(other.max_sqm_runtime)
+         max_sqm_runtime(other.max_sqm_runtime),
+         max_sqm_lines(other.max_sqm_lines),
+         expected_n_qm(other.expected_n_qm)
 {}
 
 /** Destructor */
@@ -167,6 +179,8 @@ SQM& SQM::operator=(const SQM &other)
         force_template = other.force_template;
         total_charge = other.total_charge;
         max_sqm_runtime = other.max_sqm_runtime;
+        max_sqm_lines = other.max_sqm_lines;
+        expected_n_qm = other.expected_n_qm;
     }
     
     return *this;
@@ -182,7 +196,9 @@ bool SQM::operator==(const SQM &other) const
             energy_template == other.energy_template and
             force_template == other.force_template and
             total_charge == other.total_charge and
-            max_sqm_runtime == other.max_sqm_runtime);
+            max_sqm_runtime == other.max_sqm_runtime and
+            max_sqm_lines == other.max_sqm_lines and
+            expected_n_qm == other.expected_n_qm);
 }
 
 /** Comparison operator */
@@ -276,6 +292,52 @@ void SQM::setMaximumRunTime(int ms)
 int SQM::maximumRunTime() const
 {
     return max_sqm_runtime;
+}
+
+/** Set the maximum number of lines that can be parsed from an SQM input file.
+    Currently, SQM has a hard-coded limit of 1000 lines! */
+void SQM::setMaximumNumberOfSQMInputLines(int numlines)
+{
+    if (numlines < 0)
+        max_sqm_lines = -1;
+    else
+        max_sqm_lines = numlines;
+}
+
+/** Set the maximum number of expected QM atoms. This is used, together with
+    the maximum number of lines in a SQM input file, to work out the maximum
+    number of supported MM atoms */
+void SQM::setExpectedNumberOfQMAtoms(int natoms)
+{
+    if (natoms < 0)
+        expected_n_qm = -1;
+    else
+        expected_n_qm = natoms;
+}
+
+/** Return the maximum number of supported SQM input lines. This returns
+    -1 if SQM doesn't have a file size limit */
+int SQM::maximumNumberOfSQMInputLines() const
+{
+    return max_sqm_lines;
+}
+
+/** Return the maximum number of expected QM atoms. This returns -1 if
+    we don't expect any QM atoms */
+int SQM::expectedNumberOfQMAtoms() const
+{
+    return expected_n_qm;
+}
+
+/** Return the maximum number of MM atoms supported by SQM. This returns
+    -1 if there is no limit on the number of atoms */
+int SQM::numberOfMMAtomsLimit() const
+{
+    if (max_sqm_lines < 0 or expected_n_qm < 0)
+        return -1;
+    else
+        return max_sqm_lines - n_energy_template_lines - expected_n_qm - 2;
+        //need -2 as have two extra lines if we have MM atoms, #EXCHARGES and #END
 }
 
 /** Set the template for the command file to be used to get
@@ -388,6 +450,17 @@ QString SQM::createCommandFile(QString cmd_template,
         }
     }
     
+    if (max_sqm_lines > 0 and
+        atom_coords.count() + n_energy_template_lines > max_sqm_lines)
+    {
+        throw SireError::unsupported( QObject::tr(
+                "SQM has a %1-line limit for its input command file, so it is not possible "
+                "to have more than %2 QM atoms. You currently have %3 atoms...")
+                    .arg(max_sqm_lines)
+                    .arg(max_sqm_lines - n_energy_template_lines)
+                    .arg(atom_coords.count()), CODELOC );
+    }
+    
     cmd_template.replace( QLatin1String("@QM_COORDS@"),
                           atom_coords.join("\n"), Qt::CaseInsensitive );
     
@@ -397,6 +470,19 @@ QString SQM::createCommandFile(QString cmd_template,
     {
         int ncharges = lattice_charges.nCharges();
         const LatticeCharge *charges_array = lattice_charges.constData();
+
+        if (max_sqm_lines > 0 and
+            atom_coords.count()+n_energy_template_lines+lattice_charges.count()+2 > max_sqm_lines)
+        {
+            throw SireError::unsupported( QObject::tr(
+                    "SQM has a %1-line limit for its input command file, so it is not possible "
+                    "to have more than %2 MM atoms when you have %3 QM atoms. You currently have "
+                    "%4 MM atoms. Try to reduce the cutoff so that you have fewer MM atoms.")
+                        .arg(max_sqm_lines)
+                        .arg(max_sqm_lines - n_energy_template_lines - atom_coords.count() - 2)
+                        .arg(atom_coords.count())
+                        .arg(lattice_charges.count()), CODELOC );
+        }
         
         QStringList charges;
         
