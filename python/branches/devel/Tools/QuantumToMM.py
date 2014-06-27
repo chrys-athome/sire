@@ -109,18 +109,23 @@ nfast = Parameter("nfast", 1000,
 scale_charges = Parameter("scale charges", 1.0,
                           """The amount by which to scale MM charges in the QM/MM calculation.""")
 
-qm_program = Parameter("qm program", "molpro",
+amberhome = Parameter("amberhome", None,
+                      """Use this to specify the installation directory of Amber / AmberTools, if you are using
+                         the 'sqm' program. If this is not set, then you must have set this location using
+                         the AMBERHOME environmental variable.""")
+
+qm_program = Parameter("qm program", "sqm",
                        """The name of the program to use to calculate QM energies.""")
 
 qm_executable = Parameter("qm executable", None,
                           """Exact path to the QM executable used to calculate the QM energies. If 
                              this is not set, then the QM executable will be searched from the path.""")
 
-qm_method = Parameter("qm method", "ks,b,lyp",
-                      """The string passed to Molpro to specify the QM method to use to model the ligand.""")
+qm_method = Parameter("qm method", "AM1/d",
+                      """The string passed to the QM program to specify the QM method to use to model the ligand.""")
 
 basis_set = Parameter("basis set", "VDZ",
-                      """The string passed to Molpro to specify the basis set used to model the ligand.""")
+                      """The string passed to the QM program (molpro, as ab-initio only) to specify the basis set used to model the ligand.""")
 
 qm_zero_energy = Parameter("qm zero energy", None,
                            """The value of 'zero' for the QM energy. This is used to shift the QM energy so that it
@@ -244,7 +249,6 @@ def createQMMMMoves(system):
     except:
         pass
 
-    print("SETTING TEMPERATURE")
     moves.setTemperature(temperature.val)
 
     try:
@@ -347,7 +351,31 @@ def setQMProperties(forcefield, space = Cartesian()):
     print("Integer charge on QM atoms is %s" % total_charge)
 
     # Define the QM program used to calculate the QM part of the QM/MM energy
-    if qm_program.val == "molpro":
+    if qm_program.val == "sqm":
+        qm_prog = SQM()
+        qm_prog.setMethod(qm_method.val)
+        qm_prog.setTotalCharge(total_charge)
+
+        if amberhome.val is None:
+            ahome = os.getenv("AMBERHOME")
+
+            if ahome is None:
+                print("ERROR: YOU MUST SET THE AMBERHOME ENVIRONMENTAL VARIABLE!!!")
+                print("This must point to the installation directory of Amber / AmberTools")
+                sys.exit(0)
+        else:
+            ahome = amberhome.val
+
+        if qm_executable.val is None:
+            qm_prog.setExecutable( findExe("%s/bin/sqm" % ahome).absoluteFilePath() )
+        else:
+            qm_prog.setExecutable( findExe(qm_executable.val).absoluteFilePath() )
+
+        qm_prog.setEnvironment("AMBERHOME", ahome)
+
+        forcefield.setQuantumProgram(qm_prog)
+
+    elif qm_program.val == "molpro":
         qm_prog = Molpro()
         qm_prog.setBasisSet(basis_set.val)
         qm_prog.setMethod(qm_method.val)
