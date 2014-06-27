@@ -198,6 +198,36 @@ const LatticeCharge& LatticeCharges::operator[](int i) const
     return lattice_charges.constData()[ Index(i).map(lattice_charges.count()) ];
 }
 
+/** Set the ith lattice point equal to 'point' */
+void LatticeCharges::set(int i, const LatticeCharge &point)
+{
+    lattice_charges[ Index(i).map(lattice_charges.count()) ] = point;
+}
+
+/** Set the element of the ith point to 'element' */
+void LatticeCharges::setElement(int i, const SireMol::Element &element)
+{
+    LatticeCharge old = this->operator[](i);
+    
+    this->set( i, LatticeCharge(old.x(), old.y(), old.z(), old.charge(), element) );
+}
+
+/** Set the coordinates of the ith point to 'coords' */
+void LatticeCharges::setCoordinates(int i, const Vector &coords)
+{
+    LatticeCharge old = this->operator[](i);
+    
+    this->set( i, LatticeCharge(coords.x(), coords.y(), coords.z(), old.charge(), old.element()) );
+}
+
+/** Set the charge of the ith point to 'charge' */
+void LatticeCharges::setCharge(int i, double charge)
+{
+    LatticeCharge old = this->operator[](i);
+    
+    this->set( i, LatticeCharge(old.x(), old.y(), old.z(), charge, old.element()) );
+}
+
 /** Return a raw pointer to the array of lattice charges */
 const LatticeCharge* LatticeCharges::constData() const
 {

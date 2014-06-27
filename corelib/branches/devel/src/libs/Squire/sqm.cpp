@@ -132,7 +132,7 @@ SQM::SQM()
          force_template(default_force_template),
          total_charge(0),
          max_sqm_runtime( 5 * 60 * 1000 ),
-         max_sqm_lines(1000),
+         max_sqm_lines(999),
          expected_n_qm(50)
 {}
 
@@ -144,7 +144,7 @@ SQM::SQM(const QString &sqm_exe)
          force_template(default_force_template),
          total_charge(0),
          max_sqm_runtime( 5 * 60 * 1000 ),
-         max_sqm_lines(1000),
+         max_sqm_lines(999),
          expected_n_qm(50)
 {
     this->setExecutable(sqm_exe);
@@ -340,6 +340,18 @@ int SQM::numberOfMMAtomsLimit() const
         //need -2 as have two extra lines if we have MM atoms, #EXCHARGES and #END
 }
 
+/** Return the maximum number of MM atoms supported by SQM if there
+    are 'num_qm_atoms' QM atoms. This returns
+    -1 if there is no limit on the number of atoms */
+int SQM::numberOfMMAtomsLimit(int num_qm_atoms) const
+{
+    if (max_sqm_lines < 0 or num_qm_atoms < 0)
+        return -1;
+    else
+        return max_sqm_lines - n_energy_template_lines - num_qm_atoms - 2;
+        //need -2 as have two extra lines if we have MM atoms, #EXCHARGES and #END
+}
+
 /** Set the template for the command file to be used to get
     SQM to calculate an energy. The following tags will
     be substituted in the template;
@@ -468,30 +480,19 @@ QString SQM::createCommandFile(QString cmd_template,
     //file *very* large)
     if (not lattice_charges.isEmpty())
     {
-        int ncharges = lattice_charges.nCharges();
-        const LatticeCharge *charges_array = lattice_charges.constData();
-
-        if (max_sqm_lines > 0 and
-            atom_coords.count()+n_energy_template_lines+lattice_charges.count()+2 > max_sqm_lines)
-        {
-            throw SireError::unsupported( QObject::tr(
-                    "SQM has a %1-line limit for its input command file, so it is not possible "
-                    "to have more than %2 MM atoms when you have %3 QM atoms. You currently have "
-                    "%4 MM atoms. Try to reduce the cutoff so that you have fewer MM atoms.")
-                        .arg(max_sqm_lines)
-                        .arg(max_sqm_lines - n_energy_template_lines - atom_coords.count() - 2)
-                        .arg(atom_coords.count())
-                        .arg(lattice_charges.count()), CODELOC );
-        }
-        
         QStringList charges;
         
-        for (int i=0; i<ncharges; ++i)
+        int ncharges = 0;
+        const LatticeCharge *charges_array = lattice_charges.constData();
+        
+        for (int i=0; i<lattice_charges.count(); ++i)
         {
             const LatticeCharge &charge = charges_array[i];
         
             if (charge.charge() != 0)
             {
+                ncharges += 1;
+            
                 Element element = charge.element();
                 
                 charges.append( QString("%1 %2 %3 %4 %5 %6")
@@ -503,7 +504,20 @@ QString SQM::createCommandFile(QString cmd_template,
                                          QString::number(charge.charge(), 'f', 8) ) );
             }
         }
-        
+
+        if (max_sqm_lines > 0 and
+            atom_coords.count()+n_energy_template_lines+ncharges+2 > max_sqm_lines)
+        {
+            throw SireError::unsupported( QObject::tr(
+                    "SQM has a %1-line limit for its input command file, so it is not possible "
+                    "to have more than %2 MM atoms when you have %3 QM atoms. You currently have "
+                    "%4 MM atoms. Try to reduce the cutoff so that you have fewer MM atoms.")
+                        .arg(max_sqm_lines)
+                        .arg(max_sqm_lines - n_energy_template_lines - atom_coords.count() - 2)
+                        .arg(atom_coords.count())
+                        .arg(ncharges), CODELOC );
+        }
+
         cmd_template.replace( QLatin1String("@USE_LATTICE_POINTS@"),
                               QString::number(1), Qt::CaseInsensitive );
             

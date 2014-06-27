@@ -125,6 +125,12 @@ public:
     int nCharges() const;
     int count() const;
     
+    void set(int i, const LatticeCharge &charge);
+    
+    void setElement(int i, const SireMol::Element &element);
+    void setCoordinates(int i, const Vector &coords);
+    void setCharge(int i, double charge);
+    
     const LatticeCharge& operator[](int i) const;
 
     const LatticeCharge* constData() const;

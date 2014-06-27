@@ -432,6 +432,47 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
             lattice_indicies->insert(mmmol.molecule().number(), lattice_idxs);
     }
     
+    //get the limit of the number of MM atoms for the used number of QM atoms
+    const int num_mm_limit = quantumProgram().numberOfMMAtomsLimit(qmgroup.count());
+
+    if (num_mm_limit > 0 and num_mm_limit < lattice_charges.count())
+    {
+        //create a QMap indexed by distance, as this will sort by distance
+        QMultiMap<float,int> distances;
+        
+        Cartesian space;
+        
+        for (int i=0; i<lattice_charges.count(); ++i)
+        {
+            const Vector coords( lattice_charges[i].x(), lattice_charges[i].y(),
+                                 lattice_charges[i].z() );
+        
+            float dist = space.minimumDistance( qmgroup.aaBox(), coords );
+
+            distances.insert( dist, i );
+        }
+        
+        int n_to_remove = lattice_charges.count() - num_mm_limit;
+        
+        QMultiMap<float,int>::const_iterator it = distances.constEnd();
+        
+        float max_distance = 0;
+        
+        for (int i=0; i<n_to_remove; ++i)
+        {
+            --it;
+            lattice_charges.setCharge(it.value(), 0.0);
+            max_distance = it.key();
+        }
+
+        //there are too many MM atoms. We have to remove MM atoms, starting
+        //from the furthest ones out, until we are under the limit
+        qDebug() << "WARNING: Number of MM atoms is too high." << lattice_charges.count()
+                 << num_mm_limit;
+        qDebug() << "All MM atoms beyond a distance of" << max_distance
+                 << "A have had their charges set to 0.";
+    }
+    
     return lattice_charges;
 }
 

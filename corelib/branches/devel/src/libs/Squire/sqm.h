@@ -96,6 +96,7 @@ public:
     int expectedNumberOfQMAtoms() const;
     
     int numberOfMMAtomsLimit() const;
+    int numberOfMMAtomsLimit(int num_qm_atoms) const;
     
     QString executable() const;
     
