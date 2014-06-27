@@ -17,6 +17,7 @@ set (TEST_DIRS "SireBase"
                "SireQt"
                "SireSystem"
                "SireVol"
+               "Squire"
                "io"
      )
 
