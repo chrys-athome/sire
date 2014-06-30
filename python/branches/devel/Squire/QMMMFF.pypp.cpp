@@ -48,6 +48,16 @@ void register_QMMMFF_class(){
         bp::scope QMMMFF_scope( QMMMFF_exposer );
         QMMMFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         QMMMFF_exposer.def( bp::init< Squire::QMMMFF const & >(( bp::arg("other") )) );
+        { //::Squire::QMMMFF::chargeScalingFactor
+        
+            typedef double ( ::Squire::QMMMFF::*chargeScalingFactor_function_type )(  ) const;
+            chargeScalingFactor_function_type chargeScalingFactor_function_value( &::Squire::QMMMFF::chargeScalingFactor );
+            
+            QMMMFF_exposer.def( 
+                "chargeScalingFactor"
+                , chargeScalingFactor_function_value );
+        
+        }
         { //::Squire::QMMMFF::components
         
             typedef ::Squire::QMComponent const & ( ::Squire::QMMMFF::*components_function_type )(  ) const;
@@ -321,6 +331,17 @@ void register_QMMMFF_class(){
                 "quantumProgram"
                 , quantumProgram_function_value
                 , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::Squire::QMMMFF::setChargeScalingFactor
+        
+            typedef bool ( ::Squire::QMMMFF::*setChargeScalingFactor_function_type )( double ) ;
+            setChargeScalingFactor_function_type setChargeScalingFactor_function_value( &::Squire::QMMMFF::setChargeScalingFactor );
+            
+            QMMMFF_exposer.def( 
+                "setChargeScalingFactor"
+                , setChargeScalingFactor_function_value
+                , ( bp::arg("scale_factor") ) );
         
         }
         { //::Squire::QMMMFF::setIntermolecularOnly
