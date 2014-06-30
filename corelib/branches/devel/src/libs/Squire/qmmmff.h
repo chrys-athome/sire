@@ -128,12 +128,14 @@ public:
     const QMProgram& quantumProgram() const;
     SireUnits::Dimension::MolarEnergy zeroEnergy() const;
     bool isIntermolecularOnly() const;
+    double chargeScalingFactor() const;
     
     bool setSpace(const Space &space);
     bool setSwitchingFunction(const SwitchingFunction &switchfunc);
     bool setQuantumProgram(const QMProgram &qmprog);
     bool setZeroEnergy(SireUnits::Dimension::MolarEnergy zero_energy);
     bool setIntermolecularOnly(bool on);
+    bool setChargeScalingFactor(double scale_factor);
 
     bool setProperty(const QString &name, const Property &property);
     const Property& property(const QString &name) const;

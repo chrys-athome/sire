@@ -195,6 +195,12 @@ MolarEnergy QMMMFF::zeroEnergy() const
     return QMMMElecEmbedPotential::zeroEnergy();
 }
 
+/** Return the amount by which the MM charges are scaled in the QM/MM interaction */
+double QMMMFF::chargeScalingFactor() const
+{
+    return QMMMElecEmbedPotential::chargeScalingFactor();
+}
+
 /** Set the space within which the QM molecules exist */
 bool QMMMFF::setSpace(const Space &space)
 {
@@ -228,6 +234,12 @@ bool QMMMFF::setZeroEnergy(MolarEnergy zero_energy)
     return QMMMElecEmbedPotential::setZeroEnergy(zero_energy);
 }
 
+/** Set the scaling factor for the MM charges in the QM/MM interaction */
+bool QMMMFF::setChargeScalingFactor(double scale_factor)
+{
+    return QMMMElecEmbedPotential::setChargeScalingFactor(scale_factor);
+}
+
 /** Set whether or not we only calculate the intermolecular energy
     (energy between the QM and MM atoms) */
 bool QMMMFF::setIntermolecularOnly(bool on)
@@ -239,9 +251,6 @@ bool QMMMFF::setIntermolecularOnly(bool on)
             setZeroEnergy( MolarEnergy(0) );
 
         intermolecular_only = on;
-        QMMMElecEmbedPotential::setProperty("intermolecularOnly",
-                                            BooleanProperty(intermolecular_only));
-
         mustNowRecalculateFromScratch();
         return true;
     }

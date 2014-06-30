@@ -35,6 +35,8 @@
 
 #include "SireMol/atomelements.h"
 
+#include "SireBase/numberproperty.h"
+
 #include "SireFF/errors.h"
 #include "SireBase/errors.h"
 
@@ -66,9 +68,10 @@ static const RegisterMetaType<QMMMElecEmbedPotential> r_qmmm( MAGIC_ONLY, NO_ROO
 QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds,
                                       const QMMMElecEmbedPotential &qmmm)
 {
-    writeHeader(ds, r_qmmm, 1);
+    writeHeader(ds, r_qmmm, 2);
     
-    ds << static_cast<const QMMMPotential<QMPotential,InterCoulombPotential>&>(qmmm);
+    ds << static_cast<const QMMMPotential<QMPotential,InterCoulombPotential>&>(qmmm)
+       << qmmm.chg_sclfac;
     
     return ds;
 }
@@ -79,11 +82,16 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds,
 {
     VersionID v = readHeader(ds, r_qmmm);
     
-    if (v == 1)
+    if (v <= 2)
     {
         SharedDataStream sds(ds);
     
         ds >> static_cast<QMMMPotential<QMPotential,InterCoulombPotential>&>(qmmm);
+
+        if (v == 2)
+            ds >> qmmm.chg_sclfac;
+        else
+            qmmm.chg_sclfac = 1;
 
         qmmm.mergeProperties();
     }
@@ -104,11 +112,13 @@ void QMMMElecEmbedPotential::mergeProperties()
     props.setProperty("switchingFunction", this->switchingFunction());
     props.setProperty("quantum program", this->quantumProgram());
     props.setProperty("zero energy", QMPotential::properties().property("zero energy"));
+    props.setProperty("chargeScalingFactor", NumberProperty(chg_sclfac));
 }
 
 /** Constructor */
 QMMMElecEmbedPotential::QMMMElecEmbedPotential()
-                       : QMMMPotential<QMPotential,InterCoulombPotential>()
+                       : QMMMPotential<QMPotential,InterCoulombPotential>(),
+                         chg_sclfac(1.0)
 {
     this->mergeProperties();
 }
@@ -116,7 +126,7 @@ QMMMElecEmbedPotential::QMMMElecEmbedPotential()
 /** Copy constructor */
 QMMMElecEmbedPotential::QMMMElecEmbedPotential(const QMMMElecEmbedPotential &other)
                        : QMMMPotential<QMPotential,InterCoulombPotential>(other),
-                         props(other.props)
+                         props(other.props), chg_sclfac(other.chg_sclfac)
 {}
 
 /** Destructor */
@@ -129,6 +139,7 @@ QMMMElecEmbedPotential::operator=(const QMMMElecEmbedPotential &other)
 {
     QMMMPotential<QMPotential,InterCoulombPotential>::operator=(other);
     props = other.props;
+    chg_sclfac = other.chg_sclfac;
     
     return *this;
 }
@@ -160,6 +171,12 @@ const QMProgram& QMMMElecEmbedPotential::quantumProgram() const
 MolarEnergy QMMMElecEmbedPotential::zeroEnergy() const
 {
     return QMPotential::zeroEnergy();
+}
+
+/** Return the amount by which the MM charges are scaled in the QM/MM interaction */
+double QMMMElecEmbedPotential::chargeScalingFactor() const
+{
+    return chg_sclfac;
 }
 
 /** Set the space within which all of the molecules in this potential
@@ -218,6 +235,19 @@ bool QMMMElecEmbedPotential::setZeroEnergy(MolarEnergy zero_energy)
         return false;
 }
 
+/** Set the scaling factor for the MM charges in the QM/MM intermolecular interaction */
+bool QMMMElecEmbedPotential::setChargeScalingFactor(double scale_factor)
+{
+    if (scale_factor != chg_sclfac)
+    {
+        chg_sclfac = scale_factor;
+        this->mergeProperties();
+        return true;
+    }
+    else
+        return false;
+}
+
 /** Set the property called 'name' to the value 'value'
 
     \throw SireBase::missing_property
@@ -234,7 +264,11 @@ bool QMMMElecEmbedPotential::setProperty(const QString &name, const Property &va
                 .arg(Sire::toString(props.propertyKeys())),
                     CODELOC );
 
-    if (QMPotential::containsProperty(name))
+    if (name == "chargeScalingFactor")
+    {
+        return this->setChargeScalingFactor( value.asA<NumberProperty>().value() );
+    }
+    else if (QMPotential::containsProperty(name))
     {
         if (QMPotential::setProperty(name, value))
         {
@@ -388,7 +422,7 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
                 //get any scaling feather factor for this group (and to convert
                 //the charge from reduced units to mod_electrons)
                 double scl = switchfunc.electrostaticScaleFactor( Length(it->get<0>()) )
-                                   * sqrt_4pieps0;
+                                   * sqrt_4pieps0 * chg_sclfac;
                                    
                 if (scl == 0)
                     continue;
