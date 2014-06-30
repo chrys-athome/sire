@@ -264,6 +264,11 @@ const QString& SQM::method() const
     return qm_method;
 }
 
+QString SQM::toString() const
+{
+    return QObject::tr("SQM( method = %1 )").arg(method());
+}
+
 /** Set the total charge of the system (in unit charges) */
 void SQM::setTotalCharge(int charge)
 {

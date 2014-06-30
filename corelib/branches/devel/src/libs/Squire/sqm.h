@@ -83,6 +83,8 @@ public:
     bool operator==(const SQM &other) const;
     bool operator!=(const SQM &other) const;
     
+    QString toString() const;
+    
     void setExecutable(const QString &SQM_exe);
     void setEnvironment(const QString &variable, const QString &value);
     

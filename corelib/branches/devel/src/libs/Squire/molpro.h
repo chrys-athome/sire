@@ -82,6 +82,8 @@ public:
     bool operator==(const Molpro &other) const;
     bool operator!=(const Molpro &other) const;
     
+    QString toString() const;
+    
     void setExecutable(const QString &molpro_exe);
     void setEnvironment(const QString &variable, const QString &value);
     

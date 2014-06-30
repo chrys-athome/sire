@@ -318,6 +318,12 @@ int Molpro::totalCharge() const
     return total_charge;
 }
 
+QString Molpro::toString() const
+{
+    return QObject::tr("Molpro( method = %1, basis set = %2 )")
+             .arg(method()).arg(basisSet());
+}
+
 /** Set the memory requirement (in bytes) that will be reserved for use
     by molpro. You will need to set this if the default amount
     (8000000 floating point words ~ 32MB) is not enough. Be careful
