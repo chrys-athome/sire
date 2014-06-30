@@ -109,7 +109,7 @@ nfast = Parameter("nfast", 1000,
 scale_charges = Parameter("scale charges", 1.0,
                           """The amount by which to scale MM charges in the QM/MM calculation.""")
 
-intermolecular_only = Parameter("intermolecular only", True,
+intermolecular_only = Parameter("intermolecular only", False,
                                 """Only calculate QM/MM intermolecular energies. This intramolecular energy of the QM atoms 
                                    is calculated using the MM forcefield.""")
 
@@ -404,6 +404,10 @@ def setQMProperties(forcefield, space):
         forcefield.setQuantumProgram(NullQM())
 
     forcefield.setIntermolecularOnly( intermolecular_only.val )
+
+    forcefield.setChargeScalingFactor( scale_charges.val )
+
+    print("Using QM program %s, MM charges scaled by %s" % (qm_prog, scale_charges.val))
 
     return forcefield
 
@@ -713,6 +717,8 @@ def loadQMMMSystem():
 
     qm_ligand.add(ligand_mols, MGIdx(0))
 
+    zero_energy = 0
+
     if not intermolecular_only.val:
         if qm_zero_energy.val is None:
             # calculate the delta value for the system - this is the difference between
@@ -728,9 +734,11 @@ def loadQMMMSystem():
 
             print("\nSetting the QM zero energy to %s kcal mol-1" % (qm_intra - mm_intra))
             qm_ligand.setZeroEnergy( (qm_intra-mm_intra) * kcal_per_mol )
+            zero_energy = qm_intra - mm_intra
         else:
             print("\nManually setting the QM zero energy to %s" % qm_zero_energy.val)
             qm_ligand.setZeroEnergy( qm_zero_energy.val )
+            zero_energy = qm_zero_energy.val
 
     qm_ligand.add(mobile_mols, MGIdx(1))
 
@@ -893,6 +901,16 @@ def loadQMMMSystem():
 
     # Create a monitor to monitor the free energy average
     system.add( "dG/dlam", MonitorComponent(Symbol("dE/dlam"), AverageAndStddev()) )
+
+    if intermolecular_only.val:
+        print("\n\n## This simulation uses QM to model *only* the intermolecular energy between")
+        print("## the QM and MM atoms. The intramolecular energy of the QM atoms is still")
+        print("## modelled using MM.\n")
+    else:
+        print("\n\n## This simulation uses QM to model both the intermolecular and intramolecular")
+        print("## energies of the QM atoms. Because the this, we have to adjust the 'zero' point")
+        print("## of the QM potential. You need to add the value %s kcal mol-1 back onto the" % zero_energy)
+        print("## QM->MM free energy calculated using this program.\n")
 
     return system
 
