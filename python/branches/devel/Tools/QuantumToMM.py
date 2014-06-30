@@ -109,6 +109,10 @@ nfast = Parameter("nfast", 1000,
 scale_charges = Parameter("scale charges", 1.0,
                           """The amount by which to scale MM charges in the QM/MM calculation.""")
 
+intermolecular_only = Parameter("intermolecular only", True,
+                                """Only calculate QM/MM intermolecular energies. This intramolecular energy of the QM atoms 
+                                   is calculated using the MM forcefield.""")
+
 amberhome = Parameter("amberhome", None,
                       """Use this to specify the installation directory of Amber / AmberTools, if you are using
                          the 'sqm' program. If this is not set, then you must have set this location using
@@ -299,7 +303,7 @@ def getMinimumDistance(mol0, mol1):
                                  CoordGroup(mol1.molecule().property("coordinates").array()))
 
 
-def setCLJProperties(forcefield, space = Cartesian()):
+def setCLJProperties(forcefield, space):
     if cutoff_method.val.find("shift electrostatics") != -1:
         forcefield.setShiftElectrostatics(True)
 
@@ -317,7 +321,7 @@ def setCLJProperties(forcefield, space = Cartesian()):
     return forcefield
 
 
-def setFakeGridProperties(forcefield, space = Cartesian()):
+def setFakeGridProperties(forcefield, space):
     forcefield.setSwitchingFunction( HarmonicSwitchingFunction(coul_cutoff.val,coul_cutoff.val,
                                                                lj_cutoff.val,lj_cutoff.val) )
     forcefield.setSpace(space)
@@ -334,7 +338,7 @@ def setGridProperties(forcefield, extra_buffer=0*angstrom):
     return forcefield
 
 
-def setQMProperties(forcefield, space = Cartesian()):
+def setQMProperties(forcefield, space):
     forcefield.setSpace(space)
     forcefield.setSwitchingFunction( HarmonicSwitchingFunction(coul_cutoff.val,coul_cutoff.val,
                                                                lj_cutoff.val,lj_cutoff.val) )
@@ -398,6 +402,8 @@ def setQMProperties(forcefield, space = Cartesian()):
                          % qm_program.val)
 
         forcefield.setQuantumProgram(NullQM())
+
+    forcefield.setIntermolecularOnly( intermolecular_only.val )
 
     return forcefield
 
@@ -463,6 +469,9 @@ def loadQMMMSystem():
 
         system.setProperty("reflection center", AtomCoords(CoordGroup(1,reflect_center)))
         system.setProperty("reflection sphere radius", VariantProperty(reflect_radius))
+        space = Cartesian()
+    else:
+        space = loadsys.property("space")
 
     if loadsys.containsProperty("average solute translation delta"):
         system.setProperty("average solute translation delta", \
@@ -676,7 +685,7 @@ def loadQMMMSystem():
     
     # intramolecular energy of the ligand
     ligand_intraclj = IntraCLJFF("ligand:intraclj")
-    ligand_intraclj = setCLJProperties(ligand_intraclj)
+    ligand_intraclj = setCLJProperties(ligand_intraclj, space)
     ligand_intraclj.add(ligand_mols)
 
     ligand_intraff = InternalFF("ligand:intra")
@@ -694,38 +703,43 @@ def loadQMMMSystem():
     # forcefield holding the energy between the ligand and the mobile atoms in the
     # bound leg
     ligand_mobile = InterGroupCLJFF("system:ligand-mobile")
-    ligand_mobile = setCLJProperties(ligand_mobile)
+    ligand_mobile = setCLJProperties(ligand_mobile, space)
 
     ligand_mobile.add(ligand_mols, MGIdx(0))
     ligand_mobile.add(mobile_mols, MGIdx(1))
 
     qm_ligand = QMMMFF("system:ligand-QM")    
-    qm_ligand = setQMProperties(qm_ligand)
+    qm_ligand = setQMProperties(qm_ligand, space)
 
     qm_ligand.add(ligand_mols, MGIdx(0))
 
-    if qm_zero_energy.val is None:
-        # calculate the delta value for the system - this is the difference between
-        # the MM and QM intramolecular energy of the ligand
-        t.start()
-        print("\nComparing the MM and QM energies of the ligand...")
-        mm_intra = ligand_intraclj.energy().value() + ligand_intraff.energy().value()
-        print("MM energy = %s kcal mol-1 (took %s ms)" % (mm_intra, t.elapsed()))
+    if not intermolecular_only.val:
+        if qm_zero_energy.val is None:
+            # calculate the delta value for the system - this is the difference between
+            # the MM and QM intramolecular energy of the ligand
+            t.start()
+            print("\nComparing the MM and QM energies of the ligand...")
+            mm_intra = ligand_intraclj.energy().value() + ligand_intraff.energy().value()
+            print("MM energy = %s kcal mol-1 (took %s ms)" % (mm_intra, t.elapsed()))
 
-        t.start()
-        qm_intra = qm_ligand.energy().value()
-        print("QM energy = %s kcal mol-1 (took %s ms)" % (qm_intra, t.elapsed()))
+            t.start()
+            qm_intra = qm_ligand.energy().value()
+            print("QM energy = %s kcal mol-1 (took %s ms)" % (qm_intra, t.elapsed()))
 
-        print("\nSetting the QM zero energy to %s kcal mol-1" % (qm_intra - mm_intra))
-        qm_ligand.setZeroEnergy( (qm_intra-mm_intra) * kcal_per_mol )
-    else:
-        print("\nManually setting the QM zero energy to %s" % qm_zero_energy.val)
-        qm_ligand.setZeroEnergy( qm_zero_energy.val )
+            print("\nSetting the QM zero energy to %s kcal mol-1" % (qm_intra - mm_intra))
+            qm_ligand.setZeroEnergy( (qm_intra-mm_intra) * kcal_per_mol )
+        else:
+            print("\nManually setting the QM zero energy to %s" % qm_zero_energy.val)
+            qm_ligand.setZeroEnergy( qm_zero_energy.val )
 
     qm_ligand.add(mobile_mols, MGIdx(1))
 
     ligand_mm_nrg += ligand_mobile.components().total()
     ligand_qm_nrg = qm_ligand.components().total() + ligand_mobile.components().lj()
+
+    if intermolecular_only.val:
+        # the QM model still uses the MM intramolecular energy of the ligand
+        ligand_qm_nrg += ligand_intraclj.components().total() + ligand_intraff.components().total()
 
     forcefields.append(ligand_mobile)
     forcefields.append(qm_ligand)
@@ -743,8 +757,8 @@ def loadQMMMSystem():
         # forcefield holding the energy between the ligand and the fixed atoms in the bound leg
         if disable_grid:
             ligand_fixed = InterGroupCLJFF("system:ligand-fixed")
-            ligand_fixed = setCLJProperties(ligand_fixed)
-            ligand_fixed = setFakeGridProperties(ligand_fixed)
+            ligand_fixed = setCLJProperties(ligand_fixed, space)
+            ligand_fixed = setFakeGridProperties(ligand_fixed, space)
 
             ligand_fixed.add(ligand_mols, MGIdx(0))
             ligand_fixed.add(fixed_group, MGIdx(1))
@@ -758,7 +772,7 @@ def loadQMMMSystem():
 
         else:
             ligand_fixed = GridFF("system:ligand-fixed")
-            ligand_fixed = setCLJProperties(ligand_fixed)
+            ligand_fixed = setCLJProperties(ligand_fixed, space)
             ligand_fixed = setGridProperties(ligand_fixed)
 
             ligand_fixed.add(ligand_mols, MGIdx(0))
@@ -777,7 +791,7 @@ def loadQMMMSystem():
 
     # forcefield holding the intermolecular energy between all molecules
     mobile_mobile = InterCLJFF("mobile-mobile")
-    mobile_mobile = setCLJProperties(mobile_mobile)
+    mobile_mobile = setCLJProperties(mobile_mobile, space)
 
     mobile_mobile.add(mobile_mols)
 
@@ -789,14 +803,14 @@ def loadQMMMSystem():
     if disable_grid.val:
         mobile_fixed = InterGroupCLJFF("mobile-fixed")
         mobile_fixed = setCLJProperties(mobile_fixed)
-        mobile_fixed = setFakeGridProperties(mobile_fixed)
+        mobile_fixed = setFakeGridProperties(mobile_fixed, space)
         mobile_fixed.add(mobile_buffered_mols, MGIdx(0))
         mobile_fixed.add(fixed_group, MGIdx(1))
         other_nrg += mobile_fixed.components().total()
         forcefields.append(mobile_fixed)
     else:
         mobile_fixed = GridFF("mobile-fixed")
-        mobile_fixed = setCLJProperties(mobile_fixed)
+        mobile_fixed = setCLJProperties(mobile_fixed, space)
         mobile_fixed = setGridProperties(mobile_fixed)
 
         # we use mobile_buffered_group as this group misses out atoms that are bonded
@@ -809,7 +823,7 @@ def loadQMMMSystem():
     # intramolecular energy of the protein
     if protein_intra_mols.nMolecules() > 0:
         protein_intraclj = IntraCLJFF("protein_intraclj")
-        protein_intraclj = setCLJProperties(protein_intraclj)
+        protein_intraclj = setCLJProperties(protein_intraclj, space)
 
         protein_intraff = InternalFF("protein_intra")
 
@@ -826,7 +840,7 @@ def loadQMMMSystem():
     # intramolecular energy of any other solutes
     if solute_intra_mols.nMolecules() > 0:
         solute_intraclj = IntraCLJFF("solute_intraclj")
-        solute_intraclj = setCLJProperties(solute_intraclj)
+        solute_intraclj = setCLJProperties(solute_intraclj, space)
 
         solute_intraff = InternalFF("solute_intra")
 
@@ -864,7 +878,13 @@ def loadQMMMSystem():
     system.setComponent(Symbol("dE/dlam"), de_by_dlam)
     system.setComponent( system.totalComponent(), e_slow )
  
-    system.setProperty("space", loadsys.property("space"))
+    system.setProperty("space", space)
+    
+    if space.isPeriodic():
+        # ensure that all molecules are wrapped into the space with the ligand at the center
+        print("Adding in a space wrapper constraint %s, %s" % (space, ligand_mol.evaluate().center()))
+        system.add( SpaceWrapper( ligand_mol.evaluate().center(), all_group ) )
+        system.applyConstraints()
 
     print("\nHere are the values of all of the initial energy components...")
     t.start()
