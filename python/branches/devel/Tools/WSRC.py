@@ -172,6 +172,12 @@ soften_water = Parameter("soften water", 1.1,
                             the swap-water cluster between lambda=0 and lambda=1. This helps keep the cluster
                             together as it is swapped between the two boxes.""")
 
+lj_buffer = Parameter("LJ buffer", 0.005,
+                      """To prevent end-point effects, the scale factor for the LJ interactions cannot fully
+                         move between 0 and 1, as configurations sampled at 0 or 1 will be invalid for other states.
+                         To overcome this problem, the LJ lambda scale is moved from "LJ buffer" to "1 - LJ buffer",
+                         e.g. for the default buffer of 0.001, the LJ lambda scale is from 0.001 to 0.999.""")
+
 uncharge_ligand = Parameter("uncharge ligand", False,
                             """Whether or not to uncharge the ligand (and swap water cluster) before 
                                swapping them. They are then recharged at the end of the swap.""")
@@ -182,11 +188,9 @@ uncharge_ligand_max = Parameter("uncharge ligand max", 0.5,
                                    0.0 will uncharge them completely. The default value is 0.5, which will 50%
                                    uncharge the ligand and swap water cluster before swapping.""")
 
-uncharge_lambda_values = Parameter("uncharge lambda values", [0.0, 0.1, 0.25, 0.45, 0.55, 0.75, 0.9, 0.99],
+uncharge_lambda_values = Parameter("uncharge lambda values", [0.0, 0.1, 0.25, 0.45, 0.55, 0.75, 0.9, 1.0],
                                    """Lambda values to use when uncharging (and then recharging) the ligand. These will be 
-                                      added onto the swapped lambda values to give a new range squashed between 0 and 1.
-                                      (note that it is a bad idea to go up to lambda=1 as this will introduce a discontinuity
-                                      into the PMF)""")
+                                      added onto the swapped lambda values to give a new range squashed between 0 and 1.""")
 
 save_pdb = Parameter("save pdb", True,
                      """Whether or not to write a PDB of the system after each iteration.""")
@@ -1725,6 +1729,10 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     system.add( WindowedComponent( lam_prev, lam, lamvals, -1 ) )
     system.setConstant( lam, lambda_values.val[0] )
 
+    # work out the maximum and minimum permissable values of lam_lj
+    lam_lj_min = lj_buffer.val
+    lam_lj_max = 1.0 - lj_buffer.val
+
     # now constrain lam_coul_on, lam_coul_off, lam_lj_on and lam_lj_off to follow lambda
     if uncharge_ligand.val:
         v = uncharge_ligand_max.val
@@ -1744,16 +1752,16 @@ def mergeSystems(protein_system, water_system, ligand_mol):
         system.add( ComponentConstraint( lam_coul_on_prev, vfunc( 1 + (4*lam_prev*(v-1.0)), (v/0.75)*(1.0-lam_prev) ) ) )
         system.add( ComponentConstraint( lam_coul_off_prev, vfunc( 1 + (4*(1-lam_prev)*(v-1.0)), (v/0.75)*(1.0-(1-lam_prev)) ) ) )
 
-        system.add( ComponentConstraint( lam_lj_on, Max( Min( 2 * ((1-lam)-0.25), 1 ), 0 ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_off, Max( Min( 2 * (lam-0.25), 1 ), 0 ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_on_f, Max( Min( 2 * ((1-lam_f)-0.25), 1 ), 0 ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_off_f, Max( Min( 2 * (lam_f-0.25), 1 ), 0 ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_on_b, Max( Min( 2 * ((1-lam_b)-0.25), 1 ), 0 ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_off_b, Max( Min( 2 * (lam_b-0.25), 1 ), 0 ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_on_next, Max( Min( 2 * ((1-lam_next)-0.25), 1 ), 0 ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_off_next, Max( Min( 2 * (lam_next-0.25), 1 ), 0 ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_on_prev, Max( Min( 2 * ((1-lam_prev)-0.25), 1 ), 0 ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_off_prev, Max( Min( 2 * (lam_prev-0.25), 1 ), 0 ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_on, Max( Min( 2 * ((1-lam)-0.25), lam_lj_max ), lam_lj_min ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_off, Max( Min( 2 * (lam-0.25), lam_lj_max ), lam_lj_min ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_on_f, Max( Min( 2 * ((1-lam_f)-0.25), lam_lj_max ), lam_lj_min ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_off_f, Max( Min( 2 * (lam_f-0.25), lam_lj_max ), lam_lj_min ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_on_b, Max( Min( 2 * ((1-lam_b)-0.25), lam_lj_max ), lam_lj_min ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_off_b, Max( Min( 2 * (lam_b-0.25), lam_lj_max ), lam_lj_min ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_on_next, Max( Min( 2 * ((1-lam_next)-0.25), lam_lj_max ), lam_lj_min ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_off_next, Max( Min( 2 * (lam_next-0.25), lam_lj_max ), lam_lj_min ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_on_prev, Max( Min( 2 * ((1-lam_prev)-0.25), lam_lj_max ), lam_lj_min ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_off_prev, Max( Min( 2 * (lam_prev-0.25), lam_lj_max ), lam_lj_min ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
 
         system.add( ComponentConstraint( lam_coul_swap, Max( v, Max(4.0*(v-1.0)*lam + 1, 4.0*(v-1.0)*(1-lam) + 1 ) ) ) )
         system.add( ComponentConstraint( lam_coul_swap_f, Max( v, Max(4.0*(v-1.0)*lam_f + 1, 4.0*(v-1.0)*(1-lam_f) + 1 ) ) ) )
@@ -1763,28 +1771,28 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     else:
         system.add( ComponentConstraint( lam_coul_on, 1-lam ) )
         system.add( ComponentConstraint( lam_coul_off, lam ) )
-        system.add( ComponentConstraint( lam_lj_on, 1-lam ) )
-        system.add( ComponentConstraint( lam_lj_off, lam ) )
+        system.add( ComponentConstraint( lam_lj_on, Max( Min( 1-lam, lam_lj_max ), lam_lj_min ) ) )
+        system.add( ComponentConstraint( lam_lj_off, Max( Min( lam, lam_lj_max ), lam_lj_min ) ) )
 
         system.add( ComponentConstraint( lam_coul_on_f, 1-lam_f ) )
         system.add( ComponentConstraint( lam_coul_off_f, lam_f ) )
-        system.add( ComponentConstraint( lam_lj_on_f, 1-lam_f ) )
-        system.add( ComponentConstraint( lam_lj_off_f, lam_f ) )
+        system.add( ComponentConstraint( lam_lj_on_f, Max( Min( 1-lam_f, lam_lj_max ), lam_lj_min ) ) )
+        system.add( ComponentConstraint( lam_lj_off_f, Max( Min( lam_f, lam_lj_max ), lam_lj_min ) ) )
 
         system.add( ComponentConstraint( lam_coul_on_b, 1-lam_b ) )
         system.add( ComponentConstraint( lam_coul_off_b, lam_b ) )
-        system.add( ComponentConstraint( lam_lj_on_b, 1-lam_b ) )
-        system.add( ComponentConstraint( lam_lj_off_b, lam_b ) )
+        system.add( ComponentConstraint( lam_lj_on_b, Max( Min( 1-lam_b, lam_lj_max ), lam_lj_min ) ) )
+        system.add( ComponentConstraint( lam_lj_off_b, Max( Min( lam_b, lam_lj_max ), lam_lj_min ) ) )
 
         system.add( ComponentConstraint( lam_coul_on_next, 1-lam_next ) )
         system.add( ComponentConstraint( lam_coul_off_next, lam_next ) )
-        system.add( ComponentConstraint( lam_lj_on_next, 1-lam_next ) )
-        system.add( ComponentConstraint( lam_lj_off_next, lam_next ) )
+        system.add( ComponentConstraint( lam_lj_on_next, Max( Min( 1-lam_next, lam_lj_max ), lam_lj_min ) ) )
+        system.add( ComponentConstraint( lam_lj_off_next, Max( Min( lam_next, lam_lj_max ), lam_lj_min ) ) )
 
         system.add( ComponentConstraint( lam_coul_on_prev, 1-lam_prev ) )
         system.add( ComponentConstraint( lam_coul_off_prev, lam_prev ) )
-        system.add( ComponentConstraint( lam_lj_on_prev, 1-lam_prev ) )
-        system.add( ComponentConstraint( lam_lj_off_prev, lam_prev ) )
+        system.add( ComponentConstraint( lam_lj_on_prev, Max( Min( 1-lam_prev, lam_lj_max ), lam_lj_min ) ) )
+        system.add( ComponentConstraint( lam_lj_off_prev, Max( Min( lam_prev, lam_lj_max ), lam_lj_min ) ) )
 
     # now add alpha variables that can be used by the EnergyMonitors
     alpha_on = Symbol("alpha_on")
