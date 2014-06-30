@@ -299,6 +299,16 @@ void register_Molpro_class(){
                 , supportsLatticeCharges_function_value );
         
         }
+        { //::Squire::Molpro::toString
+        
+            typedef ::QString ( ::Squire::Molpro::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::Squire::Molpro::toString );
+            
+            Molpro_exposer.def( 
+                "toString"
+                , toString_function_value );
+        
+        }
         { //::Squire::Molpro::totalCharge
         
             typedef int ( ::Squire::Molpro::*totalCharge_function_type )(  ) const;

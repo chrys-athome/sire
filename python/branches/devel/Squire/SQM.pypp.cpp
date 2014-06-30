@@ -298,6 +298,16 @@ void register_SQM_class(){
                 , supportsLatticeCharges_function_value );
         
         }
+        { //::Squire::SQM::toString
+        
+            typedef ::QString ( ::Squire::SQM::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::Squire::SQM::toString );
+            
+            SQM_exposer.def( 
+                "toString"
+                , toString_function_value );
+        
+        }
         { //::Squire::SQM::totalCharge
         
             typedef int ( ::Squire::SQM::*totalCharge_function_type )(  ) const;
