@@ -179,6 +179,16 @@ void register_QMMMFF_class(){
                 , ( bp::arg("forcetable") ) );
         
         }
+        { //::Squire::QMMMFF::isIntermolecularOnly
+        
+            typedef bool ( ::Squire::QMMMFF::*isIntermolecularOnly_function_type )(  ) const;
+            isIntermolecularOnly_function_type isIntermolecularOnly_function_value( &::Squire::QMMMFF::isIntermolecularOnly );
+            
+            QMMMFF_exposer.def( 
+                "isIntermolecularOnly"
+                , isIntermolecularOnly_function_value );
+        
+        }
         { //::Squire::QMMMFF::mustNowRecalculateFromScratch
         
             typedef void ( ::Squire::QMMMFF::*mustNowRecalculateFromScratch_function_type )(  ) ;
@@ -311,6 +321,17 @@ void register_QMMMFF_class(){
                 "quantumProgram"
                 , quantumProgram_function_value
                 , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::Squire::QMMMFF::setIntermolecularOnly
+        
+            typedef bool ( ::Squire::QMMMFF::*setIntermolecularOnly_function_type )( bool ) ;
+            setIntermolecularOnly_function_type setIntermolecularOnly_function_value( &::Squire::QMMMFF::setIntermolecularOnly );
+            
+            QMMMFF_exposer.def( 
+                "setIntermolecularOnly"
+                , setIntermolecularOnly_function_value
+                , ( bp::arg("on") ) );
         
         }
         { //::Squire::QMMMFF::setProperty

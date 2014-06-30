@@ -164,6 +164,17 @@ void register_SQM_class(){
                 , numberOfMMAtomsLimit_function_value );
         
         }
+        { //::Squire::SQM::numberOfMMAtomsLimit
+        
+            typedef int ( ::Squire::SQM::*numberOfMMAtomsLimit_function_type )( int ) const;
+            numberOfMMAtomsLimit_function_type numberOfMMAtomsLimit_function_value( &::Squire::SQM::numberOfMMAtomsLimit );
+            
+            SQM_exposer.def( 
+                "numberOfMMAtomsLimit"
+                , numberOfMMAtomsLimit_function_value
+                , ( bp::arg("num_qm_atoms") ) );
+        
+        }
         SQM_exposer.def( bp::self != bp::self );
         { //::Squire::SQM::operator=
         
