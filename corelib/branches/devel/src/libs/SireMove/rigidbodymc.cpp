@@ -37,6 +37,7 @@
 #include "SireMol/moleculedata.h"
 #include "SireMol/atomcoords.h"
 #include "SireMol/atomelements.h"
+#include "SireMol/atommasses.h"
 #include "SireMol/atomselection.h"
 
 #include "SireVol/space.h"
@@ -635,37 +636,78 @@ void RigidBodyMC::setReflectionVolume(const MoleculeView &mol,
     
     if (heavy_atoms_only)
     {
-        const AtomElements &elems = mol.data().property( map["element"] ).asA<AtomElements>();
-        
-        if (mol.selectedAll())
+        if (mol.data().hasProperty( map["element"] ) and
+            mol.data().property( map["element"] ).isA<AtomElements>())
         {
-            for (int i=0; i<coords.nCutGroups(); ++i)
+            const AtomElements &elems = mol.data().property( map["element"] ).asA<AtomElements>();
+            
+            if (mol.selectedAll())
             {
-                CGIdx ci(i);
-            
-                const Vector *coords_array = coords.constData(ci);
-                const Element *elems_array = elems.constData(ci);
-            
-                for (int j=0; j<coords.nAtoms(ci); ++j)
+                for (int i=0; i<coords.nCutGroups(); ++i)
                 {
-                    if (elems_array[j].nProtons() > 5)
-                        points.append(coords_array[j]);
+                    CGIdx ci(i);
+                
+                    const Vector *coords_array = coords.constData(ci);
+                    const Element *elems_array = elems.constData(ci);
+                
+                    for (int j=0; j<coords.nAtoms(ci); ++j)
+                    {
+                        if (elems_array[j].nProtons() > 5)
+                            points.append(coords_array[j]);
+                    }
+                }
+            }
+            else
+            {
+                AtomSelection selected_atoms = mol.selection();
+                
+                foreach (CGIdx ci, selected_atoms.selectedCutGroups())
+                {
+                    const Vector *coords_array = coords.constData(ci);
+                    const Element *elems_array = elems.constData(ci);
+                    
+                    foreach (Index j, selected_atoms.selectedAtoms(ci))
+                    {
+                        if (elems_array[j].nProtons() > 5)
+                            points.append(coords_array[j]);
+                    }
                 }
             }
         }
         else
         {
-            AtomSelection selected_atoms = mol.selection();
+            const AtomMasses &masses = mol.data().property( map["mass"] ).asA<AtomMasses>();
             
-            foreach (CGIdx ci, selected_atoms.selectedCutGroups())
+            if (mol.selectedAll())
             {
-                const Vector *coords_array = coords.constData(ci);
-                const Element *elems_array = elems.constData(ci);
-                
-                foreach (Index j, selected_atoms.selectedAtoms(ci))
+                for (int i=0; i<coords.nCutGroups(); ++i)
                 {
-                    if (elems_array[j].nProtons() > 5)
-                        points.append(coords_array[j]);
+                    CGIdx ci(i);
+                
+                    const Vector *coords_array = coords.constData(ci);
+                    const SireUnits::Dimension::MolarMass *masses_array = masses.constData(ci);
+                
+                    for (int j=0; j<coords.nAtoms(ci); ++j)
+                    {
+                        if (masses_array[j] > Element(5).mass())
+                            points.append(coords_array[j]);
+                    }
+                }
+            }
+            else
+            {
+                AtomSelection selected_atoms = mol.selection();
+                
+                foreach (CGIdx ci, selected_atoms.selectedCutGroups())
+                {
+                    const Vector *coords_array = coords.constData(ci);
+                    const SireUnits::Dimension::MolarMass *masses_array = masses.constData(ci);
+                    
+                    foreach (Index j, selected_atoms.selectedAtoms(ci))
+                    {
+                        if (masses_array[j] > Element(5).mass())
+                            points.append(coords_array[j]);
+                    }
                 }
             }
         }
