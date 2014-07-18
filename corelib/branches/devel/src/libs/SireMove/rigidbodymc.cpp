@@ -1952,16 +1952,16 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
                 test_ns += t.nsecsElapsed();
         }
         
-        qint64 ns = t2.nsecsElapsed();
+        //qint64 ns = t2.nsecsElapsed();
         
-        if (nmoves > 1)
+        /*if (nmoves > 1)
         {
             qDebug() << "Timing for" << nmoves << "(" << (0.000001*ns) << ")";
             qDebug() << "OLD:" << (0.000001*old_ns) << "COPY:" << (0.000001*copy_ns)
                      << "MOVE:" << (0.000001*move_ns) << "ENERGY:" << (0.000001*nrg_ns)
                      << "TEST:" << (0.000001*test_ns) << "ACCEPT:" << (0.000001*accept_ns)
                      << "REJECT:" << (0.000001*reject_ns);
-        }
+        }*/
     }
     catch(...)
     {
