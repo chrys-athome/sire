@@ -63,8 +63,6 @@ namespace bp = boost::python;
 
 #include "SireVol/periodicbox.h"
 
-#include "dcd_writer.h"
-
 #include "ensemble.h"
 
 #include "openmmfrenergyst.h"
@@ -291,16 +289,6 @@ void register_OpenMMFrEnergyST_class(){
             OpenMMFrEnergyST_exposer.def( 
                 "getFriction"
                 , getFriction_function_value );
-        
-        }
-        { //::SireMove::OpenMMFrEnergyST::getGradient
-        
-            typedef double ( ::SireMove::OpenMMFrEnergyST::*getGradient_function_type )(  ) ;
-            getGradient_function_type getGradient_function_value( &::SireMove::OpenMMFrEnergyST::getGradient );
-            
-            OpenMMFrEnergyST_exposer.def( 
-                "getGradient"
-                , getGradient_function_value );
         
         }
         { //::SireMove::OpenMMFrEnergyST::getGradients
