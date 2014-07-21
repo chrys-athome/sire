@@ -53,13 +53,13 @@ QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds, const AmberParameters &am
 {
     //empty class so nothing to stream
 
-    writeHeader(ds, r_amberparam, 1);
+    writeHeader(ds, r_amberparam, 2);
 
     SharedDataStream sds(ds);
 
     sds << amberparam.molinfo << amberparam.bonds 
 	<< amberparam.angles << amberparam.dihedrals 
-	<< amberparam.impropers << static_cast<const MoleculeProperty&>(amberparam); 
+	<< amberparam.impropers << amberparam.nb14pairs << static_cast<const MoleculeProperty&>(amberparam); 
 
     return ds;
 }
@@ -71,8 +71,16 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, AmberParameters &amberpar
 
     VersionID v = readHeader(ds, r_amberparam);
     
-    if (v != 1)
+    if (v != 1 or v != 2)
         throw version_error( v, "1", r_amberparam, CODELOC );
+    else if (v == 2)
+      {
+	SharedDataStream sds(ds);
+
+	sds >> amberparam.molinfo >> amberparam.bonds
+	    >> amberparam.angles >> amberparam.dihedrals 
+	    >> amberparam.impropers >> amberparam.nb14pairs >> static_cast<MoleculeProperty&>(amberparam); 
+      }
     else
       {
 	SharedDataStream sds(ds);
@@ -81,8 +89,7 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, AmberParameters &amberpar
 	    >> amberparam.angles >> amberparam.dihedrals 
 	    >> amberparam.impropers >> static_cast<MoleculeProperty&>(amberparam); 
       }
-    
-        
+            
     return ds;
 }
 
@@ -101,7 +108,7 @@ AmberParameters::AmberParameters(const MoleculeData &molecule)
 AmberParameters::AmberParameters(const AmberParameters &other)
                 : ConcreteProperty<AmberParameters,MoleculeProperty>(),
 		  bonds(other.bonds),angles(other.angles),dihedrals(other.dihedrals),
-		  impropers(other.impropers)
+		  impropers(other.impropers),nb14pairs(other.nb14pairs)
 {}
 
 /** Copy assignment operator */
@@ -115,6 +122,7 @@ AmberParameters& AmberParameters::operator=(const AmberParameters &other)
 	angles = other.angles;
 	dihedrals = other.dihedrals;
 	impropers = other.impropers;
+	nb14pairs = other.nb14pairs;
     }
   
     return *this;
@@ -128,7 +136,7 @@ AmberParameters::~AmberParameters()
 bool AmberParameters::operator==(const AmberParameters &other) const
 {
   return (molinfo == other.molinfo and bonds == other.bonds and angles == other.angles 
-	  and dihedrals == other.dihedrals and impropers == other.impropers);
+	  and dihedrals == other.dihedrals and impropers == other.impropers and nb14pairs == other.nb14pairs);
 }
 
 /** Comparison operator */
@@ -284,4 +292,28 @@ QList<double> AmberParameters::getParams(const ImproperID &improper)
 QList<ImproperID> AmberParameters::getAllImpropers()
 {
   return impropers.keys();
+}
+
+void AmberParameters::add14Pair(const BondID &pair, const double &cscl, const double &ljscl) 
+{
+  QList<double> params;
+  params.append(cscl);
+  params.append(ljscl);
+
+  nb14pairs.insert( pair, params);
+}
+
+void AmberParameters::remove14Pair(const BondID &pair)
+{
+  nb14pairs.remove( pair );
+}
+
+QList<double> AmberParameters::get14PairParams(const BondID &pair)
+{
+  return nb14pairs.value(pair);
+}
+
+QList<BondID> AmberParameters::getAll14Pairs()
+{
+  return nb14pairs.keys();
 }

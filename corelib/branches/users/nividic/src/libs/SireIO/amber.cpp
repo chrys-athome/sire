@@ -154,7 +154,9 @@ enum { UNKNOWN = 0, //a flag that is not known, e.g. in newer format top files
        RADIUS_SET = 38,
        RADII = 39,
        SCREEN = 40,
-       ATOMIC_NUMBER = 41
+       ATOMIC_NUMBER = 41,
+       SCEE_SCALE_FACTOR = 42, 
+       SCNB_SCALE_FACTOR = 43
      };
 
 /** enumerates the POINTERS in a TOP file */
@@ -303,9 +305,9 @@ static void processFlagLine(const QStringList &words, int &flag)
     else if (words[1] == "ATOMIC_NUMBER")
         flag = ATOMIC_NUMBER;
     else if (words[1] == "SCEE_SCALE_FACTOR")
-        flag = UNKNOWN;
+        flag = SCEE_SCALE_FACTOR;
     else if (words[1] == "SCNB_SCALE_FACTOR")
-        flag = UNKNOWN;
+        flag = SCNB_SCALE_FACTOR;
     else if (words[1] == "IPOL")
         flag = UNKNOWN;
     else
@@ -705,11 +707,16 @@ static void setDihedrals(MolEditor &editmol, int pointer,
                          const QList<double> &dih_force_constant,
                          const QList<double> &dih_periodicity,
                          const QList<double> &dih_phase,
+			 const QList<double> &sceefactor, 
+			 const QList<double> &scnbfactor,
                          FourAtomFunctions &dihedralfuncs,
                          const PropertyName &dihedral_property,
                          FourAtomFunctions &improperfuncs,
                          const PropertyName &improper_property,
                          QHash<AtomNum, QList<AtomNum> > &atoms14,
+			 QHash<AtomNum, QHash<AtomNum, double> > &atoms14sclee, 
+			 QHash<AtomNum, QHash<AtomNum, double> > &atoms14sclnb,
+			 double coul_14scl, double lj_14scl,
                          AmberParameters &amberparams,
                          const PropertyName &amberparameters_property)
 {
@@ -780,6 +787,14 @@ static void setDihedrals(MolEditor &editmol, int pointer,
         double k = dih_force_constant[ paramIndex - 1 ];// kcal_per_mol
         double periodicity = dih_periodicity[ paramIndex - 1] * radians.to(radians);
         double phase = dih_phase[ paramIndex - 1];
+	// Assume default values for 14 scaling factors
+	// Note that these are NOT inversed after reading from input
+	double sclee14 = 1/coul_14scl;
+	double sclnb14 = 1/lj_14scl;
+	if (sceefactor.size() > 0)
+	  sclee14 = sceefactor[ paramIndex - 1 ];
+	if (scnbfactor.size() > 0)
+	  sclnb14 = scnbfactor[ paramIndex - 1 ];
 
         Expression dihedral_func = k * ( 1 + Cos( periodicity * ( phi - 0 ) - phase ) );
 
@@ -796,7 +811,7 @@ static void setDihedrals(MolEditor &editmol, int pointer,
         else
         {
             DihedralID dih = DihedralID( atom0.index(), atom1.index(), atom2.index(), atom3.index() );
-            amberparams.add( dih, k, periodicity, phase);
+	    amberparams.add( dih, k, periodicity, phase);
         }
 
         // Actually, we just save the terms in an array of atom indices
@@ -805,9 +820,9 @@ static void setDihedrals(MolEditor &editmol, int pointer,
         //if (improper and k > 0.00001)
         if (improper)
         {
-            //qDebug() << "IMPROPER" << atom0.name().value() << atom1.name().value()
-            //         << atom2.name().value() << atom3.name().value() << " K "
-            //         << k << " period " << periodicity << " phase " << phase ;
+	  //qDebug() << "IMPROPER" << atom0.name().value() << atom1.name().value()
+	  //         << atom2.name().value() << atom3.name().value() << " K "
+	  //         << k << " period " << periodicity << " phase " << phase ;
             DofID improperid = DofID( atom0.index(), atom1.index(),
                                       atom2.index(), atom3.index() );
 
@@ -833,6 +848,21 @@ static void setDihedrals(MolEditor &editmol, int pointer,
 
         if (not ignored and not improper)
         {
+	  /* Work out the scale factors to use*/
+	  /* Complain if scale factor is senseless*/
+	  if (sclee14 < 0.00001)
+	    {
+	      throw SireError::program_bug( QObject::tr(
+	   " A 1,4 pair has a coulombic scaling factor of 0.0 in the top file which would mean an infinite energy ! "),
+					    CODELOC );
+	    }
+	  if (sclnb14 < 0.00001)
+	    {
+	      throw SireError::program_bug( QObject::tr(
+	   " A 1,4 pair has a LJ scaling factor of 0.0 in the top file which would mean an infinite energy ! "),
+					    CODELOC );
+	    }
+
             /**Save this in 14 array */
             if (not atoms14.contains(atom0.number()))
             {
@@ -844,6 +874,12 @@ static void setDihedrals(MolEditor &editmol, int pointer,
             if ( not atoms14[atom0.number()].contains(atom3.number()) )
             {
                 atoms14[atom0.number()].append(atom3.number());
+		/* JM 07/14 Save scale factor for this pair*/
+		atoms14sclee[atom0.number()][atom3.number()] = 1/sclee14;
+		atoms14sclnb[atom0.number()][atom3.number()] = 1/sclnb14;
+		// Add pair (atom0,atom3) = (1/sclee14, 1/sclnb14) to amber parameters object
+		BondID pair = BondID(atom0.index() , atom3.index() );
+		amberparams.add14Pair( pair, 1/sclee14, 1/sclnb14 );
             }
 
             if (not atoms14.contains(atom3.number()))
@@ -855,7 +891,11 @@ static void setDihedrals(MolEditor &editmol, int pointer,
             if ( not atoms14[atom3.number()].contains(atom0.number()) )
             {
                 atoms14[atom3.number()].append(atom0.number());
+		/* JM 07/14 Save scale factor for this pair*/
+		atoms14sclee[atom3.number()][atom0.number()] = 1/sclee14;
+		atoms14sclnb[atom3.number()][atom0.number()] = 1/sclnb14;
             }
+
         }
     }
 
@@ -888,7 +928,9 @@ static void setNonBondedPairs(MolEditor &editmol, int pointer,
                               CLJNBPairs &nbpairs,
                               const PropertyName &nb_property,
                               const QHash<AtomNum, QList<AtomNum> > &atoms14,
-                              double coul_14scl, double lj_14scl)
+			      const QHash<AtomNum, QHash<AtomNum, double> > &atoms14sclee,
+			      const QHash<AtomNum, QHash<AtomNum, double> > &atoms14sclnb)
+//                              double coul_14scl, double lj_14scl)
 {
     // For each pair of atoms within a molecule
     // --> if 1,2 or 1,3 CLJScaleFactor(0,0)
@@ -967,10 +1009,45 @@ static void setNonBondedPairs(MolEditor &editmol, int pointer,
 
             if ( atoms14[ atom0.number() ].contains( atom1.number() ) )
             {
-                //qDebug() << " ATOMS " << atom0.number() << " and "
-                //          << atom1.number() << " are 14";
-                cscl = coul_14scl;
-                ljscl = lj_14scl;
+                qDebug() << " ATOMS " << atom0.number() << " and "
+                          << atom1.number() << " are 14";
+
+		//cscl = coul_14scl;
+		//ljscl = lj_14scl;
+
+		if ( not atoms14sclee.contains( atom0.number() )  )
+		  {
+		    throw SireError::program_bug( QObject::tr(
+                "It should not happen that atoms14sclee does not have an entry for atom0"),
+                                             CODELOC );
+		  }
+	
+		if ( not atoms14sclee[atom0.number()].contains( atom1.number() ) )
+		  {
+		    throw SireError::program_bug( QObject::tr(
+                "It should not happen that atoms14sclee does not have an entry for [atom0]]atom1]"),
+                                             CODELOC );  
+		  }
+		
+		cscl = atoms14sclee[ atom0.number() ][ atom1.number() ];
+
+		if ( not atoms14sclnb.contains( atom0.number() ) )
+		  {
+		    throw SireError::program_bug( QObject::tr(
+                "It should not happen that atoms14sclnb does not have an entry for atom0"),
+                                             CODELOC );
+		  }
+		
+		if ( not atoms14sclnb[atom0.number()].contains( atom1.number() ) )
+		  {
+		    throw SireError::program_bug( QObject::tr(
+                "It should not happen that atoms14sclnb does not have an entry for [atom0]]atom1]"),
+                                             CODELOC );  
+		  }
+		
+		ljscl = atoms14sclnb[ atom0.number() ][ atom1.number() ];
+		
+		qDebug() << " cscl " << cscl << " ljscl " << ljscl << "\n";
             }
             else
             {
@@ -1527,6 +1604,8 @@ tuple<MoleculeGroup,SpacePtr> Amber::readCrdTop(const QString &crdfile,
     QStringList radius_set;
     QList<double> radii;
     QList<double> screen;
+    QList<double> sceefactor;
+    QList<double> scnbfactor;
 
     QString line = ts.readLine();
 
@@ -1687,6 +1766,12 @@ tuple<MoleculeGroup,SpacePtr> Amber::readCrdTop(const QString &crdfile,
                 case ATOMIC_NUMBER:
                     processIntegerLine(line, currentFormat, element);
                     break;
+   	        case SCEE_SCALE_FACTOR:
+		    processDoubleLine(line, currentFormat, sceefactor);
+		    break;
+   	        case SCNB_SCALE_FACTOR:
+		    processDoubleLine(line, currentFormat, scnbfactor);
+		    break; 
                 case UNKNOWN:
                     break;
                 default:
@@ -1912,6 +1997,9 @@ tuple<MoleculeGroup,SpacePtr> Amber::readCrdTop(const QString &crdfile,
 
         CLJNBPairs nbpairs;
         QHash<AtomNum, QList<AtomNum> > atoms14;
+	// JM 07/14 Store info about variable scale factors
+	QHash<AtomNum, QHash<AtomNum, double> > atoms14sclee;
+	QHash<AtomNum, QHash<AtomNum, double> > atoms14sclnb;
 
         int natoms = editmol.nAtoms();
 
@@ -1989,18 +2077,22 @@ tuple<MoleculeGroup,SpacePtr> Amber::readCrdTop(const QString &crdfile,
             //qDebug() << " Setting up dihedrals ";
             setDihedrals(editmol, pointers[NPHIH],
                          dihs_inc_h,
-                         dih_force_constant, dih_periodicity, dih_phase,
+                         dih_force_constant, dih_periodicity, dih_phase, 
+			 sceefactor, scnbfactor,
                          dihedralfuncs, dihedral_property,
                          improperfuncs, improper_property,
-                         atoms14,
+                         atoms14, atoms14sclee, atoms14sclnb,
+			 coul_14scl, lj_14scl,
                          amberparams, amberparameters_property);
 
             setDihedrals(editmol, pointers[MPHIA],
                          dihs_exc_h,
                          dih_force_constant, dih_periodicity, dih_phase,
+			 sceefactor, scnbfactor,
                          dihedralfuncs, dihedral_property,
                          improperfuncs, improper_property,
-                         atoms14,
+                         atoms14, atoms14sclee, atoms14sclnb,
+			 coul_14scl, lj_14scl,
                          amberparams, amberparameters_property);
         }
 
@@ -2008,12 +2100,13 @@ tuple<MoleculeGroup,SpacePtr> Amber::readCrdTop(const QString &crdfile,
         // if (natoms >1)
 	// JM 04/14 set NB pairs even if monoatomic
         //{
-            //qDebug() << " Setting up non bonded pairs";
+	//qDebug() << " Setting up non bonded pairs";
 
 	setNonBondedPairs(editmol, pointers[NEXT],
 			  num_excluded_atoms, exc_atom_list,
 			  nbpairs, nb_property,
-			  atoms14, coul_14scl, lj_14scl);
+			  atoms14, atoms14sclee, atoms14sclnb); 
+	//			  coul_14scl, lj_14scl);
 	//}
 
         molecule = editmol.commit();

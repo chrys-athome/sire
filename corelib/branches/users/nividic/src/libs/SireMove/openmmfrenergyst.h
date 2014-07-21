@@ -154,9 +154,7 @@ public:
     double getAlchemical_value(void);
     void setAlchemical_value(double);
 
-    //int getCoulomb_power(void);
     float getCoulomb_power(void);
-    //void setCoulomb_power(int);
     void setCoulomb_power(float);
 
     double getShift_delta(void);
@@ -197,7 +195,6 @@ public:
 
     void setReinitializeContext(bool);
 
-    double getGradient(void);
 
 private:
     void createContext(IntegratorWorkspace &workspace,
@@ -292,7 +289,6 @@ private:
     double GF_acc;
     double GB_acc;
 
-    double gradient;
 
 };
 

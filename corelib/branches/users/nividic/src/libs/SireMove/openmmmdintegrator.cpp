@@ -617,6 +617,14 @@ void OpenMMMDIntegrator::initialise()
     //double AKMAPerPs = 0.04888821;
     //double PsPerAKMA = 1 / AKMAPerPs;
 
+    // The default 1,4 scaling factors
+    const double Coulomb14Scale = 1.0 / 1.2;
+    const double LennardJones14Scale = 1.0 / 2.0;
+
+    // A list of 1,4 atom pairs with non default scale factors
+    // for each entry, first pair has pair of indices, second has pair of scale factors
+    QList< QPair< QPair<int,int>, QPair<double, double > > > custom14pairs;
+
     for (int i=0; i < nmols; ++i){
         const int nats_mol = ws.nAtoms(i);
 
@@ -774,6 +782,7 @@ void OpenMMMDIntegrator::initialise()
             }
         }//end of restraint flag
 
+        
 
         // The bonded parameters
         bool hasConnectivity = molecule.hasProperty("connectivity");
@@ -954,14 +963,61 @@ void OpenMMMDIntegrator::initialise()
             }
         }//end of impropers
 
+	// Variable 1,4 scaling factors
+	QList<BondID> pairs14_ff = amber_params.getAll14Pairs();
+	QVector<BondID> pairs14 = pairs14_ff.toVector();
+	//
+	for (int j=0; j < pairs14_ff.length() ; j++) {
+	     BondID pair14_ff = pairs14_ff[j];
+	     QList<double> pair14_params = amber_params.get14PairParams(pair14_ff);
+	     double cscl = pair14_params[0];
+	     double ljscl = pair14_params[1];
+	     qDebug() << " cscl@ " << cscl << " ljscl " << ljscl; 
+	     
+	     // Add to custom pairs if scale factor differs from default
+	     if ( abs(cscl-Coulomb14Scale) > 0.0001 or abs(ljscl-LennardJones14Scale) > 0.0001 )
+	       {
+		 int idx0 = pair14_ff.atom0().asA<AtomIdx>().value() + num_atoms_till_i;
+		 int idx1 = pair14_ff.atom1().asA<AtomIdx>().value() + num_atoms_till_i;
+		 QPair<int, int> indices_pair(idx0, idx1);
+		 QPair<double, double> scl_pair(cscl, ljscl);
+		 QPair< QPair<int, int>, QPair<double, double> > custom14pair(indices_pair, scl_pair);
+		 custom14pairs.append(custom14pair);
+	       }
+	}// end of variable 1,4 scaling factors
+
         num_atoms_till_i = num_atoms_till_i + num_atoms_molecule ;
       }// end of loop over molecules
 
     //Exclude the 1-2, 1-3 bonded atoms from nonbonded forces, and scale down 1-4 bonded atoms
-    const double Coulomb14Scale = 1.0/1.2;
-    const double LennardJones14Scale = 1.0/2.0;
+    // using default scaling factors for the 1,4 interactions
     nonbond_openmm->createExceptionsFromBonds(bondPairs, Coulomb14Scale, LennardJones14Scale);
-
+    
+    // Now manually override exceptions for 1,4 pairs that do not have a standard 1,4 scale factor
+    for (int i=0; i < custom14pairs.length() ; i++ ) {
+      QPair< QPair<int, int>, QPair<double, double> > custom14pair = custom14pairs[ i ];
+      int p1 = custom14pair.first.first;
+      int p2 = custom14pair.first.second;
+      double cscl = custom14pair.second.first;
+      double ljscl = custom14pair.second.second;
+      // get the particle parameters
+      double q1;
+      double sig1;
+      double eps1;
+      double q2;
+      double sig2;
+      double eps2;
+      nonbond_openmm->getParticleParameters(p1, q1, sig1, eps1);
+      nonbond_openmm->getParticleParameters(p2, q2, sig2, eps2);
+      // now find chargeprod sigma epsilon
+      double chargeprod = cscl*q1*q2;
+      double sigma = 0.5*(sig1+sig2);
+      double epsilon = ljscl * sqrt(eps1*eps2);
+      nonbond_openmm->addException( p1, p2, chargeprod, sigma, epsilon, true );
+      if (Debug)
+	qDebug() << "manual exception " << p1 << " " << p2 << " cscl " << cscl << " ljscl " << ljscl << "\n" ;
+    }
+   
     if(CMMremoval_frequency > 0){
         OpenMM::CMMotionRemover * cmmotionremover = new OpenMM::CMMotionRemover(CMMremoval_frequency);
 
@@ -1237,6 +1293,10 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
     int nframes;
     int MAXFRAMES = 1000;
 
+
+    if (Debug)
+      qDebug() << " nmoves " << nmoves << " coord_freq " << coord_freq;
+
     // Limit excessive internal buffering
     if ( coord_freq > 0 ){
         nframes = ( nmoves / coord_freq ) ;
@@ -1254,6 +1314,12 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
     std::vector<OpenMM::Vec3> positions_openmm(nats);
     //OpenMM vector momenta
     std::vector<OpenMM::Vec3> velocities_openmm(nats);
+
+    state_openmm = openmm_context->getState(infoMask);
+    double mypotential_energy = state_openmm.getPotentialEnergy(); 
+
+    if (Debug)
+      qDebug() << " pot nrg bef dyn " << mypotential_energy;
 
     if(minimize)
     {

@@ -122,6 +122,10 @@ friend QDataStream& ::operator>>(QDataStream&, SireMol::AmberParameters&);
     QList<double> getParams(const ImproperID &improper);
     QList<ImproperID> getAllImpropers();
 
+    void add14Pair(const BondID &pair, const double &cscl, const double &ljscl);
+    void remove14Pair(const BondID &pair);
+    QList<double> get14PairParams(const BondID &pair);
+    QList<BondID> getAll14Pairs();
   
  private:
     /** The molecule that this flexibility operates on */
@@ -139,6 +143,8 @@ friend QDataStream& ::operator>>(QDataStream&, SireMol::AmberParameters&);
     /**A Hash of torsional parameters for impropers **/
     QHash< ImproperID, QList<double> > impropers;    
 
+    /**A Hash of coulombic and lennard jones scale factors for 1,4 pairs**/
+    QHash< BondID, QList<double> > nb14pairs;
 };
 
 }
