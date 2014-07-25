@@ -254,7 +254,6 @@ private:
 
     double Alchemical_value;
 
-    //int coulomb_power;
     float coulomb_power;
 
     double shift_delta;

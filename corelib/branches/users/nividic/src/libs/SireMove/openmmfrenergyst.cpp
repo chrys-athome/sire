@@ -448,7 +448,7 @@ void OpenMMFrEnergyST::initialise()  {
 
     if ( flag_cutoff == NOCUTOFF ){
         
-        if (coulomb_power > 0) {
+        if (coulomb_power > 0) { //This is necessary to avoid nan errors on the GPUs platform caused by the calculation of 0^0
         
             custom_force_field = new OpenMM::CustomNonbondedForce("(1.0 - isSolvent1 * isSolvent2 * SPOnOff) * (Hcs + Hls);"
                                                                   "Hcs = (lambda^n) * 138.935456 * q_prod/sqrt(diff_cl+r^2);"
@@ -483,9 +483,7 @@ void OpenMMFrEnergyST::initialise()  {
             custom_force_field->addGlobalParameter("SPOnOff",0.0);
             
             custom_force_field->setNonbondedMethod(OpenMM::CustomNonbondedForce::NoCutoff);
-            
-            
-            
+        
             
             
             custom_intra_14_todummy = new OpenMM::CustomBondForce("Hcs + Hls;"
@@ -538,7 +536,7 @@ void OpenMMFrEnergyST::initialise()  {
             custom_intra_14_fromdummy_todummy->addGlobalParameter("nftd",coulomb_power);
             
         }
-        else{// coulomb_power == 0
+        else{// coulomb_power == 0. //This is necessary to avoid nan errors on the GPUs platform caused by the calculation of 0^0
             
             custom_force_field = new OpenMM::CustomNonbondedForce("(1.0 - isSolvent1 * isSolvent2 * SPOnOff) * (Hcs + Hls);"
                                                                   "Hcs = 138.935456 * q_prod/sqrt(diff_cl+r^2);"
@@ -656,7 +654,7 @@ void OpenMMFrEnergyST::initialise()  {
         double kvalue = eps2/(converted_cutoff_distance * converted_cutoff_distance * converted_cutoff_distance);
         double cvalue = (1.0/converted_cutoff_distance)*(3.0*field_dielectric)/(2.0*field_dielectric+1.0);
         
-        if(coulomb_power > 0){
+        if(coulomb_power > 0){//This is necessary to avoid nan errors on the GPUs platform caused by the calculation of 0^0
     
             custom_force_field = new OpenMM::CustomNonbondedForce("(1.0 - isSolvent1 * isSolvent2 * SPOnOff) * (Hls + Hcs);"
                                                                   "Hcs = (lambda^n) * 138.935456 * q_prod*(1/sqrt(diff_cl+r*r) + krflam*(diff_cl+r*r)-crflam);"
@@ -707,7 +705,7 @@ void OpenMMFrEnergyST::initialise()  {
                 custom_force_field->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffPeriodic);
             }
             
-            //NO REACTION FIELD IS APPLIED TO 1-4 INTERACTIONS
+            //NO REACTION FIELD IS APPLIED TO 1-4 INTERACTIONS. If the scaling factor is one (Glycam ff) then the OpenMM potential energy is not equal to he Sire energy. This is caused by the application of the reaction field on the 14 pairs in Sire.
             
             
             custom_intra_14_todummy = new OpenMM::CustomBondForce("withinCutoff*(Hcs + Hls);"
@@ -765,7 +763,7 @@ void OpenMMFrEnergyST::initialise()  {
         
         
         }
-        else{//coulomb_power == 0
+        else{//coulomb_power == 0. //This is necessary to avoid nan errors on the GPUs platform caused by the calculation of 0^0
             
             custom_force_field = new OpenMM::CustomNonbondedForce("(1.0 - isSolvent1 * isSolvent2 * SPOnOff) * (Hls + Hcs);"
                                                                   "Hcs = 138.935456 * q_prod*(1/sqrt(diff_cl+r*r) + krflam*(diff_cl+r*r)-crflam);"
@@ -816,7 +814,10 @@ void OpenMMFrEnergyST::initialise()  {
                 custom_force_field->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffPeriodic);
             }
             
-            //NO REACTION FIELD IS APPLIED TO 1-4 INTERACTIONS
+            
+            
+            //NO REACTION FIELD IS APPLIED TO 1-4 INTERACTIONS. If the scaling factor is one (Glycam ff) then the OpenMM potential energy is not equal to he Sire energy. This is caused by the application of the reaction field on the 14 pairs in Sire.
+
             
             
             custom_intra_14_todummy = new OpenMM::CustomBondForce("withinCutoff*(Hcs + Hls);"
@@ -836,6 +837,9 @@ void OpenMMFrEnergyST::initialise()  {
             custom_intra_14_todummy->addGlobalParameter("ntd", coulomb_power);
             custom_intra_14_todummy->addGlobalParameter("cutofftd", converted_cutoff_distance);
             
+            
+            
+            
             custom_intra_14_fromdummy = new OpenMM::CustomBondForce("withinCutoff*(Hcs + Hls);"
                                                                     "withinCutoff=step(cutofffd-r);"
                                                                     "Hcs=138.935456*q_prod/sqrt(diff_cl+r^2);"
@@ -848,11 +852,14 @@ void OpenMMFrEnergyST::initialise()  {
                                                                     "sigma_avg = lamfd*saend + (1-lamfd)*sastart;"
                                                                     "q_prod = lamfd*lamfd*qpend + (1-lamfd)*(1-lamfd)*qpstart + lamfd*(1-lamfd)*qmix");
             
+        
             custom_intra_14_fromdummy->addGlobalParameter("lamfd",Alchemical_value);
             custom_intra_14_fromdummy->addGlobalParameter("deltafd",shift_delta);
             custom_intra_14_fromdummy->addGlobalParameter("nfd",coulomb_power);
             custom_intra_14_fromdummy->addGlobalParameter("cutofffd",converted_cutoff_distance);
             
+            
+
             
             custom_intra_14_fromdummy_todummy = new OpenMM::CustomBondForce("withinCutoff*(Hcs + Hls);"
                                                                             "withinCutoff=step(cutoffftd-r);"
@@ -885,8 +892,24 @@ void OpenMMFrEnergyST::initialise()  {
                                                           "sigma_avg = lamhd*saend + (1-lamhd)*sastart;"
                                                           "q_prod = lamhd*lamhd*qpend + (1-lamhd)*(1-lamhd)*qpstart + lamhd*(1-lamhd)*qmix");
         
+        
         custom_intra_14_clj->addGlobalParameter("lamhd",Alchemical_value);
         custom_intra_14_clj->addGlobalParameter("cutoffhd",converted_cutoff_distance);
+        
+        
+        //REACTION FIELD 14 IMPLEMENTATION FOR FUTURE USE
+        /*custom_intra_14_clj = new OpenMM::CustomBondForce("(Hl+Hc);"
+                                                          "Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
+                                                          "Hc = 138.935456 * q_prod*(1.0/r + krf*(r*r)-crf);"
+                                                          "eps_avg = sqrt(lamhd*lamhd*eaend + (1-lamhd)*(1-lamhd)*eastart + lamhd*(1-lamhd)*emix);"
+                                                          "sigma_avg = lamhd*saend + (1-lamhd)*sastart;"
+                                                          "q_prod = lamhd*lamhd*qpend + (1-lamhd)*(1-lamhd)*qpstart + lamhd*(1-lamhd)*qmix");
+        
+        
+        custom_intra_14_clj->addGlobalParameter("lamhd",Alchemical_value);
+        custom_intra_14_clj->addGlobalParameter("krf",kvalue);
+        custom_intra_14_clj->addGlobalParameter("crf",cvalue);*/
+        
         
         
         if (true) {
@@ -1187,7 +1210,19 @@ void OpenMMFrEnergyST::initialise()  {
 
     for(int i = 0; i<perturbed_energies_tmp.size();i++)
         perturbed_energies_tmp[i] = false;
-
+    
+    
+    // The default 1,4 scaling factors
+    double const Coulomb14Scale = 1.0 / 1.2;
+    double const LennardJones14Scale = 1.0 / 2.0;
+    
+    // A list of 1,4 atom pairs with non default scale factors
+    // for each entry, first pair has pair of indices, second has pair of scale factors
+    //QList< QPair< QPair<int,int>, QPair<double, double > > > custom14pairs;
+    QHash< QPair<int,int>, QPair<double,double> > custom14pairs;
+    
+    bool special_14 = false;
+    
     for (int i=0; i < nmols ; i++){
 
         const Vector *c = ws.coordsArray(i);
@@ -1506,7 +1541,7 @@ void OpenMMFrEnergyST::initialise()  {
         QList< ImproperID > improper_pert_list;
         QList< ImproperID > improper_pert_swap_list;
 
-        //if(molecule.isSameMolecule(solutemol)){//Solute molecule perturbation
+
         if (solute.contains(molecule)) {
             Perturbations pert_params = molecule.property("perturbations").asA<Perturbations>();
 
@@ -2132,10 +2167,44 @@ void OpenMMFrEnergyST::initialise()  {
             }
         }//end of impropers
 
+        
+        // Variable 1,4 scaling factors
+        QList<BondID> pairs14_ff = amber_params.getAll14Pairs();
+        QVector<BondID> pairs14 = pairs14_ff.toVector();
+        
+        for (int j=0; j < pairs14_ff.length() ; j++) {
+            
+            BondID pair14_ff = pairs14_ff[j];
+            
+            QList<double> pair14_params = amber_params.get14PairParams(pair14_ff);
+            
+            double cscl = pair14_params[0];
+            double ljscl = pair14_params[1];
+            
+            if(Debug)
+                qDebug() << " cscl@ " << cscl << " ljscl " << ljscl;
+            
+            // Add to custom pairs if scale factor differs from default
+            if ( abs(cscl-Coulomb14Scale) > 0.0001 or abs(ljscl-LennardJones14Scale) > 0.0001 ){
+                
+                int idx0 = pair14_ff.atom0().asA<AtomIdx>().value() + num_atoms_till_i;
+                int idx1 = pair14_ff.atom1().asA<AtomIdx>().value() + num_atoms_till_i;
+                
+                QPair<int, int> indices_pair(idx0, idx1);
+                QPair<double, double> scl_pair(cscl, ljscl);
+                custom14pairs.insert(indices_pair, scl_pair);
+                
+                special_14 = true;
+                
+                if(Debug)
+                    qDebug() << "IDX0 = " << idx0 << " IDX1 =" << idx1 << "14 OpenMM Index";
+            }
+        }// end of variable 1,4 scaling factors
+    
         num_atoms_till_i = num_atoms_till_i + num_atoms_molecule ;
 
-
     }// end of loop over molecules
+    
 
     if(Debug){
         if(nions!=0)
@@ -2143,10 +2212,6 @@ void OpenMMFrEnergyST::initialise()  {
     }
 
     //Exclude the 1-2, 1-3 bonded atoms from nonbonded forces, and scale down 1-4 bonded atoms
-
-    const double Coulomb14Scale = 1.0/1.2;
-
-    const double LennardJones14Scale = 1.0/2.0;
 
     nonbond_openmm->createExceptionsFromBonds(bondPairs, Coulomb14Scale, LennardJones14Scale);
 
@@ -2211,17 +2276,54 @@ void OpenMMFrEnergyST::initialise()  {
                 double sigma_avg_start, sigma_avg_end;
                 double epsilon_avg_start,epsilon_avg_end,epsilon_avg_mix;
                 
+                double Coulomb14Scale_tmp = Coulomb14Scale;
+                double LennardJones14Scale_tmp = LennardJones14Scale;
+
+                if(special_14){
+                    
+                    QPair<double,double> sc_factors;
+                    
+                    QPair<int, int> indices_pair(p1, p2);
+                    QHash<QPair<int,int>, QPair<double,double>>::const_iterator i_pair = custom14pairs.find(indices_pair);
+                    
                 
-                charge_prod_start = Qstart_p1 * Qstart_p2 * Coulomb14Scale;
-                charge_prod_end = Qend_p1 * Qend_p2 * Coulomb14Scale;
-                charge_prod_mix = (Qend_p1 * Qstart_p2 + Qstart_p1 * Qend_p2)  * Coulomb14Scale;
+                    if(i_pair != custom14pairs.end()){
+                    
+                        sc_factors = i_pair.value();
+                        Coulomb14Scale_tmp = sc_factors.first;
+                        LennardJones14Scale_tmp = sc_factors.second;
+                        
+                        if(Debug)
+                            qDebug() << "The pair ( " << p1 << ", " << p2 << " ) is 14 special no swap pair";
+                    }
+                    else{
+                    
+                        QPair<int, int> indices_swap_pair(p2,p1);
+                        QHash<QPair<int,int>, QPair<double,double>>::const_iterator i_swap_pair = custom14pairs.find(indices_swap_pair);
+                        
+                        if(i_swap_pair != custom14pairs.end()){
+                        
+                            sc_factors = i_swap_pair.value();
+                            Coulomb14Scale_tmp = sc_factors.first;
+                            LennardJones14Scale_tmp = sc_factors.second;
+            
+                            if(Debug)
+                                qDebug() << "The pair ( " << p2 << ", " << p1 << " ) is 14 special swap pair";
+                            
+                        }
+                    }
+                }
+                
+                charge_prod_start = Qstart_p1 * Qstart_p2 * Coulomb14Scale_tmp;
+                charge_prod_end = Qend_p1 * Qend_p2 * Coulomb14Scale_tmp;
+                charge_prod_mix = (Qend_p1 * Qstart_p2 + Qstart_p1 * Qend_p2)  * Coulomb14Scale_tmp;
                 
                 sigma_avg_start = (Sigstart_p1 + Sigstart_p2)/2.0;
                 sigma_avg_end = (Sigend_p1 + Sigend_p2)/2.0;
                 
-                epsilon_avg_start = Epstart_p1 * Epstart_p2 * LennardJones14Scale * LennardJones14Scale;
-                epsilon_avg_end = Epend_p1 * Epend_p2 * LennardJones14Scale * LennardJones14Scale;
-                epsilon_avg_mix = (Epend_p1 * Epstart_p2 + Epstart_p1 * Epend_p2) * LennardJones14Scale * LennardJones14Scale;
+                epsilon_avg_start = Epstart_p1 * Epstart_p2 * LennardJones14Scale_tmp * LennardJones14Scale_tmp;
+                epsilon_avg_end = Epend_p1 * Epend_p2 * LennardJones14Scale_tmp * LennardJones14Scale_tmp;
+                epsilon_avg_mix = (Epend_p1 * Epstart_p2 + Epstart_p1 * Epend_p2) * LennardJones14Scale_tmp * LennardJones14Scale_tmp;
                 
 
                 std::vector<double> params(8);
@@ -2251,7 +2353,8 @@ void OpenMMFrEnergyST::initialise()  {
                     
                     qDebug() << "Product Charge start = " << charge_prod_start << "\nProduct Charge end = " << charge_prod_end << "\nProduct Chrage mixed = " << charge_prod_mix
                              << "\nEpsilon average start = " << epsilon_avg_start << "\nEpsilon average end = " << epsilon_avg_end << "\nEpsilon average mixed = " << charge_prod_mix
-                             << "\nSigma average start = " << sigma_avg_start << "\nSigma average end = " << sigma_avg_end << "\n";
+                    << "\nSigma average start = " << sigma_avg_start << "\nSigma average end = " << sigma_avg_end;
+                qDebug() << "Columbic Scale Factor = " << Coulomb14Scale_tmp << " Lennard-Jones Scale Factor = " << LennardJones14Scale_tmp <<"\n";
                 }
 
                 if((isHard_p1 == 1.0 && isHard_p2 == 1.0)){
@@ -2394,6 +2497,7 @@ void OpenMMFrEnergyST::initialise()  {
     
     this->openmm_system = system_openmm;
     this->isSystemInitialised = true;
+    
 
 }
 
@@ -3007,7 +3111,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         
         //double Energy_Gradient_lamda = coefficient * log(GF_acc / GB_acc);
         
-        if(true){
+        if(Debug){
             //qDebug()<< "Total Time = " << state_openmm.getTime() << " ps";
             printf("Cumulative Energy Gradient = %.5f kcal/mol\n", Energy_Gradient_lamda * OpenMM::KcalPerKJ);
             //qDebug() << "Istantaneus Energy Gradient = " << coefficient * log(plus / minus) * OpenMM::KcalPerKJ << " kcal/(mol lambda)";
@@ -3050,9 +3154,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             openmm_context->setParameter("lamdih",Alchemical_value);//Torsions
         
         sample_count= sample_count + 1.0;
-        
-        //exit(-1);
-        
+                
         
     }//end while
 

@@ -1009,8 +1009,7 @@ static void setNonBondedPairs(MolEditor &editmol, int pointer,
 
             if ( atoms14[ atom0.number() ].contains( atom1.number() ) )
             {
-                qDebug() << " ATOMS " << atom0.number() << " and "
-                          << atom1.number() << " are 14";
+                //qDebug() << " ATOMS " << atom0.number() << " and " << atom1.number() << " are 14";
 
 		//cscl = coul_14scl;
 		//ljscl = lj_14scl;
@@ -1047,7 +1046,7 @@ static void setNonBondedPairs(MolEditor &editmol, int pointer,
 		
 		ljscl = atoms14sclnb[ atom0.number() ][ atom1.number() ];
 		
-		qDebug() << " cscl " << cscl << " ljscl " << ljscl << "\n";
+		//qDebug() << " cscl " << cscl << " ljscl " << ljscl << "\n";
             }
             else
             {
