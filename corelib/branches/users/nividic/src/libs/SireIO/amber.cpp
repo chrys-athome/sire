@@ -503,7 +503,7 @@ static void setAtomParameters(AtomEditor &editatom, MolEditor &editmol,
 
     //qDebug() << " Coords " << coords.x() << coords.y() << coords.z() ;
 
-    //qDebug() << " Charges...";
+    //qDebug() << " Charges..." << charge[ atomNumber - 1 ] << " " <<  charge[atomNumber - 1] / AMBERCHARGECONV  ;
     // set the charges
     SireUnits::Dimension::Charge chg = ( charge[atomNumber - 1] / AMBERCHARGECONV )
                                        * mod_electron;
@@ -550,7 +550,7 @@ static void setAtomParameters(AtomEditor &editatom, MolEditor &editmol,
         rstar = (sigma/2.)* std::pow(2.0, 1/6. ) ;
     }
 
-    //qDebug() << " Atom " << atomNumber << " itype " << itype << " inbparams "
+    //qDebug() << " Atom " << atomNumber - 1 << " itype " << itype << " inbparams "
     //         << inbparams << " iAcoef " << iAcoef << " iBcoef " << iBcoef << " sigma "
     //         << sigma << " epsilon " << epsilon << " rstar " << rstar ;
 
@@ -1925,7 +1925,7 @@ tuple<MoleculeGroup,SpacePtr> Amber::readCrdTop(const QString &crdfile,
         if (i > 0 and i % 1000 == 0)
             qDebug() << "...building molecule" << i << "...";
 
-        //qDebug() << " Parameterizing molecule " << moleculeNumber;
+        //qDebug() << " Parameterizing molecule " << i;
         /** First pass, use StructureEditors to build the layout of the molecule*/
         MolStructureEditor molstructeditor;
         int atoms_in_mol = 0;
@@ -2004,7 +2004,7 @@ tuple<MoleculeGroup,SpacePtr> Amber::readCrdTop(const QString &crdfile,
 
         for (int i=0; i < natoms ; ++i)
         {
-            //qDebug() << " Parameterizing atom " << i;
+	  //qDebug() << " Parameterizing atom " << i;
             // Now that the structure of the molecule has been built, we assign the
             // following atom properties: coordinates, charge, mass, lj , amber_atom_type
             // and element (if element is available)

@@ -397,7 +397,7 @@ QString OpenMMMDIntegrator::toString() const
 
 void OpenMMMDIntegrator::initialise()
 {
-  bool Debug = true;
+  bool Debug = false;
 
   if (Debug)
     qDebug() << " initialising OpenMMMDIntegrator";
@@ -972,8 +972,8 @@ void OpenMMMDIntegrator::initialise()
 	     QList<double> pair14_params = amber_params.get14PairParams(pair14_ff);
 	     double cscl = pair14_params[0];
 	     double ljscl = pair14_params[1];
-	     qDebug() << " cscl@ " << cscl << " ljscl " << ljscl; 
 	     
+	     	     
 	     // Add to custom pairs if scale factor differs from default
 	     if ( abs(cscl-Coulomb14Scale) > 0.0001 or abs(ljscl-LennardJones14Scale) > 0.0001 )
 	       {
@@ -1037,7 +1037,7 @@ void OpenMMMDIntegrator::createContext(IntegratorWorkspace &workspace,
                                        SireUnits::Dimension::Time timestep,
                                        int nmoves, bool record_stats)
 {
-    bool Debug = true;
+    bool Debug = false;
 
       if(Debug)
         qDebug() << "In OpenMMMDIntegrator::integrate()\n\n" ;
@@ -1256,7 +1256,7 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
                                    SireUnits::Dimension::Time timestep,
                                    int nmoves, bool record_stats)
 {
-    bool Debug = true;
+    bool Debug = false;
 
     createContext(workspace, timestep, nmoves, record_stats);
 
