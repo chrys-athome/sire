@@ -2284,7 +2284,7 @@ void OpenMMFrEnergyST::initialise()  {
                     QPair<double,double> sc_factors;
                     
                     QPair<int, int> indices_pair(p1, p2);
-                    QHash<QPair<int,int>, QPair<double,double>>::const_iterator i_pair = custom14pairs.find(indices_pair);
+                    QHash< QPair<int,int>, QPair<double,double> >::const_iterator i_pair = custom14pairs.find(indices_pair);
                     
                 
                     if(i_pair != custom14pairs.end()){
