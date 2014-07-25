@@ -71,7 +71,7 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, AmberParameters &amberpar
 
     VersionID v = readHeader(ds, r_amberparam);
     
-    if (v != 1 or v != 2)
+    if (v != 1 and v != 2)
         throw version_error( v, "1", r_amberparam, CODELOC );
     else if (v == 2)
       {
