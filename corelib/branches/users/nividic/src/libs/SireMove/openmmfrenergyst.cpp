@@ -2111,7 +2111,7 @@ void OpenMMFrEnergyST::initialise()  {
                 double phase = dihedral_params[ k + 2 ];
                 bondTorsion_openmm->addTorsion(idx0, idx1, idx2, idx3, periodicity, phase , v * OpenMM::KJPerKcal);
                 if(Debug){
-                        qDebug() << "Dihedral between atom global index " << idx0 - num_atoms_till_i << 
+                        qDebug() << "Dihedral between atom global index " << idx0 - num_atoms_till_i <<
                                 " and " << idx1 - num_atoms_till_i << 
                                 " and " << idx2 - num_atoms_till_i << 
                                 " and " << idx3 - num_atoms_till_i <<"\n";
@@ -2299,7 +2299,7 @@ void OpenMMFrEnergyST::initialise()  {
                     else{
                     
                         QPair<int, int> indices_swap_pair(p2,p1);
-                        QHash<QPair<int,int>, QPair<double,double>>::const_iterator i_swap_pair = custom14pairs.find(indices_swap_pair);
+                        QHash< QPair<int,int>, QPair<double,double> >::const_iterator i_swap_pair = custom14pairs.find(indices_swap_pair);
                         
                         if(i_swap_pair != custom14pairs.end()){
                         
