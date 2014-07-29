@@ -146,6 +146,26 @@ void register_InterFF_class(){
                 , disableGrid_function_value );
         
         }
+        { //::SireMM::InterFF::disableParallelCalculation
+        
+            typedef void ( ::SireMM::InterFF::*disableParallelCalculation_function_type )(  ) ;
+            disableParallelCalculation_function_type disableParallelCalculation_function_value( &::SireMM::InterFF::disableParallelCalculation );
+            
+            InterFF_exposer.def( 
+                "disableParallelCalculation"
+                , disableParallelCalculation_function_value );
+        
+        }
+        { //::SireMM::InterFF::disableReproducibleCalculation
+        
+            typedef void ( ::SireMM::InterFF::*disableReproducibleCalculation_function_type )(  ) ;
+            disableReproducibleCalculation_function_type disableReproducibleCalculation_function_value( &::SireMM::InterFF::disableReproducibleCalculation );
+            
+            InterFF_exposer.def( 
+                "disableReproducibleCalculation"
+                , disableReproducibleCalculation_function_value );
+        
+        }
         { //::SireMM::InterFF::enableGrid
         
             typedef void ( ::SireMM::InterFF::*enableGrid_function_type )(  ) ;
@@ -154,6 +174,26 @@ void register_InterFF_class(){
             InterFF_exposer.def( 
                 "enableGrid"
                 , enableGrid_function_value );
+        
+        }
+        { //::SireMM::InterFF::enableParallelCalculation
+        
+            typedef void ( ::SireMM::InterFF::*enableParallelCalculation_function_type )(  ) ;
+            enableParallelCalculation_function_type enableParallelCalculation_function_value( &::SireMM::InterFF::enableParallelCalculation );
+            
+            InterFF_exposer.def( 
+                "enableParallelCalculation"
+                , enableParallelCalculation_function_value );
+        
+        }
+        { //::SireMM::InterFF::enableReproducibleCalculation
+        
+            typedef void ( ::SireMM::InterFF::*enableReproducibleCalculation_function_type )(  ) ;
+            enableReproducibleCalculation_function_type enableReproducibleCalculation_function_value( &::SireMM::InterFF::enableReproducibleCalculation );
+            
+            InterFF_exposer.def( 
+                "enableReproducibleCalculation"
+                , enableReproducibleCalculation_function_value );
         
         }
         { //::SireMM::InterFF::fixedOnly
@@ -352,6 +392,28 @@ void register_InterFF_class(){
                 , ( bp::arg("on") ) );
         
         }
+        { //::SireMM::InterFF::setUseParallelCalculation
+        
+            typedef void ( ::SireMM::InterFF::*setUseParallelCalculation_function_type )( bool ) ;
+            setUseParallelCalculation_function_type setUseParallelCalculation_function_value( &::SireMM::InterFF::setUseParallelCalculation );
+            
+            InterFF_exposer.def( 
+                "setUseParallelCalculation"
+                , setUseParallelCalculation_function_value
+                , ( bp::arg("on") ) );
+        
+        }
+        { //::SireMM::InterFF::setUseReproducibleCalculation
+        
+            typedef void ( ::SireMM::InterFF::*setUseReproducibleCalculation_function_type )( bool ) ;
+            setUseReproducibleCalculation_function_type setUseReproducibleCalculation_function_value( &::SireMM::InterFF::setUseReproducibleCalculation );
+            
+            InterFF_exposer.def( 
+                "setUseReproducibleCalculation"
+                , setUseReproducibleCalculation_function_value
+                , ( bp::arg("on") ) );
+        
+        }
         { //::SireMM::InterFF::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -370,6 +432,26 @@ void register_InterFF_class(){
             InterFF_exposer.def( 
                 "usesGrid"
                 , usesGrid_function_value );
+        
+        }
+        { //::SireMM::InterFF::usesParallelCalculation
+        
+            typedef bool ( ::SireMM::InterFF::*usesParallelCalculation_function_type )(  ) const;
+            usesParallelCalculation_function_type usesParallelCalculation_function_value( &::SireMM::InterFF::usesParallelCalculation );
+            
+            InterFF_exposer.def( 
+                "usesParallelCalculation"
+                , usesParallelCalculation_function_value );
+        
+        }
+        { //::SireMM::InterFF::usesReproducibleCalculation
+        
+            typedef bool ( ::SireMM::InterFF::*usesReproducibleCalculation_function_type )(  ) const;
+            usesReproducibleCalculation_function_type usesReproducibleCalculation_function_value( &::SireMM::InterFF::usesReproducibleCalculation );
+            
+            InterFF_exposer.def( 
+                "usesReproducibleCalculation"
+                , usesReproducibleCalculation_function_value );
         
         }
         { //::SireMM::InterFF::what
