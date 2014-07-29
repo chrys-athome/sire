@@ -62,7 +62,8 @@ namespace SireMM
         class InterFFData : public QSharedData
         {
         public:
-            InterFFData() : QSharedData(), fixed_only(false)
+            InterFFData() : QSharedData(), fixed_only(false),
+                            parallel_calc(true), repro_sum(false)
             {}
             
             InterFFData(const InterFFData &other)
@@ -74,7 +75,9 @@ namespace SireMM
                    fixed_atoms(other.fixed_atoms),
                    cljcomps(other.cljcomps),
                    props(other.props),
-                   fixed_only(other.fixed_only)
+                   fixed_only(other.fixed_only),
+                   parallel_calc(other.parallel_calc),
+                   repro_sum(other.repro_sum)
             {}
             
             ~InterFFData()
@@ -112,6 +115,12 @@ namespace SireMM
             /** Whether or not to only calculate the energy with
                 the fixed atoms */
             bool fixed_only;
+            
+            /** Whether or not to calculate energies in parallel */
+            bool parallel_calc;
+            
+            /** Whether or not to sum energies using a reproducible sum */
+            bool repro_sum;
         };
     }
 }
@@ -260,6 +269,11 @@ void InterFF::rebuildProps()
     d->props.setProperty("gridBuffer", LengthProperty(d->fixed_atoms.gridBuffer()));
     d->props.setProperty("gridSpacing", LengthProperty(d->fixed_atoms.gridSpacing()));
     d->props.setProperty("fixedOnly", BooleanProperty(d->fixed_only));
+    d->props.setProperty("parallelCalculation", BooleanProperty(d->parallel_calc));
+    d->props.setProperty("reproducibleCalculation", BooleanProperty(d->repro_sum));
+
+    d->fixed_atoms.setUseParallelCalculation(this->usesParallelCalculation());
+    d->fixed_atoms.setUseReproducibleCalculation(this->usesReproducibleCalculation());
 }
 
 /** Set the forcefield property called 'name' to the value 'property' */
@@ -323,6 +337,34 @@ bool InterFF::setProperty(const QString &name, const Property &property)
             d->fixed_only = fixed_only;
             d->props.setProperty("fixedOnly", property);
             this->mustNowRecalculateFromScratch();
+            return true;
+        }
+        else
+            return false;
+    }
+    else if (name == "parallelCalculation")
+    {
+        bool parallel_calc = property.asA<BooleanProperty>().value();
+        
+        if (parallel_calc != d.constData()->parallel_calc)
+        {
+            d->parallel_calc = parallel_calc;
+            d->fixed_atoms.setUseParallelCalculation(parallel_calc);
+            d->props.setProperty("parallelCalculation", property);
+            return true;
+        }
+        else
+            return false;
+    }
+    else if (name == "reproducibleCalculation")
+    {
+        bool repro_sum = property.asA<BooleanProperty>().value();
+        
+        if (repro_sum != d.constData()->repro_sum)
+        {
+            d->repro_sum = repro_sum;
+            d->fixed_atoms.setUseReproducibleCalculation(repro_sum);
+            d->props.setProperty("reproducibleCalculation", property);
             return true;
         }
         else
@@ -449,6 +491,76 @@ void InterFF::disableGrid()
 bool InterFF::usesGrid() const
 {
     return d->fixed_atoms.usesGrid();
+}
+
+/** Set whether or not to use a multicore parallel algorithm
+    to calculate the energy */
+void InterFF::setUseParallelCalculation(bool on)
+{
+    if (on != usesParallelCalculation())
+    {
+        d->parallel_calc = on;
+        d->props.setProperty("parallelCalculation", BooleanProperty(on));
+        d->fixed_atoms.setUseParallelCalculation(on);
+    }
+}
+
+/** Turn on use of a multicore parallel calculation of the energy.
+    This is on by default, and spreads the energy calculations over
+    available cores */
+void InterFF::enableParallelCalculation()
+{
+    this->setUseParallelCalculation(true);
+}
+
+/** Turn off use of a multicore parallel calculation of the energy.
+    This may be quicker if you have few atoms in the forcefield,
+    or if you are only planning on allocating one core per forcefield */
+void InterFF::disableParallelCalculation()
+{
+    this->setUseParallelCalculation(false);
+}
+
+/** Return whether or not a parallel algorithm is used to calculate energies */
+bool InterFF::usesParallelCalculation() const
+{
+    return d->parallel_calc;
+}
+
+/** Turn on an energy summing algorithm that guarantees the same energy
+    regardless of whether a single core or multicore calculation is being
+    performed (i.e. rounding errors in both cases will be identical) */
+void InterFF::enableReproducibleCalculation()
+{
+    setUseReproducibleCalculation(true);
+}
+
+/** Turn off an energy summing algorithm that guarantees the same energy
+    regardless of whether a single core or multicore calculation is being
+    performed (i.e. rounding errors in both cases will not be identical) */
+void InterFF::disableReproducibleCalculation()
+{
+    setUseReproducibleCalculation(false);
+}
+
+/** Switch on or off use of an energy summing algorithm that guarantees the 
+    same energy regardless of whether a single core or multicore calculation 
+    is being performed */
+void InterFF::setUseReproducibleCalculation(bool on)
+{
+    if (on != d->repro_sum)
+    {
+        d->repro_sum = on;
+        d->fixed_atoms.setUseReproducibleCalculation(on);
+        d->props.setProperty("reproducibleCalculation", BooleanProperty(on));
+    }
+}
+
+/** Return whether or not a reproducible energy summing algorithm is being
+    used to accumulate the energies */
+bool InterFF::usesReproducibleCalculation() const
+{
+    return d->repro_sum;
 }
 
 /** Return whether or not only the energy between the mobile and fixed
@@ -737,9 +849,17 @@ void InterFF::recalculateEnergy()
         {
             QElapsedTimer t;
             t.start();
-            CLJCalculator calc;
-            nrgs = calc.calculate(*(d.constData()->cljfunc), cljboxes);
-            //tuple<double,double> nrgs = d.constData()->cljfunc->calculate(cljboxes);
+            
+            if (d.constData()->parallel_calc)
+            {
+                CLJCalculator calc(d->repro_sum);
+                nrgs = calc.calculate(*(d.constData()->cljfunc), cljboxes);
+            }
+            else
+            {
+                nrgs = d.constData()->cljfunc->calculate(cljboxes);
+            }
+            
             qint64 ns = t.nsecsElapsed();
             
             qDebug() << "Calculating total energy took" << (0.000001*ns) << "ms";
@@ -748,6 +868,7 @@ void InterFF::recalculateEnergy()
         if (not d.constData()->fixed_atoms.isEmpty())
         {
             this->regridAtoms();
+            
             tuple<double,double> grid_nrgs = d.constData()->fixed_atoms.calculate(cljboxes);
             nrgs.get<0>() += grid_nrgs.get<0>();
             nrgs.get<1>() += grid_nrgs.get<1>();
@@ -765,9 +886,16 @@ void InterFF::recalculateEnergy()
         if (not d.constData()->fixed_only)
         {
             //calculate the change in energy using the molecules in changed_atoms
-            CLJCalculator calc;
-            delta_nrgs = calc.calculate(*(d.constData()->cljfunc),
-                                        delta, cljboxes);
+            if (d.constData()->parallel_calc)
+            {
+                CLJCalculator calc(d.constData()->repro_sum);
+                delta_nrgs = calc.calculate(*(d.constData()->cljfunc),
+                                            delta, cljboxes);
+            }
+            else
+            {
+                delta_nrgs = d.constData()->cljfunc.read().calculate(delta, cljboxes);
+            }
         }
         
         if (not d.constData()->fixed_atoms.isEmpty())
@@ -795,9 +923,15 @@ void InterFF::recalculateEnergy()
         
         if (not d.constData()->fixed_only)
         {
-            CLJCalculator calc;
-            nrgs = calc.calculate(*(d.constData()->cljfunc), cljboxes);
-            //tuple<double,double> nrgs = d.constData()->cljfunc->calculate(cljboxes);
+            if (d.constData()->parallel_calc)
+            {
+                CLJCalculator calc(d.constData()->repro_sum);
+                nrgs = calc.calculate(*(d.constData()->cljfunc), cljboxes);
+            }
+            else
+            {
+                nrgs = d.constData()->cljfunc.read().calculate(cljboxes);
+            }
         }
 
         if (not d.constData()->fixed_atoms.isEmpty())

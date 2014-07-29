@@ -1463,7 +1463,10 @@ void RigidBodyMC::performMove(System &system,
         }
 
         //update the system with the new coordinates
-        system.update(newmol);
+        if (MonteCarlo::usingOptimisedMoves())
+            system.update(newmol, false);
+        else
+            system.update(newmol, true);
 
         //get the new bias on this molecule
         new_bias = smplr.read().probabilityOf(newmol);

@@ -120,6 +120,16 @@ public:
 
     GridInfo grid() const;
 
+    void enableParallelCalculation();
+    void disableParallelCalculation();
+    void setUseParallelCalculation(bool on);
+    bool usesParallelCalculation() const;
+
+    void enableReproducibleCalculation();
+    void disableReproducibleCalculation();
+    void setUseReproducibleCalculation(bool on);
+    bool usesReproducibleCalculation() const;
+
     bool setProperty(const QString &name, const Property &property);
     const Property& property(const QString &name) const;
     bool containsProperty(const QString &name) const;
