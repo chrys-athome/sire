@@ -21,8 +21,10 @@ set ( SIREMM_HEADERS
       cljcalculator.h
       cljcomponent.h
       cljdelta.h
+      cljextractor.h
       cljfunction.h
       cljgrid.h
+      cljgroup.h
       cljparam.h
       cljpotential.h
       cljprobe.h
@@ -83,8 +85,10 @@ set ( SIREMM_SOURCES
       cljcalculator.cpp
       cljcomponent.cpp
       cljdelta.cpp
+      cljextractor.cpp
       cljfunction.cpp
       cljgrid.cpp
+      cljgroup.cpp
       cljparam.cpp
       cljpotential.cpp
       cljprobe.cpp

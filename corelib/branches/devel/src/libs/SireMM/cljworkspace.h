@@ -92,12 +92,13 @@ public:
     const CLJDelta* data() const;
     const CLJDelta* constData() const;
     
-    void push(const CLJDelta &delta);
-    void push(quint32 idnum, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
-              const MoleculeView &new_atoms, const PropertyMap &map = PropertyMap());
-    void push(quint32 idnum, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
-              const MoleculeView &new_atoms, CLJAtoms::ID_SOURCE source,
-              const PropertyMap &map = PropertyMap());
+    CLJDelta push(CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
+                  const CLJAtoms &new_atoms, const CLJDelta &old_delta);
+    
+    void removeSameIDAtoms(CLJBoxes &boxes);
+    
+    QVector<CLJBoxIndex> commit(CLJBoxes &boxes, const CLJDelta &delta);
+    QVector<CLJBoxIndex> revert(CLJBoxes &boxes, const CLJDelta &delta);
     
     int nDeltas() const;
     
@@ -105,7 +106,7 @@ public:
     
     bool isEmpty() const;
     
-    CLJDelta merge() const;
+    CLJAtoms merge() const;
 
     void clear();
 

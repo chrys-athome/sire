@@ -1526,9 +1526,6 @@ CLJFunctionPtr CLJCutoffFunction::setProperty(const QString &name, const Propert
     if (name == "switchingFunction")
     {
         const SwitchingFunction &switchfunc = value.asA<SwitchingFunction>();
-        
-        qDebug() << "Set switching function" << switchfunc.toString();
-        
         ret.edit().setCoulombCutoff( Length(switchfunc.electrostaticCutoffDistance()) );
         ret.edit().setLJCutoff( Length(switchfunc.vdwCutoffDistance()) );
     }

@@ -163,6 +163,7 @@ public:
     CLJAtoms();
     CLJAtoms(const QVector<CLJAtom> &atoms);
     CLJAtoms(const QList<CLJAtom> &atoms);
+    CLJAtoms(const CLJAtom *atoms, int natoms);
     
     CLJAtoms(const QVector<Vector> &coordinates,
              const QVector<Charge> &charges,
@@ -198,6 +199,8 @@ public:
     CLJAtoms(const CLJAtoms &other);
 
     ~CLJAtoms();
+    
+    static CLJAtoms construct(int natoms);
     
     void reconstruct(const MoleculeView &molecule,
                      const PropertyMap &map = PropertyMap());

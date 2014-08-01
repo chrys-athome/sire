@@ -190,25 +190,6 @@ CLJAtom CLJBox::take(int atom)
         return CLJAtom();
 }
 
-/** Remove the atom at index 'atom', returning the negative of the atom removed */
-CLJAtom CLJBox::takeNegative(int atom)
-{
-    if (atom < 0 or atom >= atms.count())
-    {
-        return CLJAtom();
-    }
-    
-    if (not atms.isDummy(atom))
-    {
-        CLJAtom atm = atms[atom];
-        atms.makeDummy(atom);
-        gaps.push(atom);
-        return atm.negate();
-    }
-    else
-        return CLJAtom();
-}
-
 /** Add a single passed atom into this box. This returns the index
     of the added atom */
 CLJBoxIndex CLJBox::add(const CLJAtom &atom)
@@ -1512,82 +1493,6 @@ CLJAtoms CLJBoxes::take(const QVector<CLJBoxIndex> &atoms)
     }
     
     return CLJAtoms(atms);
-}
-
-/** Remove the atoms at the specified indicies, returning the negative of the atoms that are
-    removed. This is equivalent to CLJBoxes::take(atoms).negate().
-    This does a rapid remove, i.e. it just turns the specified atoms into
-    dummies (which may be overwritten by subsequent "add" operations). If you want
-    to completely remove the atoms, use "take" followed by "squeeze" */
-CLJAtoms CLJBoxes::takeNegative(const QVector<CLJBoxIndex> &atoms)
-{
-    QList<CLJAtom> atms;
-    
-    foreach (const CLJBoxIndex &atom, atoms)
-    {
-        if (atom.hasAtomIndex())
-        {
-            int idx = box_to_idx.value(atom.boxOnly(), -1);
-            
-            if (idx >= 0)
-            {
-                CLJAtom cljatom = bxs[idx].write().takeNegative(atom.index());
-                
-                if (not cljatom.isDummy())
-                    atms.append(cljatom);
-            }
-        }
-    }
-    
-    return CLJAtoms(atms);
-}
-
-/** Apply the passed delta - this will replace all of the old atoms with the 
-    new atoms in the passed delta, returning the indicies of the newly added atoms */
-QVector<CLJBoxIndex> CLJBoxes::apply(const CLJDelta &delta)
-{
-    if (delta.boxLength() != box_length)
-        throw SireError::incompatible_error( QObject::tr(
-                "You cannot apply a delta to a CLJBoxes object that was not used to create "
-                "that CLJDelta object! %1 vs. %2")
-                    .arg(delta.boxLength()).arg(box_length), CODELOC );
-    
-    else if (delta.isNull())
-        return QVector<CLJBoxIndex>();
-    
-    if (delta.isSingleBox())
-    {
-        //find the single box and replace the old atoms with new
-        int idx = box_to_idx.value(delta.boxIndex(), -1);
-        
-        if (idx == -1)
-        {
-            if (CLJBoxIndex::countNonDummies(delta.oldIndicies()) != 0)
-                throw SireError::program_bug( QObject::tr(
-                        "How can the CLJBoxes not have the box when the delta believes "
-                        "that there are still old atoms to remove? %1, %2, %3")
-                            .arg(delta.boxIndex().toString())
-                            .arg(Sire::toString(delta.oldIndicies()))
-                            .arg(Sire::toString(box_to_idx.keys())), CODELOC );
-
-            //we are adding new atoms to a completely new CLJBox. Nothing is being removed
-            bxs.append( new CLJBox(delta.boxIndex(), Length(box_length)) );
-            box_to_idx.insert( delta.boxIndex(), bxs.count() - 1 );
-            
-            return bxs.last().write().add(delta.newAtoms());
-        }
-        else
-        {
-            return bxs[idx].write().apply(delta);
-        }
-    }
-    else
-    {
-        //the delta runs over more than one box. It is quicker to remove the old
-        //atoms and then add the new ones
-        this->remove( delta.oldIndicies() );
-        return this->add( delta.newAtoms() );
-    }
 }
 
 /** Return a copy of the boxes where all of the CLJAtoms objects have been squeezed,
