@@ -131,6 +131,11 @@ namespace detail
             same_ids.clear();
         }
 
+        void mustRecalculateFromScratch(CLJBoxes &boxes)
+        {
+            removeSameIDAtoms(boxes);
+        }
+
         CLJDelta push(CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
                       const CLJAtoms &new_atoms, const CLJDelta &old_delta)
         {
@@ -232,13 +237,7 @@ namespace detail
                     //no, we are now changing ID. Need to remove all of the
                     //old atoms
                     boxes.remove(old_atoms);
-                    
-                    for (int i=0; i<same_ids.count(); ++i)
-                    {
-                        boxes.remove( same_ids.at(i) );
-                    }
-                    
-                    same_ids.clear();
+                    removeSameIDAtoms(boxes);
                 }
                 
                 return new_delta;
@@ -285,18 +284,25 @@ namespace detail
             }
         }
         
-        QVector<CLJBoxIndex> commit(CLJBoxes &boxes, const CLJDelta &delta)
+        bool needsAccepting() const
         {
             if (not same_ids.isEmpty())
+                return true;
+            else
             {
-                //remove all of the old atoms
-                for (int i=0; i<same_ids.count(); ++i)
+                for (int i=0; i<deltas.count(); ++i)
                 {
-                    boxes.remove( same_ids.at(i) );
+                    if (not deltas.at(i).isNull())
+                        return true;
                 }
                 
-                same_ids.clear();
+                return false;
             }
+        }
+        
+        QVector<CLJBoxIndex> commit(CLJBoxes &boxes, const CLJDelta &delta)
+        {
+            removeSameIDAtoms(boxes);
             
             if (delta.ID() < 0 or delta.ID() >= deltas.count())
                 //invalid delta, so return nothing
@@ -317,16 +323,7 @@ namespace detail
         
         QVector<CLJBoxIndex> revert(CLJBoxes &boxes, const CLJDelta &delta)
         {
-            if (not same_ids.isEmpty())
-            {
-                //remove all of the old atoms
-                for (int i=0; i<same_ids.count(); ++i)
-                {
-                    boxes.remove( same_ids.at(i) );
-                }
-                
-                same_ids.clear();
-            }
+            removeSameIDAtoms(boxes);
             
             if (delta.ID() < 0 or delta.ID() >= deltas.count())
                 //invalid delta, so return nothing
@@ -379,9 +376,9 @@ QDataStream  &operator>>(QDataStream &ds, SireMM::detail::CLJWorkspaceData &ws)
 
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJWorkspace &ws)
 {
-    writeHeader(ds, r_workspace, 1);
+    writeHeader(ds, r_workspace, 2);
     
-    ds << ws.isEmpty();
+    ds << ws.recalc_from_scratch << ws.isEmpty();
     
     if (not ws.isEmpty())
     {
@@ -396,24 +393,30 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJWorkspace &ws)
 {
     VersionID v = readHeader(ds, r_workspace);
     
-    if (v == 1)
+    if (v <= 2)
     {
-        bool is_empty;
+        bool recalc_from_scratch = false;
+        bool is_empty = true;
+        
+        if (v == 2)
+            ds >> recalc_from_scratch;
         
         ds >> is_empty;
         
         if (is_empty)
         {
             ws = CLJWorkspace();
+            ws.recalc_from_scratch = recalc_from_scratch;
         }
         else
         {
             SharedDataStream sds(ds);
             sds >> ws.d;
+            ws.recalc_from_scratch = recalc_from_scratch;
         }
     }
     else
-        throw version_error(v, "1", r_workspace, CODELOC);
+        throw version_error(v, "1,2", r_workspace, CODELOC);
     
     return ds;
 }
@@ -441,11 +444,8 @@ void CLJWorkspace::returnToMemoryPool()
     if (cache.localData()->count() < 32)
     {
         d->clear();
-        //qDebug() << "PUSHED" << quintptr(d.get()) << "INTO THE POOL";
         cache.localData()->push_back(d);
     }
-    else
-        qDebug() << "DELETING AS THE CACHE IS FULL";
     
     d.reset();
 }
@@ -477,11 +477,12 @@ void CLJWorkspace::createFromMemoryPool()
 }
 
 /** Constructor */
-CLJWorkspace::CLJWorkspace()
+CLJWorkspace::CLJWorkspace() : recalc_from_scratch(false)
 {}
 
 /** Copy constructor */
 CLJWorkspace::CLJWorkspace(const CLJWorkspace &other)
+             : recalc_from_scratch(other.recalc_from_scratch)
 {
     if (not other.isEmpty())
     {
@@ -502,6 +503,7 @@ CLJWorkspace& CLJWorkspace::operator=(const CLJWorkspace &other)
     {
         returnToMemoryPool();
         d = other.d;
+        recalc_from_scratch = other.recalc_from_scratch;
     }
     
     return *this;
@@ -510,13 +512,33 @@ CLJWorkspace& CLJWorkspace::operator=(const CLJWorkspace &other)
 /** Comparison operator */
 bool CLJWorkspace::operator==(const CLJWorkspace &other) const
 {
-    return (isEmpty() and other.isEmpty()) or (d.get() == other.d.get());
+    return (recalc_from_scratch == other.recalc_from_scratch) and
+             ((isEmpty() and other.isEmpty()) or (d.get() == other.d.get()));
 }
 
 /** Comparison operator */
 bool CLJWorkspace::operator!=(const CLJWorkspace &other) const
 {
     return not operator==(other);
+}
+
+const char* CLJWorkspace::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CLJWorkspace>() );
+}
+
+const char* CLJWorkspace::what() const
+{
+    return CLJWorkspace::typeName();
+}
+
+QString CLJWorkspace::toString() const
+{
+    if (this->isEmpty())
+        return QObject::tr("CLJWorkspace::empty");
+    else
+        return QObject::tr("CLJWorkspace( nDeltas() == %1 )")
+                    .arg(nDeltas());
 }
 
 /** Return the ith delta */
@@ -577,16 +599,6 @@ int CLJWorkspace::size() const
     return count();
 }
 
-const char* CLJWorkspace::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<CLJWorkspace>() );
-}
-
-const char* CLJWorkspace::what() const
-{
-    return CLJWorkspace::typeName();
-}
-
 void CLJWorkspace::detach()
 {
     if (d.get() != 0)
@@ -624,14 +636,29 @@ void CLJWorkspace::removeSameIDAtoms(CLJBoxes &boxes)
 CLJDelta CLJWorkspace::push(CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
                             const CLJAtoms &new_atoms, const CLJDelta &old_delta)
 {
-    detach();
-    
-    if (d.get() == 0)
+    if (not recalc_from_scratch)
     {
-        createFromMemoryPool();
+        detach();
+        
+        if (d.get() == 0)
+        {
+            createFromMemoryPool();
+        }
+        
+        return d->push(boxes, old_atoms, new_atoms, old_delta);
     }
-    
-    return d->push(boxes, old_atoms, new_atoms, old_delta);
+    else
+    {
+        if (old_delta.isNull())
+        {
+            CLJAtoms old_cljatoms = boxes.take(old_atoms);
+            return CLJDelta(0,old_cljatoms,new_atoms);
+        }
+        else
+        {
+            return CLJDelta(old_delta.ID(), old_delta.oldAtoms(), new_atoms);
+        }
+    }
 }
 
 /** Commit the changes in the passed delta into the passed CLJBoxes */
@@ -660,6 +687,50 @@ QVector<CLJBoxIndex> CLJWorkspace::revert(CLJBoxes &boxes, const CLJDelta &delta
     }
 }
 
+/** Tell the workspace that we are now recalculating everything from scratch */
+void CLJWorkspace::mustRecalculateFromScratch(CLJBoxes &boxes)
+{
+    recalc_from_scratch = true;
+
+    if (d.get() != 0)
+    {
+        detach();
+        d->mustRecalculateFromScratch(boxes);
+        returnToMemoryPool();
+    }
+}
+
+/** Return whether or not we are recalculating everything from scratch */
+bool CLJWorkspace::recalculatingFromScratch() const
+{
+    return recalc_from_scratch;
+}
+
+/** Return whether or not this workspace needs accepting */
+bool CLJWorkspace::needsAccepting() const
+{
+    if (d.get() != 0)
+    {
+        return d->needsAccepting();
+    }
+    else
+        return false;
+}
+
+/** Accept this workspace - this clears the 'recalc_from_scratch' flag as it
+    signals that we have put the CLJBoxes into a sane state */
+void CLJWorkspace::accept(CLJBoxes &boxes)
+{
+    recalc_from_scratch = false;
+
+    if (d.get() != 0)
+    {
+        detach();
+        d->mustRecalculateFromScratch(boxes);
+        returnToMemoryPool();
+    }
+}
+
 /** Return the number of deltas in this workspace */
 int CLJWorkspace::nDeltas() const
 {
@@ -671,7 +742,7 @@ int CLJWorkspace::nDeltas() const
 bool CLJWorkspace::isSingleID() const
 {
     if (d.get() == 0)
-        return true;
+        return false;
     else
         return d->isSingleID();
 }
@@ -699,4 +770,5 @@ CLJAtoms CLJWorkspace::merge() const
 void CLJWorkspace::clear()
 {
     returnToMemoryPool();
+    recalc_from_scratch = true;
 }

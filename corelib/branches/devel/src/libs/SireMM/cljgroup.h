@@ -63,31 +63,48 @@ friend QDataStream& ::operator>>(QDataStream&, SireMM::CLJGroup&);
 public:
     CLJGroup();
     CLJGroup(const QString &name);
-    CLJGroup(const QString &name, const MoleculeView &molview);
-    CLJGroup(const QString &name, const Molecules &molecules);
-    CLJGroup(const QString &name, const MoleculeGroup &molgroup);
+    CLJGroup(const QString &name, CLJAtoms::ID_SOURCE id_source);
+    CLJGroup(const QString &name, CLJAtoms::ID_SOURCE id_source, bool extract_by_residue);
 
     CLJGroup(const CLJGroup &other);
     
     ~CLJGroup();
     
+    CLJGroup& operator=(const CLJGroup &other);
+    
+    bool operator==(const CLJGroup &other) const;
+    bool operator!=(const CLJGroup &other) const;
+    
+    static const char* typeName();
+    
+    const char* what() const;
+    
+    QString toString() const;
+    
+    Length boxLength() const;
+    void setBoxLength(Length box_length);
+    
     MoleculeGroup group() const;
     
-    void add(const MoleculeView &molview);
-    void add(const Molecules &molecules);
+    void add(const MoleculeView &molview, const PropertyMap &map = PropertyMap());
+    void add(const Molecules &molecules, const PropertyMap &map = PropertyMap());
+    void add(const MoleculeGroup &molgroup, const PropertyMap &map = PropertyMap());
     
     void update(const MoleculeView &molview);
     void update(const Molecules &molecules);
+    void update(const MoleculeGroup &molecules);
     
     void updatedConnectedGroup();
     
     void remove(const MoleculeView &molview);
     void remove(const Molecules &molecules);
+    void remove(const MoleculeGroup &molecules);
     
     void remove(MolNum molnum);
     
     void removeAll();
     
+    bool needsAccepting() const;
     void accept();
     
     const CLJBoxes& cljBoxes() const;
@@ -113,8 +130,27 @@ private:
     CLJWorkspace cljworkspace;
     
     /** All of the changed molecules */
-    QSet<MolNum> changed_mols;
+    QHash<MolNum,CLJExtractor> changed_mols;
+    
+    /** The set of all of the property maps used for each molecule */
+    QHash<MolNum,PropertyMap> props;
+    
+    /** The source for the ID numbers for the atoms */
+    CLJAtoms::ID_SOURCE id_source;
+    
+    /** Whether or not to extract atoms by molecule or by residue */
+    bool split_by_residue;
 };
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+/** Return the CLJBoxes that contains all of the atoms in this group */
+inline const CLJBoxes& CLJGroup::cljBoxes() const
+{
+    return cljboxes;
+}
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

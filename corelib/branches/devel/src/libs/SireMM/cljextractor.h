@@ -95,13 +95,19 @@ public:
     bool operator==(const CLJExtractor &other) const;
     bool operator!=(const CLJExtractor &other) const;
     
+    static const char* typeName();
+    
+    const char* what() const;
+    
+    QString toString() const;
+    
     bool changed() const;
     bool needsCommitting() const;
     
     bool isEmpty() const;
     bool isNull() const;
     
-    PartialMolecule oldmolecule() const;
+    PartialMolecule oldMolecule() const;
     PartialMolecule newMolecule() const;
     
     PropertyMap propertyMap() const;
@@ -128,6 +134,8 @@ public:
                 CLJBoxes &boxes, CLJWorkspace &workspace);
     void remove(const MoleculeView &new_molecule,
                 CLJBoxes &boxes, CLJWorkspace &workspace);
+                
+    void removeAll(CLJBoxes &boxes, CLJWorkspace &workspace);
 
     void commit(CLJBoxes &boxes, CLJWorkspace &workspace);
     void revert(CLJBoxes &boxes, CLJWorkspace &workspace);

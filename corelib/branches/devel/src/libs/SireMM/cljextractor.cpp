@@ -205,6 +205,29 @@ bool CLJExtractor::operator!=(const CLJExtractor &other) const
     return not operator==(other);
 }
 
+const char* CLJExtractor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CLJExtractor>() );
+}
+
+const char* CLJExtractor::what() const
+{
+    return CLJExtractor::typeName();
+}
+
+QString CLJExtractor::toString() const
+{
+    if (this->isNull())
+        return QObject::tr("CLJExtractor::null");
+    
+    else if (this->needsCommitting())
+        return QObject::tr("CLJExtractor( %1 => %2 )")
+                .arg(oldMolecule().toString(), newMolecule().toString());
+
+    return QObject::tr( "CLJExtractor( %1 )")
+                .arg(newMolecule().toString());
+}
+
 /** Return whether or not this molecule has been changed during the move */
 bool CLJExtractor::changed() const
 {
@@ -232,7 +255,7 @@ bool CLJExtractor::isNull() const
 }
 
 /** Return the molecule as it exists before any changes were made */
-PartialMolecule CLJExtractor::oldmolecule() const
+PartialMolecule CLJExtractor::oldMolecule() const
 {
     if (selected_atoms.isNull())
         return mol;
@@ -343,6 +366,14 @@ void CLJExtractor::remove(const AtomSelection &new_selection,
         //we have selected no atoms, so cannot remove any more
         return;
     }
+}
+
+/** Remove all of the atoms in this view from the molecule */
+void CLJExtractor::removeAll(CLJBoxes &boxes, CLJWorkspace &workspace)
+{
+    AtomSelection select = newmol.selection();
+    select = select.selectNone();
+    this->updateSelection(select, boxes, workspace);
 }
 
 /** This function is used to update the molecule to use only the passed
@@ -618,8 +649,11 @@ void CLJExtractor::commit(CLJBoxes &boxes, CLJWorkspace &workspace)
     
     for (int i=0; i<cljidxs.count(); ++i)
     {
-        cljidxs[i] = workspace.commit(boxes, cljdeltas[i]);
-        cljdeltas[i] = CLJDelta();
+        if (not cljdeltas[i].isNull())
+        {
+            cljidxs[i] = workspace.commit(boxes, cljdeltas[i]);
+            cljdeltas[i] = CLJDelta();
+        }
     }
 }
 
@@ -650,8 +684,11 @@ void CLJExtractor::revert(CLJBoxes &boxes, CLJWorkspace &workspace)
     {
         for (int i=0; i<cljidxs.count(); ++i)
         {
-            cljidxs[i] = workspace.revert(boxes, cljdeltas[i]);
-            cljdeltas[i] = CLJDelta();
+            if (not cljdeltas[i].isNull())
+            {
+                cljidxs[i] = workspace.revert(boxes, cljdeltas[i]);
+                cljdeltas[i] = CLJDelta();
+            }
         }
     }
 }

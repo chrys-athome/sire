@@ -76,6 +76,11 @@ public:
     bool operator==(const CLJWorkspace &other) const;
     bool operator!=(const CLJWorkspace &other) const;
     
+    static const char* typeName();
+    const char* what() const;
+    
+    QString toString() const;
+    
     const CLJDelta& operator[](int i) const;
 
     const CLJDelta& at(int i) const;
@@ -84,10 +89,6 @@ public:
     
     int count() const;
     int size() const;
-    
-    static const char* typeName();
-    
-    const char* what() const;
     
     const CLJDelta* data() const;
     const CLJDelta* constData() const;
@@ -110,6 +111,13 @@ public:
 
     void clear();
 
+    bool needsAccepting() const;
+
+    void accept(CLJBoxes &boxes);
+    void mustRecalculateFromScratch(CLJBoxes &boxes);
+
+    bool recalculatingFromScratch() const;
+
 private:
     void returnToMemoryPool();
     void createFromMemoryPool();
@@ -118,6 +126,9 @@ private:
 
     /** Implicitly shared pointer to the data */
     boost::shared_ptr<detail::CLJWorkspaceData> d;
+    
+    /** Whether or not we are recalculating everything from scratch */
+    bool recalc_from_scratch;
 };
 
 }
