@@ -32,6 +32,8 @@
 #include "SireMaths/multidouble.h"
 #include "SireMaths/multiint.h"
 
+#include "SireUnits/units.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -44,6 +46,7 @@ using namespace SireMM;
 using namespace SireMaths;
 using namespace SireVol;
 using namespace SireBase;
+using namespace SireUnits;
 using namespace SireStream;
 
 /////////
@@ -169,6 +172,19 @@ const char* CLJShiftFunction::what() const
 CLJShiftFunction* CLJShiftFunction::clone() const
 {
     return new CLJShiftFunction(*this);
+}
+
+QString CLJShiftFunction::toString() const
+{
+    if (this->hasCutoff())
+        return QObject::tr("CLJShiftFunction( coulombCutoff() == %1 A, "
+                           "ljCutoff() == %2 A, space() == %3 )")
+            .arg(coulombCutoff().to(angstrom))
+            .arg(ljCutoff().to(angstrom))
+            .arg(space().toString());
+    else
+        return QObject::tr("CLJShiftFunction( no cutoff, space() == %1 )")
+                    .arg(space().toString());
 }
 
 /** Calculate the coulomb and LJ intermolecular energy of all of the atoms in 'atoms',

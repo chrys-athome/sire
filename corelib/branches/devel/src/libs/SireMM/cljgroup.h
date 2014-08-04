@@ -62,9 +62,8 @@ friend QDataStream& ::operator>>(QDataStream&, SireMM::CLJGroup&);
 
 public:
     CLJGroup();
-    CLJGroup(const QString &name);
-    CLJGroup(const QString &name, CLJAtoms::ID_SOURCE id_source);
-    CLJGroup(const QString &name, CLJAtoms::ID_SOURCE id_source, bool extract_by_residue);
+    CLJGroup(CLJAtoms::ID_SOURCE id_source);
+    CLJGroup(CLJAtoms::ID_SOURCE id_source, bool extract_by_residue);
 
     CLJGroup(const CLJGroup &other);
     
@@ -84,7 +83,11 @@ public:
     Length boxLength() const;
     void setBoxLength(Length box_length);
     
-    MoleculeGroup group() const;
+    bool isEmpty() const;
+    
+    Molecules molecules() const;
+    
+    PropertyMap mapForMolecule(MolNum molnum) const;
     
     void add(const MoleculeView &molview, const PropertyMap &map = PropertyMap());
     void add(const Molecules &molecules, const PropertyMap &map = PropertyMap());
@@ -114,10 +117,9 @@ public:
     
     void mustReallyRecalculateFromScratch();
     
+    bool recalculatingFromScratch() const;
+    
 private:
-    /** Molecule group containing all of the molecules in this group */
-    MoleculeGroup molgroup;
-
     /** All of the extractors that manage extracting the charge and LJ 
         properties from all of the molecules */
     QHash<MolNum,CLJExtractor> cljexts;
@@ -148,6 +150,18 @@ private:
 inline const CLJBoxes& CLJGroup::cljBoxes() const
 {
     return cljboxes;
+}
+
+/** Return whether or not we are recalculating the energy from scratch */
+inline bool CLJGroup::recalculatingFromScratch() const
+{
+    return cljworkspace.recalculatingFromScratch();
+}
+
+/** Return whether or not we don't have any molecules */
+inline bool CLJGroup::isEmpty() const
+{
+    return cljexts.isEmpty() and changed_mols.isEmpty();
 }
 
 #endif // SIRE_SKIP_INLINE_FUNCTIONS

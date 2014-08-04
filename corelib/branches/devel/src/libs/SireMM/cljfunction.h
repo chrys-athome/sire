@@ -77,7 +77,6 @@ namespace SireMM
 {
 
 class CLJBoxes;
-class CLJDelta;
 
 using SireUnits::Dimension::Length;
 
@@ -145,17 +144,12 @@ public:
     void operator()(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
                     double &cnrg, double &ljnrg) const;
 
-    void operator()(const CLJDelta &delta, const CLJBoxes &boxes,
-                    double &cnrg, double &ljnrg) const;
-
     boost::tuple<double,double> calculate(const CLJAtoms &atoms) const;
     boost::tuple<double,double> calculate(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                                           float min_distance=0) const;
 
     boost::tuple<double,double> calculate(const CLJBoxes &atoms) const;
     boost::tuple<double,double> calculate(const CLJBoxes &atoms0, const CLJBoxes &atoms1) const;
-
-    boost::tuple<double,double> calculate(const CLJDelta &delta, const CLJBoxes &boxes) const;
 
     QVector<float> calculate(const CLJAtoms &atoms, const GridInfo &gridinfo) const;
 
@@ -170,9 +164,6 @@ public:
                double &cnrg, double &ljnrg) const;
     
     void total(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
-               double &cnrg, double &ljnrg) const;
-    
-    void total(const CLJDelta &delta, const CLJBoxes &boxes,
                double &cnrg, double &ljnrg) const;
     
     double coulomb(const CLJAtoms &atoms) const;

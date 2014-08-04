@@ -456,6 +456,75 @@ CLJAtoms::CLJAtoms(const QVector<CLJAtom> &atoms)
              << (0.000001*ns) << "ms";*/
 }
 
+/** Construct from the passed array of CLJAtom atoms */
+CLJAtoms::CLJAtoms(const CLJAtom *atoms, int natoms)
+{
+    if (atoms == 0 or natoms <= 0)
+        return;
+    
+    /*QElapsedTimer t;
+    t.start();*/
+    
+    //vectorise all of the parameters
+    QVector<float> xf(natoms);
+    QVector<float> yf(natoms);
+    QVector<float> zf(natoms);
+    
+    QVector<float> cf(natoms);
+    QVector<float> sf(natoms);
+    QVector<float> ef(natoms);
+    
+    QVector<qint32> idf(natoms);
+    
+    float *xa = xf.data();
+    float *ya = yf.data();
+    float *za = zf.data();
+    
+    float *ca = cf.data();
+    float *sa = sf.data();
+    float *ea = ef.data();
+    
+    qint32 *ida = idf.data();
+    
+    int idx = 0;
+    
+    for (int i=0; i<natoms; ++i)
+    {
+        const CLJAtom &atm = atoms[i];
+    
+        if (atm.chg != 0 or atm.eps != 0)
+        {
+            xa[idx] = atm.x;
+            ya[idx] = atm.y;
+            za[idx] = atm.z;
+            ca[idx] = atm.chg;
+            sa[idx] = atm.sig;
+            ea[idx] = atm.eps;
+            ida[idx] = atm.idnum;
+            
+            idx += 1;
+        }
+    }
+    
+    if (idx > 0)
+    {
+        _x = MultiFloat::fromArray(xf.constData(), idx);
+        _y = MultiFloat::fromArray(yf.constData(), idx);
+        _z = MultiFloat::fromArray(zf.constData(), idx);
+        
+        _q = MultiFloat::fromArray(cf.constData(), idx);
+        _sig = MultiFloat::fromArray(sf.constData(), idx);
+        _eps = MultiFloat::fromArray(ef.constData(), idx);
+        
+        _id = MultiInt::fromArray(idf.constData(), idx);
+    }
+    
+    /*quint64 ns = t.nsecsElapsed();
+
+    qDebug() << "Converting" << (_q.count() * MultiFloat::count()) << "atoms took"
+             << (0.000001*ns) << "ms";*/
+}
+
 /** Construct from the passed list of CLJAtom atoms */
 CLJAtoms::CLJAtoms(const QList<CLJAtom> &atoms)
 {

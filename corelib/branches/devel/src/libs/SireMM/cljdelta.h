@@ -104,6 +104,8 @@ private:
     qint32 idnum;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the ID number of this delta. This can be used for book-keeping
     by the object that created this delta */
 inline qint32 CLJDelta::ID() const

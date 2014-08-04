@@ -32,6 +32,8 @@
 #include "SireMol/atomcharges.h"
 #include "SireMol/residue.h"
 #include "SireMM/atomljs.h"
+#include "SireMol/mover.hpp"
+#include "SireMol/editor.hpp"
 
 #include "SireError/errors.h"
 
@@ -55,7 +57,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJExtractor &cljex
         << cljext.selected_atoms << cljext.new_selected_atoms
         << cljext.props << cljext.cljidxs
         << cljext.cljdeltas
-        << cljext.id_source
+        << qint32(cljext.id_source)
         << cljext.extract_by_residue;
 
     return ds;
@@ -69,12 +71,16 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJExtractor &cljext)
     {
         SharedDataStream sds(ds);
         
+        qint32 id_source;
+        
         sds >> cljext.mol >> cljext.newmol
             >> cljext.selected_atoms >> cljext.new_selected_atoms
             >> cljext.props >> cljext.cljidxs
             >> cljext.cljdeltas
-            >> cljext.id_source
+            >> id_source
             >> cljext.extract_by_residue;
+        
+        cljext.id_source = CLJAtoms::ID_SOURCE(id_source);
     }
     else
         throw version_error(v, "1", r_cljext, CODELOC);

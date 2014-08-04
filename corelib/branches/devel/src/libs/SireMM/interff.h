@@ -32,9 +32,7 @@
 #include "cljcomponent.h"
 #include "cljgrid.h"
 #include "cljfunction.h"
-#include "cljworkspace.h"
-
-#include "SireBase/chunkedvector.hpp"
+#include "cljgroup.h"
 
 #include "SireFF/g1ff.h"
 
@@ -168,21 +166,14 @@ private:
 
     void _pvt_updateName();
 
-    /** The locations of the atoms of all of the molecules in the boxes,
-        indexed by the ID of their enclosing group in the forcefield */
-    SireBase::ChunkedVector< QVector<CLJBoxIndex> > atom_locs;
-
-    /** The workspace containing everything about the changes during a move */
-    CLJWorkspace wspace;
-
-    /** All of the boxed-up atoms */
-    CLJBoxes cljboxes;
+    /** The CLJGroup containing all of the extracted molecules */
+    CLJGroup cljgroup;
 
     /** Implicitly shared pointer to the (mostly) const data for this forcefield */
     QSharedDataPointer<detail::InterFFData> d;
     
-    /** Whether or not the changed atoms need re-boxing */
-    bool needs_reboxing;
+    /** Whether or not we need to 'accept' this move */
+    bool needs_accepting;
 };
 
 }

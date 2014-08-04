@@ -38,7 +38,7 @@ using namespace SireMol;
 using namespace SireStream;
 using namespace SireBase;
 
-static const RegisterMetaType<CLJGroup> r_group;
+static const RegisterMetaType<CLJGroup> r_group(NO_ROOT);
 
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJGroup &group)
 {
@@ -46,9 +46,9 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJGroup &group)
     
     SharedDataStream sds(ds);
     
-    sds << group.molgroup << group.cljexts << group.cljboxes
+    sds << group.cljexts << group.cljboxes
         << group.cljworkspace << group.changed_mols
-        << group.props << group.id_source << group.split_by_residue;
+        << group.props << qint32(group.id_source) << group.split_by_residue;
     
     return ds;
 }
@@ -61,9 +61,13 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJGroup &group)
     {
         SharedDataStream sds(ds);
         
-        sds >> group.molgroup >> group.cljexts >> group.cljboxes
+        qint32 id_source;
+        
+        sds >> group.cljexts >> group.cljboxes
             >> group.cljworkspace >> group.changed_mols
-            >> group.props >> group.id_source >> group.split_by_residue;
+            >> group.props >> id_source >> group.split_by_residue;
+        
+        group.id_source = CLJAtoms::ID_SOURCE(id_source);
     }
     else
         throw version_error(v, "1", r_group, CODELOC);
@@ -77,18 +81,11 @@ CLJGroup::CLJGroup() : id_source(CLJAtoms::USE_MOLNUM), split_by_residue(true)
     cljworkspace.mustRecalculateFromScratch(cljboxes);
 }
 
-/** Construct, supplying the name of the molecule group */
-CLJGroup::CLJGroup(const QString &name)
-         : molgroup(name), id_source(CLJAtoms::USE_MOLNUM), split_by_residue(true)
-{
-    cljworkspace.mustRecalculateFromScratch(cljboxes);
-}
-
 /** Construct, suppling the name of the molecule group and the source of the
     CLJAtoms ID_SOURCE property (e.g. USE_MOLNUM for intermolecular forcefields or
     USE_ATOMNUM for intramolecular forcefields) */
-CLJGroup::CLJGroup(const QString &name, CLJAtoms::ID_SOURCE ids)
-         : molgroup(name), id_source(ids), split_by_residue(true)
+CLJGroup::CLJGroup(CLJAtoms::ID_SOURCE ids)
+         : id_source(ids), split_by_residue(true)
 {
     cljworkspace.mustRecalculateFromScratch(cljboxes);
 }
@@ -98,15 +95,15 @@ CLJGroup::CLJGroup(const QString &name, CLJAtoms::ID_SOURCE ids)
     USE_ATOMNUM for intramolecular forcefields), and also specifying if we are going
     to split molecules by residue, or add them as single units (normally best to
     extract by residue unless you know that all molecules are going to be small) */
-CLJGroup::CLJGroup(const QString &name, CLJAtoms::ID_SOURCE ids, bool extract_by_residue)
-         : molgroup(name), id_source(ids), split_by_residue(extract_by_residue)
+CLJGroup::CLJGroup(CLJAtoms::ID_SOURCE ids, bool extract_by_residue)
+         : id_source(ids), split_by_residue(extract_by_residue)
 {
     cljworkspace.mustRecalculateFromScratch(cljboxes);
 }
 
 /** Copy constructor */
 CLJGroup::CLJGroup(const CLJGroup &other)
-         : molgroup(other.molgroup), cljexts(other.cljexts), cljboxes(other.cljboxes),
+         : cljexts(other.cljexts), cljboxes(other.cljboxes),
            cljworkspace(other.cljworkspace), changed_mols(other.changed_mols),
            props(other.props), id_source(other.id_source),
            split_by_residue(other.split_by_residue)
@@ -121,7 +118,6 @@ CLJGroup& CLJGroup::operator=(const CLJGroup &other)
 {
     if (this != &other)
     {
-        molgroup = other.molgroup;
         cljexts = other.cljexts;
         cljboxes = other.cljboxes;
         cljworkspace = other.cljworkspace;
@@ -138,7 +134,7 @@ CLJGroup& CLJGroup::operator=(const CLJGroup &other)
 bool CLJGroup::operator==(const CLJGroup &other) const
 {
     return (this == &other) or
-           (molgroup == other.molgroup and cljexts == other.cljexts and
+           (cljexts == other.cljexts and
             cljboxes == other.cljboxes and cljworkspace == other.cljworkspace and
             changed_mols == other.changed_mols and props == other.props and
             id_source == other.id_source and split_by_residue == other.split_by_residue);
@@ -162,8 +158,8 @@ const char* CLJGroup::what() const
 
 QString CLJGroup::toString() const
 {
-    return QObject::tr("CLJGroup( group() == %1, needsAccepting() == %2 )")
-                .arg(molgroup.toString()).arg(needsAccepting());
+    return QObject::tr("CLJGroup( needsAccepting() == %1 )")
+                .arg(needsAccepting());
 }
 
 /** Return the size of the box used by CLJBoxes to partition space */
@@ -182,10 +178,10 @@ void CLJGroup::setBoxLength(Length box_length)
     }
 }
 
-/** Return the molecule group containing all of the molecules in this group */
-MoleculeGroup CLJGroup::group() const
+/** Return the property map used for the molecule with number 'molnum' */
+PropertyMap CLJGroup::mapForMolecule(MolNum molnum) const
 {
-    return molgroup;
+    return props.value(molnum, PropertyMap());
 }
 
 /** Add the passed molecule to this group */
@@ -195,7 +191,7 @@ void CLJGroup::add(const MoleculeView &molview, const PropertyMap &map)
     
     bool must_add_map = false;
     
-    if (cljexts.contains(molnum) or changed_mols.contains(molnum) or molgroup.contains(molnum))
+    if (cljexts.contains(molnum) or changed_mols.contains(molnum))
     {
         //we already contain this molecule - we should check that there is no
         //change in property map
@@ -215,68 +211,39 @@ void CLJGroup::add(const MoleculeView &molview, const PropertyMap &map)
         must_add_map = true;
     }
 
-    //only add this molecule if it is not already in this view
-    if (not molgroup.contains(molview))
+    if (changed_mols.contains(molnum))
     {
-        if (molgroup[molnum].selection().contains(molview.selection()))
+        changed_mols[molnum].add(molview, cljboxes, cljworkspace);
+    }
+    else if (cljexts.contains(molnum))
+    {
+        if (cljworkspace.recalculatingFromScratch())
         {
-            //we already contain these atoms - nothing needs doing
-            return;
-        }
-    
-        PartialMolecule newmol;
-    
-        if (changed_mols.contains(molnum))
-        {
-            changed_mols[molnum].add(molview, cljboxes, cljworkspace);
-            newmol = changed_mols[molnum].newMolecule();
-        }
-        else if (cljexts.contains(molnum))
-        {
-            if (cljworkspace.recalculatingFromScratch())
-            {
-                cljexts[molnum].add(molview, cljboxes, cljworkspace);
-                newmol = cljexts[molnum].newMolecule();
-            }
-            else
-            {
-                CLJExtractor changed = cljexts.value(molnum);
-                changed.add(molview, cljboxes, cljworkspace);
-                changed_mols.insert(molnum, changed);
-                newmol = changed.newMolecule();
-            }
+            cljexts[molnum].add(molview, cljboxes, cljworkspace);
         }
         else
         {
-            CLJExtractor changed(molview, id_source, split_by_residue);
-            
-            if (cljworkspace.recalculatingFromScratch())
-            {
-                changed.commit(cljboxes, cljworkspace);
-                cljexts.insert(molnum, changed);
-            }
-            else
-            {
-                changed_mols.insert(molnum, changed);
-            }
-            
-            newmol = changed.newMolecule();
+            CLJExtractor changed = cljexts.value(molnum);
+            changed.add(molview, cljboxes, cljworkspace);
+            changed_mols.insert(molnum, changed);
         }
-
-        molgroup.remove(molnum);
-        molgroup.add(newmol);
-        
-        if (cljworkspace.recalculatingFromScratch())
-            molgroup.accept();
-        
-        if (must_add_map)
-            props.insert(molnum, map);
     }
     else
     {
-        //even if we are not adding the molecule, we must make sure that
-        //we have updated the version in this group to match 'molview'
-        this->update(molview);
+        CLJExtractor changed(molview, id_source, split_by_residue);
+        
+        if (cljworkspace.recalculatingFromScratch())
+        {
+            changed.commit(cljboxes, cljworkspace);
+            cljexts.insert(molnum, changed);
+        }
+        else
+        {
+            changed_mols.insert(molnum, changed);
+        }
+        
+        if (must_add_map)
+            props.insert(molnum, map);
     }
 }
 
@@ -312,7 +279,7 @@ void CLJGroup::update(const MoleculeView &molview)
 {
     MolNum molnum = molview.data().number();
     
-    if (molgroup.contains(molnum))
+    if (cljexts.contains(molnum) or changed_mols.contains(molnum))
     {
         //we must update this molecule
         if (changed_mols.contains(molnum))
@@ -332,11 +299,6 @@ void CLJGroup::update(const MoleculeView &molview)
                 changed_mols.insert(molnum,changed);
             }
         }
-        
-        molgroup.update(molview);
-        
-        if (cljworkspace.recalculatingFromScratch())
-            molgroup.accept();
     }
 }
 
@@ -373,52 +335,35 @@ void CLJGroup::remove(const MoleculeView &molview)
 {
     MolNum molnum = molview.data().number();
     
-    if (molgroup.contains(molnum))
-    {
-        if (not molgroup[molnum].selection().intersects(molview.selection()))
-        {
-            //we are not removing any atoms that are already in this group - we must
-            //however update the version of the molecule to match this version
-            this->update(molview);
-            return;
-        }
-
-        PartialMolecule newmol;
+    PartialMolecule newmol;
     
-        if (changed_mols.contains(molnum))
+    if (changed_mols.contains(molnum))
+    {
+        changed_mols[molnum].remove(molview, cljboxes, cljworkspace);
+        newmol = changed_mols[molnum].newMolecule();
+    }
+    else if (cljexts.contains(molnum))
+    {
+        if (cljworkspace.recalculatingFromScratch())
         {
-            changed_mols[molnum].remove(molview, cljboxes, cljworkspace);
-            newmol = changed_mols[molnum].newMolecule();
-        }
-        else if (cljexts.contains(molnum))
-        {
-            if (cljworkspace.recalculatingFromScratch())
-            {
-                cljexts[molnum].remove(molview, cljboxes, cljworkspace);
-                newmol = cljexts[molnum].newMolecule();
-            }
-            else
-            {
-                CLJExtractor changed = cljexts.value(molnum);
-                changed.remove(molview, cljboxes, cljworkspace);
-                changed_mols.insert(molnum, changed);
-                newmol = changed.newMolecule();
-            }
-        }
-        
-        molgroup.remove(molnum);
-
-        if (newmol.nAtoms() > 0)
-        {
-            molgroup.add(newmol);
+            cljexts[molnum].remove(molview, cljboxes, cljworkspace);
+            newmol = cljexts[molnum].newMolecule();
+            
+            if (newmol.selection().nSelected() == 0)
+                cljexts.remove(molnum);
         }
         else
         {
-            props.remove(molnum);
+            CLJExtractor changed = cljexts.value(molnum);
+            changed.remove(molview, cljboxes, cljworkspace);
+            changed_mols.insert(molnum, changed);
+            newmol = changed.newMolecule();
         }
-        
-        if (cljworkspace.recalculatingFromScratch())
-            molgroup.accept();
+    }
+
+    if (newmol.nAtoms() == 0)
+    {
+        props.remove(molnum);
     }
 }
 
@@ -460,6 +405,7 @@ void CLJGroup::remove(MolNum molnum)
         if (cljworkspace.recalculatingFromScratch())
         {
             cljexts[molnum].removeAll(cljboxes, cljworkspace);
+            cljexts.remove(molnum);
         }
         else
         {
@@ -467,11 +413,6 @@ void CLJGroup::remove(MolNum molnum)
             changed.removeAll(cljboxes, cljworkspace);
             changed_mols.insert(molnum, changed);
         }
-    }
-
-    if (molgroup.contains(molnum))
-    {
-        molgroup.remove(molnum);
     }
     
     if (props.contains(molnum))
@@ -483,7 +424,6 @@ void CLJGroup::remove(MolNum molnum)
 /** Remove all molecules from this group */
 void CLJGroup::removeAll()
 {
-    molgroup.removeAll();
     cljexts.clear();
     changed_mols.clear();
     cljboxes = CLJBoxes(cljboxes.length());
@@ -495,7 +435,7 @@ void CLJGroup::removeAll()
 /** Return whether or not this group needs to be accepted */
 bool CLJGroup::needsAccepting() const
 {
-    if (molgroup.needsAccepting() or cljworkspace.needsAccepting() or (not changed_mols.isEmpty()))
+    if (cljworkspace.needsAccepting() or (not changed_mols.isEmpty()))
         return true;
     
     else
@@ -543,7 +483,19 @@ void CLJGroup::accept()
     }
     
     changed_mols.clear();
-    molgroup.accept();
+
+    QMutableHashIterator<MolNum,CLJExtractor> it(cljexts);
+    
+    while (it.hasNext())
+    {
+        it.next();
+        
+        if (it.value().newMolecule().selection().selectedNone())
+        {
+            //this molecule has been removed
+            it.remove();
+        }
+    }
 }
 
 /** Tell this CLJGroup that atoms in a connected group have been
@@ -584,10 +536,19 @@ void CLJGroup::mustReallyRecalculateFromScratch()
     cljboxes = CLJBoxes(this->boxLength());
 
     changed_mols.clear();
-    cljexts.clear();
     
-    for (MoleculeGroup::const_iterator it = molgroup.constBegin();
-         it != molgroup.constEnd();
+    Molecules mols;
+    
+    for (QHash<MolNum,CLJExtractor>::const_iterator it = cljexts.constBegin();
+         it != cljexts.constEnd(); ++it)
+    {
+        mols.add( it.value().newMolecule() );
+    }
+
+    cljexts.clear();
+
+    for (MoleculeGroup::const_iterator it = mols.constBegin();
+         it != mols.constEnd();
          ++it)
     {
         CLJExtractor cljmol( it.value(), id_source, split_by_residue,

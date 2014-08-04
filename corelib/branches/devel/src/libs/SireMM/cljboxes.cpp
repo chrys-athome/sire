@@ -296,88 +296,6 @@ QVector<CLJBoxIndex> CLJBox::add(const CLJAtoms &atoms)
     return indicies;
 }
 
-/** Apply the delta that contains a change of atoms that are located entirely within
-    this box */
-QVector<CLJBoxIndex> CLJBox::apply(const CLJDelta &delta)
-{
-    if (not (delta.isSingleBox() and box_index.sameBox(delta.boxIndex())))
-    {
-        throw SireError::program_bug( QObject::tr(
-                "You can only apply a CLJDelta to a CLJBox if the change is contained "
-                "entirely within the box!"), CODELOC );
-    }
-    
-    const QVector<CLJBoxIndex> &old_idxs = delta.oldIndicies();
-    QVector<CLJBoxIndex> new_idxs = old_idxs;
-    
-    if (delta.newAtoms().count() != new_idxs.count())
-    {
-        new_idxs.resize(delta.newAtoms().count());
-    }
-    
-    QVarLengthArray<CLJBoxIndex> delta_gaps;
-    
-    for (int i=0; i<delta.newAtoms().count(); ++i)
-    {
-        const CLJAtom new_atom = delta.newAtoms()[i];
-        
-        if (new_atom.isDummy())
-        {
-            if (not old_idxs.constData()[i].isNull())
-            {
-                new_idxs[i] = CLJBoxIndex();
-                delta_gaps.push_back(old_idxs.constData()[i]);
-            }
-        }
-        else if (i >= old_idxs.count())
-        {
-            if (delta_gaps.isEmpty())
-            {
-                new_idxs[i] = this->add(new_atom);
-            }
-            else
-            {
-                CLJBoxIndex idx = delta_gaps.last();
-                delta_gaps.pop_back();
-                
-                atms.set(idx.index(), new_atom);
-                new_idxs[i] = idx;
-            }
-        }
-        else
-        {
-            if (not old_idxs.constData()[i].isNull())
-            {
-                atms.set(old_idxs.constData()[i].index(), new_atom);
-            }
-            else
-            {
-                if (delta_gaps.isEmpty())
-                {
-                    new_idxs[i] = this->add(new_atom);
-                }
-                else
-                {
-                    CLJBoxIndex idx = delta_gaps.last();
-                    delta_gaps.pop_back();
-                    
-                    atms.set(idx.index(), new_atom);
-                    new_idxs[i] = idx;
-                }
-            }
-        }
-    }
-
-    //remove any extra old atoms
-    while (not delta_gaps.isEmpty())
-    {
-        atms.makeDummy( delta_gaps.last().index() );
-        delta_gaps.pop_back();
-    }
-
-    return new_idxs;
-}
-
 /** Combine the atoms of the two passed boxes */
 CLJBox CLJBox::operator+(const CLJBox &other) const
 {
@@ -1384,6 +1302,13 @@ CLJAtoms CLJBoxes::atoms(const QVector<CLJBoxIndex> &idxs) const
     }
     
     return ret;
+}
+
+/** Return all of the atoms whose indicies are in 'idxs'. The atoms are returned
+    in the same order as they appear in 'idxs' */
+CLJAtoms CLJBoxes::get(const QVector<CLJBoxIndex> &idxs) const
+{
+    return this->atoms(idxs);
 }
 
 /** Add a set of CLJAtoms to the box, returning the indicies of each added atom */

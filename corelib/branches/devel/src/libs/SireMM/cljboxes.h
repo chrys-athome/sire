@@ -405,7 +405,7 @@ public:
 
     void remove(const QVector<CLJBoxIndex> &atoms);
     
-    CLJAtoms get(const QVector<CLJBoxIndex> &atoms);
+    CLJAtoms get(const QVector<CLJBoxIndex> &atoms) const;
     
     CLJAtoms take(const QVector<CLJBoxIndex> &atoms);
     
