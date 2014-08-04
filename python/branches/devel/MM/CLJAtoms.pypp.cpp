@@ -64,6 +64,7 @@ void register_CLJAtoms_class(){
             ;
         CLJAtoms_exposer.def( bp::init< QVector< SireMM::CLJAtom > const & >(( bp::arg("atoms") )) );
         CLJAtoms_exposer.def( bp::init< QList< SireMM::CLJAtom > const & >(( bp::arg("atoms") )) );
+        CLJAtoms_exposer.def( bp::init< SireMM::CLJAtom const *, int >(( bp::arg("atoms"), bp::arg("natoms") )) );
         CLJAtoms_exposer.def( bp::init< QVector< SireMaths::Vector > const &, QVector< SireUnits::Dimension::PhysUnit< 0, 0, 0, 1, 0, 0, 0 > > const &, QVector< SireMM::LJParameter > const &, bp::optional< qint32 > >(( bp::arg("coordinates"), bp::arg("charges"), bp::arg("ljparams"), bp::arg("atomid")=(int)(1) )) );
         CLJAtoms_exposer.def( bp::init< QVector< SireMaths::Vector > const &, QVector< SireUnits::Dimension::PhysUnit< 0, 0, 0, 1, 0, 0, 0 > > const &, QVector< SireMM::LJParameter > const &, QVector< int > const & >(( bp::arg("coordinates"), bp::arg("charges"), bp::arg("ljparams"), bp::arg("ids") )) );
         CLJAtoms_exposer.def( bp::init< SireMol::MoleculeView const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecule"), bp::arg("map")=SireBase::PropertyMap() )) );
@@ -145,6 +146,17 @@ void register_CLJAtoms_class(){
             CLJAtoms_exposer.def( 
                 "charges"
                 , charges_function_value );
+        
+        }
+        { //::SireMM::CLJAtoms::construct
+        
+            typedef ::SireMM::CLJAtoms ( *construct_function_type )( int );
+            construct_function_type construct_function_value( &::SireMM::CLJAtoms::construct );
+            
+            CLJAtoms_exposer.def( 
+                "construct"
+                , construct_function_value
+                , ( bp::arg("natoms") ) );
         
         }
         { //::SireMM::CLJAtoms::coordinates
@@ -524,6 +536,7 @@ void register_CLJAtoms_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        CLJAtoms_exposer.staticmethod( "construct" );
         CLJAtoms_exposer.staticmethod( "idOfDummy" );
         CLJAtoms_exposer.staticmethod( "typeName" );
         CLJAtoms_exposer.def( "__copy__", &__copy__);

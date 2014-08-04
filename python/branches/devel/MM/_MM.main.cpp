@@ -61,9 +61,13 @@
 
 #include "CLJDelta.pypp.hpp"
 
+#include "CLJExtractor.pypp.hpp"
+
 #include "CLJFunction.pypp.hpp"
 
 #include "CLJGrid.pypp.hpp"
+
+#include "CLJGroup.pypp.hpp"
 
 #include "CLJIntraFunction.pypp.hpp"
 
@@ -476,7 +480,11 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_CLJDelta_class();
 
+    register_CLJExtractor_class();
+
     register_CLJGrid_class();
+
+    register_CLJGroup_class();
 
     register_CLJIntraFunction_class();
 

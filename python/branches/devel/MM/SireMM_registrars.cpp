@@ -29,6 +29,7 @@
 #include "cljgrid.h"
 #include "intracljff.h"
 #include "interff.h"
+#include "cljextractor.h"
 #include "internalparameters.h"
 #include "internalcomponent.h"
 #include "restraintff.h"
@@ -44,6 +45,7 @@
 #include "internalff.h"
 #include "cljparam.h"
 #include "restraint.h"
+#include "cljgroup.h"
 #include "gridff2.h"
 
 #include "Helpers/objectregistry.hpp"
@@ -107,6 +109,7 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::IntraGroupCLJFFBase >();
     ObjectRegistry::registerConverterFor< SireMM::IntraGroupCLJFF >();
     ObjectRegistry::registerConverterFor< SireMM::InterFF >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJExtractor >();
     ObjectRegistry::registerConverterFor< SireMM::InternalParameters >();
     ObjectRegistry::registerConverterFor< SireMM::InternalParameters3D >();
     ObjectRegistry::registerConverterFor< SireMM::BondComponent >();
@@ -148,6 +151,7 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::CLJParams >();
     ObjectRegistry::registerConverterFor< SireMM::CLJParamsArray >();
     ObjectRegistry::registerConverterFor< SireMM::NullRestraint >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJGroup >();
     ObjectRegistry::registerConverterFor< SireMM::GridFF2 >();
 
 }

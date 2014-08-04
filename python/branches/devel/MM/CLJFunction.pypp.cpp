@@ -34,8 +34,6 @@ namespace bp = boost::python;
 
 #include "cljboxes.h"
 
-#include "cljdelta.h"
-
 #include "cljfunction.h"
 
 #include "switchingfunction.h"
@@ -109,17 +107,6 @@ void register_CLJFunction_class(){
                 "calculate"
                 , calculate_function_value
                 , ( bp::arg("atoms0"), bp::arg("atoms1") ) );
-        
-        }
-        { //::SireMM::CLJFunction::calculate
-        
-            typedef ::boost::tuples::tuple< double, double, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJFunction::*calculate_function_type )( ::SireMM::CLJDelta const &,::SireMM::CLJBoxes const & ) const;
-            calculate_function_type calculate_function_value( &::SireMM::CLJFunction::calculate );
-            
-            CLJFunction_exposer.def( 
-                "calculate"
-                , calculate_function_value
-                , ( bp::arg("delta"), bp::arg("boxes") ) );
         
         }
         { //::SireMM::CLJFunction::calculate
@@ -347,17 +334,6 @@ void register_CLJFunction_class(){
                 , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("cnrg"), bp::arg("ljnrg") ) );
         
         }
-        { //::SireMM::CLJFunction::operator()
-        
-            typedef void ( ::SireMM::CLJFunction::*__call___function_type )( ::SireMM::CLJDelta const &,::SireMM::CLJBoxes const &,double &,double & ) const;
-            __call___function_type __call___function_value( &::SireMM::CLJFunction::operator() );
-            
-            CLJFunction_exposer.def( 
-                "__call__"
-                , __call___function_value
-                , ( bp::arg("delta"), bp::arg("boxes"), bp::arg("cnrg"), bp::arg("ljnrg") ) );
-        
-        }
         { //::SireMM::CLJFunction::properties
         
             typedef ::SireBase::Properties ( ::SireMM::CLJFunction::*properties_function_type )(  ) const;
@@ -541,17 +517,6 @@ void register_CLJFunction_class(){
                 "total"
                 , total_function_value
                 , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("cnrg"), bp::arg("ljnrg") ) );
-        
-        }
-        { //::SireMM::CLJFunction::total
-        
-            typedef void ( ::SireMM::CLJFunction::*total_function_type )( ::SireMM::CLJDelta const &,::SireMM::CLJBoxes const &,double &,double & ) const;
-            total_function_type total_function_value( &::SireMM::CLJFunction::total );
-            
-            CLJFunction_exposer.def( 
-                "total"
-                , total_function_value
-                , ( bp::arg("delta"), bp::arg("boxes"), bp::arg("cnrg"), bp::arg("ljnrg") ) );
         
         }
         { //::SireMM::CLJFunction::typeName

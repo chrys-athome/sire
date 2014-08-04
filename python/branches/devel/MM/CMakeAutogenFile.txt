@@ -21,6 +21,7 @@ set ( PYPP_SOURCES
        LJNBPairs.pypp.cpp
        UreyBradleyParameterName.pypp.cpp
        InternalSymbolsBase.pypp.cpp
+       CLJGroup.pypp.cpp
        IntraGroupLJFFBase.pypp.cpp
        CLJNBPairs.pypp.cpp
        RestraintComponent.pypp.cpp
@@ -147,6 +148,7 @@ set ( PYPP_SOURCES
        ThreeAtomFunction.pypp.cpp
        StretchBendTorsionParameterName.pypp.cpp
        NullRestraint.pypp.cpp
+       CLJExtractor.pypp.cpp
        DihedralRestraint.pypp.cpp
        InterLJFF.pypp.cpp
        CLJComponent.pypp.cpp
