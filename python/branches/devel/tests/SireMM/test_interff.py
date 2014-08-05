@@ -15,6 +15,20 @@ from nose.tools import assert_almost_equal
 
 (mols, space) = Amber().readCrdTop("../io/waterbox.crd", "../io/waterbox.top")
 
+use_only_two_waters = True
+
+if use_only_two_waters:
+    newmols = MoleculeGroup("close")
+    newmols.add( mols[MolIdx(0)] )
+
+    for i in range(1, mols.nMolecules()):
+        if Vector.distance( mols[MolIdx(0)].evaluate().center(),
+                            mols[MolIdx(i)].evaluate().center() ) < 5:
+            newmols.add( mols[MolIdx(i)] )
+            break
+
+    mols = newmols
+
 grid_spacing = 0.5 * angstrom
 grid_buffer = 2.0 * angstrom
 
@@ -52,6 +66,7 @@ oldff.setShiftElectrostatics(True)
 newff = InterFF("newff")
 newff.setProperty("switchingFunction",switchfunc)
 newff.setProperty("space",space)
+newff.disableParallelCalculation()
 
 old_clusterff = InterCLJFF("old_clusterff")
 old_clusterff.setSwitchingFunction(grid_switchfunc)
@@ -238,6 +253,7 @@ def test_sim(verbose = False):
 
     moves = RigidBodyMC(mols)
     moves.setGenerator( RanGenerator( 42 ) )
+    moves.enableOptimisedMoves()
 
     t.start()
     moves.move(oldsys, nmoves, False)
@@ -271,7 +287,7 @@ def test_sim(verbose = False):
     newljnrg = newsys.energy( newff.components().lj() ).value()
 
     if verbose:
-        print("\nMoves: %s ms vs. %s ms" % (0.000001*move_oldns, 0.000001*move_newns))
+        print("\nMoves: old %s ms vs. new %s ms" % (0.000001*move_oldns, 0.000001*move_newns))
         print("OLD SYS:  %s  %s  %s  : %s ms" % (oldcnrg+oldljnrg,oldcnrg,oldljnrg,
                                                  0.000001*oldns))
         print("nAccepted() = %s, nRejected() = %s" % (old_naccepted, old_nrejected))
@@ -503,5 +519,5 @@ def test_grid_sim(verbose = False):
 if __name__ == "__main__":
     test_energy(True)
     test_sim(True)
-    test_grid_sim(True)
-    test_fixed_sim(True)
+    #test_grid_sim(True)
+    #test_fixed_sim(True)

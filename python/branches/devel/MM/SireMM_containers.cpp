@@ -69,4 +69,5 @@ void register_SireMM_containers()
     register_list< QVector<CLJBox> >();
     register_list< QVector<CLJBoxIndex> >();
 
+    register_tuple< boost::tuple<CLJAtoms,CLJAtoms,CLJAtoms> >();
 }

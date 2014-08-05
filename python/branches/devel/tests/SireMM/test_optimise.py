@@ -18,7 +18,7 @@ from nose.tools import assert_almost_equal
 grid_spacing = 0.5 * angstrom
 grid_buffer = 2.0 * angstrom
 
-nmoves = 5000
+nmoves = 50
 
 #space = Cartesian()
 
