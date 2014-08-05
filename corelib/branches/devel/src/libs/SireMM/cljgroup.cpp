@@ -568,6 +568,32 @@ void CLJGroup::updatedConnectedGroup()
     cljworkspace.removeSameIDAtoms(cljboxes);
 }
 
+/** Return whether or not the changes since the last time 'accept()'
+    was called all change parts of a molecule that all have the same
+    ID. If they do, then we only need to use 'changedAtoms()' in the
+    delta energy calculation as the changed atoms don't interact with
+    each other. Otherwise, we need 'mergeChanges()' to get the changedAtoms
+    together with oldAtoms and newAtoms, so that we can calculate the
+    change in energy within changedAtoms() itself as well */
+bool CLJGroup::isSingleIDChange() const
+{
+    if (cljworkspace.recalculatingFromScratch())
+        return false;
+    else
+        return cljworkspace.isSingleID();
+}
+
+/** Return a tuple of (changedAtoms(),oldAtoms(),newAtoms()). This is
+    needed if more than a single ID group has changed and thus we
+    need to calculate the change in interaction within changedAtoms */
+tuple<CLJAtoms,CLJAtoms,CLJAtoms> CLJGroup::mergeChanges() const
+{
+    if (cljworkspace.recalculatingFromScratch())
+        return tuple<CLJAtoms,CLJAtoms,CLJAtoms>();
+    else
+        return cljworkspace.merge();
+}
+
 /** Return the set of all atoms that have changed since the last 
     time 'accept()' was called. This will return an empty set if 
     the workspace was told to "mustRecalculateFromScratch()" */
@@ -576,7 +602,29 @@ CLJAtoms CLJGroup::changedAtoms() const
     if (cljworkspace.recalculatingFromScratch())
         return CLJAtoms();
     else
-        return cljworkspace.merge();
+        return cljworkspace.changedAtoms();
+}
+
+/** Return the set of all of the new atoms that have changed
+    since the last time 'accept()' was called. This, plus the 
+    negative of oldAtoms() will equal changedAtoms() */
+CLJAtoms CLJGroup::newAtoms() const
+{
+    if (cljworkspace.recalculatingFromScratch())
+        return CLJAtoms();
+    else
+        return cljworkspace.newAtoms();
+}
+
+/** Return the set of all of the old atoms that have changed
+    since the last time 'accept()' was called. The negative
+    of this plus newAtoms() will equal changedAtoms() */
+CLJAtoms CLJGroup::oldAtoms() const
+{
+    if (cljworkspace.recalculatingFromScratch())
+        return CLJAtoms();
+    else
+        return cljworkspace.oldAtoms();
 }
 
 /** Tell the group that calculations will be made completely from scratch,

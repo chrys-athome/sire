@@ -725,12 +725,39 @@ void InterFF::recalculateEnergy()
     
         //we can calculate using just the change in energy
         tuple<double,double> delta_nrgs(0,0);
+
+        CLJAtoms changed_atoms;
         
-        const CLJAtoms changed_atoms = cljgroup.changedAtoms();
-        
-        if (not d.constData()->fixed_only)
+        if (cljgroup.isSingleIDChange() or d.constData()->fixed_only)
         {
-            //calculate the change in energy using the molecules in changed_atoms
+            //the changed atoms don't interact with each other
+            changed_atoms = cljgroup.changedAtoms();
+        
+            if (not d.constData()->fixed_only)
+            {
+                //calculate the change in energy using the molecules in changed_atoms
+                if (d.constData()->parallel_calc)
+                {
+                    CLJCalculator calc(d.constData()->repro_sum);
+                    delta_nrgs = calc.calculate(*(d.constData()->cljfunc),
+                                                changed_atoms, cljgroup.cljBoxes());
+                }
+                else
+                {
+                    delta_nrgs = d.constData()->cljfunc.read().calculate(changed_atoms,
+                                                                         cljgroup.cljBoxes());
+                }
+            }
+        }
+        else
+        {
+            //the changed atoms interact with one another
+            tuple<CLJAtoms,CLJAtoms,CLJAtoms> changes = cljgroup.mergeChanges();
+            
+            changed_atoms = changes.get<0>();
+            const CLJAtoms &old_atoms = changes.get<1>();
+            const CLJAtoms &new_atoms = changes.get<2>();
+            
             if (d.constData()->parallel_calc)
             {
                 CLJCalculator calc(d.constData()->repro_sum);
@@ -742,6 +769,15 @@ void InterFF::recalculateEnergy()
                 delta_nrgs = d.constData()->cljfunc.read().calculate(changed_atoms,
                                                                      cljgroup.cljBoxes());
             }
+
+            //add on the change in interaction within changed_atoms
+            tuple<double,double> old_changes = d.constData()->cljfunc.read()
+                                                    .calculate(old_atoms);
+            tuple<double,double> new_changes = d.constData()->cljfunc.read()
+                                                    .calculate(new_atoms);
+            
+            delta_nrgs.get<0>() += new_changes.get<0>() - old_changes.get<0>();
+            delta_nrgs.get<1>() += new_changes.get<1>() - old_changes.get<1>();
         }
         
         if (not d.constData()->fixed_atoms.isEmpty())

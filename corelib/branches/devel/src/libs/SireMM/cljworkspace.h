@@ -33,6 +33,8 @@
 
 #include "SireMol/moleculeview.h"
 
+#include <boost/tuple/tuple.hpp>
+
 SIRE_BEGIN_HEADER
 
 namespace SireMM
@@ -49,6 +51,8 @@ QDataStream& operator>>(QDataStream&, SireMM::detail::CLJWorkspaceData&);
 
 namespace SireMM
 {
+
+using boost::tuple;
 
 /** This class provides a workspace in which to hold the details of the changes
     that occur in a CLJ forcefield during a Monte Carlo move. The class is optimised
@@ -107,7 +111,11 @@ public:
     
     bool isEmpty() const;
     
-    CLJAtoms merge() const;
+    tuple<CLJAtoms,CLJAtoms,CLJAtoms> merge() const;
+    
+    CLJAtoms changedAtoms() const;
+    CLJAtoms oldAtoms() const;
+    CLJAtoms newAtoms() const;
 
     void clear();
 

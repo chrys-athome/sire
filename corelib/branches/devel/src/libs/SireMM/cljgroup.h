@@ -111,7 +111,13 @@ public:
     void accept();
     
     const CLJBoxes& cljBoxes() const;
+    
     CLJAtoms changedAtoms() const;
+    CLJAtoms newAtoms() const;
+    CLJAtoms oldAtoms() const;
+    
+    bool isSingleIDChange() const;
+    tuple<CLJAtoms,CLJAtoms,CLJAtoms> mergeChanges() const;
     
     int nChangedMolecules() const;
     

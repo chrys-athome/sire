@@ -249,7 +249,7 @@ CLJAtoms CLJDelta::changedAtoms() const
     into a single changed atoms object. The resulting set of changed atoms will
     thus be able to be used to calculate energy changes from a lot of changed
     atoms */
-CLJAtoms CLJDelta::merge(const CLJDelta *deltas, int n)
+CLJAtoms CLJDelta::mergeChanged(const CLJDelta *deltas, int n)
 {
     if (n == 0)
         return CLJAtoms();
@@ -312,7 +312,207 @@ CLJAtoms CLJDelta::merge(const CLJDelta *deltas, int n)
     into a single changed atoms object. The resulting set of changed atoms will
     thus be able to be used to calculate energy changes from a lot of changed
     atoms */
-CLJAtoms CLJDelta::merge(const QVector<CLJDelta> &deltas)
+CLJAtoms CLJDelta::mergeChanged(const QVector<CLJDelta> &deltas)
+{
+    return mergeChanged(deltas.constData(), deltas.count());
+}
+
+/** Merge together the new atoms from the 'n' deltas from the passed array
+    into a single new atoms object. The resulting set of new atoms will
+    thus be able to be used to calculate energy changes from a lot of changed
+    atoms */
+CLJAtoms CLJDelta::mergeNew(const CLJDelta *deltas, int n)
+{
+    if (n == 0)
+        return CLJAtoms();
+    else
+    {
+        //work out which atoms have changed and which ones haven't...
+        QVarLengthArray<CLJAtom> changed_atoms;
+
+        for (int l=0; l<n; ++l)
+        {
+            CLJAtoms old_atoms = deltas[l].oldAtoms();
+            CLJAtoms new_atoms = deltas[l].newAtoms();
+        
+            for (int i=0; i<qMin(old_atoms.count(),new_atoms.count()); ++i)
+            {
+                CLJAtom old_atom = old_atoms.at(i);
+                CLJAtom new_atom = new_atoms.at(i);
+                
+                if (old_atom != new_atom)
+                {
+                    if (not new_atom.isDummy())
+                        changed_atoms.append( new_atom );
+                }
+            }
+            
+            if (new_atoms.count() > old_atoms.count())
+            {
+                for (int i=old_atoms.count(); i<new_atoms.count(); ++i)
+                {
+                    CLJAtom new_atom = new_atoms.at(i);
+                    
+                    if (not new_atom.isDummy())
+                        changed_atoms.append( new_atom );
+                }
+            }
+        }
+        
+        return CLJAtoms(changed_atoms.constData(), changed_atoms.count());
+    }
+}
+
+/** Merge together the new atoms from deltas
+    into a single new atoms object. The resulting set of new atoms will
+    thus be able to be used to calculate energy changes from a lot of changed
+    atoms */
+CLJAtoms CLJDelta::mergeNew(const QVector<CLJDelta> &deltas)
+{
+    return mergeNew(deltas.constData(), deltas.count());
+}
+
+/** Merge together the old atoms from the 'n' deltas from the passed array
+    into a single old atoms object. The resulting set of old atoms will
+    thus be able to be used to calculate energy changes from a lot of changed
+    atoms */
+CLJAtoms CLJDelta::mergeOld(const CLJDelta *deltas, int n)
+{
+    if (n == 0)
+        return CLJAtoms();
+    
+    else
+    {
+        //work out which atoms have changed and which ones haven't...
+        QVarLengthArray<CLJAtom> changed_atoms;
+
+        for (int l=0; l<n; ++l)
+        {
+            CLJAtoms old_atoms = deltas[l].oldAtoms();
+            CLJAtoms new_atoms = deltas[l].newAtoms();
+        
+            for (int i=0; i<qMin(old_atoms.count(),new_atoms.count()); ++i)
+            {
+                CLJAtom old_atom = old_atoms.at(i);
+                CLJAtom new_atom = new_atoms.at(i);
+                
+                if (old_atom != new_atom)
+                {
+                    if (not old_atom.isDummy())
+                        changed_atoms.append( old_atom );
+                }
+            }
+            
+            if (old_atoms.count() > new_atoms.count())
+            {
+                for (int i=new_atoms.count(); i<old_atoms.count(); ++i)
+                {
+                    CLJAtom old_atom = old_atoms.at(i);
+                    
+                    if (not old_atom.isDummy())
+                        changed_atoms.append( old_atom );
+                }
+            }
+        }
+        
+        return CLJAtoms(changed_atoms.constData(), changed_atoms.count());
+    }
+}
+
+/** Merge together the old atoms from deltas
+    into a single old atoms object. The resulting set of old atoms will
+    thus be able to be used to calculate energy changes from a lot of changed
+    atoms */
+CLJAtoms CLJDelta::mergeOld(const QVector<CLJDelta> &deltas)
+{
+    return mergeOld(deltas.constData(), deltas.count());
+}
+
+/** Merge together the changed atoms from the 'n' deltas from the passed array 
+    into a tuple of the changed, old and new atoms. The resulting set of changed atoms will
+    thus be able to be used to calculate energy changes from a lot of changed
+    atoms */
+tuple<CLJAtoms,CLJAtoms,CLJAtoms> CLJDelta::merge(const CLJDelta *deltas, int n)
+{
+    if (n == 0)
+        return CLJAtoms();
+    
+    else if (n == 1)
+        return deltas[0].changedAtoms();
+
+    else
+    {
+        //work out which atoms have changed and which ones haven't...
+        QVarLengthArray<CLJAtom> changed_atoms;
+        QVarLengthArray<CLJAtom> all_old_atoms;
+        QVarLengthArray<CLJAtom> all_new_atoms;
+
+        for (int l=0; l<n; ++l)
+        {
+            CLJAtoms old_atoms = deltas[l].oldAtoms();
+            CLJAtoms new_atoms = deltas[l].newAtoms();
+        
+            for (int i=0; i<qMin(old_atoms.count(),new_atoms.count()); ++i)
+            {
+                CLJAtom old_atom = old_atoms.at(i);
+                CLJAtom new_atom = new_atoms.at(i);
+                
+                if (old_atom != new_atom)
+                {
+                    if (not old_atom.isDummy())
+                    {
+                        changed_atoms.append( old_atom.negate() );
+                        all_old_atoms.append( old_atom );
+                    }
+                    
+                    if (not new_atom.isDummy())
+                    {
+                        changed_atoms.append( new_atom );
+                        all_new_atoms.append( new_atom );
+                    }
+                }
+            }
+            
+            if (old_atoms.count() > new_atoms.count())
+            {
+                for (int i=new_atoms.count(); i<old_atoms.count(); ++i)
+                {
+                    CLJAtom old_atom = old_atoms.at(i);
+                    
+                    if (not old_atom.isDummy())
+                    {
+                        changed_atoms.append( old_atom.negate() );
+                        all_old_atoms.append( old_atom );
+                    }
+                }
+            }
+            else if (new_atoms.count() > old_atoms.count())
+            {
+                for (int i=old_atoms.count(); i<new_atoms.count(); ++i)
+                {
+                    CLJAtom new_atom = new_atoms.at(i);
+                    
+                    if (not new_atom.isDummy())
+                    {
+                        changed_atoms.append( new_atom );
+                        all_new_atoms.append( new_atom );
+                    }
+                }
+            }
+        }
+        
+        return tuple<CLJAtoms,CLJAtoms,CLJAtoms>(
+                        CLJAtoms(changed_atoms.constData(), changed_atoms.count()),
+                        CLJAtoms(all_old_atoms.constData(), all_old_atoms.count()),
+                        CLJAtoms(all_new_atoms.constData(), all_new_atoms.count()) );
+    }
+}
+
+/** Merge together the changed atoms from the passed deltas
+    into a tuple of changed, old and new atoms. The resulting set of changed atoms will
+    thus be able to be used to calculate energy changes from a lot of changed
+    atoms */
+tuple<CLJAtoms,CLJAtoms,CLJAtoms> CLJDelta::merge(const QVector<CLJDelta> &deltas)
 {
     return merge(deltas.constData(), deltas.count());
 }

@@ -32,6 +32,8 @@
 #include "cljatoms.h"
 #include "cljboxes.h"
 
+#include <boost/tuple/tuple.hpp>
+
 SIRE_BEGIN_HEADER
 
 namespace SireMM
@@ -46,6 +48,8 @@ namespace SireMM
 {
 
 class CLJBoxes;
+
+using boost::tuple;
 
 /** This class is used to hold the change in coordinates etc. of a set of atoms caused
     by e.g. a Monte Carlo move
@@ -89,8 +93,17 @@ public:
     
     void assertIdenticalTo(const CLJDelta &other) const;
     
-    static CLJAtoms merge(const CLJDelta *deltas, int count);
-    static CLJAtoms merge(const QVector<CLJDelta> &deltas);
+    static CLJAtoms mergeChanged(const CLJDelta *deltas, int count);
+    static CLJAtoms mergeChanged(const QVector<CLJDelta> &deltas);
+
+    static CLJAtoms mergeNew(const CLJDelta *deltas, int count);
+    static CLJAtoms mergeNew(const QVector<CLJDelta> &deltas);
+
+    static CLJAtoms mergeOld(const CLJDelta *deltas, int count);
+    static CLJAtoms mergeOld(const QVector<CLJDelta> &deltas);
+    
+    static tuple<CLJAtoms,CLJAtoms,CLJAtoms> merge(const CLJDelta *deltas, int count);
+    static tuple<CLJAtoms,CLJAtoms,CLJAtoms> merge(const QVector<CLJDelta> &deltas);
     
 private:
     /** The old atoms */

@@ -28,7 +28,6 @@
 
 #include "cljworkspace.h"
 
-
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
@@ -99,20 +98,48 @@ namespace detail
             
             for (int i=0; i<deltas.count(); ++i)
             {
-                const QVector<MultiInt> &ids = deltas.constData()[i].changedAtoms().ID();
-                
-                for (int j=0; j<ids.count(); ++j)
+                //loop over the old and new atoms
                 {
-                    for (int k=0; k<MultiInt::count(); ++k)
+                    const QVector<MultiInt> &ids = deltas.constData()[i].newAtoms().ID();
+                
+                    for (int j=0; j<ids.count(); ++j)
                     {
-                        if (ids[j][k] != dummy_id)
+                        for (int k=0; k<MultiInt::count(); ++k)
                         {
-                            if (id == dummy_id)
-                                id = ids[j][k];
+                            if (ids[j][k] != dummy_id)
+                            {
+                                if (id == dummy_id)
+                                    id = ids[j][k];
 
-                            else if (id != ids[j][k])
-                                //we found an atom with a different ID
-                                return false;
+                                else if (id != ids[j][k])
+                                {
+                                    //we found an atom with a different ID
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //loop over the old and new atoms
+                {
+                    const QVector<MultiInt> &ids = deltas.constData()[i].oldAtoms().ID();
+                
+                    for (int j=0; j<ids.count(); ++j)
+                    {
+                        for (int k=0; k<MultiInt::count(); ++k)
+                        {
+                            if (ids[j][k] != dummy_id)
+                            {
+                                if (id == dummy_id)
+                                    id = ids[j][k];
+
+                                else if (id != ids[j][k])
+                                {
+                                    //we found an atom with a different ID
+                                    return false;
+                                }
+                            }
                         }
                     }
                 }
@@ -291,7 +318,17 @@ namespace detail
             }
         }
         
-        CLJAtoms merge() const
+        tuple<CLJAtoms,CLJAtoms,CLJAtoms> merge() const
+        {
+            if (deltas.isEmpty())
+                return CLJAtoms();
+            else
+            {
+                return CLJDelta::merge(deltas.constData(), deltas.count());
+            }
+        }
+        
+        CLJAtoms changedAtoms() const
         {
             if (deltas.isEmpty())
                 return CLJAtoms();
@@ -299,7 +336,27 @@ namespace detail
                 return deltas.constData()[0].changedAtoms();
             else
             {
-                return CLJDelta::merge(deltas.constData(), deltas.count());
+                return CLJDelta::mergeChanged(deltas.constData(), deltas.count());
+            }
+        }
+
+        CLJAtoms newAtoms() const
+        {
+            if (deltas.isEmpty())
+                return CLJAtoms();
+            else
+            {
+                return CLJDelta::mergeNew(deltas.constData(), deltas.count());
+            }
+        }
+
+        CLJAtoms oldAtoms() const
+        {
+            if (deltas.isEmpty())
+                return CLJAtoms();
+            else
+            {
+                return CLJDelta::mergeOld(deltas.constData(), deltas.count());
             }
         }
         
@@ -474,25 +531,29 @@ void CLJWorkspace::createFromMemoryPool()
 {
     if (d.get() != 0)
     {
-        d->clear();
-    }
-    else
-    {
-        if (cache.hasLocalData())
+        if (d.unique())
         {
-            if (not cache.localData()->isEmpty())
-            {
-                d = cache.localData()->back();
-                cache.localData()->pop_back();
-                //qDebug() << "TAKEN" << quintptr(d.get()) << "FROM THE POOL" << d->isEmpty();
-                return;
-            }
+            d->clear();
+            return;
         }
-        
-        //no available value in the pool
-        //qDebug() << "CREATING AS NOT AVAILABLE IN THE POOL";
-        d.reset( new SireMM::detail::CLJWorkspaceData() );
+        else
+            d.reset();
     }
+    
+    if (cache.hasLocalData())
+    {
+        if (not cache.localData()->isEmpty())
+        {
+            d = cache.localData()->back();
+            cache.localData()->pop_back();
+            //qDebug() << "TAKEN" << quintptr(d.get()) << "FROM THE POOL" << d->isEmpty();
+            return;
+        }
+    }
+    
+    //no available value in the pool
+    //qDebug() << "CREATING AS NOT AVAILABLE IN THE POOL";
+    d.reset( new SireMM::detail::CLJWorkspaceData() );
 }
 
 /** Constructor */
@@ -775,12 +836,44 @@ bool CLJWorkspace::isEmpty() const
         return d->isEmpty();
 }
 
-/** Merge all of the deltas together into a single set of CLJAtoms that
+/** Merge all of the deltas together into a single set of changed CLJAtoms that
     can be used for the change in energy calculation */
-CLJAtoms CLJWorkspace::merge() const
+CLJAtoms CLJWorkspace::changedAtoms() const
 {
     if (isEmpty())
         return CLJAtoms();
+    else
+        return d->changedAtoms();
+}
+
+/** Merge all of the old atoms from the deltas together into a single 
+    set of old CLJAtoms that can be used for the change in energy calculation */
+CLJAtoms CLJWorkspace::oldAtoms() const
+{
+    if (isEmpty())
+        return CLJAtoms();
+    else
+        return d->oldAtoms();
+}
+
+/** Merge all of the new atoms from the deltas together into a single
+    set of new CLJAtoms that can be used for the change in energy calculation */
+CLJAtoms CLJWorkspace::newAtoms() const
+{
+    if (isEmpty())
+        return CLJAtoms();
+    else
+        return d->newAtoms();
+}
+
+/** Merge all of the deltas together to return the tuple of the 
+    changed, old and new atoms. This is equivalent to calling
+    changedAtoms(), oldAtoms() and newAtoms() and placing them
+    into a tuple. This is more efficient than three separate calls */
+tuple<CLJAtoms,CLJAtoms,CLJAtoms> CLJWorkspace::merge() const
+{
+    if (isEmpty())
+        return tuple<CLJAtoms,CLJAtoms,CLJAtoms>();
     else
         return d->merge();
 }
