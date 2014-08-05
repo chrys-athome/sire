@@ -148,17 +148,6 @@ void register_CLJAtoms_class(){
                 , charges_function_value );
         
         }
-        { //::SireMM::CLJAtoms::construct
-        
-            typedef ::SireMM::CLJAtoms ( *construct_function_type )( int );
-            construct_function_type construct_function_value( &::SireMM::CLJAtoms::construct );
-            
-            CLJAtoms_exposer.def( 
-                "construct"
-                , construct_function_value
-                , ( bp::arg("natoms") ) );
-        
-        }
         { //::SireMM::CLJAtoms::coordinates
         
             typedef ::QVector< SireMaths::Vector > ( ::SireMM::CLJAtoms::*coordinates_function_type )(  ) const;
@@ -536,7 +525,6 @@ void register_CLJAtoms_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        CLJAtoms_exposer.staticmethod( "construct" );
         CLJAtoms_exposer.staticmethod( "idOfDummy" );
         CLJAtoms_exposer.staticmethod( "typeName" );
         CLJAtoms_exposer.def( "__copy__", &__copy__);
