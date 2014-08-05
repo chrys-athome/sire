@@ -162,6 +162,29 @@ QString CLJGroup::toString() const
                 .arg(needsAccepting());
 }
 
+/** Return the current version of all of the molecules in this group */
+Molecules CLJGroup::molecules() const
+{
+    Molecules mols;
+
+    for (QHash<MolNum,CLJExtractor>::const_iterator it = changed_mols.constBegin();
+         it != changed_mols.constEnd(); ++it)
+    {
+        mols.add( it.value().newMolecule() );
+    }
+    
+    for (QHash<MolNum,CLJExtractor>::const_iterator it = cljexts.constBegin();
+         it != cljexts.constEnd(); ++it)
+    {
+        if (not mols.contains(it.key()))
+        {
+            mols.add( it.value().newMolecule() );
+        }
+    }
+    
+    return mols;
+}
+
 /** Return the size of the box used by CLJBoxes to partition space */
 Length CLJGroup::boxLength() const
 {

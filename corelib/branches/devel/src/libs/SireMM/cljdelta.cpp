@@ -307,3 +307,12 @@ CLJAtoms CLJDelta::merge(const CLJDelta *deltas, int n)
         return CLJAtoms(changed_atoms.constData(), changed_atoms.count());
     }
 }
+
+/** Merge together the changed atoms from the passed deltas
+    into a single changed atoms object. The resulting set of changed atoms will
+    thus be able to be used to calculate energy changes from a lot of changed
+    atoms */
+CLJAtoms CLJDelta::merge(const QVector<CLJDelta> &deltas)
+{
+    return merge(deltas.constData(), deltas.count());
+}

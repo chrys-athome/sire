@@ -200,8 +200,6 @@ public:
 
     ~CLJAtoms();
     
-    static CLJAtoms construct(int natoms);
-    
     void reconstruct(const MoleculeView &molecule,
                      const PropertyMap &map = PropertyMap());
     
