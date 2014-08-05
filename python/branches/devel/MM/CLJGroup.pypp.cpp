@@ -126,6 +126,16 @@ void register_CLJGroup_class(){
                 , isEmpty_function_value );
         
         }
+        { //::SireMM::CLJGroup::isSingleIDChange
+        
+            typedef bool ( ::SireMM::CLJGroup::*isSingleIDChange_function_type )(  ) const;
+            isSingleIDChange_function_type isSingleIDChange_function_value( &::SireMM::CLJGroup::isSingleIDChange );
+            
+            CLJGroup_exposer.def( 
+                "isSingleIDChange"
+                , isSingleIDChange_function_value );
+        
+        }
         { //::SireMM::CLJGroup::mapForMolecule
         
             typedef ::SireBase::PropertyMap ( ::SireMM::CLJGroup::*mapForMolecule_function_type )( ::SireMol::MolNum ) const;
@@ -135,6 +145,16 @@ void register_CLJGroup_class(){
                 "mapForMolecule"
                 , mapForMolecule_function_value
                 , ( bp::arg("molnum") ) );
+        
+        }
+        { //::SireMM::CLJGroup::mergeChanges
+        
+            typedef ::boost::tuples::tuple< SireMM::CLJAtoms, SireMM::CLJAtoms, SireMM::CLJAtoms, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJGroup::*mergeChanges_function_type )(  ) const;
+            mergeChanges_function_type mergeChanges_function_value( &::SireMM::CLJGroup::mergeChanges );
+            
+            CLJGroup_exposer.def( 
+                "mergeChanges"
+                , mergeChanges_function_value );
         
         }
         { //::SireMM::CLJGroup::molecules
@@ -185,6 +205,26 @@ void register_CLJGroup_class(){
             CLJGroup_exposer.def( 
                 "needsAccepting"
                 , needsAccepting_function_value );
+        
+        }
+        { //::SireMM::CLJGroup::newAtoms
+        
+            typedef ::SireMM::CLJAtoms ( ::SireMM::CLJGroup::*newAtoms_function_type )(  ) const;
+            newAtoms_function_type newAtoms_function_value( &::SireMM::CLJGroup::newAtoms );
+            
+            CLJGroup_exposer.def( 
+                "newAtoms"
+                , newAtoms_function_value );
+        
+        }
+        { //::SireMM::CLJGroup::oldAtoms
+        
+            typedef ::SireMM::CLJAtoms ( ::SireMM::CLJGroup::*oldAtoms_function_type )(  ) const;
+            oldAtoms_function_type oldAtoms_function_value( &::SireMM::CLJGroup::oldAtoms );
+            
+            CLJGroup_exposer.def( 
+                "oldAtoms"
+                , oldAtoms_function_value );
         
         }
         CLJGroup_exposer.def( bp::self != bp::self );

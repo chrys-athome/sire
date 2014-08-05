@@ -86,7 +86,7 @@ void register_CLJDelta_class(){
         }
         { //::SireMM::CLJDelta::merge
         
-            typedef ::SireMM::CLJAtoms ( *merge_function_type )( ::SireMM::CLJDelta const *,int );
+            typedef ::boost::tuples::tuple< SireMM::CLJAtoms, SireMM::CLJAtoms, SireMM::CLJAtoms, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( *merge_function_type )( ::SireMM::CLJDelta const *,int );
             merge_function_type merge_function_value( &::SireMM::CLJDelta::merge );
             
             CLJDelta_exposer.def( 
@@ -97,12 +97,78 @@ void register_CLJDelta_class(){
         }
         { //::SireMM::CLJDelta::merge
         
-            typedef ::SireMM::CLJAtoms ( *merge_function_type )( ::QVector< SireMM::CLJDelta > const & );
+            typedef ::boost::tuples::tuple< SireMM::CLJAtoms, SireMM::CLJAtoms, SireMM::CLJAtoms, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( *merge_function_type )( ::QVector< SireMM::CLJDelta > const & );
             merge_function_type merge_function_value( &::SireMM::CLJDelta::merge );
             
             CLJDelta_exposer.def( 
                 "merge"
                 , merge_function_value
+                , ( bp::arg("deltas") ) );
+        
+        }
+        { //::SireMM::CLJDelta::mergeChanged
+        
+            typedef ::SireMM::CLJAtoms ( *mergeChanged_function_type )( ::SireMM::CLJDelta const *,int );
+            mergeChanged_function_type mergeChanged_function_value( &::SireMM::CLJDelta::mergeChanged );
+            
+            CLJDelta_exposer.def( 
+                "mergeChanged"
+                , mergeChanged_function_value
+                , ( bp::arg("deltas"), bp::arg("count") ) );
+        
+        }
+        { //::SireMM::CLJDelta::mergeChanged
+        
+            typedef ::SireMM::CLJAtoms ( *mergeChanged_function_type )( ::QVector< SireMM::CLJDelta > const & );
+            mergeChanged_function_type mergeChanged_function_value( &::SireMM::CLJDelta::mergeChanged );
+            
+            CLJDelta_exposer.def( 
+                "mergeChanged"
+                , mergeChanged_function_value
+                , ( bp::arg("deltas") ) );
+        
+        }
+        { //::SireMM::CLJDelta::mergeNew
+        
+            typedef ::SireMM::CLJAtoms ( *mergeNew_function_type )( ::SireMM::CLJDelta const *,int );
+            mergeNew_function_type mergeNew_function_value( &::SireMM::CLJDelta::mergeNew );
+            
+            CLJDelta_exposer.def( 
+                "mergeNew"
+                , mergeNew_function_value
+                , ( bp::arg("deltas"), bp::arg("count") ) );
+        
+        }
+        { //::SireMM::CLJDelta::mergeNew
+        
+            typedef ::SireMM::CLJAtoms ( *mergeNew_function_type )( ::QVector< SireMM::CLJDelta > const & );
+            mergeNew_function_type mergeNew_function_value( &::SireMM::CLJDelta::mergeNew );
+            
+            CLJDelta_exposer.def( 
+                "mergeNew"
+                , mergeNew_function_value
+                , ( bp::arg("deltas") ) );
+        
+        }
+        { //::SireMM::CLJDelta::mergeOld
+        
+            typedef ::SireMM::CLJAtoms ( *mergeOld_function_type )( ::SireMM::CLJDelta const *,int );
+            mergeOld_function_type mergeOld_function_value( &::SireMM::CLJDelta::mergeOld );
+            
+            CLJDelta_exposer.def( 
+                "mergeOld"
+                , mergeOld_function_value
+                , ( bp::arg("deltas"), bp::arg("count") ) );
+        
+        }
+        { //::SireMM::CLJDelta::mergeOld
+        
+            typedef ::SireMM::CLJAtoms ( *mergeOld_function_type )( ::QVector< SireMM::CLJDelta > const & );
+            mergeOld_function_type mergeOld_function_value( &::SireMM::CLJDelta::mergeOld );
+            
+            CLJDelta_exposer.def( 
+                "mergeOld"
+                , mergeOld_function_value
                 , ( bp::arg("deltas") ) );
         
         }
@@ -171,6 +237,9 @@ void register_CLJDelta_class(){
         
         }
         CLJDelta_exposer.staticmethod( "merge" );
+        CLJDelta_exposer.staticmethod( "mergeChanged" );
+        CLJDelta_exposer.staticmethod( "mergeNew" );
+        CLJDelta_exposer.staticmethod( "mergeOld" );
         CLJDelta_exposer.staticmethod( "typeName" );
         CLJDelta_exposer.def( "__copy__", &__copy__);
         CLJDelta_exposer.def( "__deepcopy__", &__copy__);

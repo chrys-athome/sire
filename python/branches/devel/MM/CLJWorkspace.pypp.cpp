@@ -59,6 +59,16 @@ void register_CLJWorkspace_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireMM::CLJWorkspace::changedAtoms
+        
+            typedef ::SireMM::CLJAtoms ( ::SireMM::CLJWorkspace::*changedAtoms_function_type )(  ) const;
+            changedAtoms_function_type changedAtoms_function_value( &::SireMM::CLJWorkspace::changedAtoms );
+            
+            CLJWorkspace_exposer.def( 
+                "changedAtoms"
+                , changedAtoms_function_value );
+        
+        }
         { //::SireMM::CLJWorkspace::clear
         
             typedef void ( ::SireMM::CLJWorkspace::*clear_function_type )(  ) ;
@@ -123,7 +133,7 @@ void register_CLJWorkspace_class(){
         }
         { //::SireMM::CLJWorkspace::merge
         
-            typedef ::SireMM::CLJAtoms ( ::SireMM::CLJWorkspace::*merge_function_type )(  ) const;
+            typedef ::boost::tuples::tuple< SireMM::CLJAtoms, SireMM::CLJAtoms, SireMM::CLJAtoms, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJWorkspace::*merge_function_type )(  ) const;
             merge_function_type merge_function_value( &::SireMM::CLJWorkspace::merge );
             
             CLJWorkspace_exposer.def( 
@@ -160,6 +170,26 @@ void register_CLJWorkspace_class(){
             CLJWorkspace_exposer.def( 
                 "needsAccepting"
                 , needsAccepting_function_value );
+        
+        }
+        { //::SireMM::CLJWorkspace::newAtoms
+        
+            typedef ::SireMM::CLJAtoms ( ::SireMM::CLJWorkspace::*newAtoms_function_type )(  ) const;
+            newAtoms_function_type newAtoms_function_value( &::SireMM::CLJWorkspace::newAtoms );
+            
+            CLJWorkspace_exposer.def( 
+                "newAtoms"
+                , newAtoms_function_value );
+        
+        }
+        { //::SireMM::CLJWorkspace::oldAtoms
+        
+            typedef ::SireMM::CLJAtoms ( ::SireMM::CLJWorkspace::*oldAtoms_function_type )(  ) const;
+            oldAtoms_function_type oldAtoms_function_value( &::SireMM::CLJWorkspace::oldAtoms );
+            
+            CLJWorkspace_exposer.def( 
+                "oldAtoms"
+                , oldAtoms_function_value );
         
         }
         CLJWorkspace_exposer.def( bp::self != bp::self );
