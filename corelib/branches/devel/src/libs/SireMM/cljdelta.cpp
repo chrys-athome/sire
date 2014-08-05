@@ -436,10 +436,6 @@ tuple<CLJAtoms,CLJAtoms,CLJAtoms> CLJDelta::merge(const CLJDelta *deltas, int n)
 {
     if (n == 0)
         return CLJAtoms();
-    
-    else if (n == 1)
-        return deltas[0].changedAtoms();
-
     else
     {
         //work out which atoms have changed and which ones haven't...

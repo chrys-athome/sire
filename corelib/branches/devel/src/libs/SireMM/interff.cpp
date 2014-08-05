@@ -633,7 +633,7 @@ void InterFF::regridAtoms()
 /** Signal that this forcefield must now be recalculated from scratch */
 void InterFF::mustNowRecalculateFromScratch()
 {
-    if (cljgroup.needsAccepting())
+    if (needs_accepting or cljgroup.needsAccepting())
         cljgroup.accept();
     
     cljgroup.mustRecalculateFromScratch();
@@ -654,19 +654,12 @@ void InterFF::mustNowReallyRecalculateFromScratch()
 /** Recalculate the energy of this forcefield */
 void InterFF::recalculateEnergy()
 {
-    if (needs_accepting)
-    {
-        //the delta from the last energy calculation has not yet been accepted
-        qDebug() << "WARNING: RECALC ENERGY BEFORE LAST MOVE WAS ACCEPTED";
-        cljgroup.accept();
-        cljgroup.mustRecalculateFromScratch();
-    }
-
     if (cljgroup.recalculatingFromScratch())
     {
         //calculate the energy from first principles and regenerate the
         //grid if needed
         cljgroup.accept();
+        needs_accepting = false;
         
         if (cljgroup.isEmpty())
         {
@@ -704,25 +697,9 @@ void InterFF::recalculateEnergy()
         
         d.constData()->cljcomps.setEnergy(*this, CLJEnergy(nrgs.get<0>(), nrgs.get<1>()));
         this->setClean();
-        needs_accepting = false;
     }
     else if (cljgroup.needsAccepting())
     {
-        qDebug() << "cljgroup.needsAccepting() - delta energy calculation";
-        bool debug_energies = true;
-        
-        if (debug_energies)
-        {
-            CLJGroup test_group(cljgroup);
-            test_group.accept();
-        
-            CLJCalculator calc(d.constData()->repro_sum);
-            tuple<double,double> nrgs = calc.calculate(*(d.constData()->cljfunc),
-                                                       test_group.cljBoxes());
-            
-            qDebug() << "TEST ENERGY" << nrgs.get<0>() << nrgs.get<1>();
-        }
-    
         //we can calculate using just the change in energy
         tuple<double,double> delta_nrgs(0,0);
 
@@ -791,27 +768,6 @@ void InterFF::recalculateEnergy()
         
         d.constData()->cljcomps.changeEnergy(*this,
                                     CLJEnergy(delta_nrgs.get<0>(), delta_nrgs.get<1>()));
-        
-        //we don't accept the CLJGroup here in case the move is rejected.
-        //We must set a flag to say that this group needs to be accepted before
-        //we can continue
-        needs_accepting = true;
-
-        if (debug_energies)
-        {
-            this->accept();
-            needs_accepting = false;
-
-            qDebug() << "CALC ENERGY" << this->energy(this->components().coulomb()).value()
-                     << this->energy(this->components().lj()).value();
-
-            CLJCalculator calc(d.constData()->repro_sum);
-            
-            tuple<double,double> nrgs = calc.calculate(*(d.constData()->cljfunc),
-                                                       cljgroup.cljBoxes());
-            
-            qDebug() << "RECL ENERGY" << nrgs.get<0>() << nrgs.get<1>();
-        }
     }
     else
     {
@@ -852,51 +808,33 @@ void InterFF::recalculateEnergy()
 /** Function called to add a molecule to this forcefield */
 void InterFF::_pvt_added(const SireMol::PartialMolecule &mol, const SireBase::PropertyMap &map)
 {
-    if (needs_accepting)
-    {
-        cljgroup.accept();
-        needs_accepting = false;
-    }
-
     cljgroup.add(mol, map);
+    needs_accepting = not cljgroup.recalculatingFromScratch();
+
     setDirty();
 }
 
 /** Function called to remove a molecule from this forcefield */
 void InterFF::_pvt_removed(const SireMol::PartialMolecule &mol)
 {
-    if (needs_accepting)
-    {
-        cljgroup.accept();
-        needs_accepting = false;
-    }
-
     cljgroup.remove(mol);
+    needs_accepting = not cljgroup.recalculatingFromScratch();
+    
     setDirty();
 }
 
 /** Function called to indicate that the passed molecule has changed */
 void InterFF::_pvt_changed(const Molecule &molecule, bool auto_update)
 {
-    if (needs_accepting)
-    {
-        cljgroup.accept();
-        needs_accepting = false;
-    }
-    
     cljgroup.update(molecule);
+    needs_accepting = not cljgroup.recalculatingFromScratch();
+
     setDirty();
 }
 
 /** Function called to indicate that a list of molecules in this forcefield have changed */
 void InterFF::_pvt_changed(const QList<SireMol::Molecule> &molecules, bool auto_update)
 {
-    if (needs_accepting)
-    {
-        cljgroup.accept();
-        needs_accepting = false;
-    }
-
     foreach (const Molecule &molecule, molecules)
     {
         cljgroup.update(molecule);
@@ -908,12 +846,6 @@ void InterFF::_pvt_changed(const QList<SireMol::Molecule> &molecules, bool auto_
 /** Function called to indicate that all molecules in this forcefield have been removed */
 void InterFF::_pvt_removedAll()
 {
-    if (needs_accepting)
-    {
-        cljgroup.accept();
-        needs_accepting = false;
-    }
-
     cljgroup.removeAll();
     this->setDirty();
 }
