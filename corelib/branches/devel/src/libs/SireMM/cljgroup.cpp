@@ -479,33 +479,34 @@ bool CLJGroup::needsAccepting() const
     added to the CLJBoxes boxes */
 void CLJGroup::accept()
 {
-    if (not needsAccepting())
-        return;
-
     if (cljworkspace.recalculatingFromScratch())
     {
-        cljworkspace.accept(cljboxes);
-        
         for (QHash<MolNum,CLJExtractor>::iterator it = cljexts.begin();
              it != cljexts.end();
              ++it)
         {
             it.value().commit(cljboxes, cljworkspace);
         }
-    }
-    else
-    {
-        cljworkspace.accept(cljboxes);
 
+        cljworkspace.accept(cljboxes);
+        changed_mols.clear();
+    }
+    else if (not changed_mols.isEmpty())
+    {
         for (QHash<MolNum,CLJExtractor>::iterator it = changed_mols.begin();
              it != changed_mols.end(); ++it)
         {
             it.value().commit(cljboxes, cljworkspace);
             cljexts[it.key()] = it.value();
         }
+
+        cljworkspace.accept(cljboxes);
+        changed_mols.clear();
     }
-    
-    changed_mols.clear();
+    else if (cljworkspace.needsAccepting())
+    {
+        cljworkspace.accept(cljboxes);
+    }
 
     QMutableHashIterator<MolNum,CLJExtractor> it(cljexts);
     

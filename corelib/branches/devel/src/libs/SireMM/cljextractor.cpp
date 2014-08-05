@@ -98,13 +98,11 @@ CLJExtractor::CLJExtractor() : id_source(CLJAtoms::USE_MOLNUM), extract_by_resid
 CLJExtractor::CLJExtractor(const MoleculeView &molecule, const PropertyMap &map)
              : props(map), id_source(CLJAtoms::USE_MOLNUM), extract_by_residue(true)
 {
-    mol = molecule.molecule();
-    newmol = mol;
+    newmol = molecule.molecule();
 
-    if (not mol.selectedAll())
+    if (not molecule.selectedAll())
     {
-        selected_atoms = mol.selection();
-        new_selected_atoms = selected_atoms;
+        new_selected_atoms = molecule.selection();
     }
 }
 
@@ -116,13 +114,11 @@ CLJExtractor::CLJExtractor(const MoleculeView &molecule, bool split_by_residue,
                            const PropertyMap &map)
              : props(map), id_source(CLJAtoms::USE_MOLNUM), extract_by_residue(split_by_residue)
 {
-    mol = molecule.molecule();
-    newmol = mol;
+    newmol = molecule.molecule();
 
-    if (not mol.selectedAll())
+    if (not molecule.selectedAll())
     {
-        selected_atoms = mol.selection();
-        new_selected_atoms = selected_atoms;
+        new_selected_atoms = molecule.selection();
     }
 }
 
@@ -133,11 +129,11 @@ CLJExtractor::CLJExtractor(const MoleculeView &molecule, CLJAtoms::ID_SOURCE id,
                            const PropertyMap &map)
              : props(map), id_source(id), extract_by_residue(true)
 {
-    mol = molecule.molecule();
+    newmol = molecule.molecule();
     
-    if (not mol.selectedAll())
+    if (not molecule.selectedAll())
     {
-        selected_atoms = mol.selection();
+        new_selected_atoms = molecule.selection();
     }
 }
 
@@ -149,13 +145,11 @@ CLJExtractor::CLJExtractor(const MoleculeView &molecule, CLJAtoms::ID_SOURCE id,
                            bool split_by_residue, const PropertyMap &map)
              : props(map), id_source(id), extract_by_residue(split_by_residue)
 {
-    mol = molecule.molecule();
-    newmol = mol;
+    newmol = molecule.molecule();
     
-    if (not mol.selectedAll())
+    if (not molecule.selectedAll())
     {
-        selected_atoms = mol.selection();
-        new_selected_atoms = selected_atoms;
+        new_selected_atoms = molecule.selection();
     }
 }
 
@@ -257,7 +251,7 @@ bool CLJExtractor::isEmpty() const
 /** Return whether or not this extractor is null (contains no molecule information) */
 bool CLJExtractor::isNull() const
 {
-    return mol.isNull();
+    return newmol.isNull() and mol.isNull();
 }
 
 /** Return the molecule as it exists before any changes were made */
@@ -652,8 +646,25 @@ void CLJExtractor::commit(CLJBoxes &boxes, CLJWorkspace &workspace)
 {
     mol = newmol;
     selected_atoms = new_selected_atoms;
+
+    //have we added any atoms to the CLJBoxes yet?
+    bool needs_to_be_added = true;
     
     for (int i=0; i<cljidxs.count(); ++i)
+    {
+        if (not cljidxs.at(i).isEmpty())
+        {
+            needs_to_be_added = false;
+            break;
+        }
+    }
+
+    if (needs_to_be_added)
+    {
+        this->initialise(boxes, workspace);
+    }
+    
+    for (int i=0; i<cljdeltas.count(); ++i)
     {
         if (not cljdeltas[i].isNull())
         {
@@ -669,26 +680,26 @@ void CLJExtractor::revert(CLJBoxes &boxes, CLJWorkspace &workspace)
     newmol = mol;
     new_selected_atoms = selected_atoms;
     
-    //have we only initialised this extractor?
-    bool initialised_only = true;
+    //have we added any atoms to the CLJBoxes yet?
+    bool needs_to_be_added = true;
     
     for (int i=0; i<cljidxs.count(); ++i)
     {
         if (not cljidxs.at(i).isEmpty())
         {
-            initialised_only = false;
+            needs_to_be_added = false;
             break;
         }
     }
     
-    if (initialised_only)
+    if (needs_to_be_added)
     {
         cljidxs.clear();
         cljdeltas.clear();
     }
     else
     {
-        for (int i=0; i<cljidxs.count(); ++i)
+        for (int i=0; i<cljdeltas.count(); ++i)
         {
             if (not cljdeltas[i].isNull())
             {
@@ -702,10 +713,29 @@ void CLJExtractor::revert(CLJBoxes &boxes, CLJWorkspace &workspace)
 /** Initialise this molecule with the passed CLJBoxes / CLJWorkspace */
 void CLJExtractor::initialise(CLJBoxes &boxes, CLJWorkspace &workspace)
 {
-    if (not cljidxs.isEmpty())
+    //have we added any atoms to the CLJBoxes yet?
+    bool needs_to_be_added = true;
+    
+    for (int i=0; i<cljidxs.count(); ++i)
+    {
+        if (not cljidxs.at(i).isEmpty())
+        {
+            needs_to_be_added = false;
+            break;
+        }
+    }
+    
+    if (not needs_to_be_added)
         throw SireError::program_bug( QObject::tr(
                 "It is a mistake to initialise a CLJExtractor more than once!"),
                     CODELOC );
+    
+    if (newmol.nAtoms() == 0 or
+            (new_selected_atoms.selectedNone() and (not new_selected_atoms.isNull())))
+    {
+        //there are no atoms selected, so nothing to add
+        return;
+    }
     
     if (extract_by_residue)
     {

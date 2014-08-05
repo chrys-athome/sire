@@ -671,9 +671,9 @@ QString CLJBoxIndex::toString() const
     of length 1 / inv_box_length */
 CLJBoxIndex CLJBoxIndex::createWithInverseBoxLength(float x, float y, float z, float inv_length)
 {
-    int i = std::floor(x * inv_length + 0.5);
-    int j = std::floor(y * inv_length + 0.5);
-    int k = std::floor(z * inv_length + 0.5);
+    int i = int( std::floor(x * inv_length + 0.5) );  //std::floor will round the floating point
+    int j = int( std::floor(y * inv_length + 0.5) );  //down to the nearest integer. Adding 0.5
+    int k = int( std::floor(z * inv_length + 0.5) );  //ensures we instead round to nearest int
     
     const int min16 = std::numeric_limits<qint16>::min();
     const int max16 = std::numeric_limits<qint16>::max();
@@ -1655,7 +1655,10 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
             const float half_box_z = 0.5 * box_z;
 
             const float box_cutoff = cutoff.value() / boxes.box_length;
-            const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
+            
+            //std::ceil rounds up to the neares integer, so we round up the cutoff to
+            //the nearest integer to allow us to use integer distance math
+            const int int_box_cutoff2 = int( std::ceil( box_cutoff*box_cutoff ) );
             
             for (quint32 i=0; i<nboxes; ++i)
             {
@@ -1720,7 +1723,10 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
         else
         {
             const float box_cutoff = cutoff.value() / boxes.box_length;
-            const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
+
+            //std::ceil rounds up to the neares integer, so we round up the cutoff to
+            //the nearest integer to allow us to use integer distance math
+            const int int_box_cutoff2 = int( std::ceil( box_cutoff*box_cutoff ) );
             
             for (quint32 i=0; i<nboxes; ++i)
             {
@@ -1838,6 +1844,9 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
         if (space.isPeriodic())
         {
             const float box_cutoff = cutoff.value() / boxes0.box_length;
+
+            //std::ceil rounds up to the neares integer, so we round up the cutoff to
+            //the nearest integer to allow us to use integer distance math
             const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
             
             Vector dimensions = space.asA<PeriodicBox>().dimensions();
@@ -1913,6 +1922,9 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
         else
         {
             const float box_cutoff = cutoff.value() / boxes0.box_length;
+
+            //std::ceil rounds up to the neares integer, so we round up the cutoff to
+            //the nearest integer to allow us to use integer distance math
             const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
             
             for (quint32 i=0; i<n0; ++i)

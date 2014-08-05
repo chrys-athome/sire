@@ -657,6 +657,7 @@ void InterFF::recalculateEnergy()
     if (needs_accepting)
     {
         //the delta from the last energy calculation has not yet been accepted
+        qDebug() << "WARNING: RECALC ENERGY BEFORE LAST MOVE WAS ACCEPTED";
         cljgroup.accept();
         cljgroup.mustRecalculateFromScratch();
     }
@@ -681,9 +682,6 @@ void InterFF::recalculateEnergy()
         
         if (not d.constData()->fixed_only)
         {
-            QElapsedTimer t;
-            t.start();
-            
             if (d.constData()->parallel_calc)
             {
                 CLJCalculator calc(d->repro_sum);
@@ -693,10 +691,6 @@ void InterFF::recalculateEnergy()
             {
                 nrgs = d.constData()->cljfunc->calculate(cljgroup.cljBoxes());
             }
-            
-            qint64 ns = t.nsecsElapsed();
-            
-            qDebug() << "Calculating total energy took" << (0.000001*ns) << "ms";
         }
 
         if (not d.constData()->fixed_atoms.isEmpty())
@@ -716,6 +710,21 @@ void InterFF::recalculateEnergy()
     }
     else if (cljgroup.needsAccepting())
     {
+        qDebug() << "cljgroup.needsAccepting() - delta energy calculation";
+        bool debug_energies = true;
+        
+        if (debug_energies)
+        {
+            CLJGroup test_group(cljgroup);
+            test_group.accept();
+        
+            CLJCalculator calc(d.constData()->repro_sum);
+            tuple<double,double> nrgs = calc.calculate(*(d.constData()->cljfunc),
+                                                       test_group.cljBoxes());
+            
+            qDebug() << "TEST ENERGY" << nrgs.get<0>() << nrgs.get<1>();
+        }
+    
         //we can calculate using just the change in energy
         tuple<double,double> delta_nrgs(0,0);
         
@@ -748,13 +757,27 @@ void InterFF::recalculateEnergy()
         
         d.constData()->cljcomps.changeEnergy(*this,
                                     CLJEnergy(delta_nrgs.get<0>(), delta_nrgs.get<1>()));
-
-        this->setClean();
         
         //we don't accept the CLJGroup here in case the move is rejected.
         //We must set a flag to say that this group needs to be accepted before
         //we can continue
         needs_accepting = true;
+
+        if (debug_energies)
+        {
+            this->accept();
+            needs_accepting = false;
+
+            qDebug() << "CALC ENERGY" << this->energy(this->components().coulomb()).value()
+                     << this->energy(this->components().lj()).value();
+
+            CLJCalculator calc(d.constData()->repro_sum);
+            
+            tuple<double,double> nrgs = calc.calculate(*(d.constData()->cljfunc),
+                                                       cljgroup.cljBoxes());
+            
+            qDebug() << "RECL ENERGY" << nrgs.get<0>() << nrgs.get<1>();
+        }
     }
     else
     {
@@ -828,7 +851,6 @@ void InterFF::_pvt_changed(const Molecule &molecule, bool auto_update)
     }
     
     cljgroup.update(molecule);
-    
     setDirty();
 }
 

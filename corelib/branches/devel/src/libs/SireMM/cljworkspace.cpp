@@ -134,6 +134,25 @@ namespace detail
         void mustRecalculateFromScratch(CLJBoxes &boxes)
         {
             removeSameIDAtoms(boxes);
+            deltas.clear();
+        }
+
+        void accept(CLJBoxes &boxes)
+        {
+            removeSameIDAtoms(boxes);
+            
+            for (int i=0; i<deltas.count(); ++i)
+            {
+                if (not deltas.at(i).isNull())
+                {
+                    throw SireError::program_bug( QObject::tr(
+                            "Accepting a CLJWorkspace when some of the deltas have not "
+                            "been applied: %1 %2. This is likely to cause an energy leak!")
+                                .arg(i).arg(deltas.at(i).toString()), CODELOC );
+                }
+            }
+            
+            deltas.clear();
         }
 
         CLJDelta push(CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
@@ -726,7 +745,7 @@ void CLJWorkspace::accept(CLJBoxes &boxes)
     if (d.get() != 0)
     {
         detach();
-        d->mustRecalculateFromScratch(boxes);
+        d->accept(boxes);
         returnToMemoryPool();
     }
 }
