@@ -201,6 +201,16 @@ void register_CLJAtoms_class(){
                 , ( bp::arg("i") ) );
         
         }
+        { //::SireMM::CLJAtoms::hasDummies
+        
+            typedef bool ( ::SireMM::CLJAtoms::*hasDummies_function_type )(  ) const;
+            hasDummies_function_type hasDummies_function_value( &::SireMM::CLJAtoms::hasDummies );
+            
+            CLJAtoms_exposer.def( 
+                "hasDummies"
+                , hasDummies_function_value );
+        
+        }
         { //::SireMM::CLJAtoms::idOfDummy
         
             typedef ::SireMaths::MultiInt ( *idOfDummy_function_type )(  );
@@ -271,6 +281,16 @@ void register_CLJAtoms_class(){
             CLJAtoms_exposer.def( 
                 "nAtoms"
                 , nAtoms_function_value );
+        
+        }
+        { //::SireMM::CLJAtoms::nDummies
+        
+            typedef int ( ::SireMM::CLJAtoms::*nDummies_function_type )(  ) const;
+            nDummies_function_type nDummies_function_value( &::SireMM::CLJAtoms::nDummies );
+            
+            CLJAtoms_exposer.def( 
+                "nDummies"
+                , nDummies_function_value );
         
         }
         { //::SireMM::CLJAtoms::nPadded

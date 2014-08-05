@@ -95,6 +95,16 @@ void register_CLJGroup_class(){
                 , changedAtoms_function_value );
         
         }
+        { //::SireMM::CLJGroup::changedMolecules
+        
+            typedef ::SireMol::Molecules ( ::SireMM::CLJGroup::*changedMolecules_function_type )(  ) const;
+            changedMolecules_function_type changedMolecules_function_value( &::SireMM::CLJGroup::changedMolecules );
+            
+            CLJGroup_exposer.def( 
+                "changedMolecules"
+                , changedMolecules_function_value );
+        
+        }
         { //::SireMM::CLJGroup::cljBoxes
         
             typedef ::SireMM::CLJBoxes const & ( ::SireMM::CLJGroup::*cljBoxes_function_type )(  ) const;
@@ -155,6 +165,16 @@ void register_CLJGroup_class(){
             CLJGroup_exposer.def( 
                 "mustRecalculateFromScratch"
                 , mustRecalculateFromScratch_function_value );
+        
+        }
+        { //::SireMM::CLJGroup::nChangedMolecules
+        
+            typedef int ( ::SireMM::CLJGroup::*nChangedMolecules_function_type )(  ) const;
+            nChangedMolecules_function_type nChangedMolecules_function_value( &::SireMM::CLJGroup::nChangedMolecules );
+            
+            CLJGroup_exposer.def( 
+                "nChangedMolecules"
+                , nChangedMolecules_function_value );
         
         }
         { //::SireMM::CLJGroup::needsAccepting
