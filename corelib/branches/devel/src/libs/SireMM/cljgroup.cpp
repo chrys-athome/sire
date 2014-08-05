@@ -455,6 +455,43 @@ void CLJGroup::removeAll()
     props.clear();
 }
 
+/** Return the number of molecules that have changed since the 
+    last time this CLJGroup was accepted */
+int CLJGroup::nChangedMolecules() const
+{
+    if (recalculatingFromScratch())
+    {
+        //assume that everything has changed
+        return cljexts.count();
+    }
+    else
+    {
+        return changed_mols.count();
+    }
+}
+
+/** Return all of the molecules that have changed since the last time
+    this CLJGroup was accepted */
+Molecules CLJGroup::changedMolecules() const
+{
+    if (recalculatingFromScratch())
+    {
+        return this->molecules();
+    }
+    else
+    {
+        Molecules mols;
+        
+        for (QHash<MolNum,CLJExtractor>::const_iterator it = changed_mols.constBegin();
+             it != changed_mols.constEnd(); ++it)
+        {
+            mols.add( it.value().newMolecule() );
+        }
+        
+        return mols;
+    }
+}
+
 /** Return whether or not this group needs to be accepted */
 bool CLJGroup::needsAccepting() const
 {

@@ -672,7 +672,6 @@ void InterFF::recalculateEnergy()
         {
             //no atoms
             d.constData()->cljcomps.setEnergy(*this, CLJEnergy(0,0));
-            cljgroup.accept();
             this->setClean();
             return;
         }
@@ -704,7 +703,6 @@ void InterFF::recalculateEnergy()
         }
         
         d.constData()->cljcomps.setEnergy(*this, CLJEnergy(nrgs.get<0>(), nrgs.get<1>()));
-        cljgroup.accept();
         this->setClean();
         needs_accepting = false;
     }

@@ -345,7 +345,7 @@ bool CLJBox::operator!=(const CLJBox &other) const
     number of actual atoms (i.e. not including padding or dummy atoms) */
 int CLJBox::nAtoms() const
 {
-    return atms.count() - gaps.count();
+    return atms.nAtoms();
 }
 
 /** Return the count of the box - this includes dummy atoms and padding */

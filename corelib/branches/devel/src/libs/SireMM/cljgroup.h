@@ -113,6 +113,10 @@ public:
     const CLJBoxes& cljBoxes() const;
     CLJAtoms changedAtoms() const;
     
+    int nChangedMolecules() const;
+    
+    Molecules changedMolecules() const;
+    
     void mustRecalculateFromScratch();
     
     void mustReallyRecalculateFromScratch();

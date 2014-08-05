@@ -2074,9 +2074,51 @@ QVector<qint32> CLJAtoms::IDs() const
     return ids;
 }
 
-/** Return the number of atoms in this set. This is equal to 
-    count() - nPadded() */
+/** Return whether or not there are any dummy (or padded) atoms in this set */
+bool CLJAtoms::hasDummies() const
+{
+    if (this->isEmpty())
+        return false;
+    
+    for (int i=0; i<_id.count(); ++i)
+    {
+        const MultiInt &idf = _id[i];
+        
+        for (int j=0; j<MultiInt::count(); ++j)
+        {
+            if (idf[j] == id_of_dummy)
+                return true;
+        }
+    }
+    
+    return false;
+}
+
+/** Return the number of dummy (or padded) atoms in this set */
+int CLJAtoms::nDummies() const
+{
+    if (this->isEmpty())
+        return 0;
+    
+    int ndummies = 0;
+    
+    for (int i=0; i<_id.count(); ++i)
+    {
+        const MultiInt &idf = _id[i];
+        
+        for (int j=0; j<MultiInt::count(); ++j)
+        {
+            if (idf[j] == id_of_dummy)
+                ndummies += 1;
+        }
+    }
+    
+    return ndummies;
+}
+
+/** Return the number of non-dummy atoms in this set. This is equal to
+    count() - nDummies() */
 int CLJAtoms::nAtoms() const
 {
-    return count() - nPadded();
+    return count() - nDummies();
 }

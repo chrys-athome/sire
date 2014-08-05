@@ -283,6 +283,9 @@ public:
     bool isPadded() const;
     int nPadded() const;
 
+    bool hasDummies() const;
+    int nDummies() const;
+
 private:
     void constructFrom(const MoleculeGroup &molecules,
                        const ID_SOURCE id_source, const PropertyMap &map);

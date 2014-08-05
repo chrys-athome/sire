@@ -733,7 +733,7 @@ bool CLJWorkspace::needsAccepting() const
         return d->needsAccepting();
     }
     else
-        return false;
+        return recalc_from_scratch;
 }
 
 /** Accept this workspace - this clears the 'recalc_from_scratch' flag as it
