@@ -268,6 +268,28 @@ void register_CLJBoxes_class(){
                 , ( bp::arg("space"), bp::arg("boxes0"), bp::arg("boxes1"), bp::arg("cutoff") ) );
         
         }
+        { //::SireMM::CLJBoxes::getDistances
+        
+            typedef ::QVector< SireMM::CLJBoxDistance > ( *getDistances_function_type )( ::SireVol::Space const &,::SireMM::CLJAtoms const &,::SireMM::CLJBoxes const & );
+            getDistances_function_type getDistances_function_value( &::SireMM::CLJBoxes::getDistances );
+            
+            CLJBoxes_exposer.def( 
+                "getDistances"
+                , getDistances_function_value
+                , ( bp::arg("space"), bp::arg("atoms0"), bp::arg("boxes1") ) );
+        
+        }
+        { //::SireMM::CLJBoxes::getDistances
+        
+            typedef ::QVector< SireMM::CLJBoxDistance > ( *getDistances_function_type )( ::SireVol::Space const &,::SireMM::CLJAtoms const &,::SireMM::CLJBoxes const &,::SireUnits::Dimension::Length );
+            getDistances_function_type getDistances_function_value( &::SireMM::CLJBoxes::getDistances );
+            
+            CLJBoxes_exposer.def( 
+                "getDistances"
+                , getDistances_function_value
+                , ( bp::arg("space"), bp::arg("atoms0"), bp::arg("boxes1"), bp::arg("cutoff") ) );
+        
+        }
         { //::SireMM::CLJBoxes::getitem
         
             typedef ::SireMM::CLJAtom ( ::SireMM::CLJBoxes::*getitem_function_type )( ::SireMM::CLJBoxIndex const & ) const;

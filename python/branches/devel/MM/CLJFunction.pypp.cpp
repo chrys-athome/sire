@@ -111,6 +111,17 @@ void register_CLJFunction_class(){
         }
         { //::SireMM::CLJFunction::calculate
         
+            typedef ::boost::tuples::tuple< double, double, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireMM::CLJFunction::*calculate_function_type )( ::SireMM::CLJAtoms const &,::SireMM::CLJBoxes const & ) const;
+            calculate_function_type calculate_function_value( &::SireMM::CLJFunction::calculate );
+            
+            CLJFunction_exposer.def( 
+                "calculate"
+                , calculate_function_value
+                , ( bp::arg("atoms0"), bp::arg("atoms1") ) );
+        
+        }
+        { //::SireMM::CLJFunction::calculate
+        
             typedef ::QVector< float > ( ::SireMM::CLJFunction::*calculate_function_type )( ::SireMM::CLJAtoms const &,::SireVol::GridInfo const & ) const;
             calculate_function_type calculate_function_value( &::SireMM::CLJFunction::calculate );
             
@@ -326,6 +337,17 @@ void register_CLJFunction_class(){
         { //::SireMM::CLJFunction::operator()
         
             typedef void ( ::SireMM::CLJFunction::*__call___function_type )( ::SireMM::CLJBoxes const &,::SireMM::CLJBoxes const &,double &,double & ) const;
+            __call___function_type __call___function_value( &::SireMM::CLJFunction::operator() );
+            
+            CLJFunction_exposer.def( 
+                "__call__"
+                , __call___function_value
+                , ( bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("cnrg"), bp::arg("ljnrg") ) );
+        
+        }
+        { //::SireMM::CLJFunction::operator()
+        
+            typedef void ( ::SireMM::CLJFunction::*__call___function_type )( ::SireMM::CLJAtoms const &,::SireMM::CLJBoxes const &,double &,double & ) const;
             __call___function_type __call___function_value( &::SireMM::CLJFunction::operator() );
             
             CLJFunction_exposer.def( 

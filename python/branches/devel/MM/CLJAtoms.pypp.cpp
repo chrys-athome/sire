@@ -273,6 +273,26 @@ void register_CLJAtoms_class(){
                 , ( bp::arg("i") ) );
         
         }
+        { //::SireMM::CLJAtoms::maxCoords
+        
+            typedef ::SireMaths::Vector ( ::SireMM::CLJAtoms::*maxCoords_function_type )(  ) const;
+            maxCoords_function_type maxCoords_function_value( &::SireMM::CLJAtoms::maxCoords );
+            
+            CLJAtoms_exposer.def( 
+                "maxCoords"
+                , maxCoords_function_value );
+        
+        }
+        { //::SireMM::CLJAtoms::minCoords
+        
+            typedef ::SireMaths::Vector ( ::SireMM::CLJAtoms::*minCoords_function_type )(  ) const;
+            minCoords_function_type minCoords_function_value( &::SireMM::CLJAtoms::minCoords );
+            
+            CLJAtoms_exposer.def( 
+                "minCoords"
+                , minCoords_function_value );
+        
+        }
         { //::SireMM::CLJAtoms::nAtoms
         
             typedef int ( ::SireMM::CLJAtoms::*nAtoms_function_type )(  ) const;
