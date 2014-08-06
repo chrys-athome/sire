@@ -257,6 +257,9 @@ public:
     void makeDummy(int i);
     bool isDummy(int i) const;
     
+    Vector minCoords() const;
+    Vector maxCoords() const;
+    
     CLJAtoms negate() const;
     
     QVector<CLJAtom> atoms() const;

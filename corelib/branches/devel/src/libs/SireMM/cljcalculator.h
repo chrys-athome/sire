@@ -86,9 +86,17 @@ public:
                                           const CLJBoxes &boxes0,
                                           const CLJBoxes &boxes1) const;
 
+    boost::tuple<double,double> calculate(const CLJFunction &func,
+                                          const CLJAtoms &atoms0,
+                                          const CLJBoxes &boxes1) const;
+
     boost::tuple< QVector<double>, QVector<double> >
             calculate( const QVector<CLJFunctionPtr> &funcs,
                        const CLJBoxes &boxes0, const CLJBoxes &boxes1) const;
+
+    boost::tuple< QVector<double>, QVector<double> >
+            calculate( const QVector<CLJFunctionPtr> &funcs,
+                       const CLJAtoms &atoms0, const CLJBoxes &boxes1) const;
 
 private:
     /** Whether or not the energy calculation should give the same

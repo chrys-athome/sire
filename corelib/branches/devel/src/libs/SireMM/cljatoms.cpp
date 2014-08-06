@@ -2122,3 +2122,51 @@ int CLJAtoms::nAtoms() const
 {
     return count() - nDummies();
 }
+
+/** Return the minimum coordinates of these atoms (ignoring dummies) */
+Vector CLJAtoms::minCoords() const
+{
+    Vector mincoords( std::numeric_limits<double>::max() );
+    
+    for (int i=0; i<_id.count(); ++i)
+    {
+        const MultiFloat &xf = _x[i];
+        const MultiFloat &yf = _y[i];
+        const MultiFloat &zf = _z[i];
+        const MultiInt &idf = _id[i];
+        
+        for (int j=0; j<MultiInt::count(); ++j)
+        {
+            if (idf[j] != id_of_dummy)
+            {
+                mincoords.setMin( Vector(xf[j],yf[j],zf[j]) );
+            }
+        }
+    }
+    
+    return mincoords;
+}
+
+/** Return the maximum coordinates of these atoms (ignoring dummies) */
+Vector CLJAtoms::maxCoords() const
+{
+    Vector maxcoords( -std::numeric_limits<double>::max() );
+    
+    for (int i=0; i<_id.count(); ++i)
+    {
+        const MultiFloat &xf = _x[i];
+        const MultiFloat &yf = _y[i];
+        const MultiFloat &zf = _z[i];
+        const MultiInt &idf = _id[i];
+        
+        for (int j=0; j<MultiInt::count(); ++j)
+        {
+            if (idf[j] != id_of_dummy)
+            {
+                maxcoords.setMax( Vector(xf[j],yf[j],zf[j]) );
+            }
+        }
+    }
+    
+    return maxcoords;
+}

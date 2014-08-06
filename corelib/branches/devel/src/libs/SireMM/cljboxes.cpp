@@ -1512,11 +1512,36 @@ inline int getDelta( const qint16 i0, const qint16 i1 )
     return (i0 == i1) ? 0 : (i0 < i1) ? (i1-i0-1) : (i0-i1-1);
 }
 
+/** Get the number of box lengths separating box 1 from the set of boxes
+    from minbox0 to maxbox0 */
+inline int getDelta( const qint16 min0, const qint16 max0, const qint16 i1 )
+{
+    // the below single-line expression is doing
+    // if (i1 >= min0 and i1 <= max0)
+    // {
+    //     //i1 is contained within the box
+    //     return 0;
+    // }
+    // else
+    //     return qMin( getDelta(min0,i1), getDelta(max0,i1) );
+
+    return (i1 >= min0 and i1 <= max0) ? 0 : qMin( getDelta(min0,i1), getDelta(max0,i1) );
+}
+
 inline int getDelta2(const CLJBoxIndex &box0, const CLJBoxIndex &box1)
 {
     const int dx = getDelta(box0.i(), box1.i());
     const int dy = getDelta(box0.j(), box1.j());
     const int dz = getDelta(box0.k(), box1.k());
+    return dx*dx + dy*dy + dz*dz;
+}
+
+inline int getDelta2(const CLJBoxIndex &minbox0, const CLJBoxIndex &maxbox0,
+                     const CLJBoxIndex &box1)
+{
+    const int dx = getDelta(minbox0.i(), maxbox0.i(), box1.i());
+    const int dy = getDelta(minbox0.j(), maxbox0.j(), box1.j());
+    const int dz = getDelta(minbox0.k(), maxbox0.k(), box1.k());
     return dx*dx + dy*dy + dz*dz;
 }
 
@@ -1542,6 +1567,22 @@ inline int getBoxDelta( const qint16 i0, const qint16 i1 )
     // than the above if statements.
 
     return (i0 == i1) ? 0 : (i0 < i1) ? (i1-i0) : (i0-i1);
+}
+
+/** Get the number of box lengths separating box 1 from the set of boxes
+    from minbox0 to maxbox0 */
+inline int getBoxDelta( const qint16 min0, const qint16 max0, const qint16 i1 )
+{
+    // the below single-line expression is doing
+    // if (i1 >= min0 and i1 <= max0)
+    // {
+    //     //i1 is contained within the box
+    //     return 0;
+    // }
+    // else
+    //     return qMin( getBoxDelta(min0,i1), getBoxDelta(max0,i1) );
+
+    return (i1 >= min0 and i1 <= max0) ? 0 : qMin( getBoxDelta(min0,i1), getBoxDelta(max0,i1) );
 }
 
 /** Return the distance between the two boxes, assuming they are in an infinite cartesian space */
@@ -1968,6 +2009,82 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
     }
     
     //quint64 ns = t.nsecsElapsed();
+    //qDebug() << "Getting box distances took" << (0.000001*ns) << "ms";
+    
+    return dists;
+}
+
+/** Return the distances between all the passed atoms and all of the occupied
+    boxes in 'boxes1', returning a set of CLJBoxDistance objects where box0() is 0 */
+QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJAtoms &atoms0,
+                                               const CLJBoxes &boxes1, Length cutoff)
+{
+    //QElapsedTimer t;
+    //t.start();
+
+    //get the minimum and maximum coordinates of the atoms
+    Vector mincoords0 = atoms0.minCoords();
+    Vector maxcoords0 = atoms0.maxCoords();
+
+    QVector<CLJBoxDistance> dists;
+    
+    const quint32 n1 = boxes1.bxs.count();
+    const CLJBoxPtr *b1 = boxes1.bxs.constData();
+
+    dists.reserve(n1);
+    
+    //having timed this, it is just as quick to just convert to AABox and use
+    //that to calculate the minimum distance
+    const AABox box0 = AABox::from(mincoords0, maxcoords0);
+        
+    for (quint32 j=0; j<n1; ++j)
+    {
+        const AABox box1 = b1[j].read().dimensions();
+            
+        const float dist = space.minimumDistance(box0, box1);
+        
+        if (dist < cutoff.value())
+            dists.append( CLJBoxDistance(0, j, dist) );
+    }
+
+    //qint64 ns = t.nsecsElapsed();
+    //qDebug() << "Getting box distances took" << (0.000001*ns) << "ms";
+    
+    return dists;
+}
+
+/** Return the distances between all the passed atoms and all of the occupied
+    boxes in 'boxes1', returning a set of CLJBoxDistance objects where box0() is 0 */
+QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJAtoms &atoms0,
+                                               const CLJBoxes &boxes1)
+{
+    //QElapsedTimer t;
+    //t.start();
+
+    //get the minimum and maximum coordinates of the atoms
+    Vector mincoords0 = atoms0.minCoords();
+    Vector maxcoords0 = atoms0.maxCoords();
+
+    QVector<CLJBoxDistance> dists;
+    
+    const quint32 n1 = boxes1.bxs.count();
+    const CLJBoxPtr *b1 = boxes1.bxs.constData();
+
+    dists.reserve(n1);
+    
+    //having timed this, it is just as quick to just convert to AABox and use
+    //that to calculate the minimum distance
+    const AABox box0 = AABox::from(mincoords0, maxcoords0);
+        
+    for (quint32 j=0; j<n1; ++j)
+    {
+        const AABox box1 = b1[j].read().dimensions();
+            
+        const float dist = space.minimumDistance(box0, box1);
+        dists.append( CLJBoxDistance(0, j, dist) );
+    }
+
+    //qint64 ns = t.nsecsElapsed();
     //qDebug() << "Getting box distances took" << (0.000001*ns) << "ms";
     
     return dists;

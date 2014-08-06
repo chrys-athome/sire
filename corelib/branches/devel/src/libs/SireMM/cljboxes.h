@@ -401,6 +401,12 @@ public:
                                                 const CLJBoxes &boxes0, const CLJBoxes &boxes1,
                                                 Length cutoff);
     
+    static QVector<CLJBoxDistance> getDistances(const Space &space,
+                                                const CLJAtoms &atoms0, const CLJBoxes &boxes1);
+    static QVector<CLJBoxDistance> getDistances(const Space &space,
+                                                const CLJAtoms &atoms0, const CLJBoxes &boxes1,
+                                                Length cutoff);
+    
     QVector<CLJBoxIndex> add(const CLJAtoms &atoms);
 
     void remove(const QVector<CLJBoxIndex> &atoms);
