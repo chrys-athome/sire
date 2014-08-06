@@ -15,7 +15,7 @@ from nose.tools import assert_almost_equal
 
 (mols, space) = Amber().readCrdTop("../io/waterbox.crd", "../io/waterbox.top")
 
-use_only_two_waters = True
+use_only_two_waters = False
 
 if use_only_two_waters:
     newmols = MoleculeGroup("close")
@@ -148,6 +148,9 @@ def test_energy(verbose = False):
     assert_almost_equal( oldcnrg, newcnrg, 2 )
     assert_almost_equal( oldljnrg, newljnrg, 2 )
 
+    if verbose:
+        print("\nMoving a water molecule...\n")
+
     water = mols[ MolIdx(0) ].molecule()
     water = water.move().translate( Vector(1,0,0) ).commit()
 
@@ -172,6 +175,7 @@ def test_energy(verbose = False):
     t.start()
     newnrgs = newff.energies()
     newns = t.nsecsElapsed()
+
     newcnrg = newff.energy( newff.components().coulomb() ).value()
     newljnrg = newff.energy( newff.components().lj() ).value()
 
@@ -253,7 +257,7 @@ def test_sim(verbose = False):
 
     moves = RigidBodyMC(mols)
     moves.setGenerator( RanGenerator( 42 ) )
-    moves.enableOptimisedMoves()
+    moves.disableOptimisedMoves()
 
     t.start()
     moves.move(oldsys, nmoves, False)
