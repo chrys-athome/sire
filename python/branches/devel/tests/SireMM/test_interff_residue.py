@@ -203,5 +203,5 @@ def test_moves(verbose = False):
 
 
 if __name__ == "__main__":
-    #test_energy(True)
-    test_moves(True)
+    test_energy(True)
+    #test_moves(True)
