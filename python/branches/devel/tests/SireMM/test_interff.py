@@ -11,8 +11,6 @@ from Sire.Base import *
 from Sire.Units import *
 from Sire.Qt import *
 
-from nose.tools import assert_almost_equal
-
 (mols, space) = Amber().readCrdTop("../io/waterbox.crd", "../io/waterbox.top")
 
 use_only_two_waters = False
@@ -66,7 +64,7 @@ oldff.setShiftElectrostatics(True)
 newff = InterFF("newff")
 newff.setProperty("switchingFunction",switchfunc)
 newff.setProperty("space",space)
-newff.disableParallelCalculation()
+newff.enableParallelCalculation()
 
 old_clusterff = InterCLJFF("old_clusterff")
 old_clusterff.setSwitchingFunction(grid_switchfunc)
@@ -82,6 +80,7 @@ old_fixedff.setGridSpacing(grid_spacing)
 old_fixedff.setBuffer(grid_buffer)
 
 new_clusterff = InterFF("new_clusterff")
+new_clusterff.enableParallelCalculation()
 new_clusterff.setProperty("cljFunction", CLJShiftFunction())
 new_clusterff.setProperty("switchingFunction", grid_switchfunc )
 new_clusterff.setProperty("space", Cartesian())
@@ -111,6 +110,16 @@ newns = t.nsecsElapsed()
 
 print("Setup times: %s ms vs. %s ms (%s ms)" % (0.000001*oldns,0.000001*newns,
                                                 0.000001*cljns))
+
+def assert_almost_equal( x, y, delta = 0.5 ):
+    if abs(x-y) > delta:
+        print("ERROR: %s is not equal to %s within a delta of %s" % (x,y,delta))
+        assert(False)
+
+def assert_equal( x, y ):
+    if not (x == y):
+        print("ERROR: %s is not equal to %s" % (x, y))
+        assert(False)
 
 def test_energy(verbose = False):
     t = QElapsedTimer()
@@ -143,10 +152,10 @@ def test_energy(verbose = False):
         print("NEW FF :  %s  %s  %s  : %s ms" % (newcnrg+newljnrg,newcnrg,newljnrg,
                                                  0.000001*newns))
 
-    assert_almost_equal( cnrg, newcnrg, 6 )
-    assert_almost_equal( ljnrg, newljnrg, 6 )
-    assert_almost_equal( oldcnrg, newcnrg, 2 )
-    assert_almost_equal( oldljnrg, newljnrg, 2 )
+    assert_almost_equal( cnrg, newcnrg )
+    assert_almost_equal( ljnrg, newljnrg )
+    assert_almost_equal( oldcnrg, newcnrg )
+    assert_almost_equal( oldljnrg, newljnrg )
 
     if verbose:
         print("\nMoving a water molecule...\n")
@@ -186,8 +195,8 @@ def test_energy(verbose = False):
         print("NEW FF :  %s  %s  %s  : %s ms" % (newcnrg+newljnrg,newcnrg,newljnrg,
                                                  0.000001*newns))
 
-    assert_almost_equal( oldcnrg, newcnrg, 1 )
-    assert_almost_equal( oldljnrg, newljnrg, 1 )
+    assert_almost_equal( oldcnrg, newcnrg )
+    assert_almost_equal( oldljnrg, newljnrg  )
 
     oldff.mustNowRecalculateFromScratch()
     newff.mustNowRecalculateFromScratch()
@@ -213,18 +222,18 @@ def test_energy(verbose = False):
         print("NEW FF :  %s  %s  %s  : %s ms" % (r_newcnrg+r_newljnrg,r_newcnrg,r_newljnrg,
                                                  0.000001*newns))
 
-    assert_almost_equal( oldcnrg, r_oldcnrg, 6 )
-    assert_almost_equal( oldljnrg, r_oldljnrg, 6 )
-    assert_almost_equal( newcnrg, r_newcnrg, 6 )
-    assert_almost_equal( newljnrg, r_newljnrg, 6 )
+    assert_almost_equal( oldcnrg, r_oldcnrg )
+    assert_almost_equal( oldljnrg, r_oldljnrg )
+    assert_almost_equal( newcnrg, r_newcnrg )
+    assert_almost_equal( newljnrg, r_newljnrg )
 
 def test_sim(verbose = False):
 
     oldsys = System()
     newsys = System()
 
-    #oldsys.add(mols)
-    #newsys.add(mols)
+    oldsys.add(mols)
+    newsys.add(mols)
 
     oldsys.add(oldff)
     newsys.add(newff)
@@ -257,7 +266,7 @@ def test_sim(verbose = False):
 
     moves = RigidBodyMC(mols)
     moves.setGenerator( RanGenerator( 42 ) )
-    moves.disableOptimisedMoves()
+    moves.enableOptimisedMoves()
 
     t.start()
     moves.move(oldsys, nmoves, False)
@@ -362,6 +371,7 @@ def test_fixed_sim(verbose = False):
     moves = RigidBodyMC(cluster)                    
     moves.setReflectionSphere( reflect_sphere_center, reflect_sphere_radius )
     moves.setGenerator( RanGenerator( 42 ) )
+    moves.enableOptimisedMoves()
     
     t.start()
     moves.move(oldsys, 1000, False)
@@ -457,6 +467,7 @@ def test_grid_sim(verbose = False):
                                              0.000001*newns))
 
     moves = RigidBodyMC(cluster)                    
+    moves.enableOptimisedMoves()
     moves.setReflectionSphere( reflect_sphere_center, reflect_sphere_radius )
     moves.setGenerator( RanGenerator( 42 ) )
     
@@ -523,5 +534,5 @@ def test_grid_sim(verbose = False):
 if __name__ == "__main__":
     test_energy(True)
     test_sim(True)
-    #test_grid_sim(True)
-    #test_fixed_sim(True)
+    test_grid_sim(True)
+    test_fixed_sim(True)
