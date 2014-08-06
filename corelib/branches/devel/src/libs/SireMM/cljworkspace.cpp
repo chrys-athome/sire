@@ -58,30 +58,37 @@ namespace detail
         CLJWorkspaceData()
         {}
         
-        CLJWorkspaceData(const CLJWorkspaceData &other) : deltas(other.deltas)
+        CLJWorkspaceData(const CLJWorkspaceData &other)
+                : deltas(other.deltas), same_ids(other.same_ids)
         {}
         
         ~CLJWorkspaceData()
         {}
         
-        QVarLengthArray<CLJDelta,16> deltas;
-        
-        QVarLengthArray< QVector<CLJBoxIndex>, 16 > same_ids;
-        
         CLJWorkspaceData& operator=(const CLJWorkspaceData &other)
         {
-            deltas = other.deltas;
+            if (this != &other)
+            {
+                deltas = other.deltas;
+                same_ids = other.same_ids;
+            }
+            
             return *this;
         }
+        
+        QVarLengthArray<CLJDelta,4> deltas;
+        
+        QVarLengthArray<QVector<CLJBoxIndex>, 4> same_ids;
         
         void clear()
         {
             deltas.resize(0);
+            same_ids.resize(0);
         }
         
         bool isEmpty() const
         {
-            return deltas.isEmpty();
+            return deltas.isEmpty() and same_ids.isEmpty();
         }
         
         /** Return whether or not all of the atoms in the deltas
@@ -701,10 +708,9 @@ void CLJWorkspace::detach()
     changed IDs across these groups */
 void CLJWorkspace::removeSameIDAtoms(CLJBoxes &boxes)
 {
-    detach();
-    
     if (d.get() != 0)
     {
+        detach();
         d->removeSameIDAtoms(boxes);
     }
 }
@@ -750,6 +756,7 @@ QVector<CLJBoxIndex> CLJWorkspace::commit(CLJBoxes &boxes, const CLJDelta &delta
     }
     else
     {
+        detach();
         return d->commit(boxes, delta);
     }
 }
@@ -763,6 +770,7 @@ QVector<CLJBoxIndex> CLJWorkspace::revert(CLJBoxes &boxes, const CLJDelta &delta
     }
     else
     {
+        detach();
         return d->revert(boxes, delta);
     }
 }

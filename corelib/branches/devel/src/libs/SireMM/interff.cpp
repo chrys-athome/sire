@@ -619,10 +619,10 @@ void InterFF::regridAtoms()
         if (cljgroup.needsAccepting())
         {
             cljgroup.accept();
+            needs_accepting = false;
+            
             this->mustNowRecalculateFromScratch();
         }
-    
-        needs_accepting = false;
         
         d->fixed_atoms.setGridDimensions( cljgroup.cljBoxes().atoms() );
         
@@ -633,12 +633,9 @@ void InterFF::regridAtoms()
 /** Signal that this forcefield must now be recalculated from scratch */
 void InterFF::mustNowRecalculateFromScratch()
 {
-    if (needs_accepting or cljgroup.needsAccepting())
-        cljgroup.accept();
-    
     cljgroup.mustRecalculateFromScratch();
     needs_accepting = false;
-    
+
     this->setDirty();
 }
 
@@ -647,6 +644,7 @@ void InterFF::mustNowReallyRecalculateFromScratch()
 {
     cljgroup.mustReallyRecalculateFromScratch();
     needs_accepting = false;
+    
     this->regridAtoms();
     this->setDirty();
 }
@@ -768,9 +766,16 @@ void InterFF::recalculateEnergy()
         
         d.constData()->cljcomps.changeEnergy(*this,
                                     CLJEnergy(delta_nrgs.get<0>(), delta_nrgs.get<1>()));
+
+        //the CLJGroup needs to be accepted before we can change anything else
+        needs_accepting = true;
+
+        this->setClean();
     }
     else
     {
+        qDebug() << "TOTAL ENERGY";
+    
         //recalculate everything from scratch as this has been requested
         //calculate the energy from scratch
         tuple<double,double> nrgs(0,0);
@@ -808,33 +813,51 @@ void InterFF::recalculateEnergy()
 /** Function called to add a molecule to this forcefield */
 void InterFF::_pvt_added(const SireMol::PartialMolecule &mol, const SireBase::PropertyMap &map)
 {
-    cljgroup.add(mol, map);
-    needs_accepting = not cljgroup.recalculatingFromScratch();
+    if (needs_accepting)
+    {
+        cljgroup.accept();
+        needs_accepting = false;
+    }
 
+    cljgroup.add(mol, map);
     setDirty();
 }
 
 /** Function called to remove a molecule from this forcefield */
 void InterFF::_pvt_removed(const SireMol::PartialMolecule &mol)
 {
+    if (needs_accepting)
+    {
+        cljgroup.accept();
+        needs_accepting = false;
+    }
+
     cljgroup.remove(mol);
-    needs_accepting = not cljgroup.recalculatingFromScratch();
-    
     setDirty();
 }
 
 /** Function called to indicate that the passed molecule has changed */
 void InterFF::_pvt_changed(const Molecule &molecule, bool auto_update)
 {
-    cljgroup.update(molecule);
-    needs_accepting = not cljgroup.recalculatingFromScratch();
+    if (needs_accepting)
+    {
+        cljgroup.accept();
+        needs_accepting = false;
+    }
 
+    cljgroup.update(molecule);
     setDirty();
 }
 
 /** Function called to indicate that a list of molecules in this forcefield have changed */
 void InterFF::_pvt_changed(const QList<SireMol::Molecule> &molecules, bool auto_update)
 {
+    if (needs_accepting)
+    {
+        cljgroup.accept();
+        needs_accepting = false;
+    }
+
     foreach (const Molecule &molecule, molecules)
     {
         cljgroup.update(molecule);
@@ -846,6 +869,12 @@ void InterFF::_pvt_changed(const QList<SireMol::Molecule> &molecules, bool auto_
 /** Function called to indicate that all molecules in this forcefield have been removed */
 void InterFF::_pvt_removedAll()
 {
+    if (needs_accepting)
+    {
+        cljgroup.accept();
+        needs_accepting = false;
+    }
+
     cljgroup.removeAll();
     this->setDirty();
 }

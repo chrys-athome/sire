@@ -144,12 +144,17 @@ public:
     void operator()(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
                     double &cnrg, double &ljnrg) const;
 
+    void operator()(const CLJAtoms &atoms0, const CLJBoxes &atoms1,
+                    double &cnrg, double &ljnrg) const;
+
     boost::tuple<double,double> calculate(const CLJAtoms &atoms) const;
     boost::tuple<double,double> calculate(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
                                           float min_distance=0) const;
 
     boost::tuple<double,double> calculate(const CLJBoxes &atoms) const;
     boost::tuple<double,double> calculate(const CLJBoxes &atoms0, const CLJBoxes &atoms1) const;
+
+    boost::tuple<double,double> calculate(const CLJAtoms &atoms0, const CLJBoxes &atoms1) const;
 
     QVector<float> calculate(const CLJAtoms &atoms, const GridInfo &gridinfo) const;
 

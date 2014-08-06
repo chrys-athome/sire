@@ -891,6 +891,52 @@ void CLJFunction::operator()(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
     }
 }
 
+/** Return the total energy between 'atoms0' and 'atoms1', returning the coulomb part in 'cnrg'
+    and the LJ part in 'ljnrg' */
+void CLJFunction::operator()(const CLJAtoms &atoms0, const CLJBoxes &atoms1,
+                             double &cnrg, double &ljnrg) const
+{
+    cnrg = 0;
+    ljnrg = 0;
+    
+    if (this->hasCutoff())
+    {
+        const CLJBoxes::Container &boxes1 = atoms1.occupiedBoxes();
+        
+        //const float min_cutoff = qMax(this->coulombCutoff(), this->ljCutoff());
+        
+        for (CLJBoxes::const_iterator it1 = boxes1.constBegin();
+             it1 != boxes1.constEnd();
+             ++it1)
+        {
+            double icnrg(0), iljnrg(0);
+
+            this->operator()(atoms0, it1->read().atoms(),
+                             icnrg, iljnrg);
+
+            cnrg += icnrg;
+            ljnrg += iljnrg;
+        }
+    }
+    else
+    {
+        const CLJBoxes::Container &boxes1 = atoms1.occupiedBoxes();
+        
+        for (CLJBoxes::const_iterator it1 = boxes1.constBegin();
+             it1 != boxes1.constEnd();
+             ++it1)
+        {
+            double icnrg(0), iljnrg(0);
+            
+            this->operator()(atoms0, it1->read().atoms(),
+                             icnrg, iljnrg);
+            
+            cnrg += icnrg;
+            ljnrg += iljnrg;
+        }
+    }
+}
+
 /** Return the total energy between 'atoms', returning the coulomb part in 'cnrg'
     and the LJ part in 'ljnrg' */
 void CLJFunction::total(const CLJAtoms &atoms, double &cnrg, double &ljnrg) const
@@ -952,6 +998,16 @@ boost::tuple<double,double> CLJFunction::calculate(const CLJBoxes &atoms) const
 /** Return the total energy between 'atoms0' and 'atoms1', returning the coulomb part as the first
     element of the tuple and the LJ part as the second */
 boost::tuple<double,double> CLJFunction::calculate(const CLJBoxes &atoms0,
+                                                   const CLJBoxes &atoms1) const
+{
+    double cnrg, ljnrg;
+    this->operator()(atoms0, atoms1, cnrg, ljnrg);
+    return boost::tuple<double,double>(cnrg, ljnrg);
+}
+
+/** Return the total energy between 'atoms0' and 'atoms1', returning the coulomb part as the first
+    element of the tuple and the LJ part as the second */
+boost::tuple<double,double> CLJFunction::calculate(const CLJAtoms &atoms0,
                                                    const CLJBoxes &atoms1) const
 {
     double cnrg, ljnrg;

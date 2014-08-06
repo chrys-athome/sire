@@ -516,8 +516,12 @@ bool CLJGroup::needsAccepting() const
     added to the CLJBoxes boxes */
 void CLJGroup::accept()
 {
+    bool changed = false;
+
     if (cljworkspace.recalculatingFromScratch())
     {
+        //this adds any molecules to the box that have not yet been
+        //added to the box
         for (QHash<MolNum,CLJExtractor>::iterator it = cljexts.begin();
              it != cljexts.end();
              ++it)
@@ -527,6 +531,8 @@ void CLJGroup::accept()
 
         cljworkspace.accept(cljboxes);
         changed_mols.clear();
+        
+        changed = true;
     }
     else if (not changed_mols.isEmpty())
     {
@@ -539,22 +545,27 @@ void CLJGroup::accept()
 
         cljworkspace.accept(cljboxes);
         changed_mols.clear();
+        
+        changed = true;
     }
     else if (cljworkspace.needsAccepting())
     {
         cljworkspace.accept(cljboxes);
     }
 
-    QMutableHashIterator<MolNum,CLJExtractor> it(cljexts);
-    
-    while (it.hasNext())
+    if (changed)
     {
-        it.next();
-        
-        if (it.value().newMolecule().selection().selectedNone())
+        QMutableHashIterator<MolNum,CLJExtractor> it(cljexts);
+    
+        while (it.hasNext())
         {
-            //this molecule has been removed
-            it.remove();
+            it.next();
+            
+            if (it.value().newMolecule().selection().selectedNone())
+            {
+                //this molecule has been removed
+                it.remove();
+            }
         }
     }
 }
