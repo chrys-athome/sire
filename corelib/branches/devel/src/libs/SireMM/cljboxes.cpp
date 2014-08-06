@@ -1015,10 +1015,10 @@ void CLJBoxes::constructFrom(const CLJAtoms &atoms0, const CLJAtoms &atoms1)
     }
     
     /*quint64 ns = t.nsecsElapsed();
-    qDebug() << "Boxing up" << atoms.count() << "atoms took"
+    qDebug() << "Boxing up" << this->nAtoms() << "atoms took"
              << (0.000001*ns) << "ms";
     
-    qDebug() << "number of boxes ==" << boxed_atoms.count();*/
+    qDebug() << "number of boxes ==" << this->nOccupiedBoxes();*/
 }
 
 /** Add together two boxes - both boxes must have the same box length */

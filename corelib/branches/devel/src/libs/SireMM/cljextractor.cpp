@@ -245,7 +245,18 @@ bool CLJExtractor::needsCommitting() const
 /** Return whether or not this extractor is empty (contains no atoms) */
 bool CLJExtractor::isEmpty() const
 {
-    return selected_atoms.selectedNone() and new_selected_atoms.selectedNone();
+    if (new_selected_atoms.isNull())
+    {
+        return (newmol.nAtoms() == 0);
+    }
+    else if (selected_atoms.isNull())
+    {
+        return (mol.nAtoms() == 0);
+    }
+    else
+    {
+        return (selected_atoms.selectedNone() or new_selected_atoms.selectedNone());
+    }
 }
 
 /** Return whether or not this extractor is null (contains no molecule information) */

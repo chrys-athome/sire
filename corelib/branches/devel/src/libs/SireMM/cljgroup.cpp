@@ -33,6 +33,8 @@
 
 #include "SireError/errors.h"
 
+#include <QElapsedTimer>
+
 using namespace SireMM;
 using namespace SireMol;
 using namespace SireStream;
@@ -516,7 +518,7 @@ bool CLJGroup::needsAccepting() const
     added to the CLJBoxes boxes */
 void CLJGroup::accept()
 {
-    bool changed = false;
+    bool removed_mols = false;
 
     if (cljworkspace.recalculatingFromScratch())
     {
@@ -527,12 +529,13 @@ void CLJGroup::accept()
              ++it)
         {
             it.value().commit(cljboxes, cljworkspace);
+            
+            if (it.value().isEmpty())
+                removed_mols = true;
         }
 
         cljworkspace.accept(cljboxes);
         changed_mols.clear();
-        
-        changed = true;
     }
     else if (not changed_mols.isEmpty())
     {
@@ -541,19 +544,20 @@ void CLJGroup::accept()
         {
             it.value().commit(cljboxes, cljworkspace);
             cljexts[it.key()] = it.value();
+            
+            if (it.value().isEmpty())
+                removed_mols = true;
         }
 
         cljworkspace.accept(cljboxes);
         changed_mols.clear();
-        
-        changed = true;
     }
     else if (cljworkspace.needsAccepting())
     {
         cljworkspace.accept(cljboxes);
     }
 
-    if (changed)
+    if (removed_mols)
     {
         QMutableHashIterator<MolNum,CLJExtractor> it(cljexts);
     
@@ -561,7 +565,7 @@ void CLJGroup::accept()
         {
             it.next();
             
-            if (it.value().newMolecule().selection().selectedNone())
+            if (it.value().isEmpty())
             {
                 //this molecule has been removed
                 it.remove();

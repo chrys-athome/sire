@@ -1870,7 +1870,7 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
         //get the old total energy of the system
         if (nmoves > 1)
             t.start();
-        
+
         double old_nrg = system.energy( this->energyComponent() );
 
         if (nmoves > 1)
