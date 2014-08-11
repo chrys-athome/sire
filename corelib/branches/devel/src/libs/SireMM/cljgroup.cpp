@@ -117,6 +117,13 @@ CLJGroup::CLJGroup(CLJAtoms::ID_SOURCE ids)
     cljworkspace.mustRecalculateFromScratch(cljboxes);
 }
 
+/** Construct specifying how the atoms will be extracted from the molecule */
+CLJGroup::CLJGroup(CLJExtractor::EXTRACT_SOURCE ext)
+         : id_source(CLJAtoms::USE_MOLNUM), extract_source(ext)
+{
+    cljworkspace.mustRecalculateFromScratch(cljboxes);
+}
+
 /** Construct, suppling the name of the molecule group and the source of the
     CLJAtoms ID_SOURCE property (e.g. USE_MOLNUM for intermolecular forcefields or
     USE_ATOMNUM for intramolecular forcefields), and also specifying if we are going
@@ -348,7 +355,7 @@ void CLJGroup::update(const MoleculeView &molview)
                 changed.update(molview, cljboxes, cljworkspace);
                 changed_mols.insert(molnum,changed);
             }
-        }
+      }
     }
 }
 
@@ -567,8 +574,28 @@ void CLJGroup::accept()
         for (QHash<MolNum,CLJExtractor>::iterator it = changed_mols.begin();
              it != changed_mols.end(); ++it)
         {
+            QElapsedTimer t2;
+
+            t2.start();
             it.value().commit(cljboxes, cljworkspace);
-            cljexts[it.key()] = it.value();
+            qint64 ns3 = t2.nsecsElapsed();
+            qDebug() << "ns3" << (0.000001*ns3);
+            
+            t2.start();
+            CLJExtractor oldext;
+            oldext = cljexts.find(it.key()).value(); //[it.key()];
+            qint64 ns31 = t2.nsecsElapsed();
+            qDebug() << "ns31" << (0.000001*ns31);
+            
+            t2.start();
+            cljexts.insert(it.key(), it.value());
+            qint64 ns4 = t2.nsecsElapsed();
+            qDebug() << "ns4" << (0.000001*ns4);
+            
+            t2.start();
+            oldext = CLJExtractor();
+            qint64 ns5 = t2.nsecsElapsed();
+            qDebug() << "ns5" << (0.000001*ns5);
             
             if (it.value().isEmpty())
                 removed_mols = true;

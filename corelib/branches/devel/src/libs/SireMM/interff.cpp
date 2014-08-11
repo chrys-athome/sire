@@ -150,7 +150,9 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, InterFF &interff)
 }
 
 /** Constructor */
-InterFF::InterFF() : ConcreteProperty<InterFF,G1FF>(), needs_accepting(false)
+InterFF::InterFF()
+        : ConcreteProperty<InterFF,G1FF>(),
+          cljgroup(CLJExtractor::EXTRACT_BY_CUTGROUP), needs_accepting(false)
 {
     d = new detail::InterFFData();
     this->_pvt_updateName();
@@ -159,7 +161,8 @@ InterFF::InterFF() : ConcreteProperty<InterFF,G1FF>(), needs_accepting(false)
 
 /** Construct, specifying the name of the forcefield */
 InterFF::InterFF(const QString &name)
-        : ConcreteProperty<InterFF, G1FF>(), needs_accepting(false)
+        : ConcreteProperty<InterFF, G1FF>(),
+          cljgroup(CLJExtractor::EXTRACT_BY_CUTGROUP), needs_accepting(false)
 {
     d = new detail::InterFFData();
     G1FF::setName(name);

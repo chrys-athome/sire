@@ -63,6 +63,7 @@ friend QDataStream& ::operator>>(QDataStream&, SireMM::CLJGroup&);
 public:
     CLJGroup();
     CLJGroup(CLJAtoms::ID_SOURCE id_source);
+    CLJGroup(CLJExtractor::EXTRACT_SOURCE extract_source);
     CLJGroup(CLJAtoms::ID_SOURCE id_source, CLJExtractor::EXTRACT_SOURCE extract_source);
 
     CLJGroup(const CLJGroup &other);
