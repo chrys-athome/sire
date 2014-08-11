@@ -613,14 +613,18 @@ void CLJExtractor::update(const MoleculeView &new_molecule,
             {
                 ResIdx i(changed_residue);
             
-                if (new_selected_atoms.selectedAll() or new_selected_atoms.selectedAll(i))
+                if (new_selected_atoms.isNull() or
+                    new_selected_atoms.selectedAll() or
+                    new_selected_atoms.selectedAll(i))
                 {
+                    //all atoms in this residue are in this forcefield
                     cljdeltas[i] = workspace.push(boxes, cljidxs.at(i),
                                                   CLJAtoms(newmol.residue(i), id_source, props),
                                                   cljdeltas[i]);
                 }
                 else
                 {
+                    //only some of the atoms of this residue are in the forcefield
                     AtomSelection selected_resatoms = new_selected_atoms;
                     selected_resatoms = selected_resatoms.intersect(i);
                 
