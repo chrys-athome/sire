@@ -491,8 +491,6 @@ namespace SireMM
     the coulomb and LJ energy as a tuple (coulomb,lj) */
 tuple<double,double> CLJCalculator::calculate(const CLJFunction &func, const CLJBoxes &boxes) const
 {
-    QElapsedTimer t;
-
     //get the cutoffs for the function
     if (func.hasCutoff())
     {
@@ -503,25 +501,20 @@ tuple<double,double> CLJCalculator::calculate(const CLJFunction &func, const CLJ
                            coul_cutoff : lj_cutoff );
         
         //get the list of box pairs that are within the cutoff distance
-        t.start();
         QVector<CLJBoxDistance> dists = CLJBoxes::getDistances(func.space(), boxes, max_cutoff);
-        qint64 ns = t.nsecsElapsed();
 
         //now create the space to hold the calculated energies
         QVarLengthArray<double> coul_nrgs( dists.count() );
         QVarLengthArray<double> lj_nrgs( dists.count() );
         
         //now create the object that will be used by TBB to calculate the energies
-        t.start();
         detail::TotalWithCutoff helper(&func, dists.constData(), boxes.occupiedBoxes(),
                                        coul_cutoff.value(), lj_cutoff.value(),
                                        coul_nrgs.data(), lj_nrgs.data());
 
         //now perform the calculation in parallel
         tbb::parallel_for(tbb::blocked_range<int>(0,dists.count()), helper);
-        qint64 calcns = t.nsecsElapsed();
         
-        t.start();
         if (reproducible_sum)
         {
             //do a sorted sum of energies so that we get the same result no matter the order
@@ -544,10 +537,6 @@ tuple<double,double> CLJCalculator::calculate(const CLJFunction &func, const CLJ
             ++coul_nrgs_array;
             ++lj_nrgs_array;
         }
-        
-        qint64 sumns = t.nsecsElapsed();
-        
-        qDebug() << "CALC" << (0.000001*ns) << (0.000001*calcns) << (0.000001*sumns);
         
         return tuple<double,double>(cnrg, ljnrg);
     }

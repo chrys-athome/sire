@@ -40,6 +40,9 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QElapsedTimer>
+#include <QDebug>
+
 using namespace SireMM;
 using namespace SireMol;
 using namespace SireBase;
@@ -605,9 +608,9 @@ void CLJExtractor::update(const MoleculeView &new_molecule,
                     }
                 }
             }
-        
+
             newmol = new_molecule.molecule();
-        
+    
             //loop over all of the changed residues
             foreach (int changed_residue, changed_residues)
             {
