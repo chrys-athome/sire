@@ -41,10 +41,16 @@ void register_CLJExtractor_class(){
         typedef bp::class_< SireMM::CLJExtractor > CLJExtractor_exposer_t;
         CLJExtractor_exposer_t CLJExtractor_exposer = CLJExtractor_exposer_t( "CLJExtractor", bp::init< >() );
         bp::scope CLJExtractor_scope( CLJExtractor_exposer );
+        bp::enum_< SireMM::CLJExtractor::EXTRACT_SOURCE>("EXTRACT_SOURCE")
+            .value("EXTRACT_BY_CUTGROUP", SireMM::CLJExtractor::EXTRACT_BY_CUTGROUP)
+            .value("EXTRACT_BY_RESIDUE", SireMM::CLJExtractor::EXTRACT_BY_RESIDUE)
+            .value("EXTRACT_BY_MOLECULE", SireMM::CLJExtractor::EXTRACT_BY_MOLECULE)
+            .export_values()
+            ;
         CLJExtractor_exposer.def( bp::init< SireMol::MoleculeView const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("mol"), bp::arg("map")=SireBase::PropertyMap() )) );
-        CLJExtractor_exposer.def( bp::init< SireMol::MoleculeView const &, bool, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("mol"), bp::arg("split_by_residue"), bp::arg("map")=SireBase::PropertyMap() )) );
+        CLJExtractor_exposer.def( bp::init< SireMol::MoleculeView const &, SireMM::CLJExtractor::EXTRACT_SOURCE, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("mol"), bp::arg("extract_source"), bp::arg("map")=SireBase::PropertyMap() )) );
         CLJExtractor_exposer.def( bp::init< SireMol::MoleculeView const &, SireMM::CLJAtoms::ID_SOURCE, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("mol"), bp::arg("id_source"), bp::arg("map")=SireBase::PropertyMap() )) );
-        CLJExtractor_exposer.def( bp::init< SireMol::MoleculeView const &, SireMM::CLJAtoms::ID_SOURCE, bool, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("mol"), bp::arg("id_source"), bp::arg("split_by_residue"), bp::arg("map")=SireBase::PropertyMap() )) );
+        CLJExtractor_exposer.def( bp::init< SireMol::MoleculeView const &, SireMM::CLJAtoms::ID_SOURCE, SireMM::CLJExtractor::EXTRACT_SOURCE, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("mol"), bp::arg("id_source"), bp::arg("extract_source"), bp::arg("map")=SireBase::PropertyMap() )) );
         CLJExtractor_exposer.def( bp::init< SireMM::CLJExtractor const & >(( bp::arg("other") )) );
         { //::SireMM::CLJExtractor::add
         
@@ -107,6 +113,16 @@ void register_CLJExtractor_class(){
             CLJExtractor_exposer.def( 
                 "coordinatesProperty"
                 , coordinatesProperty_function_value );
+        
+        }
+        { //::SireMM::CLJExtractor::extractingByCutGroup
+        
+            typedef bool ( ::SireMM::CLJExtractor::*extractingByCutGroup_function_type )(  ) const;
+            extractingByCutGroup_function_type extractingByCutGroup_function_value( &::SireMM::CLJExtractor::extractingByCutGroup );
+            
+            CLJExtractor_exposer.def( 
+                "extractingByCutGroup"
+                , extractingByCutGroup_function_value );
         
         }
         { //::SireMM::CLJExtractor::extractingByMolecule
