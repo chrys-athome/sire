@@ -12,7 +12,9 @@ import Sire.Stream
 
 import os
 
-coul_cutoff = 15 * angstrom
+nmoves = 100
+
+coul_cutoff = 10 * angstrom
 lj_cutoff = 10 * angstrom
 
 switchfunc = HarmonicSwitchingFunction(coul_cutoff,coul_cutoff,lj_cutoff,lj_cutoff)
@@ -45,6 +47,11 @@ newff.add(mols)
 parff.add(mols)
 
 cljmols = CLJBoxes( CLJAtoms(mols.molecules()) )
+
+def assert_equal( x, y ):
+    if not (x == y):
+        print("ERROR: %s is not equal to %s" % (x,y))
+        assert(False)
 
 def assert_almost_equal( x, y, delta = 0.5 ):
     if abs(x-y) > delta:
@@ -108,30 +115,69 @@ def test_energy(verbose = False):
     assert_almost_equal( oldljnrg, newljnrg )
 
 def test_moves(verbose = False):
-    nmoves = 10
-
     newsys = System()
     oldsys = System()
+    optsys = System()
     parsys = System()
 
     res = MoleculeGroup("residues")
     protein = mols[ MolWithResID("ALA") ].molecule()
-    res.add( protein.residues() )
+
+    for residue in protein.residues():
+        res.add(residue)
 
     newsys.add(newff)
     oldsys.add(oldff)
+    optsys.add(newff)
     parsys.add(parff)
 
     newsys.add(res)
     oldsys.add(res)
+    optsys.add(res)
     parsys.add(res)
 
     moves = RigidBodyMC(res)
+    moves.disableOptimisedMoves()
 
     moves.setMaximumTranslation( 0.2 * angstrom )
     moves.setMaximumRotation( 0.5 * degrees )
 
+    opt_moves = RigidBodyMC(res)
+    opt_moves.enableOptimisedMoves()
+
     t = QElapsedTimer()
+
+    if verbose:
+        print("Calculating initial energy...")
+
+    t.start()
+    oldnrg = oldsys.energy().value()
+    oldns = t.nsecsElapsed()
+
+    t.start()
+    newnrg = newsys.energy().value()
+    newns = t.nsecsElapsed()
+
+    t.start()
+    optnrg = optsys.energy().value()
+    optns = t.nsecsElapsed()
+
+    t.start()
+    parnrg = parsys.energy().value()
+    parns = t.nsecsElapsed()
+
+    if verbose:
+        print("\nTIMES: old = %s ms, new = %s ms, opt = %s ms, par = %s ms" % \
+                        (oldns*0.000001,newns*0.000001,optns*0.000001,parns*0.000001))
+        print("\nENERGIES: old = %s, new = %s, opt = %s, par = %s" % \
+                        (oldnrg,newnrg,optnrg,parnrg))
+
+    assert_almost_equal( oldnrg, newnrg, 0.5 )
+    assert_almost_equal( optnrg, newnrg, 0.1 )
+    assert_almost_equal( parnrg, newnrg, 0.1 )
+
+    if verbose:
+        print("\nPerforming simulation...")
 
     moves.clearStatistics()
     moves.setGenerator( RanGenerator(42) )
@@ -165,10 +211,26 @@ def test_moves(verbose = False):
     check_newcnrg = newsys.energy( newff.components().coulomb() ).value()
     check_newljnrg = newsys.energy( newff.components().lj() ).value()
 
-    moves.clearStatistics()
-    moves.setGenerator( RanGenerator(42) )
+    opt_moves.clearStatistics()
+    opt_moves.setGenerator( RanGenerator(42) )
     t.start()
-    moves.move(parsys, nmoves, False)
+    opt_moves.move(optsys, nmoves, False)
+    optns = t.nsecsElapsed()
+    opt_naccept = moves.nAccepted()
+    opt_nreject = moves.nRejected()
+
+    optcnrg = optsys.energy( newff.components().coulomb() ).value()
+    optljnrg = optsys.energy( newff.components().lj() ).value()
+
+    optsys.mustNowRecalculateFromScratch()
+
+    check_optcnrg = optsys.energy( newff.components().coulomb() ).value()
+    check_optljnrg = optsys.energy( newff.components().lj() ).value()
+
+    opt_moves.clearStatistics()
+    opt_moves.setGenerator( RanGenerator(42) )
+    t.start()
+    opt_moves.move(parsys, nmoves, False)
     parns = t.nsecsElapsed()
     par_naccept = moves.nAccepted()
     par_nreject = moves.nRejected()
@@ -182,26 +244,50 @@ def test_moves(verbose = False):
     check_parljnrg = parsys.energy( parff.components().lj() ).value()
 
     if verbose:
-        print("\nTIMES: old = %s ms, new = %s ms, par = %s ms" % \
-                        (oldns*0.000001,newns*0.000001,parns*0.000001))
+        print("\nTIMES: old = %s ms, new = %s ms, opt = %s ms, par = %s ms" % \
+                        (oldns*0.000001,newns*0.000001,optns*0.000001,parns*0.000001))
 
-        print("\nNACCEPT: old = %s, new = %s, par = %s" % \
-                        (old_naccept,new_naccept,par_naccept))
+        print("\nNACCEPT: old = %s, new = %s, opt = %s, par = %s" % \
+                        (old_naccept,new_naccept,opt_naccept,par_naccept))
 
-        print("NREJECT: old = %s, new = %s, par = %s" % \
-                        (old_nreject,new_nreject,par_nreject))
+        print("NREJECT: old = %s, new = %s, opt = %s, par = %s" % \
+                        (old_nreject,new_nreject,opt_nreject,par_nreject))
 
         print("\nTotal energy")
         print("OLD FF :  %s  %s  %s" % (oldcnrg+oldljnrg,oldcnrg,oldljnrg))
         print("NEW FF :  %s  %s  %s" % (newcnrg+newljnrg,newcnrg,newljnrg))
+        print("OPT FF :  %s  %s  %s" % (optcnrg+optljnrg,optcnrg,optljnrg))
         print("PAR FF :  %s  %s  %s" % (parcnrg+parljnrg,parcnrg,parljnrg))
 
         print("\nCheck energy")
         print("OLD FF :  %s  %s  %s" % (check_oldcnrg+check_oldljnrg,check_oldcnrg,check_oldljnrg))
         print("NEW FF :  %s  %s  %s" % (check_newcnrg+check_newljnrg,check_newcnrg,check_newljnrg))
+        print("OPT FF :  %s  %s  %s" % (check_optcnrg+check_optljnrg,check_optcnrg,check_optljnrg))
         print("PAR FF :  %s  %s  %s" % (check_parcnrg+check_parljnrg,check_parcnrg,check_parljnrg))
+
+    assert_equal( new_naccept, old_naccept )
+    assert_equal( new_nreject, old_nreject )
+    assert_equal( opt_naccept, old_naccept )
+    assert_equal( opt_nreject, old_nreject )
+    assert_equal( par_naccept, old_naccept )
+    assert_equal( par_nreject, old_nreject )
+
+    assert_almost_equal( oldcnrg, check_oldcnrg, 0.1 )
+    assert_almost_equal( oldljnrg, check_oldljnrg, 0.1 )
+    assert_almost_equal( newcnrg, check_newcnrg, 0.1 )
+    assert_almost_equal( newljnrg, check_newljnrg, 0.1 )
+    assert_almost_equal( optcnrg, check_optcnrg, 0.1 )
+    assert_almost_equal( optljnrg, check_optljnrg, 0.1 )
+    assert_almost_equal( parcnrg, check_parcnrg, 0.1 )
+    assert_almost_equal( parljnrg, check_parljnrg, 0.1 )
+    assert_almost_equal( newcnrg, oldcnrg, 0.5 )
+    assert_almost_equal( newljnrg, oldljnrg, 0.5 )
+    assert_almost_equal( optcnrg, newcnrg, 0.1 )
+    assert_almost_equal( optljnrg, newljnrg, 0.1 )
+    assert_almost_equal( parcnrg, newcnrg, 0.1 )
+    assert_almost_equal( parljnrg, newljnrg, 0.1 )
 
 
 if __name__ == "__main__":
-    test_energy(True)
-    #test_moves(True)
+    #test_energy(True)
+    test_moves(True)
