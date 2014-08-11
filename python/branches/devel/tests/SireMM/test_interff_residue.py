@@ -12,7 +12,7 @@ import Sire.Stream
 
 import os
 
-nmoves = 100
+nmoves = 1000
 
 coul_cutoff = 10 * angstrom
 lj_cutoff = 10 * angstrom
@@ -24,6 +24,8 @@ if os.path.exists("../io/proteinbox.s3"):
 else:
     (mols, space) = Amber().readCrdTop("../io/proteinbox.crd", "../io/proteinbox.top")
     Sire.Stream.save( (mols,space), "../io/proteinbox.s3")
+
+# space = Cartesian()
 
 oldff = InterCLJFF("oldff")
 oldff.setProperty("switchingFunction",switchfunc)
@@ -144,6 +146,9 @@ def test_moves(verbose = False):
 
     opt_moves = RigidBodyMC(res)
     opt_moves.enableOptimisedMoves()
+
+    opt_moves.setMaximumTranslation( 0.2 * angstrom )
+    opt_moves.setMaximumRotation( 0.5 * degrees )
 
     t = QElapsedTimer()
 
@@ -289,5 +294,5 @@ def test_moves(verbose = False):
 
 
 if __name__ == "__main__":
-    #test_energy(True)
+    test_energy(True)
     test_moves(True)
