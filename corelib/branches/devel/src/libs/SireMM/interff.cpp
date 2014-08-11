@@ -774,8 +774,6 @@ void InterFF::recalculateEnergy()
     }
     else
     {
-        qDebug() << "TOTAL ENERGY";
-    
         //recalculate everything from scratch as this has been requested
         //calculate the energy from scratch
         tuple<double,double> nrgs(0,0);

@@ -901,22 +901,7 @@ void CLJFunction::operator()(const CLJAtoms &atoms0, const CLJBoxes &atoms1,
     
     if (this->hasCutoff())
     {
-        const CLJBoxes::Container &boxes1 = atoms1.occupiedBoxes();
-        
-        //const float min_cutoff = qMax(this->coulombCutoff(), this->ljCutoff());
-        
-        for (CLJBoxes::const_iterator it1 = boxes1.constBegin();
-             it1 != boxes1.constEnd();
-             ++it1)
-        {
-            double icnrg(0), iljnrg(0);
-
-            this->operator()(atoms0, it1->read().atoms(),
-                             icnrg, iljnrg);
-
-            cnrg += icnrg;
-            ljnrg += iljnrg;
-        }
+        this->operator()( CLJBoxes(atoms0, atoms1.length()), atoms1, cnrg, ljnrg );
     }
     else
     {
