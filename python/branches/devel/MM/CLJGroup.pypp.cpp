@@ -30,6 +30,7 @@ void register_CLJGroup_class(){
         CLJGroup_exposer_t CLJGroup_exposer = CLJGroup_exposer_t( "CLJGroup", bp::init< >() );
         bp::scope CLJGroup_scope( CLJGroup_exposer );
         CLJGroup_exposer.def( bp::init< SireMM::CLJAtoms::ID_SOURCE >(( bp::arg("id_source") )) );
+        CLJGroup_exposer.def( bp::init< SireMM::CLJExtractor::EXTRACT_SOURCE >(( bp::arg("extract_source") )) );
         CLJGroup_exposer.def( bp::init< SireMM::CLJAtoms::ID_SOURCE, SireMM::CLJExtractor::EXTRACT_SOURCE >(( bp::arg("id_source"), bp::arg("extract_source") )) );
         CLJGroup_exposer.def( bp::init< SireMM::CLJGroup const & >(( bp::arg("other") )) );
         { //::SireMM::CLJGroup::accept
