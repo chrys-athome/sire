@@ -52,7 +52,7 @@ static const RegisterMetaType<CLJExtractor> r_cljext( NO_ROOT );
 
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJExtractor &cljext)
 {
-    writeHeader(ds, r_cljext, 1);
+    writeHeader(ds, r_cljext, 2);
     
     SharedDataStream sds(ds);
     
@@ -61,7 +61,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJExtractor &cljex
         << cljext.props << cljext.cljidxs
         << cljext.cljdeltas
         << qint32(cljext.id_source)
-        << cljext.extract_by_residue;
+        << qint32(cljext.extract_source);
 
     return ds;
 }
@@ -70,36 +70,65 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJExtractor &cljext)
 {
     VersionID v = readHeader(ds, r_cljext);
     
-    if (v == 1)
+    if (v == 2)
     {
         SharedDataStream sds(ds);
         
         qint32 id_source;
+        qint32 extract_source;
         
         sds >> cljext.mol >> cljext.newmol
             >> cljext.selected_atoms >> cljext.new_selected_atoms
             >> cljext.props >> cljext.cljidxs
             >> cljext.cljdeltas
             >> id_source
-            >> cljext.extract_by_residue;
+            >> extract_source;
         
         cljext.id_source = CLJAtoms::ID_SOURCE(id_source);
+        cljext.extract_source = CLJExtractor::EXTRACT_SOURCE(extract_source);
+    }
+    else if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        qint32 id_source;
+        bool extract_by_residue;
+        
+        sds >> cljext.mol >> cljext.newmol
+            >> cljext.selected_atoms >> cljext.new_selected_atoms
+            >> cljext.props >> cljext.cljidxs
+            >> cljext.cljdeltas
+            >> id_source
+            >> extract_by_residue;
+        
+        cljext.id_source = CLJAtoms::ID_SOURCE(id_source);
+        
+        if (extract_by_residue)
+        {
+            cljext.extract_source = CLJExtractor::EXTRACT_BY_RESIDUE;
+        }
+        else
+        {
+            cljext.extract_source = CLJExtractor::EXTRACT_BY_MOLECULE;
+        }
     }
     else
-        throw version_error(v, "1", r_cljext, CODELOC);
+        throw version_error(v, "1,2", r_cljext, CODELOC);
 
     return ds;
 }
 
 /** Null constructor */
-CLJExtractor::CLJExtractor() : id_source(CLJAtoms::USE_MOLNUM), extract_by_residue(true)
+CLJExtractor::CLJExtractor()
+             : id_source(CLJAtoms::USE_MOLNUM), extract_source(EXTRACT_BY_CUTGROUP)
 {}
 
 /** Construct to extract the CLJ properties from the passed molecule, extracting
     information per-residue, and using the supplied property map to find the 
     correct properties */
 CLJExtractor::CLJExtractor(const MoleculeView &molecule, const PropertyMap &map)
-             : props(map), id_source(CLJAtoms::USE_MOLNUM), extract_by_residue(true)
+             : props(map), id_source(CLJAtoms::USE_MOLNUM),
+               extract_source(EXTRACT_BY_CUTGROUP)
 {
     newmol = molecule.molecule();
 
@@ -110,12 +139,12 @@ CLJExtractor::CLJExtractor(const MoleculeView &molecule, const PropertyMap &map)
 }
 
 /** Construct to extract the CLJ properties from the passed molecule, specifying
-    wheter or not to extract information per-residue or per-molecule, 
+    how to extract atom data from the molecule,
     and using the supplied property map to find the
     correct properties */
-CLJExtractor::CLJExtractor(const MoleculeView &molecule, bool split_by_residue,
+CLJExtractor::CLJExtractor(const MoleculeView &molecule, EXTRACT_SOURCE ext,
                            const PropertyMap &map)
-             : props(map), id_source(CLJAtoms::USE_MOLNUM), extract_by_residue(split_by_residue)
+             : props(map), id_source(CLJAtoms::USE_MOLNUM), extract_source(ext)
 {
     newmol = molecule.molecule();
 
@@ -130,7 +159,7 @@ CLJExtractor::CLJExtractor(const MoleculeView &molecule, bool split_by_residue,
     correct properties */
 CLJExtractor::CLJExtractor(const MoleculeView &molecule, CLJAtoms::ID_SOURCE id,
                            const PropertyMap &map)
-             : props(map), id_source(id), extract_by_residue(true)
+             : props(map), id_source(id), extract_source(EXTRACT_BY_CUTGROUP)
 {
     newmol = molecule.molecule();
     
@@ -141,12 +170,12 @@ CLJExtractor::CLJExtractor(const MoleculeView &molecule, CLJAtoms::ID_SOURCE id,
 }
 
 /** Construct to extract the CLJ properties from the passed molecule, specifying
-    wheter or not to extract information per-residue or per-molecule, 
+    how to extract atom information,
     and using the supplied property map to find the
     correct properties */
 CLJExtractor::CLJExtractor(const MoleculeView &molecule, CLJAtoms::ID_SOURCE id,
-                           bool split_by_residue, const PropertyMap &map)
-             : props(map), id_source(id), extract_by_residue(split_by_residue)
+                           EXTRACT_SOURCE ext, const PropertyMap &map)
+             : props(map), id_source(id), extract_source(ext)
 {
     newmol = molecule.molecule();
     
@@ -162,7 +191,7 @@ CLJExtractor::CLJExtractor(const CLJExtractor &other)
                newmol(other.newmol), new_selected_atoms(other.new_selected_atoms),
                props(other.props),
                cljidxs(other.cljidxs), cljdeltas(other.cljdeltas),
-               id_source(other.id_source), extract_by_residue(other.extract_by_residue)
+               id_source(other.id_source), extract_source(other.extract_source)
 {}
 
 /** Destructor */
@@ -182,7 +211,7 @@ CLJExtractor& CLJExtractor::operator=(const CLJExtractor &other)
         cljidxs = other.cljidxs;
         cljdeltas = other.cljdeltas;
         id_source = other.id_source;
-        extract_by_residue = other.extract_by_residue;
+        extract_source = other.extract_source;
     }
     
     return *this;
@@ -199,7 +228,7 @@ bool CLJExtractor::operator==(const CLJExtractor &other) const
             new_selected_atoms == other.new_selected_atoms and
             props == other.props and
             cljidxs == other.cljidxs and cljdeltas == other.cljdeltas and
-            id_source == other.id_source and extract_by_residue == other.extract_by_residue);
+            id_source == other.id_source and extract_source == other.extract_source);
 }
 
 /** Comparison operator */
@@ -311,16 +340,22 @@ PropertyName CLJExtractor::ljProperty() const
     return props["LJ"];
 }
 
+/** Return whether or not atoms are extracted by cutgroup */
+bool CLJExtractor::extractingByCutGroup() const
+{
+    return extract_source == EXTRACT_BY_CUTGROUP;
+}
+
 /** Return whether or not atoms are extracted by residue */
 bool CLJExtractor::extractingByResidue() const
 {
-    return extract_by_residue;
+    return extract_source == EXTRACT_BY_RESIDUE;
 }
 
 /** Return whether or not atoms are extracted by molecule */
 bool CLJExtractor::extractingByMolecule() const
 {
-    return not extract_by_residue;
+    return extract_source == EXTRACT_BY_MOLECULE;
 }
 
 /** Return the source of the ID property for each CLJAtom */
@@ -421,7 +456,19 @@ void CLJExtractor::updateSelection(const AtomSelection &new_selection,
     }
     else if (new_selection.selectedAll())
     {
-        if (extract_by_residue)
+        if (extractingByCutGroup())
+        {
+            for (CGIdx i(0); i<mol.nCutGroups(); ++i)
+            {
+                if (not old_selection.selectedAll(i))
+                {
+                    cljdeltas[i] = workspace.push(boxes, cljidxs.at(i),
+                                                  CLJAtoms(newmol.cutGroup(i), id_source, props),
+                                                  cljdeltas[i]);
+                }
+            }
+        }
+        else if (extractingByResidue())
         {
             for (ResIdx i(0); i<mol.nResidues(); ++i)
             {
@@ -433,7 +480,7 @@ void CLJExtractor::updateSelection(const AtomSelection &new_selection,
                 }
             }
         }
-        else
+        else // extractingByMolecule()
         {
             cljdeltas[0] = workspace.push(boxes, cljidxs.at(0),
                                           CLJAtoms(newmol, id_source, props),
@@ -443,7 +490,25 @@ void CLJExtractor::updateSelection(const AtomSelection &new_selection,
     else
     {
         //something in between...
-        if (extract_by_residue)
+        if (extractingByCutGroup())
+        {
+            for (CGIdx i(0); i<mol.nCutGroups(); ++i)
+            {
+                AtomSelection old_cg_selection = old_selection;
+                AtomSelection new_cg_selection = new_selection;
+                
+                old_cg_selection = old_cg_selection.mask(i);
+                new_cg_selection = new_cg_selection.mask(i);
+            
+                if (old_cg_selection != new_cg_selection)
+                {
+                    cljdeltas[i] = workspace.push(boxes, cljidxs.at(i),
+                                            CLJAtoms( PartialMolecule(newmol, new_cg_selection),
+                                                      id_source, props ), cljdeltas[i]);
+                }
+            }
+        }
+        else if (extractingByResidue())
         {
             for (ResIdx i(0); i<mol.nResidues(); ++i)
             {
@@ -461,7 +526,7 @@ void CLJExtractor::updateSelection(const AtomSelection &new_selection,
                 }
             }
         }
-        else
+        else // extractingByMolecule
         {
             cljdeltas[0] = workspace.push(boxes, cljidxs.at(0),
                                           CLJAtoms( PartialMolecule(newmol,new_selection),
@@ -527,7 +592,115 @@ void CLJExtractor::update(const MoleculeView &new_molecule,
         }
         
         //do we have multiple CLJAtoms groups to extract?
-        if (extract_by_residue and newmol.nResidues() > 1)
+        if (extractingByCutGroup() and newmol.nCutGroups() > 1)
+        {
+            //generate a list of changed CutGroup indicies
+            QVarLengthArray<CGIdx> changed_cgroups;
+            
+            if (changed_coords)
+            {
+                const AtomCoords &old_coords = newmol.property(coords_property).asA<AtomCoords>();
+                const AtomCoords &new_coords = new_molecule.data()
+                                                    .property(coords_property).asA<AtomCoords>();
+        
+                for (CGIdx i(0); i<newmol.nCutGroups(); ++i)
+                {
+                    const Vector *oldc = old_coords.constData(i);
+                    const Vector *newc = new_coords.constData(i);
+                    
+                    if (oldc != newc)
+                    {
+                        for (Index j(0); j<mol.data().info().nAtoms(i); ++j)
+                        {
+                            if (oldc[j] != newc[j])
+                            {
+                                //this atom has moved
+                                changed_cgroups.append(i);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (changed_charge and changed_cgroups.count() < newmol.nCutGroups())
+            {
+                const AtomCharges &old_chgs = newmol.property(charge_property).asA<AtomCharges>();
+                const AtomCharges &new_chgs = new_molecule.data()
+                                                    .property(charge_property).asA<AtomCharges>();
+            
+                for (CGIdx i(0); i<newmol.nCutGroups(); ++i)
+                {
+                    const Charge *oldc = old_chgs.constData(i);
+                    const Charge *newc = new_chgs.constData(i);
+                    
+                    if (oldc != newc)
+                    {
+                        for (Index j(0); j<mol.data().info().nAtoms(i); ++j)
+                        {
+                            if (oldc[j] != newc[j])
+                            {
+                                //the charge on this atom has changed
+                                changed_cgroups.append(i);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (changed_lj and changed_cgroups.count() < newmol.nCutGroups())
+            {
+                const AtomLJs &old_ljs = newmol.property(lj_property).asA<AtomLJs>();
+                const AtomLJs &new_ljs = new_molecule.data().property(lj_property).asA<AtomLJs>();
+
+                for (CGIdx i(0); i<newmol.nCutGroups(); ++i)
+                {
+                    const LJParameter *oldlj = old_ljs.constData(i);
+                    const LJParameter *newlj = new_ljs.constData(i);
+                    
+                    if (oldlj != newlj)
+                    {
+                        for (Index j(0); j<mol.data().info().nAtoms(i); ++j)
+                        {
+                            if (oldlj[j] != newlj[j])
+                            {
+                                //the LJ parameter of this atom has changed
+                                changed_cgroups.append(i);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            newmol = new_molecule.molecule();
+    
+            //loop over all of the changed residues
+            foreach (const CGIdx &i, changed_cgroups)
+            {
+                if (new_selected_atoms.isNull() or
+                    new_selected_atoms.selectedAll() or
+                    new_selected_atoms.selectedAll(i))
+                {
+                    //all atoms in this residue are in this forcefield
+                    cljdeltas[i] = workspace.push(boxes, cljidxs.at(i),
+                                                  CLJAtoms(newmol.cutGroup(i), id_source, props),
+                                                  cljdeltas[i]);
+                }
+                else
+                {
+                    //only some of the atoms of this residue are in the forcefield
+                    AtomSelection selected_cgatoms = new_selected_atoms;
+                    selected_cgatoms = selected_cgatoms.intersect(i);
+                
+                    cljdeltas[i] = workspace.push(boxes, cljidxs.at(i),
+                                     CLJAtoms( PartialMolecule(newmol, selected_cgatoms),
+                                               id_source, props ), cljdeltas[i]);
+                }
+            }
+        }
+        else if (extractingByResidue() and newmol.nResidues() > 1)
         {
             //generate a list of changed residue indicies
             QSet<qint32> changed_residues;
@@ -637,7 +810,7 @@ void CLJExtractor::update(const MoleculeView &new_molecule,
                 }
             }
         }
-        else
+        else // extractingByMolecule or only a single residue or cutgroup
         {
             newmol = new_molecule.molecule();
 
@@ -755,7 +928,31 @@ void CLJExtractor::initialise(CLJBoxes &boxes, CLJWorkspace &workspace)
         return;
     }
     
-    if (extract_by_residue)
+    if (extractingByCutGroup())
+    {
+        cljdeltas = QVector<CLJDelta>( newmol.nCutGroups(), CLJDelta() );
+        cljidxs = QVector< QVector<CLJBoxIndex> >( newmol.nCutGroups(), QVector<CLJBoxIndex>() );
+
+        for (CGIdx i(0); i<newmol.nCutGroups(); ++i)
+        {
+            if (new_selected_atoms.isNull() or new_selected_atoms.selectedAll(i))
+            {
+                cljdeltas[i] = workspace.push(boxes, QVector<CLJBoxIndex>(),
+                                              CLJAtoms(newmol.cutGroup(i), id_source, props),
+                                              CLJDelta());
+            }
+            else
+            {
+                AtomSelection cg_selection = new_selected_atoms;
+                cg_selection = cg_selection.mask(i);
+                
+                cljdeltas[i] = workspace.push(boxes, QVector<CLJBoxIndex>(),
+                                              CLJAtoms( PartialMolecule(newmol,cg_selection),
+                                                        id_source, props ), CLJDelta());
+            }
+        }
+    }
+    else if (extractingByResidue())
     {
         cljdeltas = QVector<CLJDelta>( newmol.nResidues(), CLJDelta() );
         cljidxs = QVector< QVector<CLJBoxIndex> >( newmol.nResidues(), QVector<CLJBoxIndex>() );
@@ -779,7 +976,7 @@ void CLJExtractor::initialise(CLJBoxes &boxes, CLJWorkspace &workspace)
             }
         }
     }
-    else
+    else // extractingByMolecule()
     {
         cljdeltas = QVector<CLJDelta>( 1, CLJDelta() );
         cljidxs = QVector< QVector<CLJBoxIndex> >( 1, QVector<CLJBoxIndex>() );

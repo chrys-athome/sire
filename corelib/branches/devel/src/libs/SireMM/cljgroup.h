@@ -63,7 +63,7 @@ friend QDataStream& ::operator>>(QDataStream&, SireMM::CLJGroup&);
 public:
     CLJGroup();
     CLJGroup(CLJAtoms::ID_SOURCE id_source);
-    CLJGroup(CLJAtoms::ID_SOURCE id_source, bool extract_by_residue);
+    CLJGroup(CLJAtoms::ID_SOURCE id_source, CLJExtractor::EXTRACT_SOURCE extract_source);
 
     CLJGroup(const CLJGroup &other);
     
@@ -150,8 +150,8 @@ private:
     /** The source for the ID numbers for the atoms */
     CLJAtoms::ID_SOURCE id_source;
     
-    /** Whether or not to extract atoms by molecule or by residue */
-    bool split_by_residue;
+    /** How to extract atoms in the CLJExtractor */
+    CLJExtractor::EXTRACT_SOURCE extract_source;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS

@@ -75,15 +75,22 @@ friend QDataStream& ::operator<<(QDataStream&, const CLJExtractor&);
 friend QDataStream& ::operator>>(QDataStream&, CLJExtractor&);
 
 public:
+    enum EXTRACT_SOURCE
+    {
+        EXTRACT_BY_CUTGROUP = 0,
+        EXTRACT_BY_RESIDUE = 1,
+        EXTRACT_BY_MOLECULE = 2
+    };
+
     CLJExtractor();
     CLJExtractor(const MoleculeView &mol, const PropertyMap &map = PropertyMap());
-    CLJExtractor(const MoleculeView &mol, bool split_by_residue,
+    CLJExtractor(const MoleculeView &mol, EXTRACT_SOURCE extract_source,
                  const PropertyMap &map = PropertyMap());
 
     CLJExtractor(const MoleculeView &mol, CLJAtoms::ID_SOURCE id_source,
                  const PropertyMap &map = PropertyMap());
     CLJExtractor(const MoleculeView &mol, CLJAtoms::ID_SOURCE id_source,
-                 bool split_by_residue,
+                 EXTRACT_SOURCE extract_source,
                  const PropertyMap &map = PropertyMap());
     
     CLJExtractor(const CLJExtractor &other);
@@ -116,6 +123,7 @@ public:
     PropertyName chargeProperty() const;
     PropertyName ljProperty() const;
     
+    bool extractingByCutGroup() const;
     bool extractingByResidue() const;
     bool extractingByMolecule() const;
     
@@ -169,8 +177,8 @@ private:
     /** The source of the ID property in CLJAtoms */
     CLJAtoms::ID_SOURCE id_source;
 
-    /** Whether or not we extract atoms by molecule or by residues */
-    bool extract_by_residue;
+    /** How are we extracting atoms? */
+    EXTRACT_SOURCE extract_source;
 };
 
 }

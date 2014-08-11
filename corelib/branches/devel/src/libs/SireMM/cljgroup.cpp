@@ -44,13 +44,13 @@ static const RegisterMetaType<CLJGroup> r_group(NO_ROOT);
 
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJGroup &group)
 {
-    writeHeader(ds, r_group, 1);
+    writeHeader(ds, r_group, 2);
     
     SharedDataStream sds(ds);
     
     sds << group.cljexts << group.cljboxes
         << group.cljworkspace << group.changed_mols
-        << group.props << qint32(group.id_source) << group.split_by_residue;
+        << group.props << qint32(group.id_source) << qint32(group.extract_source);
     
     return ds;
 }
@@ -59,17 +59,41 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJGroup &group)
 {
     VersionID v = readHeader(ds, r_group);
     
-    if (v == 1)
+    if (v == 2)
     {
         SharedDataStream sds(ds);
         
         qint32 id_source;
+        qint32 extract_source;
         
         sds >> group.cljexts >> group.cljboxes
             >> group.cljworkspace >> group.changed_mols
-            >> group.props >> id_source >> group.split_by_residue;
+            >> group.props >> id_source >> extract_source;
         
         group.id_source = CLJAtoms::ID_SOURCE(id_source);
+        group.extract_source = CLJExtractor::EXTRACT_SOURCE(extract_source);
+    }
+    else if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        qint32 id_source;
+        bool split_by_residue;
+        
+        sds >> group.cljexts >> group.cljboxes
+            >> group.cljworkspace >> group.changed_mols
+            >> group.props >> id_source >> split_by_residue;
+        
+        group.id_source = CLJAtoms::ID_SOURCE(id_source);
+        
+        if (split_by_residue)
+        {
+            group.extract_source = CLJExtractor::EXTRACT_BY_RESIDUE;
+        }
+        else
+        {
+            group.extract_source = CLJExtractor::EXTRACT_BY_MOLECULE;
+        }
     }
     else
         throw version_error(v, "1", r_group, CODELOC);
@@ -78,7 +102,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJGroup &group)
 }
 
 /** Null constructor */
-CLJGroup::CLJGroup() : id_source(CLJAtoms::USE_MOLNUM), split_by_residue(true)
+CLJGroup::CLJGroup()
+         : id_source(CLJAtoms::USE_MOLNUM), extract_source(CLJExtractor::EXTRACT_BY_CUTGROUP)
 {
     cljworkspace.mustRecalculateFromScratch(cljboxes);
 }
@@ -87,7 +112,7 @@ CLJGroup::CLJGroup() : id_source(CLJAtoms::USE_MOLNUM), split_by_residue(true)
     CLJAtoms ID_SOURCE property (e.g. USE_MOLNUM for intermolecular forcefields or
     USE_ATOMNUM for intramolecular forcefields) */
 CLJGroup::CLJGroup(CLJAtoms::ID_SOURCE ids)
-         : id_source(ids), split_by_residue(true)
+         : id_source(ids), extract_source(CLJExtractor::EXTRACT_BY_CUTGROUP)
 {
     cljworkspace.mustRecalculateFromScratch(cljboxes);
 }
@@ -95,10 +120,10 @@ CLJGroup::CLJGroup(CLJAtoms::ID_SOURCE ids)
 /** Construct, suppling the name of the molecule group and the source of the
     CLJAtoms ID_SOURCE property (e.g. USE_MOLNUM for intermolecular forcefields or
     USE_ATOMNUM for intramolecular forcefields), and also specifying if we are going
-    to split molecules by residue, or add them as single units (normally best to
-    extract by residue unless you know that all molecules are going to be small) */
-CLJGroup::CLJGroup(CLJAtoms::ID_SOURCE ids, bool extract_by_residue)
-         : id_source(ids), split_by_residue(extract_by_residue)
+    to split molecules by cutgroup, residue or molecule, (normally best to
+    extract by cutgroup unless you know that all molecules are going to be small) */
+CLJGroup::CLJGroup(CLJAtoms::ID_SOURCE ids, CLJExtractor::EXTRACT_SOURCE ext)
+         : id_source(ids), extract_source(ext)
 {
     cljworkspace.mustRecalculateFromScratch(cljboxes);
 }
@@ -108,7 +133,7 @@ CLJGroup::CLJGroup(const CLJGroup &other)
          : cljexts(other.cljexts), cljboxes(other.cljboxes),
            cljworkspace(other.cljworkspace), changed_mols(other.changed_mols),
            props(other.props), id_source(other.id_source),
-           split_by_residue(other.split_by_residue)
+           extract_source(other.extract_source)
 {}
 
 /** Destructor */
@@ -126,7 +151,7 @@ CLJGroup& CLJGroup::operator=(const CLJGroup &other)
         changed_mols = other.changed_mols;
         props = other.props;
         id_source = other.id_source;
-        split_by_residue = other.split_by_residue;
+        extract_source = other.extract_source;
     }
     
     return *this;
@@ -139,7 +164,7 @@ bool CLJGroup::operator==(const CLJGroup &other) const
            (cljexts == other.cljexts and
             cljboxes == other.cljboxes and cljworkspace == other.cljworkspace and
             changed_mols == other.changed_mols and props == other.props and
-            id_source == other.id_source and split_by_residue == other.split_by_residue);
+            id_source == other.id_source and extract_source == other.extract_source);
 }
 
 /** Comparison operator */
@@ -255,7 +280,7 @@ void CLJGroup::add(const MoleculeView &molview, const PropertyMap &map)
     }
     else
     {
-        CLJExtractor changed(molview, id_source, split_by_residue);
+        CLJExtractor changed(molview, id_source, extract_source);
         
         if (cljworkspace.recalculatingFromScratch())
         {
@@ -675,7 +700,7 @@ void CLJGroup::mustReallyRecalculateFromScratch()
          it != mols.constEnd();
          ++it)
     {
-        CLJExtractor cljmol( it.value(), id_source, split_by_residue,
+        CLJExtractor cljmol( it.value(), id_source, extract_source,
                              props.value(it.key(),PropertyMap()) );
     
         cljmol.commit(cljboxes, cljworkspace);;
