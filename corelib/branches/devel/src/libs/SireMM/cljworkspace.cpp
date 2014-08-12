@@ -590,8 +590,9 @@ CLJWorkspace& CLJWorkspace::operator=(const CLJWorkspace &other)
     {
         returnToMemoryPool();
         d = other.d;
-        recalc_from_scratch = other.recalc_from_scratch;
     }
+
+    recalc_from_scratch = other.recalc_from_scratch;
     
     return *this;
 }

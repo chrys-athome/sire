@@ -426,8 +426,7 @@ void InterGroupFF::mustNowReallyRecalculateFromScratch()
 /** Recalculate the energy of this forcefield */
 void InterGroupFF::recalculateEnergy()
 {
-    if (cljgroup[0].recalculatingFromScratch() or cljgroup[1].recalculatingFromScratch() or
-        (cljgroup[0].needsAccepting() and cljgroup[1].needsAccepting()))
+    if (cljgroup[0].recalculatingFromScratch() or cljgroup[1].recalculatingFromScratch())
     {
         //calculate the energy from first principles
         cljgroup[0].accept();
@@ -458,6 +457,32 @@ void InterGroupFF::recalculateEnergy()
                                                      cljgroup[1].cljBoxes());
         }
 
+        d.constData()->cljcomps.setEnergy(*this, CLJEnergy(nrgs.get<0>(), nrgs.get<1>()));
+        this->setClean();
+    }
+    else if (cljgroup[0].needsAccepting() and cljgroup[1].needsAccepting())
+    {
+        //recalculate everything from scratch until I write optimised code that
+        //handles the differences between the two groups
+        tuple<double,double> nrgs(0,0);
+        
+        cljgroup[0].accept();
+        cljgroup[1].accept();
+        needs_accepting = false;
+        
+        if (d.constData()->parallel_calc)
+        {
+            CLJCalculator calc(d.constData()->repro_sum);
+            nrgs = calc.calculate(*(d.constData()->cljfunc),
+                                  cljgroup[0].cljBoxes(),
+                                  cljgroup[1].cljBoxes());
+        }
+        else
+        {
+            nrgs = d.constData()->cljfunc.read().calculate(cljgroup[0].cljBoxes(),
+                                                           cljgroup[1].cljBoxes());
+        }
+        
         d.constData()->cljcomps.setEnergy(*this, CLJEnergy(nrgs.get<0>(), nrgs.get<1>()));
         this->setClean();
     }
