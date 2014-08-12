@@ -290,6 +290,61 @@ void register_CLJFunction_class(){
                 , ljCutoff_function_value );
         
         }
+        { //::SireMM::CLJFunction::multiCalculate
+        
+            typedef ::boost::tuples::tuple< QVector< double >, QVector< double >, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( *multiCalculate_function_type )( ::QVector< SireBase::PropPtr< SireMM::CLJFunction > > const &,::SireMM::CLJAtoms const & );
+            multiCalculate_function_type multiCalculate_function_value( &::SireMM::CLJFunction::multiCalculate );
+            
+            CLJFunction_exposer.def( 
+                "multiCalculate"
+                , multiCalculate_function_value
+                , ( bp::arg("funcs"), bp::arg("atoms") ) );
+        
+        }
+        { //::SireMM::CLJFunction::multiCalculate
+        
+            typedef ::boost::tuples::tuple< QVector< double >, QVector< double >, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( *multiCalculate_function_type )( ::QVector< SireBase::PropPtr< SireMM::CLJFunction > > const &,::SireMM::CLJAtoms const &,::SireMM::CLJAtoms const &,float );
+            multiCalculate_function_type multiCalculate_function_value( &::SireMM::CLJFunction::multiCalculate );
+            
+            CLJFunction_exposer.def( 
+                "multiCalculate"
+                , multiCalculate_function_value
+                , ( bp::arg("funcs"), bp::arg("atoms0"), bp::arg("atoms1"), bp::arg("min_distance")=0 ) );
+        
+        }
+        { //::SireMM::CLJFunction::multiCalculate
+        
+            typedef ::boost::tuples::tuple< QVector< double >, QVector< double >, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( *multiCalculate_function_type )( ::QVector< SireBase::PropPtr< SireMM::CLJFunction > > const &,::SireMM::CLJBoxes const & );
+            multiCalculate_function_type multiCalculate_function_value( &::SireMM::CLJFunction::multiCalculate );
+            
+            CLJFunction_exposer.def( 
+                "multiCalculate"
+                , multiCalculate_function_value
+                , ( bp::arg("funcs"), bp::arg("atoms") ) );
+        
+        }
+        { //::SireMM::CLJFunction::multiCalculate
+        
+            typedef ::boost::tuples::tuple< QVector< double >, QVector< double >, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( *multiCalculate_function_type )( ::QVector< SireBase::PropPtr< SireMM::CLJFunction > > const &,::SireMM::CLJBoxes const &,::SireMM::CLJBoxes const & );
+            multiCalculate_function_type multiCalculate_function_value( &::SireMM::CLJFunction::multiCalculate );
+            
+            CLJFunction_exposer.def( 
+                "multiCalculate"
+                , multiCalculate_function_value
+                , ( bp::arg("funcs"), bp::arg("atoms0"), bp::arg("atoms1") ) );
+        
+        }
+        { //::SireMM::CLJFunction::multiCalculate
+        
+            typedef ::boost::tuples::tuple< QVector< double >, QVector< double >, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( *multiCalculate_function_type )( ::QVector< SireBase::PropPtr< SireMM::CLJFunction > > const &,::SireMM::CLJAtoms const &,::SireMM::CLJBoxes const & );
+            multiCalculate_function_type multiCalculate_function_value( &::SireMM::CLJFunction::multiCalculate );
+            
+            CLJFunction_exposer.def( 
+                "multiCalculate"
+                , multiCalculate_function_value
+                , ( bp::arg("funcs"), bp::arg("atoms0"), bp::arg("atoms1") ) );
+        
+        }
         { //::SireMM::CLJFunction::null
         
             typedef ::SireMM::NullCLJFunction const & ( *null_function_type )(  );
@@ -571,6 +626,7 @@ void register_CLJFunction_class(){
                 , usingGeometricCombiningRules_function_value );
         
         }
+        CLJFunction_exposer.staticmethod( "multiCalculate" );
         CLJFunction_exposer.staticmethod( "null" );
         CLJFunction_exposer.staticmethod( "typeName" );
         CLJFunction_exposer.def( "__rlshift__", &__rlshift__QDataStream< ::SireMM::CLJFunction >,
