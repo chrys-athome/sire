@@ -108,15 +108,12 @@ static RegisterMetaType<InterFF> r_interff;
 
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const InterFF &interff)
 {
-    throw SireError::incomplete_code( QObject::tr("NEED TO WRITE"), CODELOC );
-
     writeHeader(ds, r_interff, 1);
     
     SharedDataStream sds(ds);
     
     sds << interff.cljgroup << interff.needs_accepting
         << interff.d->cljfunc << interff.d->fixed_atoms
-        << interff.d->props
         << interff.d->fixed_only << interff.d->parallel_calc
         << interff.d->repro_sum
         << static_cast<const G1FF&>(interff);
@@ -126,8 +123,6 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const InterFF &interff)
 
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, InterFF &interff)
 {
-    throw SireError::incomplete_code( QObject::tr("NEED TO WRITE"), CODELOC );
-
     VersionID v = readHeader(ds, r_interff);
     
     if (v == 1)
@@ -136,11 +131,11 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, InterFF &interff)
         
         sds >> interff.cljgroup >> interff.needs_accepting
             >> interff.d->cljfunc >> interff.d->fixed_atoms
-            >> interff.d->props
             >> interff.d->fixed_only >> interff.d->parallel_calc
             >> interff.d->repro_sum
             >> static_cast<G1FF&>(interff);
         
+        interff.rebuildProps();
         interff._pvt_updateName();
     }
     else

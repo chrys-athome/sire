@@ -26,97 +26,69 @@
   *
 \*********************************************/
 
-#ifndef SIREMM_INTERFF_H
-#define SIREMM_INTERFF_H
+#ifndef SIREMM_INTERGROUPFF_H
+#define SIREMM_INTERGROUPFF_H
 
 #include "cljcomponent.h"
 #include "cljgrid.h"
 #include "cljfunction.h"
 #include "cljgroup.h"
 
-#include "SireFF/g1ff.h"
+#include "SireFF/g2ff.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMM
 {
-class InterFF;
+class InterGroupFF;
 }
 
-QDataStream& operator<<(QDataStream&, const SireMM::InterFF&);
-QDataStream& operator>>(QDataStream&, SireMM::InterFF&);
+QDataStream& operator<<(QDataStream&, const SireMM::InterGroupFF&);
+QDataStream& operator>>(QDataStream&, SireMM::InterGroupFF&);
 
 namespace SireMM
 {
 
-using SireBase::Property;
-using SireBase::Properties;
-
 namespace detail
 {
-    class InterFFData;
+class InterGroupFFData;
 }
 
 /** This is a forcefield that calculates the intermolecular coulomb
-    and Lennard Jones (LJ) energy of all contained molecule views.
-    It also calculates the interactions with any fixed atoms added
-    to this forcefield
-    
+    and Lennard Jones (LJ) energy between all of the molecules in 
+    group 0 and all of the molecules in group 1.
+ 
     @author Christopher Woods
 */
-class SIREMM_EXPORT InterFF : public SireBase::ConcreteProperty<InterFF,SireFF::G1FF>
+class SIREMM_EXPORT InterGroupFF : public SireBase::ConcreteProperty<InterGroupFF,SireFF::G2FF>
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const InterFF&);
-friend QDataStream& ::operator>>(QDataStream&, InterFF&);
+friend QDataStream& ::operator<<(QDataStream&, const SireMM::InterGroupFF&);
+friend QDataStream& ::operator>>(QDataStream&, SireMM::InterGroupFF&);
 
 public:
-    InterFF();
-    InterFF(const QString &name);
+    InterGroupFF();
+    InterGroupFF(const QString &name);
     
-    InterFF(const InterFF &other);
+    InterGroupFF(const InterGroupFF &other);
     
-    ~InterFF();
+    ~InterGroupFF();
     
     static const char* typeName();
     
     const char* what() const;
     
-    InterFF& operator=(const InterFF &other);
+    InterGroupFF& operator=(const InterGroupFF &other);
     
-    bool operator==(const InterFF &other) const;
-    bool operator!=(const InterFF &other) const;
+    bool operator==(const InterGroupFF &other) const;
+    bool operator!=(const InterGroupFF &other) const;
 
-    InterFF* clone() const;
+    InterGroupFF* clone() const;
 
     const CLJComponent& components() const;
 
     void setCLJFunction(const CLJFunction &cljfunc);
     const CLJFunction& cljFunction() const;
-
-    void addFixedAtoms(const MoleculeView &molecule, const PropertyMap &map = PropertyMap());
-    void addFixedAtoms(const Molecules &molecules, const PropertyMap &map = PropertyMap());
-    void addFixedAtoms(const CLJAtoms &atoms);
-    
-    void setFixedAtoms(const MoleculeView &molecule, const PropertyMap &map = PropertyMap());
-    void setFixedAtoms(const Molecules &molecules, const PropertyMap &map = PropertyMap());
-    void setFixedAtoms(const CLJAtoms &atoms);
-
-    void setFixedOnly(bool on);
-    bool fixedOnly() const;
-
-    void enableGrid();
-    void disableGrid();
-    void setUseGrid(bool on);
-    bool usesGrid() const;
-    
-    void setGridBuffer(Length buffer);
-    Length gridBuffer() const;
-    
-    void setGridSpacing(Length spacing);
-    Length gridSpacing() const;
-
-    GridInfo grid() const;
 
     void enableParallelCalculation();
     void disableParallelCalculation();
@@ -143,29 +115,36 @@ private:
 
     void recalculateEnergy();
     void rebuildProps();
-    
-    void regridAtoms();
-    
-    void _pvt_added(const SireMol::PartialMolecule &mol,
-                    const SireBase::PropertyMap &map);
 
-    void _pvt_removed(const SireMol::PartialMolecule &mol);
+    void _pvt_added(quint32 groupid,
+                    const PartialMolecule &mol,
+                    const PropertyMap &map);
 
-    void _pvt_changed(const SireMol::Molecule &molecule, bool auto_update);
-    void _pvt_changed(const QList<SireMol::Molecule> &molecules, bool auto_update);
+    void _pvt_removed(quint32 groupid,
+                      const PartialMolecule &mol);
+
+    void _pvt_changed(quint32 groupid,
+                      const Molecule &molecule,
+                      bool auto_commit);
+                              
+    void _pvt_changed(quint32 groupid,
+                      const QList<Molecule> &molecules,
+                      bool auto_commit);
     
-    void _pvt_removedAll();
+    void _pvt_removedAll(quint32 groupid);
         
-    bool _pvt_wouldChangeProperties(SireMol::MolNum molnum,
-                                    const SireBase::PropertyMap &map) const;
+    bool _pvt_wouldChangeProperties(quint32 groupid,
+                                    MolNum molnum,
+                                    const PropertyMap &map) const;
 
     void _pvt_updateName();
 
-    /** The CLJGroup containing all of the extracted molecules */
-    CLJGroup cljgroup;
+    /** The CLJGroup containing all of the extracted molecules
+        in the two groups */
+    CLJGroup cljgroup[2];
 
     /** Implicitly shared pointer to the (mostly) const data for this forcefield */
-    QSharedDataPointer<detail::InterFFData> d;
+    QSharedDataPointer<detail::InterGroupFFData> d;
     
     /** Whether or not we need to 'accept' this move */
     bool needs_accepting;
@@ -173,9 +152,9 @@ private:
 
 }
 
-Q_DECLARE_METATYPE( SireMM::InterFF )
+Q_DECLARE_METATYPE( SireMM::InterGroupFF )
 
-SIRE_EXPOSE_CLASS( SireMM::InterFF )
+SIRE_EXPOSE_CLASS( SireMM::InterGroupFF )
 
 SIRE_END_HEADER
 

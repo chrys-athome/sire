@@ -41,6 +41,7 @@ set ( SIREMM_HEADERS
       intercljff.h
       intercoulombff.h
       interff.h
+      intergroupff.h
       interljff.h
       internalcomponent.h
       internalff.h
@@ -105,6 +106,7 @@ set ( SIREMM_SOURCES
       intercljff.cpp
       intercoulombff.cpp
       interff.cpp
+      intergroupff.cpp
       interljff.cpp
       internalcomponent.cpp
       internalff.cpp
