@@ -215,6 +215,14 @@ MultiCLJComponent* MultiCLJComponent::clone() const
     return new MultiCLJComponent(*this);
 }
 
+void MultiCLJComponent::assertValidKey(QString key) const
+{
+    if (not key_to_idx.contains(key))
+        throw SireError::invalid_key( QObject::tr(
+                "There is no CLJ component with key '%1'. Available keys are %2.")
+                    .arg(key).arg(Sire::toString(keys())), CODELOC );
+}
+
 /** Set the energy in the forcefield from the passed 'cljnrg' object */
 void MultiCLJComponent::setEnergy(FF &ff, const MultiCLJEnergy &value) const
 {
