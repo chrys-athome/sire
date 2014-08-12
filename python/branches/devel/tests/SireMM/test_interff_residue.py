@@ -12,7 +12,7 @@ import Sire.Stream
 
 import os
 
-nmoves = 1000
+nmoves = 500
 
 coul_cutoff = 10 * angstrom
 lj_cutoff = 10 * angstrom
