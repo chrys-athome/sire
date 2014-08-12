@@ -156,6 +156,25 @@ public:
 
     boost::tuple<double,double> calculate(const CLJAtoms &atoms0, const CLJBoxes &atoms1) const;
 
+    static boost::tuple< QVector<double>,QVector<double> >
+                multiCalculate(const QVector<CLJFunctionPtr> &funcs, const CLJAtoms &atoms);
+
+    static boost::tuple< QVector<double>,QVector<double> >
+                multiCalculate(const QVector<CLJFunctionPtr> &funcs,
+                               const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                               float min_distance=0);
+
+    static boost::tuple< QVector<double>,QVector<double> >
+                multiCalculate(const QVector<CLJFunctionPtr> &funcs, const CLJBoxes &atoms);
+
+    static boost::tuple< QVector<double>,QVector<double> >
+                multiCalculate(const QVector<CLJFunctionPtr> &funcs,
+                               const CLJBoxes &atoms0, const CLJBoxes &atoms1);
+
+    static boost::tuple< QVector<double>,QVector<double> >
+                multiCalculate(const QVector<CLJFunctionPtr> &funcs,
+                               const CLJAtoms &atoms0, const CLJBoxes &atoms1);
+
     QVector<float> calculate(const CLJAtoms &atoms, const GridInfo &gridinfo) const;
 
     void total(const CLJAtoms &atoms,

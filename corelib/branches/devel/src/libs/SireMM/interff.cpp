@@ -786,49 +786,113 @@ void InterFF::recalculateEnergy()
         }
         
         //calculate the energy from scratch
-        tuple<double,double> nrgs(0,0);
-        
-        if (not d.constData()->fixed_only)
+        if (d.constData()->cljcomps.count() == 1)
         {
-            if (d.constData()->parallel_calc)
+            tuple<double,double> nrgs(0,0);
+            
+            if (not d.constData()->fixed_only)
             {
-                CLJCalculator calc(d->repro_sum);
-                nrgs = calc.calculate(cljFunction(), cljgroup.cljBoxes());
+                if (d.constData()->parallel_calc)
+                {
+                    CLJCalculator calc(d->repro_sum);
+                    nrgs = calc.calculate(cljFunction(), cljgroup.cljBoxes());
+                }
+                else
+                {
+                    nrgs = cljFunction().calculate(cljgroup.cljBoxes());
+                }
+            }
+
+            if (not d.constData()->fixed_atoms.isEmpty())
+            {
+                this->regridAtoms();
+                
+                tuple<double,double> grid_nrgs = d.constData()->fixed_atoms
+                                                                    .calculate(cljgroup.cljBoxes());
+                nrgs.get<0>() += grid_nrgs.get<0>();
+                nrgs.get<1>() += grid_nrgs.get<1>();
+            }
+            
+            d.constData()->cljcomps.setEnergy(*this, MultiCLJEnergy(nrgs.get<0>(), nrgs.get<1>()));
+        }
+        else
+        {
+            tuple< QVector<double>,QVector<double> > nrgs;
+            
+            if (not d.constData()->fixed_only)
+            {
+                if (d.constData()->parallel_calc)
+                {
+                    CLJCalculator calc(d->repro_sum);
+                    nrgs = calc.calculate(d.constData()->cljfuncs, cljgroup.cljBoxes());
+                }
+                else
+                {
+                    nrgs = CLJFunction::multiCalculate(d.constData()->cljfuncs,
+                                                       cljgroup.cljBoxes());
+                }
             }
             else
             {
-                nrgs = cljFunction().calculate(cljgroup.cljBoxes());
+                nrgs.get<0>() = QVector<double>(d.constData()->cljfuncs.count(), 0.0);
+                nrgs.get<1>() = QVector<double>(d.constData()->cljfuncs.count(), 0.0);
             }
-        }
-
-        if (not d.constData()->fixed_atoms.isEmpty())
-        {
-            this->regridAtoms();
             
-            tuple<double,double> grid_nrgs = d.constData()->fixed_atoms
-                                                                .calculate(cljgroup.cljBoxes());
-            nrgs.get<0>() += grid_nrgs.get<0>();
-            nrgs.get<1>() += grid_nrgs.get<1>();
+            if (not d.constData()->fixed_atoms.isEmpty())
+            {
+                this->regridAtoms();
+                
+                tuple<double,double> grid_nrgs = d.constData()->fixed_atoms
+                                                                    .calculate(cljgroup.cljBoxes());
+
+                // we only calculate the grid energy for the default CLJFunction
+                nrgs.get<0>()[0] += grid_nrgs.get<0>();
+                nrgs.get<1>()[0] += grid_nrgs.get<1>();
+            }
+            
+            d.constData()->cljcomps.setEnergy(*this, MultiCLJEnergy(nrgs.get<0>(), nrgs.get<1>()));
         }
         
-        d.constData()->cljcomps.setEnergy(*this, MultiCLJEnergy(nrgs.get<0>(), nrgs.get<1>()));
         this->setClean();
     }
     else if (cljgroup.needsAccepting())
     {
         //we can calculate using just the change in energy
-        tuple<double,double> delta_nrgs(0,0);
-
-        CLJAtoms changed_atoms;
-        
-        if (cljgroup.isSingleIDChange() or d.constData()->fixed_only)
+        if (d.constData()->cljfuncs.count() == 1)
         {
-            //the changed atoms don't interact with each other
-            changed_atoms = cljgroup.changedAtoms();
-        
-            if (not d.constData()->fixed_only)
+            tuple<double,double> delta_nrgs(0,0);
+
+            CLJAtoms changed_atoms;
+            
+            if (cljgroup.isSingleIDChange() or d.constData()->fixed_only)
             {
-                //calculate the change in energy using the molecules in changed_atoms
+                //the changed atoms don't interact with each other
+                changed_atoms = cljgroup.changedAtoms();
+            
+                if (not d.constData()->fixed_only)
+                {
+                    //calculate the change in energy using the molecules in changed_atoms
+                    if (d.constData()->parallel_calc)
+                    {
+                        CLJCalculator calc(d.constData()->repro_sum);
+                        delta_nrgs = calc.calculate(cljFunction(),
+                                                    changed_atoms, cljgroup.cljBoxes());
+                    }
+                    else
+                    {
+                        delta_nrgs = cljFunction().calculate(changed_atoms, cljgroup.cljBoxes());
+                    }
+                }
+            }
+            else
+            {
+                //the changed atoms interact with one another
+                tuple<CLJAtoms,CLJAtoms,CLJAtoms> changes = cljgroup.mergeChanges();
+                
+                changed_atoms = changes.get<0>();
+                const CLJAtoms &old_atoms = changes.get<1>();
+                const CLJAtoms &new_atoms = changes.get<2>();
+                
                 if (d.constData()->parallel_calc)
                 {
                     CLJCalculator calc(d.constData()->repro_sum);
@@ -839,47 +903,101 @@ void InterFF::recalculateEnergy()
                 {
                     delta_nrgs = cljFunction().calculate(changed_atoms, cljgroup.cljBoxes());
                 }
+
+                //add on the change in interaction within changed_atoms
+                tuple<double,double> old_changes = cljFunction().calculate(old_atoms);
+                tuple<double,double> new_changes = cljFunction().calculate(new_atoms);
+                
+                delta_nrgs.get<0>() += new_changes.get<0>() - old_changes.get<0>();
+                delta_nrgs.get<1>() += new_changes.get<1>() - old_changes.get<1>();
             }
+            
+            if (not d.constData()->fixed_atoms.isEmpty())
+            {
+                tuple<double,double> grid_deltas = d.constData()
+                                                        ->fixed_atoms.calculate(changed_atoms);
+                
+                delta_nrgs.get<0>() += grid_deltas.get<0>();
+                delta_nrgs.get<1>() += grid_deltas.get<1>();
+            }
+            
+            d.constData()->cljcomps.changeEnergy(*this,
+                                        MultiCLJEnergy(delta_nrgs.get<0>(), delta_nrgs.get<1>()));
         }
         else
         {
-            //the changed atoms interact with one another
-            tuple<CLJAtoms,CLJAtoms,CLJAtoms> changes = cljgroup.mergeChanges();
+            tuple< QVector<double>,QVector<double> > delta_nrgs;
+
+            CLJAtoms changed_atoms;
             
-            changed_atoms = changes.get<0>();
-            const CLJAtoms &old_atoms = changes.get<1>();
-            const CLJAtoms &new_atoms = changes.get<2>();
-            
-            if (d.constData()->parallel_calc)
+            if (cljgroup.isSingleIDChange() or d.constData()->fixed_only)
             {
-                CLJCalculator calc(d.constData()->repro_sum);
-                delta_nrgs = calc.calculate(cljFunction(),
-                                            changed_atoms, cljgroup.cljBoxes());
+                //the changed atoms don't interact with each other
+                changed_atoms = cljgroup.changedAtoms();
+            
+                if (not d.constData()->fixed_only)
+                {
+                    //calculate the change in energy using the molecules in changed_atoms
+                    if (d.constData()->parallel_calc)
+                    {
+                        CLJCalculator calc(d.constData()->repro_sum);
+                        delta_nrgs = calc.calculate(d.constData()->cljfuncs,
+                                                    changed_atoms, cljgroup.cljBoxes());
+                    }
+                    else
+                    {
+                        delta_nrgs = CLJFunction::multiCalculate(d.constData()->cljfuncs,
+                                                    changed_atoms, cljgroup.cljBoxes());
+                    }
+                }
             }
             else
             {
-                delta_nrgs = cljFunction().calculate(changed_atoms, cljgroup.cljBoxes());
-            }
+                //the changed atoms interact with one another
+                tuple<CLJAtoms,CLJAtoms,CLJAtoms> changes = cljgroup.mergeChanges();
+                
+                changed_atoms = changes.get<0>();
+                const CLJAtoms &old_atoms = changes.get<1>();
+                const CLJAtoms &new_atoms = changes.get<2>();
+                
+                if (d.constData()->parallel_calc)
+                {
+                    CLJCalculator calc(d.constData()->repro_sum);
+                    delta_nrgs = calc.calculate(d.constData()->cljfuncs,
+                                                changed_atoms, cljgroup.cljBoxes());
+                }
+                else
+                {
+                    delta_nrgs = CLJFunction::multiCalculate(d.constData()->cljfuncs,
+                                                             changed_atoms, cljgroup.cljBoxes());
+                }
 
-            //add on the change in interaction within changed_atoms
-            tuple<double,double> old_changes = cljFunction().calculate(old_atoms);
-            tuple<double,double> new_changes = cljFunction().calculate(new_atoms);
+                //add on the change in interaction within changed_atoms
+                tuple< QVector<double>,QVector<double> > old_changes
+                            = CLJFunction::multiCalculate(d.constData()->cljfuncs,old_atoms);
+                tuple< QVector<double>,QVector<double> > new_changes
+                            = CLJFunction::multiCalculate(d.constData()->cljfuncs,new_atoms);
+                
+                for (int i=0; i<d.constData()->cljfuncs.count(); ++i)
+                {
+                    delta_nrgs.get<0>()[i] += new_changes.get<0>()[i] - old_changes.get<0>()[i];
+                    delta_nrgs.get<1>()[i] += new_changes.get<1>()[i] - old_changes.get<1>()[i];
+                }
+            }
             
-            delta_nrgs.get<0>() += new_changes.get<0>() - old_changes.get<0>();
-            delta_nrgs.get<1>() += new_changes.get<1>() - old_changes.get<1>();
-        }
-        
-        if (not d.constData()->fixed_atoms.isEmpty())
-        {
-            tuple<double,double> grid_deltas = d.constData()
-                                                    ->fixed_atoms.calculate(changed_atoms);
+            if (not d.constData()->fixed_atoms.isEmpty())
+            {
+                tuple<double,double> grid_deltas = d.constData()
+                                                        ->fixed_atoms.calculate(changed_atoms);
+                
+                //only add on grid energies for the default CLJ function
+                delta_nrgs.get<0>()[0] += grid_deltas.get<0>();
+                delta_nrgs.get<1>()[0] += grid_deltas.get<1>();
+            }
             
-            delta_nrgs.get<0>() += grid_deltas.get<0>();
-            delta_nrgs.get<1>() += grid_deltas.get<1>();
+            d.constData()->cljcomps.changeEnergy(*this,
+                                        MultiCLJEnergy(delta_nrgs.get<0>(), delta_nrgs.get<1>()));
         }
-        
-        d.constData()->cljcomps.changeEnergy(*this,
-                                    MultiCLJEnergy(delta_nrgs.get<0>(), delta_nrgs.get<1>()));
 
         //the CLJGroup needs to be accepted before we can change anything else
         needs_accepting = true;
@@ -890,34 +1008,74 @@ void InterFF::recalculateEnergy()
     {
         //recalculate everything from scratch as this has been requested
         //calculate the energy from scratch
-        tuple<double,double> nrgs(0,0);
-        
         cljgroup.accept();
         needs_accepting = false;
-        
-        if (not d.constData()->fixed_only)
+
+        if (d.constData()->cljfuncs.count() == 1)
         {
-            if (d.constData()->parallel_calc)
+            tuple<double,double> nrgs(0,0);
+            
+            if (not d.constData()->fixed_only)
             {
-                CLJCalculator calc(d.constData()->repro_sum);
-                nrgs = calc.calculate(cljFunction(), cljgroup.cljBoxes());
+                if (d.constData()->parallel_calc)
+                {
+                    CLJCalculator calc(d.constData()->repro_sum);
+                    nrgs = calc.calculate(cljFunction(), cljgroup.cljBoxes());
+                }
+                else
+                {
+                    nrgs = cljFunction().calculate(cljgroup.cljBoxes());
+                }
+            }
+
+            if (not d.constData()->fixed_atoms.isEmpty())
+            {
+                this->regridAtoms();
+                tuple<double,double> grid_nrgs = d.constData()
+                                                    ->fixed_atoms.calculate(cljgroup.cljBoxes());
+                nrgs.get<0>() += grid_nrgs.get<0>();
+                nrgs.get<1>() += grid_nrgs.get<1>();
+            }
+            
+            d.constData()->cljcomps.setEnergy(*this, MultiCLJEnergy(nrgs.get<0>(), nrgs.get<1>()));
+        }
+        else
+        {
+            tuple< QVector<double>,QVector<double> > nrgs;
+            
+            if (not d.constData()->fixed_only)
+            {
+                if (d.constData()->parallel_calc)
+                {
+                    CLJCalculator calc(d.constData()->repro_sum);
+                    nrgs = calc.calculate(d.constData()->cljfuncs, cljgroup.cljBoxes());
+                }
+                else
+                {
+                    nrgs = CLJFunction::multiCalculate(d.constData()->cljfuncs,
+                                                       cljgroup.cljBoxes());
+                }
             }
             else
             {
-                nrgs = cljFunction().calculate(cljgroup.cljBoxes());
+                nrgs.get<0>() = QVector<double>( d.constData()->cljfuncs.count(), 0.0 );
+                nrgs.get<1>() = QVector<double>( d.constData()->cljfuncs.count(), 0.0 );
             }
-        }
 
-        if (not d.constData()->fixed_atoms.isEmpty())
-        {
-            this->regridAtoms();
-            tuple<double,double> grid_nrgs = d.constData()
-                                                ->fixed_atoms.calculate(cljgroup.cljBoxes());
-            nrgs.get<0>() += grid_nrgs.get<0>();
-            nrgs.get<1>() += grid_nrgs.get<1>();
+            if (not d.constData()->fixed_atoms.isEmpty())
+            {
+                this->regridAtoms();
+                tuple<double,double> grid_nrgs = d.constData()
+                                                    ->fixed_atoms.calculate(cljgroup.cljBoxes());
+
+                //we only calculate the grid energy for the default CLJ function
+                nrgs.get<0>()[0] += grid_nrgs.get<0>();
+                nrgs.get<1>()[0] += grid_nrgs.get<1>();
+            }
+            
+            d.constData()->cljcomps.setEnergy(*this, MultiCLJEnergy(nrgs.get<0>(), nrgs.get<1>()));
         }
         
-        d.constData()->cljcomps.setEnergy(*this, MultiCLJEnergy(nrgs.get<0>(), nrgs.get<1>()));
         this->setClean();
     }
 }

@@ -1164,6 +1164,101 @@ double CLJFunction::lj(const CLJBoxes &atoms0, const CLJBoxes &atoms1) const
     return this->calculate(atoms0, atoms1).get<1>();
 }
 
+tuple< QVector<double>,QVector<double> >
+CLJFunction::multiCalculate(const QVector<CLJFunctionPtr> &funcs, const CLJAtoms &atoms)
+{
+    if (funcs.isEmpty())
+        return tuple< QVector<double>,QVector<double> >();
+    
+    QVector<double> cnrgs(funcs.count()), ljnrgs(funcs.count());
+    
+    for (int i=0; i<funcs.count(); ++i)
+    {
+        tuple<double,double> nrgs = funcs.constData()[i].read().calculate(atoms);
+        cnrgs[i] = nrgs.get<0>();
+        ljnrgs[i] = nrgs.get<1>();
+    }
+    
+    return tuple< QVector<double>,QVector<double> >(cnrgs, ljnrgs);
+}
+
+tuple< QVector<double>,QVector<double> >
+CLJFunction::multiCalculate(const QVector<CLJFunctionPtr> &funcs,
+                            const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                            float min_distance)
+{
+    if (funcs.isEmpty())
+        return tuple< QVector<double>,QVector<double> >();
+    
+    QVector<double> cnrgs(funcs.count()), ljnrgs(funcs.count());
+    
+    for (int i=0; i<funcs.count(); ++i)
+    {
+        tuple<double,double> nrgs = funcs.constData()[i].read()
+                                                        .calculate(atoms0, atoms1, min_distance);
+        cnrgs[i] = nrgs.get<0>();
+        ljnrgs[i] = nrgs.get<1>();
+    }
+    
+    return tuple< QVector<double>,QVector<double> >(cnrgs, ljnrgs);
+}
+
+tuple< QVector<double>,QVector<double> >
+CLJFunction::multiCalculate(const QVector<CLJFunctionPtr> &funcs, const CLJBoxes &atoms)
+{
+    if (funcs.isEmpty())
+        return tuple< QVector<double>,QVector<double> >();
+    
+    QVector<double> cnrgs(funcs.count()), ljnrgs(funcs.count());
+    
+    for (int i=0; i<funcs.count(); ++i)
+    {
+        tuple<double,double> nrgs = funcs.constData()[i].read().calculate(atoms);
+        cnrgs[i] = nrgs.get<0>();
+        ljnrgs[i] = nrgs.get<1>();
+    }
+    
+    return tuple< QVector<double>,QVector<double> >(cnrgs, ljnrgs);
+}
+
+tuple< QVector<double>,QVector<double> >
+CLJFunction::multiCalculate(const QVector<CLJFunctionPtr> &funcs,
+                            const CLJBoxes &atoms0, const CLJBoxes &atoms1)
+{
+    if (funcs.isEmpty())
+        return tuple< QVector<double>,QVector<double> >();
+    
+    QVector<double> cnrgs(funcs.count()), ljnrgs(funcs.count());
+    
+    for (int i=0; i<funcs.count(); ++i)
+    {
+        tuple<double,double> nrgs = funcs.constData()[i].read().calculate(atoms0, atoms1);
+        cnrgs[i] = nrgs.get<0>();
+        ljnrgs[i] = nrgs.get<1>();
+    }
+    
+    return tuple< QVector<double>,QVector<double> >(cnrgs, ljnrgs);
+}
+
+tuple< QVector<double>,QVector<double> >
+CLJFunction::multiCalculate(const QVector<CLJFunctionPtr> &funcs,
+                            const CLJAtoms &atoms0, const CLJBoxes &atoms1)
+{
+    if (funcs.isEmpty())
+        return tuple< QVector<double>,QVector<double> >();
+    
+    QVector<double> cnrgs(funcs.count()), ljnrgs(funcs.count());
+    
+    for (int i=0; i<funcs.count(); ++i)
+    {
+        tuple<double,double> nrgs = funcs.constData()[i].read().calculate(atoms0, atoms1);
+        cnrgs[i] = nrgs.get<0>();
+        ljnrgs[i] = nrgs.get<1>();
+    }
+    
+    return tuple< QVector<double>,QVector<double> >(cnrgs, ljnrgs);
+}
+
 /////////
 ///////// Implementation of NulCLJFunction
 /////////
