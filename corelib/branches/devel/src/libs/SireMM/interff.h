@@ -29,10 +29,10 @@
 #ifndef SIREMM_INTERFF_H
 #define SIREMM_INTERFF_H
 
-#include "cljcomponent.h"
 #include "cljgrid.h"
 #include "cljfunction.h"
 #include "cljgroup.h"
+#include "multicljcomponent.h"
 
 #include "SireFF/g1ff.h"
 
@@ -89,10 +89,22 @@ public:
 
     InterFF* clone() const;
 
-    const CLJComponent& components() const;
+    const MultiCLJComponent& components() const;
 
     void setCLJFunction(const CLJFunction &cljfunc);
     const CLJFunction& cljFunction() const;
+
+    void setCLJFunction(QString key, const CLJFunction &cljfunc);
+
+    void removeCLJFunctionAt(QString key);
+    void removeAllCLJFunctions();
+
+    const CLJFunction& cljFunction(QString key) const;
+
+    int nCLJFunctions() const;
+    QStringList cljFunctionKeys() const;
+    
+    QHash<QString,CLJFunctionPtr> cljFunctions() const;
 
     void addFixedAtoms(const MoleculeView &molecule, const PropertyMap &map = PropertyMap());
     void addFixedAtoms(const Molecules &molecules, const PropertyMap &map = PropertyMap());
