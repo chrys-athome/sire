@@ -163,6 +163,8 @@
 
 #include "InterGroupCoulombFFBase.pypp.hpp"
 
+#include "InterGroupFF.pypp.hpp"
+
 #include "InterGroupLJFF.pypp.hpp"
 
 #include "InterGroupLJFFBase.pypp.hpp"
@@ -551,6 +553,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_ImproperSymbols_class();
 
     register_InterFF_class();
+
+    register_InterGroupFF_class();
 
     register_InternalComponent_class();
 

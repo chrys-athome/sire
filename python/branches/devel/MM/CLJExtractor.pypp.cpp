@@ -27,6 +27,10 @@ namespace bp = boost::python;
 
 #include "cljextractor.h"
 
+#include <QDebug>
+
+#include <QElapsedTimer>
+
 #include "cljextractor.h"
 
 SireMM::CLJExtractor __copy__(const SireMM::CLJExtractor &other){ return SireMM::CLJExtractor(other); }

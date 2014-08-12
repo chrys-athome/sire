@@ -19,7 +19,7 @@
 #include "intrasoftcljff.h"
 #include "switchingfunction.h"
 #include "cljfunction.h"
-#include "cljdelta.h"
+#include "intergroupff.h"
 #include "threeatomfunctions.h"
 #include "cljcomponent.h"
 #include "atomljs.h"
@@ -28,11 +28,12 @@
 #include "cljcalculator.h"
 #include "cljgrid.h"
 #include "intracljff.h"
-#include "interff.h"
+#include "cljdelta.h"
 #include "cljextractor.h"
 #include "internalparameters.h"
 #include "internalcomponent.h"
 #include "restraintff.h"
+#include "interff.h"
 #include "cljworkspace.h"
 #include "intercoulombff.h"
 #include "cljatoms.h"
@@ -91,7 +92,7 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::HarmonicSwitchingFunction >();
     ObjectRegistry::registerConverterFor< SireMM::CHARMMSwitchingFunction >();
     ObjectRegistry::registerConverterFor< SireMM::NullCLJFunction >();
-    ObjectRegistry::registerConverterFor< SireMM::CLJDelta >();
+    ObjectRegistry::registerConverterFor< SireMM::InterGroupFF >();
     ObjectRegistry::registerConverterFor< SireMM::ThreeAtomFunctions >();
     ObjectRegistry::registerConverterFor< SireMM::CoulombComponent >();
     ObjectRegistry::registerConverterFor< SireMM::LJComponent >();
@@ -108,7 +109,7 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::IntraCLJFF >();
     ObjectRegistry::registerConverterFor< SireMM::IntraGroupCLJFFBase >();
     ObjectRegistry::registerConverterFor< SireMM::IntraGroupCLJFF >();
-    ObjectRegistry::registerConverterFor< SireMM::InterFF >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJDelta >();
     ObjectRegistry::registerConverterFor< SireMM::CLJExtractor >();
     ObjectRegistry::registerConverterFor< SireMM::InternalParameters >();
     ObjectRegistry::registerConverterFor< SireMM::InternalParameters3D >();
@@ -123,6 +124,7 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::StretchBendTorsionComponent >();
     ObjectRegistry::registerConverterFor< SireMM::InternalComponent >();
     ObjectRegistry::registerConverterFor< SireMM::RestraintFF >();
+    ObjectRegistry::registerConverterFor< SireMM::InterFF >();
     ObjectRegistry::registerConverterFor< SireMM::CLJWorkspace >();
     ObjectRegistry::registerConverterFor< SireMM::InterCoulombFFBase >();
     ObjectRegistry::registerConverterFor< SireMM::InterCoulombFF >();

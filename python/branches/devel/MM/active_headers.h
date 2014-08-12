@@ -30,6 +30,7 @@
 #include "intercljff.h"
 #include "intercoulombff.h"
 #include "interff.h"
+#include "intergroupff.h"
 #include "interljff.h"
 #include "internalcomponent.h"
 #include "internalff.h"

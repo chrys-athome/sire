@@ -15,6 +15,8 @@ namespace bp = boost::python;
 
 #include "cljgroup.h"
 
+#include <QElapsedTimer>
+
 #include "cljgroup.h"
 
 SireMM::CLJGroup __copy__(const SireMM::CLJGroup &other){ return SireMM::CLJGroup(other); }

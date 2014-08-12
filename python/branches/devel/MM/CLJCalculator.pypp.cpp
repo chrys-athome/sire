@@ -21,6 +21,8 @@ namespace bp = boost::python;
 
 #include "tbb/parallel_for.h"
 
+#include <QElapsedTimer>
+
 #include "cljcalculator.h"
 
 SireMM::CLJCalculator __copy__(const SireMM::CLJCalculator &other){ return SireMM::CLJCalculator(other); }
