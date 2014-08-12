@@ -1107,7 +1107,7 @@ MolarEnergy Gradients::forwards(double lam) const
         {
             //finite difference TI, so take the average of the forwards and backwards
             //values and divide by delta lambda
-            return MolarEnergy( fwds[lam].average() / delta_lam );
+            return MolarEnergy( fwds[lam].fepFreeEnergy() / delta_lam );
         }
     }
 }
@@ -1138,7 +1138,7 @@ MolarEnergy Gradients::backwards(double lam) const
         {
             //finite difference TI, so take the average of the forwards and backwards
             //values and divide by delta lambda
-            return MolarEnergy( bwds[lam].average() / delta_lam );
+            return MolarEnergy( bwds[lam].fepFreeEnergy() / delta_lam );
         }
     }
 }
@@ -1171,7 +1171,8 @@ MolarEnergy Gradients::gradient(double lam) const
         {
             //finite difference TI, so take the average of the forwards and backwards
             //values and divide by delta lambda
-            return MolarEnergy( 0.5 * (fwds[lam].average() + bwds[lam].average()) / delta_lam );
+            return MolarEnergy( 0.5 * (fwds[lam].fepFreeEnergy() + bwds[lam].fepFreeEnergy())
+                                    / delta_lam );
         }
     }
 }
@@ -1259,11 +1260,10 @@ QVector<DataPoint> Gradients::values() const
                 if (fwdsavg == bwdsavg or (*fwdsavg == *bwdsavg))
                 {
                     double fwdsval = fwdsavg->average() / delta_lam;
-                    double fwdstay = fwdsavg->taylorExpansion() / delta_lam;
                     double fwdserr = fwdsavg->histogram().standardError(90) / delta_lam;
                     
-                    double val = 0.5 * (fwdsval + fwdstay);
-                    double maxerr = std::abs(fwdsval - fwdstay);
+                    double val = fwdsval;
+                    double maxerr = fwdserr;
                     
                     if (fwdserr > maxerr)
                         qSwap(fwdserr, maxerr);
@@ -1274,22 +1274,13 @@ QVector<DataPoint> Gradients::values() const
                 {
                     double fwdsval = fwdsavg->average() / delta_lam;
                     double bwdsval = bwdsavg->average() / delta_lam;
-                    double fwdstay = fwdsavg->taylorExpansion() / delta_lam;
-                    double bwdstay = bwdsavg->taylorExpansion() / delta_lam;
                     
                     double fwdserr = fwdsavg->histogram().standardError(90) / delta_lam;
                     double bwdserr = bwdsavg->histogram().standardError(90) / delta_lam;
                     
-                    double val = 0.25 * (fwdsval + bwdsval + fwdstay + bwdstay);
-                    double maxerr = qMax(fwdserr, bwdserr);
-                    
-                    //get the biggest difference between the four estimates of
-                    //the free energy
-                    double minerr = 0.5 * ( qMax(fwdsval,qMax(bwdsval,qMax(fwdstay,bwdstay))) -
-                                            qMin(fwdsval,qMin(bwdsval,qMin(fwdstay,bwdstay))) );
-                    
-                    if (maxerr < minerr)
-                        qSwap(maxerr, minerr);
+                    double val = 0.5 * (fwdsval + bwdsval);
+                    double minerr = std::abs( fwdsval - bwdsval );
+                    double maxerr = minerr + fwdserr + bwdserr;
                     
                     points[i] = DataPoint(lam, val, 0, minerr, 0, maxerr);
                 }
@@ -1332,12 +1323,11 @@ QVector<DataPoint> Gradients::forwardsValues() const
             {
                 const FreeEnergyAverage &fwdsavg = *(fwds.constFind(lam));
                 
-                double fwdsval = fwdsavg.average() / delta_lam;
-                double fwdstay = fwdsavg.taylorExpansion() / delta_lam;
+                double fwdsval = fwdsavg.fepFreeEnergy() / delta_lam;
                 double fwdserr = fwdsavg.histogram().standardError(90) / delta_lam;
                 
-                double val = 0.5 * (fwdsavg + fwdstay);
-                double maxerr = std::abs(fwdsval - fwdstay);
+                double val = fwdsval;
+                double maxerr = fwdserr;
                 
                 if (fwdserr > maxerr)
                     qSwap(fwdserr, maxerr);
@@ -1382,12 +1372,11 @@ QVector<DataPoint> Gradients::backwardsValues() const
             {
                 const FreeEnergyAverage &bwdsavg = *(bwds.constFind(lam));
                 
-                double bwdsval = bwdsavg.average() / delta_lam;
-                double bwdstay = bwdsavg.taylorExpansion() / delta_lam;
+                double bwdsval = bwdsavg.fepFreeEnergy() / delta_lam;
                 double bwdserr = bwdsavg.histogram().standardError(90) / delta_lam;
                 
-                double val = 0.5 * (bwdsavg + bwdstay);
-                double maxerr = std::abs(bwdsval - bwdstay);
+                double val = bwdsval;
+                double maxerr = bwdserr;
                 
                 if (bwdserr > maxerr)
                     qSwap(bwdserr, maxerr);
