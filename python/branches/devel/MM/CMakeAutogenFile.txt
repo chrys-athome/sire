@@ -79,6 +79,7 @@ set ( PYPP_SOURCES
        InterGroupSoftCLJFF.pypp.cpp
        DihedralParameterName.pypp.cpp
        InterSoftCLJFFBase.pypp.cpp
+       MultiCLJComponent.pypp.cpp
        CoulombComponent.pypp.cpp
        Restraint3D.pypp.cpp
        TripleDistanceRestraint.pypp.cpp

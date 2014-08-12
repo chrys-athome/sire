@@ -20,7 +20,7 @@
 #include "switchingfunction.h"
 #include "cljfunction.h"
 #include "intergroupff.h"
-#include "threeatomfunctions.h"
+#include "multicljcomponent.h"
 #include "cljcomponent.h"
 #include "atomljs.h"
 #include "distancerestraint.h"
@@ -32,6 +32,7 @@
 #include "cljextractor.h"
 #include "internalparameters.h"
 #include "internalcomponent.h"
+#include "threeatomfunctions.h"
 #include "restraintff.h"
 #include "interff.h"
 #include "cljworkspace.h"
@@ -93,7 +94,7 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::CHARMMSwitchingFunction >();
     ObjectRegistry::registerConverterFor< SireMM::NullCLJFunction >();
     ObjectRegistry::registerConverterFor< SireMM::InterGroupFF >();
-    ObjectRegistry::registerConverterFor< SireMM::ThreeAtomFunctions >();
+    ObjectRegistry::registerConverterFor< SireMM::MultiCLJComponent >();
     ObjectRegistry::registerConverterFor< SireMM::CoulombComponent >();
     ObjectRegistry::registerConverterFor< SireMM::LJComponent >();
     ObjectRegistry::registerConverterFor< SireMM::CLJComponent >();
@@ -123,6 +124,7 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::BendBendComponent >();
     ObjectRegistry::registerConverterFor< SireMM::StretchBendTorsionComponent >();
     ObjectRegistry::registerConverterFor< SireMM::InternalComponent >();
+    ObjectRegistry::registerConverterFor< SireMM::ThreeAtomFunctions >();
     ObjectRegistry::registerConverterFor< SireMM::RestraintFF >();
     ObjectRegistry::registerConverterFor< SireMM::InterFF >();
     ObjectRegistry::registerConverterFor< SireMM::CLJWorkspace >();

@@ -114,9 +114,41 @@ void register_InterFF_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireMM::InterFF::cljFunction
+        
+            typedef ::SireMM::CLJFunction const & ( ::SireMM::InterFF::*cljFunction_function_type )( ::QString ) const;
+            cljFunction_function_type cljFunction_function_value( &::SireMM::InterFF::cljFunction );
+            
+            InterFF_exposer.def( 
+                "cljFunction"
+                , cljFunction_function_value
+                , ( bp::arg("key") )
+                , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::SireMM::InterFF::cljFunctionKeys
+        
+            typedef ::QStringList ( ::SireMM::InterFF::*cljFunctionKeys_function_type )(  ) const;
+            cljFunctionKeys_function_type cljFunctionKeys_function_value( &::SireMM::InterFF::cljFunctionKeys );
+            
+            InterFF_exposer.def( 
+                "cljFunctionKeys"
+                , cljFunctionKeys_function_value );
+        
+        }
+        { //::SireMM::InterFF::cljFunctions
+        
+            typedef ::QHash< QString, SireBase::PropPtr< SireMM::CLJFunction > > ( ::SireMM::InterFF::*cljFunctions_function_type )(  ) const;
+            cljFunctions_function_type cljFunctions_function_value( &::SireMM::InterFF::cljFunctions );
+            
+            InterFF_exposer.def( 
+                "cljFunctions"
+                , cljFunctions_function_value );
+        
+        }
         { //::SireMM::InterFF::components
         
-            typedef ::SireMM::CLJComponent const & ( ::SireMM::InterFF::*components_function_type )(  ) const;
+            typedef ::SireMM::MultiCLJComponent const & ( ::SireMM::InterFF::*components_function_type )(  ) const;
             components_function_type components_function_value( &::SireMM::InterFF::components );
             
             InterFF_exposer.def( 
@@ -246,6 +278,16 @@ void register_InterFF_class(){
                 , mustNowRecalculateFromScratch_function_value );
         
         }
+        { //::SireMM::InterFF::nCLJFunctions
+        
+            typedef int ( ::SireMM::InterFF::*nCLJFunctions_function_type )(  ) const;
+            nCLJFunctions_function_type nCLJFunctions_function_value( &::SireMM::InterFF::nCLJFunctions );
+            
+            InterFF_exposer.def( 
+                "nCLJFunctions"
+                , nCLJFunctions_function_value );
+        
+        }
         { //::SireMM::InterFF::needsAccepting
         
             typedef bool ( ::SireMM::InterFF::*needsAccepting_function_type )(  ) const;
@@ -293,6 +335,27 @@ void register_InterFF_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireMM::InterFF::removeAllCLJFunctions
+        
+            typedef void ( ::SireMM::InterFF::*removeAllCLJFunctions_function_type )(  ) ;
+            removeAllCLJFunctions_function_type removeAllCLJFunctions_function_value( &::SireMM::InterFF::removeAllCLJFunctions );
+            
+            InterFF_exposer.def( 
+                "removeAllCLJFunctions"
+                , removeAllCLJFunctions_function_value );
+        
+        }
+        { //::SireMM::InterFF::removeCLJFunctionAt
+        
+            typedef void ( ::SireMM::InterFF::*removeCLJFunctionAt_function_type )( ::QString ) ;
+            removeCLJFunctionAt_function_type removeCLJFunctionAt_function_value( &::SireMM::InterFF::removeCLJFunctionAt );
+            
+            InterFF_exposer.def( 
+                "removeCLJFunctionAt"
+                , removeCLJFunctionAt_function_value
+                , ( bp::arg("key") ) );
+        
+        }
         { //::SireMM::InterFF::setCLJFunction
         
             typedef void ( ::SireMM::InterFF::*setCLJFunction_function_type )( ::SireMM::CLJFunction const & ) ;
@@ -302,6 +365,17 @@ void register_InterFF_class(){
                 "setCLJFunction"
                 , setCLJFunction_function_value
                 , ( bp::arg("cljfunc") ) );
+        
+        }
+        { //::SireMM::InterFF::setCLJFunction
+        
+            typedef void ( ::SireMM::InterFF::*setCLJFunction_function_type )( ::QString,::SireMM::CLJFunction const & ) ;
+            setCLJFunction_function_type setCLJFunction_function_value( &::SireMM::InterFF::setCLJFunction );
+            
+            InterFF_exposer.def( 
+                "setCLJFunction"
+                , setCLJFunction_function_value
+                , ( bp::arg("key"), bp::arg("cljfunc") ) );
         
         }
         { //::SireMM::InterFF::setFixedAtoms

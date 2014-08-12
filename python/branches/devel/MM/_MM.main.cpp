@@ -251,6 +251,8 @@
 
 #include "LJScaleFactor.pypp.hpp"
 
+#include "MultiCLJComponent.pypp.hpp"
+
 #include "NoCutoff.pypp.hpp"
 
 #include "NullCLJFunction.pypp.hpp"
@@ -589,6 +591,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_LJPerturbation_class();
 
     register_LJProbe_class();
+
+    register_MultiCLJComponent_class();
 
     register_NoCutoff_class();
 
