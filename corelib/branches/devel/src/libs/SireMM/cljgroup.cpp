@@ -207,7 +207,7 @@ Molecules CLJGroup::molecules() const
         mols.add( it.value().newMolecule() );
     }
     
-    for (QHash<MolNum,CLJExtractor>::const_iterator it = cljexts.constBegin();
+    for (ChunkedHash<MolNum,CLJExtractor>::const_iterator it = cljexts.constBegin();
          it != cljexts.constEnd(); ++it)
     {
         if (not mols.contains(it.key()))
@@ -534,7 +534,7 @@ bool CLJGroup::needsAccepting() const
     
     else
     {
-        for (QHash<MolNum,CLJExtractor>::const_iterator it = cljexts.constBegin();
+        for (ChunkedHash<MolNum,CLJExtractor>::const_iterator it = cljexts.constBegin();
              it != cljexts.constEnd(); ++it)
         {
             if (it.value().needsCommitting())
@@ -550,20 +550,20 @@ bool CLJGroup::needsAccepting() const
     added to the CLJBoxes boxes */
 void CLJGroup::accept()
 {
-    bool removed_mols = false;
+    QSet<MolNum> removed_mols;
 
     if (cljworkspace.recalculatingFromScratch())
     {
         //this adds any molecules to the box that have not yet been
         //added to the box
-        for (QHash<MolNum,CLJExtractor>::iterator it = cljexts.begin();
+        for (ChunkedHash<MolNum,CLJExtractor>::iterator it = cljexts.begin();
              it != cljexts.end();
              ++it)
         {
             it.value().commit(cljboxes, cljworkspace);
             
             if (it.value().isEmpty())
-                removed_mols = true;
+                removed_mols.insert(it.key());
         }
 
         cljworkspace.accept(cljboxes);
@@ -574,31 +574,11 @@ void CLJGroup::accept()
         for (QHash<MolNum,CLJExtractor>::iterator it = changed_mols.begin();
              it != changed_mols.end(); ++it)
         {
-            QElapsedTimer t2;
-
-            t2.start();
             it.value().commit(cljboxes, cljworkspace);
-            qint64 ns3 = t2.nsecsElapsed();
-            qDebug() << "ns3" << (0.000001*ns3);
-            
-            t2.start();
-            CLJExtractor oldext;
-            oldext = cljexts.find(it.key()).value(); //[it.key()];
-            qint64 ns31 = t2.nsecsElapsed();
-            qDebug() << "ns31" << (0.000001*ns31);
-            
-            t2.start();
-            cljexts.insert(it.key(), it.value());
-            qint64 ns4 = t2.nsecsElapsed();
-            qDebug() << "ns4" << (0.000001*ns4);
-            
-            t2.start();
-            oldext = CLJExtractor();
-            qint64 ns5 = t2.nsecsElapsed();
-            qDebug() << "ns5" << (0.000001*ns5);
+            cljexts[it.key()] = it.value();
             
             if (it.value().isEmpty())
-                removed_mols = true;
+                removed_mols.insert(it.key());
         }
 
         cljworkspace.accept(cljboxes);
@@ -609,19 +589,19 @@ void CLJGroup::accept()
         cljworkspace.accept(cljboxes);
     }
 
-    if (removed_mols)
+    if (not removed_mols.isEmpty())
     {
-        QMutableHashIterator<MolNum,CLJExtractor> it(cljexts);
-    
-        while (it.hasNext())
+        foreach (MolNum removed_mol, removed_mols)
         {
-            it.next();
-            
-            if (it.value().isEmpty())
-            {
-                //this molecule has been removed
-                it.remove();
-            }
+            cljexts.remove(removed_mol);
+            props.remove(removed_mol);
+        }
+        
+        if (cljexts.isEmpty())
+        {
+            cljexts.clear();
+            changed_mols.clear();
+            props.clear();
         }
     }
 }
@@ -715,7 +695,7 @@ void CLJGroup::mustReallyRecalculateFromScratch()
     
     Molecules mols;
     
-    for (QHash<MolNum,CLJExtractor>::const_iterator it = cljexts.constBegin();
+    for (ChunkedHash<MolNum,CLJExtractor>::const_iterator it = cljexts.constBegin();
          it != cljexts.constEnd(); ++it)
     {
         mols.add( it.value().newMolecule() );

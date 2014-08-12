@@ -32,6 +32,7 @@
 #include "cljextractor.h"
 
 #include "SireMol/moleculegroup.h"
+#include "SireBase/chunkedhash.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -133,7 +134,7 @@ public:
 private:
     /** All of the extractors that manage extracting the charge and LJ 
         properties from all of the molecules */
-    QHash<MolNum,CLJExtractor> cljexts;
+    SireBase::ChunkedHash<MolNum,CLJExtractor> cljexts;
     
     /** The boxes to which the CLJAtoms from each molecule in this group
         have been added */
