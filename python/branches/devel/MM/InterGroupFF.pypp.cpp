@@ -70,6 +70,39 @@ void register_InterGroupFF_class(){
                 , accept_function_value );
         
         }
+        { //::SireMM::InterGroupFF::addFixedAtoms
+        
+            typedef void ( ::SireMM::InterGroupFF::*addFixedAtoms_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) ;
+            addFixedAtoms_function_type addFixedAtoms_function_value( &::SireMM::InterGroupFF::addFixedAtoms );
+            
+            InterGroupFF_exposer.def( 
+                "addFixedAtoms"
+                , addFixedAtoms_function_value
+                , ( bp::arg("molecule"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMM::InterGroupFF::addFixedAtoms
+        
+            typedef void ( ::SireMM::InterGroupFF::*addFixedAtoms_function_type )( ::SireMol::Molecules const &,::SireBase::PropertyMap const & ) ;
+            addFixedAtoms_function_type addFixedAtoms_function_value( &::SireMM::InterGroupFF::addFixedAtoms );
+            
+            InterGroupFF_exposer.def( 
+                "addFixedAtoms"
+                , addFixedAtoms_function_value
+                , ( bp::arg("molecules"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMM::InterGroupFF::addFixedAtoms
+        
+            typedef void ( ::SireMM::InterGroupFF::*addFixedAtoms_function_type )( ::SireMM::CLJAtoms const & ) ;
+            addFixedAtoms_function_type addFixedAtoms_function_value( &::SireMM::InterGroupFF::addFixedAtoms );
+            
+            InterGroupFF_exposer.def( 
+                "addFixedAtoms"
+                , addFixedAtoms_function_value
+                , ( bp::arg("atoms") ) );
+        
+        }
         { //::SireMM::InterGroupFF::cljFunction
         
             typedef ::SireMM::CLJFunction const & ( ::SireMM::InterGroupFF::*cljFunction_function_type )(  ) const;
@@ -81,9 +114,41 @@ void register_InterGroupFF_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireMM::InterGroupFF::cljFunction
+        
+            typedef ::SireMM::CLJFunction const & ( ::SireMM::InterGroupFF::*cljFunction_function_type )( ::QString ) const;
+            cljFunction_function_type cljFunction_function_value( &::SireMM::InterGroupFF::cljFunction );
+            
+            InterGroupFF_exposer.def( 
+                "cljFunction"
+                , cljFunction_function_value
+                , ( bp::arg("key") )
+                , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::SireMM::InterGroupFF::cljFunctionKeys
+        
+            typedef ::QStringList ( ::SireMM::InterGroupFF::*cljFunctionKeys_function_type )(  ) const;
+            cljFunctionKeys_function_type cljFunctionKeys_function_value( &::SireMM::InterGroupFF::cljFunctionKeys );
+            
+            InterGroupFF_exposer.def( 
+                "cljFunctionKeys"
+                , cljFunctionKeys_function_value );
+        
+        }
+        { //::SireMM::InterGroupFF::cljFunctions
+        
+            typedef ::QHash< QString, SireBase::PropPtr< SireMM::CLJFunction > > ( ::SireMM::InterGroupFF::*cljFunctions_function_type )(  ) const;
+            cljFunctions_function_type cljFunctions_function_value( &::SireMM::InterGroupFF::cljFunctions );
+            
+            InterGroupFF_exposer.def( 
+                "cljFunctions"
+                , cljFunctions_function_value );
+        
+        }
         { //::SireMM::InterGroupFF::components
         
-            typedef ::SireMM::CLJComponent const & ( ::SireMM::InterGroupFF::*components_function_type )(  ) const;
+            typedef ::SireMM::MultiCLJComponent const & ( ::SireMM::InterGroupFF::*components_function_type )(  ) const;
             components_function_type components_function_value( &::SireMM::InterGroupFF::components );
             
             InterGroupFF_exposer.def( 
@@ -101,6 +166,16 @@ void register_InterGroupFF_class(){
                 "containsProperty"
                 , containsProperty_function_value
                 , ( bp::arg("name") ) );
+        
+        }
+        { //::SireMM::InterGroupFF::disableGrid
+        
+            typedef void ( ::SireMM::InterGroupFF::*disableGrid_function_type )(  ) ;
+            disableGrid_function_type disableGrid_function_value( &::SireMM::InterGroupFF::disableGrid );
+            
+            InterGroupFF_exposer.def( 
+                "disableGrid"
+                , disableGrid_function_value );
         
         }
         { //::SireMM::InterGroupFF::disableParallelCalculation
@@ -123,6 +198,16 @@ void register_InterGroupFF_class(){
                 , disableReproducibleCalculation_function_value );
         
         }
+        { //::SireMM::InterGroupFF::enableGrid
+        
+            typedef void ( ::SireMM::InterGroupFF::*enableGrid_function_type )(  ) ;
+            enableGrid_function_type enableGrid_function_value( &::SireMM::InterGroupFF::enableGrid );
+            
+            InterGroupFF_exposer.def( 
+                "enableGrid"
+                , enableGrid_function_value );
+        
+        }
         { //::SireMM::InterGroupFF::enableParallelCalculation
         
             typedef void ( ::SireMM::InterGroupFF::*enableParallelCalculation_function_type )(  ) ;
@@ -143,6 +228,46 @@ void register_InterGroupFF_class(){
                 , enableReproducibleCalculation_function_value );
         
         }
+        { //::SireMM::InterGroupFF::fixedOnly
+        
+            typedef bool ( ::SireMM::InterGroupFF::*fixedOnly_function_type )(  ) const;
+            fixedOnly_function_type fixedOnly_function_value( &::SireMM::InterGroupFF::fixedOnly );
+            
+            InterGroupFF_exposer.def( 
+                "fixedOnly"
+                , fixedOnly_function_value );
+        
+        }
+        { //::SireMM::InterGroupFF::grid
+        
+            typedef ::SireVol::GridInfo ( ::SireMM::InterGroupFF::*grid_function_type )(  ) const;
+            grid_function_type grid_function_value( &::SireMM::InterGroupFF::grid );
+            
+            InterGroupFF_exposer.def( 
+                "grid"
+                , grid_function_value );
+        
+        }
+        { //::SireMM::InterGroupFF::gridBuffer
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMM::InterGroupFF::*gridBuffer_function_type )(  ) const;
+            gridBuffer_function_type gridBuffer_function_value( &::SireMM::InterGroupFF::gridBuffer );
+            
+            InterGroupFF_exposer.def( 
+                "gridBuffer"
+                , gridBuffer_function_value );
+        
+        }
+        { //::SireMM::InterGroupFF::gridSpacing
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMM::InterGroupFF::*gridSpacing_function_type )(  ) const;
+            gridSpacing_function_type gridSpacing_function_value( &::SireMM::InterGroupFF::gridSpacing );
+            
+            InterGroupFF_exposer.def( 
+                "gridSpacing"
+                , gridSpacing_function_value );
+        
+        }
         { //::SireMM::InterGroupFF::mustNowRecalculateFromScratch
         
             typedef void ( ::SireMM::InterGroupFF::*mustNowRecalculateFromScratch_function_type )(  ) ;
@@ -151,6 +276,16 @@ void register_InterGroupFF_class(){
             InterGroupFF_exposer.def( 
                 "mustNowRecalculateFromScratch"
                 , mustNowRecalculateFromScratch_function_value );
+        
+        }
+        { //::SireMM::InterGroupFF::nCLJFunctions
+        
+            typedef int ( ::SireMM::InterGroupFF::*nCLJFunctions_function_type )(  ) const;
+            nCLJFunctions_function_type nCLJFunctions_function_value( &::SireMM::InterGroupFF::nCLJFunctions );
+            
+            InterGroupFF_exposer.def( 
+                "nCLJFunctions"
+                , nCLJFunctions_function_value );
         
         }
         { //::SireMM::InterGroupFF::needsAccepting
@@ -200,6 +335,27 @@ void register_InterGroupFF_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireMM::InterGroupFF::removeAllCLJFunctions
+        
+            typedef void ( ::SireMM::InterGroupFF::*removeAllCLJFunctions_function_type )(  ) ;
+            removeAllCLJFunctions_function_type removeAllCLJFunctions_function_value( &::SireMM::InterGroupFF::removeAllCLJFunctions );
+            
+            InterGroupFF_exposer.def( 
+                "removeAllCLJFunctions"
+                , removeAllCLJFunctions_function_value );
+        
+        }
+        { //::SireMM::InterGroupFF::removeCLJFunctionAt
+        
+            typedef void ( ::SireMM::InterGroupFF::*removeCLJFunctionAt_function_type )( ::QString ) ;
+            removeCLJFunctionAt_function_type removeCLJFunctionAt_function_value( &::SireMM::InterGroupFF::removeCLJFunctionAt );
+            
+            InterGroupFF_exposer.def( 
+                "removeCLJFunctionAt"
+                , removeCLJFunctionAt_function_value
+                , ( bp::arg("key") ) );
+        
+        }
         { //::SireMM::InterGroupFF::setCLJFunction
         
             typedef void ( ::SireMM::InterGroupFF::*setCLJFunction_function_type )( ::SireMM::CLJFunction const & ) ;
@@ -211,6 +367,83 @@ void register_InterGroupFF_class(){
                 , ( bp::arg("cljfunc") ) );
         
         }
+        { //::SireMM::InterGroupFF::setCLJFunction
+        
+            typedef void ( ::SireMM::InterGroupFF::*setCLJFunction_function_type )( ::QString,::SireMM::CLJFunction const & ) ;
+            setCLJFunction_function_type setCLJFunction_function_value( &::SireMM::InterGroupFF::setCLJFunction );
+            
+            InterGroupFF_exposer.def( 
+                "setCLJFunction"
+                , setCLJFunction_function_value
+                , ( bp::arg("key"), bp::arg("cljfunc") ) );
+        
+        }
+        { //::SireMM::InterGroupFF::setFixedAtoms
+        
+            typedef void ( ::SireMM::InterGroupFF::*setFixedAtoms_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) ;
+            setFixedAtoms_function_type setFixedAtoms_function_value( &::SireMM::InterGroupFF::setFixedAtoms );
+            
+            InterGroupFF_exposer.def( 
+                "setFixedAtoms"
+                , setFixedAtoms_function_value
+                , ( bp::arg("molecule"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMM::InterGroupFF::setFixedAtoms
+        
+            typedef void ( ::SireMM::InterGroupFF::*setFixedAtoms_function_type )( ::SireMol::Molecules const &,::SireBase::PropertyMap const & ) ;
+            setFixedAtoms_function_type setFixedAtoms_function_value( &::SireMM::InterGroupFF::setFixedAtoms );
+            
+            InterGroupFF_exposer.def( 
+                "setFixedAtoms"
+                , setFixedAtoms_function_value
+                , ( bp::arg("molecules"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMM::InterGroupFF::setFixedAtoms
+        
+            typedef void ( ::SireMM::InterGroupFF::*setFixedAtoms_function_type )( ::SireMM::CLJAtoms const & ) ;
+            setFixedAtoms_function_type setFixedAtoms_function_value( &::SireMM::InterGroupFF::setFixedAtoms );
+            
+            InterGroupFF_exposer.def( 
+                "setFixedAtoms"
+                , setFixedAtoms_function_value
+                , ( bp::arg("atoms") ) );
+        
+        }
+        { //::SireMM::InterGroupFF::setFixedOnly
+        
+            typedef void ( ::SireMM::InterGroupFF::*setFixedOnly_function_type )( bool ) ;
+            setFixedOnly_function_type setFixedOnly_function_value( &::SireMM::InterGroupFF::setFixedOnly );
+            
+            InterGroupFF_exposer.def( 
+                "setFixedOnly"
+                , setFixedOnly_function_value
+                , ( bp::arg("on") ) );
+        
+        }
+        { //::SireMM::InterGroupFF::setGridBuffer
+        
+            typedef void ( ::SireMM::InterGroupFF::*setGridBuffer_function_type )( ::SireUnits::Dimension::Length ) ;
+            setGridBuffer_function_type setGridBuffer_function_value( &::SireMM::InterGroupFF::setGridBuffer );
+            
+            InterGroupFF_exposer.def( 
+                "setGridBuffer"
+                , setGridBuffer_function_value
+                , ( bp::arg("buffer") ) );
+        
+        }
+        { //::SireMM::InterGroupFF::setGridSpacing
+        
+            typedef void ( ::SireMM::InterGroupFF::*setGridSpacing_function_type )( ::SireUnits::Dimension::Length ) ;
+            setGridSpacing_function_type setGridSpacing_function_value( &::SireMM::InterGroupFF::setGridSpacing );
+            
+            InterGroupFF_exposer.def( 
+                "setGridSpacing"
+                , setGridSpacing_function_value
+                , ( bp::arg("spacing") ) );
+        
+        }
         { //::SireMM::InterGroupFF::setProperty
         
             typedef bool ( ::SireMM::InterGroupFF::*setProperty_function_type )( ::QString const &,::SireBase::Property const & ) ;
@@ -220,6 +453,17 @@ void register_InterGroupFF_class(){
                 "setProperty"
                 , setProperty_function_value
                 , ( bp::arg("name"), bp::arg("property") ) );
+        
+        }
+        { //::SireMM::InterGroupFF::setUseGrid
+        
+            typedef void ( ::SireMM::InterGroupFF::*setUseGrid_function_type )( bool ) ;
+            setUseGrid_function_type setUseGrid_function_value( &::SireMM::InterGroupFF::setUseGrid );
+            
+            InterGroupFF_exposer.def( 
+                "setUseGrid"
+                , setUseGrid_function_value
+                , ( bp::arg("on") ) );
         
         }
         { //::SireMM::InterGroupFF::setUseParallelCalculation
@@ -252,6 +496,16 @@ void register_InterGroupFF_class(){
             InterGroupFF_exposer.def( 
                 "typeName"
                 , typeName_function_value );
+        
+        }
+        { //::SireMM::InterGroupFF::usesGrid
+        
+            typedef bool ( ::SireMM::InterGroupFF::*usesGrid_function_type )(  ) const;
+            usesGrid_function_type usesGrid_function_value( &::SireMM::InterGroupFF::usesGrid );
+            
+            InterGroupFF_exposer.def( 
+                "usesGrid"
+                , usesGrid_function_value );
         
         }
         { //::SireMM::InterGroupFF::usesParallelCalculation
