@@ -82,12 +82,18 @@ public:
     bool operator==(const Molpro &other) const;
     bool operator!=(const Molpro &other) const;
     
+    QString toString() const;
+    
     void setExecutable(const QString &molpro_exe);
     void setEnvironment(const QString &variable, const QString &value);
     
     void setMemoryRequirement(int nbytes);
     
     int memoryRequirement() const;
+    
+    void setLatticeInBohrRadii(bool on);
+    
+    bool latticeInBohrRadii() const;
     
     void setMaximumRunTime(int max_runtime);
     
@@ -219,6 +225,10 @@ private:
     /** The maximum amount of time to wait for a molpro
         job to complete (15 minutes) in milliseconds */
     quint32 max_molpro_runtime;
+    
+    /** Whether or not the units of lattice charges in a molpro
+        input file are in bohr radii (otherwise in angstroms) */
+    bool lattice_in_bohr_radii;
 };
 
 }

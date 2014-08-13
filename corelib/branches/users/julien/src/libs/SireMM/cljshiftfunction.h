@@ -90,6 +90,8 @@ public:
     static const char* typeName();
     const char* what() const;
     
+    QString toString() const;
+    
     CLJShiftFunction* clone() const;
 
     bool supportsGridCalculation() const;

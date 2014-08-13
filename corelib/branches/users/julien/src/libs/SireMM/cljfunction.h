@@ -68,19 +68,22 @@ QDataStream& operator>>(QDataStream&, SireMM::CLJIntraFunction&);
 QDataStream& operator<<(QDataStream&, const SireMM::CLJSoftFunction&);
 QDataStream& operator>>(QDataStream&, SireMM::CLJSoftFunction&);
 
+namespace SireVol
+{
+class GridInfo;
+}
+
 namespace SireMM
 {
 
-class GridInfo;
-
 class CLJBoxes;
-class CLJDelta;
 
 using SireUnits::Dimension::Length;
 
 using SireMol::Connectivity;
 
 using SireVol::Space;
+using SireVol::GridInfo;
 
 using SireBase::Property;
 using SireBase::Properties;
@@ -141,7 +144,7 @@ public:
     void operator()(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
                     double &cnrg, double &ljnrg) const;
 
-    void operator()(const CLJDelta &delta, const CLJBoxes &boxes,
+    void operator()(const CLJAtoms &atoms0, const CLJBoxes &atoms1,
                     double &cnrg, double &ljnrg) const;
 
     boost::tuple<double,double> calculate(const CLJAtoms &atoms) const;
@@ -151,7 +154,26 @@ public:
     boost::tuple<double,double> calculate(const CLJBoxes &atoms) const;
     boost::tuple<double,double> calculate(const CLJBoxes &atoms0, const CLJBoxes &atoms1) const;
 
-    boost::tuple<double,double> calculate(const CLJDelta &delta, const CLJBoxes &boxes) const;
+    boost::tuple<double,double> calculate(const CLJAtoms &atoms0, const CLJBoxes &atoms1) const;
+
+    static boost::tuple< QVector<double>,QVector<double> >
+                multiCalculate(const QVector<CLJFunctionPtr> &funcs, const CLJAtoms &atoms);
+
+    static boost::tuple< QVector<double>,QVector<double> >
+                multiCalculate(const QVector<CLJFunctionPtr> &funcs,
+                               const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                               float min_distance=0);
+
+    static boost::tuple< QVector<double>,QVector<double> >
+                multiCalculate(const QVector<CLJFunctionPtr> &funcs, const CLJBoxes &atoms);
+
+    static boost::tuple< QVector<double>,QVector<double> >
+                multiCalculate(const QVector<CLJFunctionPtr> &funcs,
+                               const CLJBoxes &atoms0, const CLJBoxes &atoms1);
+
+    static boost::tuple< QVector<double>,QVector<double> >
+                multiCalculate(const QVector<CLJFunctionPtr> &funcs,
+                               const CLJAtoms &atoms0, const CLJBoxes &atoms1);
 
     QVector<float> calculate(const CLJAtoms &atoms, const GridInfo &gridinfo) const;
 
@@ -166,9 +188,6 @@ public:
                double &cnrg, double &ljnrg) const;
     
     void total(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
-               double &cnrg, double &ljnrg) const;
-    
-    void total(const CLJDelta &delta, const CLJBoxes &boxes,
                double &cnrg, double &ljnrg) const;
     
     double coulomb(const CLJAtoms &atoms) const;

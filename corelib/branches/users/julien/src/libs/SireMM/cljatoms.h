@@ -163,6 +163,7 @@ public:
     CLJAtoms();
     CLJAtoms(const QVector<CLJAtom> &atoms);
     CLJAtoms(const QList<CLJAtom> &atoms);
+    CLJAtoms(const CLJAtom *atoms, int natoms);
     
     CLJAtoms(const QVector<Vector> &coordinates,
              const QVector<Charge> &charges,
@@ -256,6 +257,9 @@ public:
     void makeDummy(int i);
     bool isDummy(int i) const;
     
+    Vector minCoords() const;
+    Vector maxCoords() const;
+    
     CLJAtoms negate() const;
     
     QVector<CLJAtom> atoms() const;
@@ -281,6 +285,9 @@ public:
     
     bool isPadded() const;
     int nPadded() const;
+
+    bool hasDummies() const;
+    int nDummies() const;
 
 private:
     void constructFrom(const MoleculeGroup &molecules,

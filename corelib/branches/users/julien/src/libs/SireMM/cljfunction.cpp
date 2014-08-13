@@ -30,14 +30,13 @@
 
 #include "cljfunction.h"
 #include "cljboxes.h"
-#include "cljdelta.h"
-#include "gridinfo.h"
 #include "switchingfunction.h"
 
 #include "SireMaths/multidouble.h"
 
 #include "SireVol/cartesian.h"
 #include "SireVol/periodicbox.h"
+#include "SireVol/gridinfo.h"
 
 #include "SireError/errors.h"
 
@@ -892,72 +891,34 @@ void CLJFunction::operator()(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
     }
 }
 
-/** Return the change in energy associated with the delta in 'delta' against the
-    other atoms in 'atoms', returning the coulomb part in 'cnrg' and the LJ part
-    in 'ljnrg' */
-void CLJFunction::operator()(const CLJDelta &delta, const CLJBoxes &atoms,
+/** Return the total energy between 'atoms0' and 'atoms1', returning the coulomb part in 'cnrg'
+    and the LJ part in 'ljnrg' */
+void CLJFunction::operator()(const CLJAtoms &atoms0, const CLJBoxes &atoms1,
                              double &cnrg, double &ljnrg) const
 {
-    if (this->hasCutoff() and delta.boxLength() == atoms.length().value())
+    cnrg = 0;
+    ljnrg = 0;
+    
+    if (this->hasCutoff())
     {
-        if (delta.isSingleBox())
-        {
-            cnrg = 0;
-            ljnrg = 0;
-            const float min_cutoff = qMax(this->coulombCutoff(), this->ljCutoff());
-            
-            for (CLJBoxes::const_iterator it = atoms.constBegin();
-                 it != atoms.constEnd();
-                 ++it)
-            {
-                const CLJBoxIndex &idx = it->read().index();
-            
-                const float mindist = atoms.getDistance(spce.read(), delta.boxIndex(), idx);
-                
-                if (mindist < min_cutoff)
-                {
-                    double icnrg(0), iljnrg(0);
-                    
-                    this->operator()(delta.changedAtoms(), it->read().atoms(),
-                                     icnrg, iljnrg, mindist);
-                    
-                    cnrg += icnrg;
-                    ljnrg += iljnrg;
-                }
-            }
-        }
-        else
-        {
-            cnrg = 0;
-            ljnrg = 0;
-            const float min_cutoff = qMax(this->coulombCutoff(), this->ljCutoff());
-            
-            for (CLJBoxes::const_iterator it = atoms.constBegin();
-                 it != atoms.constEnd();
-                 ++it)
-            {
-                const CLJBoxIndex &idx = it->read().index();
-            
-                const float mindist = atoms.getDistance(spce.read(), delta.boxIndex(), idx,
-                                                        delta.nBoxX(), delta.nBoxY(),
-                                                        delta.nBoxZ());
-                
-                if (mindist < min_cutoff)
-                {
-                    double icnrg(0), iljnrg(0);
-                    
-                    this->operator()(delta.changedAtoms(), it->read().atoms(),
-                                     icnrg, iljnrg, mindist);
-                    
-                    cnrg += icnrg;
-                    ljnrg += iljnrg;
-                }
-            }
-        }
+        this->operator()( CLJBoxes(atoms0, atoms1.length()), atoms1, cnrg, ljnrg );
     }
     else
     {
-        this->operator()(delta.changedAtoms(), atoms, cnrg, ljnrg);
+        const CLJBoxes::Container &boxes1 = atoms1.occupiedBoxes();
+        
+        for (CLJBoxes::const_iterator it1 = boxes1.constBegin();
+             it1 != boxes1.constEnd();
+             ++it1)
+        {
+            double icnrg(0), iljnrg(0);
+            
+            this->operator()(atoms0, it1->read().atoms(),
+                             icnrg, iljnrg);
+            
+            cnrg += icnrg;
+            ljnrg += iljnrg;
+        }
     }
 }
 
@@ -989,15 +950,6 @@ void CLJFunction::total(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
                         double &cnrg, double &ljnrg) const
 {
     this->operator()(atoms0, atoms1, cnrg, ljnrg);
-}
-
-/** Return the change in energy associated with the delta in 'delta' against the
-    other atoms in 'atoms', returning the coulomb part in 'cnrg' and the LJ part
-    in 'ljnrg' */
-void CLJFunction::total(const CLJDelta &delta, const CLJBoxes &atoms,
-                        double &cnrg, double &ljnrg) const
-{
-    this->operator()(delta, atoms, cnrg, ljnrg);
 }
 
 /** Return the total energy between 'atoms', returning the coulomb part as the first
@@ -1038,14 +990,13 @@ boost::tuple<double,double> CLJFunction::calculate(const CLJBoxes &atoms0,
     return boost::tuple<double,double>(cnrg, ljnrg);
 }
 
-/** Return the change in energy associated with the delta in 'delta' against the
-    other atoms in 'atoms', returning the coulomb part in 'cnrg' and the LJ part
-    in 'ljnrg' */
-boost::tuple<double,double> CLJFunction::calculate(const CLJDelta &delta,
-                                                   const CLJBoxes &atoms) const
+/** Return the total energy between 'atoms0' and 'atoms1', returning the coulomb part as the first
+    element of the tuple and the LJ part as the second */
+boost::tuple<double,double> CLJFunction::calculate(const CLJAtoms &atoms0,
+                                                   const CLJBoxes &atoms1) const
 {
     double cnrg, ljnrg;
-    this->operator()(delta, atoms, cnrg, ljnrg);
+    this->operator()(atoms0, atoms1, cnrg, ljnrg);
     return boost::tuple<double,double>(cnrg, ljnrg);
 }
 
@@ -1211,6 +1162,101 @@ double CLJFunction::lj(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
 double CLJFunction::lj(const CLJBoxes &atoms0, const CLJBoxes &atoms1) const
 {
     return this->calculate(atoms0, atoms1).get<1>();
+}
+
+tuple< QVector<double>,QVector<double> >
+CLJFunction::multiCalculate(const QVector<CLJFunctionPtr> &funcs, const CLJAtoms &atoms)
+{
+    if (funcs.isEmpty())
+        return tuple< QVector<double>,QVector<double> >();
+    
+    QVector<double> cnrgs(funcs.count()), ljnrgs(funcs.count());
+    
+    for (int i=0; i<funcs.count(); ++i)
+    {
+        tuple<double,double> nrgs = funcs.constData()[i].read().calculate(atoms);
+        cnrgs[i] = nrgs.get<0>();
+        ljnrgs[i] = nrgs.get<1>();
+    }
+    
+    return tuple< QVector<double>,QVector<double> >(cnrgs, ljnrgs);
+}
+
+tuple< QVector<double>,QVector<double> >
+CLJFunction::multiCalculate(const QVector<CLJFunctionPtr> &funcs,
+                            const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                            float min_distance)
+{
+    if (funcs.isEmpty())
+        return tuple< QVector<double>,QVector<double> >();
+    
+    QVector<double> cnrgs(funcs.count()), ljnrgs(funcs.count());
+    
+    for (int i=0; i<funcs.count(); ++i)
+    {
+        tuple<double,double> nrgs = funcs.constData()[i].read()
+                                                        .calculate(atoms0, atoms1, min_distance);
+        cnrgs[i] = nrgs.get<0>();
+        ljnrgs[i] = nrgs.get<1>();
+    }
+    
+    return tuple< QVector<double>,QVector<double> >(cnrgs, ljnrgs);
+}
+
+tuple< QVector<double>,QVector<double> >
+CLJFunction::multiCalculate(const QVector<CLJFunctionPtr> &funcs, const CLJBoxes &atoms)
+{
+    if (funcs.isEmpty())
+        return tuple< QVector<double>,QVector<double> >();
+    
+    QVector<double> cnrgs(funcs.count()), ljnrgs(funcs.count());
+    
+    for (int i=0; i<funcs.count(); ++i)
+    {
+        tuple<double,double> nrgs = funcs.constData()[i].read().calculate(atoms);
+        cnrgs[i] = nrgs.get<0>();
+        ljnrgs[i] = nrgs.get<1>();
+    }
+    
+    return tuple< QVector<double>,QVector<double> >(cnrgs, ljnrgs);
+}
+
+tuple< QVector<double>,QVector<double> >
+CLJFunction::multiCalculate(const QVector<CLJFunctionPtr> &funcs,
+                            const CLJBoxes &atoms0, const CLJBoxes &atoms1)
+{
+    if (funcs.isEmpty())
+        return tuple< QVector<double>,QVector<double> >();
+    
+    QVector<double> cnrgs(funcs.count()), ljnrgs(funcs.count());
+    
+    for (int i=0; i<funcs.count(); ++i)
+    {
+        tuple<double,double> nrgs = funcs.constData()[i].read().calculate(atoms0, atoms1);
+        cnrgs[i] = nrgs.get<0>();
+        ljnrgs[i] = nrgs.get<1>();
+    }
+    
+    return tuple< QVector<double>,QVector<double> >(cnrgs, ljnrgs);
+}
+
+tuple< QVector<double>,QVector<double> >
+CLJFunction::multiCalculate(const QVector<CLJFunctionPtr> &funcs,
+                            const CLJAtoms &atoms0, const CLJBoxes &atoms1)
+{
+    if (funcs.isEmpty())
+        return tuple< QVector<double>,QVector<double> >();
+    
+    QVector<double> cnrgs(funcs.count()), ljnrgs(funcs.count());
+    
+    for (int i=0; i<funcs.count(); ++i)
+    {
+        tuple<double,double> nrgs = funcs.constData()[i].read().calculate(atoms0, atoms1);
+        cnrgs[i] = nrgs.get<0>();
+        ljnrgs[i] = nrgs.get<1>();
+    }
+    
+    return tuple< QVector<double>,QVector<double> >(cnrgs, ljnrgs);
 }
 
 /////////
@@ -1526,9 +1572,6 @@ CLJFunctionPtr CLJCutoffFunction::setProperty(const QString &name, const Propert
     if (name == "switchingFunction")
     {
         const SwitchingFunction &switchfunc = value.asA<SwitchingFunction>();
-        
-        qDebug() << "Set switching function" << switchfunc.toString();
-        
         ret.edit().setCoulombCutoff( Length(switchfunc.electrostaticCutoffDistance()) );
         ret.edit().setLJCutoff( Length(switchfunc.vdwCutoffDistance()) );
     }

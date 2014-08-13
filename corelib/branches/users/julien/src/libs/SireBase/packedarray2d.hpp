@@ -2423,8 +2423,9 @@ void PackedArray2D<T>::removeAll(const QVarLengthArray<int> &idxs)
     {
         if (to_keep.constData()[i])
         {
-            quickCopy(values_array, array_data[i].constData(),
-                      array_data[i].count());
+            T *output = quickCopy(values_array, array_data[i].constData(),
+                                  array_data[i].count());
+            BOOST_ASSERT( output == values_array );
             
             values_array += array_data[i].count();
         }

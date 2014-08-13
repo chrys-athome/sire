@@ -21,8 +21,10 @@ set ( SIREMM_HEADERS
       cljcalculator.h
       cljcomponent.h
       cljdelta.h
+      cljextractor.h
       cljfunction.h
       cljgrid.h
+      cljgroup.h
       cljparam.h
       cljpotential.h
       cljprobe.h
@@ -36,10 +38,10 @@ set ( SIREMM_HEADERS
       fouratomfunctions.h
       gridff.h
       gridff2.h
-      gridinfo.h
       intercljff.h
       intercoulombff.h
       interff.h
+      intergroupff.h
       interljff.h
       internalcomponent.h
       internalff.h
@@ -56,6 +58,7 @@ set ( SIREMM_HEADERS
       ljparameterdb.h
       ljperturbation.h
       ljpotential.h
+      multicljcomponent.h
       restraint.h
       restraintcomponent.h
       restraintff.h
@@ -84,8 +87,10 @@ set ( SIREMM_SOURCES
       cljcalculator.cpp
       cljcomponent.cpp
       cljdelta.cpp
+      cljextractor.cpp
       cljfunction.cpp
       cljgrid.cpp
+      cljgroup.cpp
       cljparam.cpp
       cljpotential.cpp
       cljprobe.cpp
@@ -99,10 +104,10 @@ set ( SIREMM_SOURCES
       fouratomfunctions.cpp
       gridff.cpp
       gridff2.cpp
-      gridinfo.cpp
       intercljff.cpp
       intercoulombff.cpp
       interff.cpp
+      intergroupff.cpp
       interljff.cpp
       internalcomponent.cpp
       internalff.cpp
@@ -118,6 +123,7 @@ set ( SIREMM_SOURCES
       ljparameterdb.cpp
       ljperturbation.cpp
       ljpotential.cpp
+      multicljcomponent.cpp
       restraint.cpp
       restraintcomponent.cpp
       restraintff.cpp

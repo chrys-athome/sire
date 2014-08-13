@@ -33,8 +33,7 @@
 #include "cljatoms.h"
 #include "cljboxes.h"
 
-#include "gridinfo.h"
-
+#include "SireVol/gridinfo.h"
 #include "SireVol/aabox.h"
 
 #include <boost/shared_ptr.hpp>
@@ -53,6 +52,7 @@ namespace SireMM
 {
 
 using SireVol::AABox;
+using SireVol::GridInfo;
 
 /** This class holds a 3D grid of the coulomb potential
     at points in space created by a set of atoms, and calculates
@@ -133,6 +133,16 @@ public:
     bool usesGrid() const;
     bool functionSupportsGrid() const;
     
+    void enableParallelCalculation();
+    void disableParallelCalculation();
+    void setUseParallelCalculation(bool on);
+    bool usesParallelCalculation() const;
+    
+    void enableReproducibleCalculation();
+    void disableReproducibleCalculation();
+    void setUseReproducibleCalculation(bool on);
+    bool usesReproducibleCalculation() const;
+    
     void total(const CLJAtoms &atoms, double &cnrg, double &ljnrg) const;
     void total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const;
     
@@ -176,6 +186,13 @@ private:
     
     /** Whether or not the CLJFunction supports use of a grid */
     bool cljfunc_supports_grid;
+    
+    /** Whether or not to use a parallel energy calculation */
+    bool parallel_calc;
+    
+    /** Whether or not to use an exact summing algorithm to 
+        ensure that parallel calculations always give the same energy */
+    bool repro_sum;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS

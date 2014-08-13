@@ -49,6 +49,7 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QElapsedTimer>
 #include <QDebug>
 
 using namespace SireFF;
@@ -74,8 +75,6 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FF &ff)
     
     SharedDataStream sds(ds);
     
-    #warning FF needs to UID registry to stream version number
-    
     sds << ff.uid << ff.versn << ff.ffname << ff.nrg_components
         << ff.isdirty
         << static_cast<const MolGroupsBase&>(ff);
@@ -90,8 +89,6 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FF &ff)
     
     if (v == 1)
     {
-        #warning FF needs to UID registry to stream version number
-
         SharedDataStream sds(ds);
         sds >> ff.uid >> ff.versn >> ff.ffname >> ff.nrg_components
             >> ff.isdirty
@@ -1294,7 +1291,7 @@ bool FF::remove(const QSet<MolNum> &molnums, const MGID &mgid)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void FF::update(const MoleculeData &moldata)
+void FF::update(const MoleculeData &moldata, bool auto_commit)
 {
     if (not this->contains(moldata.number()))
         return;
@@ -1302,26 +1299,32 @@ void FF::update(const MoleculeData &moldata)
     const QList<MGNum> &mgnums = this->groupsContaining(moldata.number());
 
     BOOST_ASSERT(not mgnums.isEmpty());
+
+    if (auto_commit and this->needsAccepting())
+        this->accept();
     
     if (mgnums.count() == 1)
     {
         this->group_update( this->mgIdx(*(mgnums.constBegin())),
-                            moldata );
+                            moldata, auto_commit );
     }
     else
     {
         foreach (MGNum mgnum, mgnums)
         {
-            this->group_update( this->mgIdx(mgnum), moldata );
+            this->group_update( this->mgIdx(mgnum), moldata, auto_commit );
         }
     }
+    
+    if (auto_commit and this->needsAccepting())
+        this->accept();
 }
 
 /** Update the data of the molecule that is view in 'molview'. This
     updates all atoms, even those that are not part of the view */
-void FF::update(const MoleculeView &molview)
+void FF::update(const MoleculeView &molview, bool auto_commit)
 {
-    this->update(molview.data());
+    this->update(molview.data(), auto_commit);
 }
 
 /** Update the molecules in this forcefield so that they have the 
@@ -1334,23 +1337,26 @@ void FF::update(const MoleculeView &molview)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void FF::update(const Molecules &molecules)
+void FF::update(const Molecules &molecules, bool auto_commit)
 {
     if (molecules.isEmpty())
         return;
     
     else if (molecules.count() == 1)
     {
-        this->update( molecules.constBegin()->data() );
+        this->update( molecules.constBegin()->data(), auto_commit );
         return;
     }
+
+    if (auto_commit and this->needsAccepting())
+        this->accept();
 
     //get the numbers of the groups that contain these molecules...
     int ngroups = this->nGroups();
     
     if (ngroups == 1)
     {
-        this->group_update(0, molecules);
+        this->group_update(0, molecules, auto_commit);
     }
     else
     {
@@ -1380,17 +1386,20 @@ void FF::update(const Molecules &molecules)
             MGNum mgnum = *(mgnums.constBegin());
             MGIdx mgidx = this->mgIdx(mgnum);
             
-            this->group_update(mgidx, molecules);
+            this->group_update(mgidx, molecules, auto_commit);
         }
         else
         {
             foreach (MGNum mgnum, mgnums)
             {
                 MGIdx mgidx = this->mgIdx(mgnum);
-                this->group_update(mgidx, molecules);
+                this->group_update(mgidx, molecules, auto_commit);
             }
         }
     }
+    
+    if (auto_commit and this->needsAccepting())
+        this->accept();
 }
 
 /** Update this forcefield so that it has the same version molecules
@@ -1400,9 +1409,9 @@ void FF::update(const Molecules &molecules)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void FF::update(const MoleculeGroup &molgroup)
+void FF::update(const MoleculeGroup &molgroup, bool auto_commit)
 {
-    this->update(molgroup.molecules());
+    this->update(molgroup.molecules(), auto_commit);
 }
 
 /** Set the contents of the forcefield groups identified by 'mgid'

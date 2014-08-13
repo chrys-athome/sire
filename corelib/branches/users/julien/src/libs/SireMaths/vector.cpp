@@ -578,18 +578,18 @@ Vector Vector::cross(const Vector &v0, const Vector &v1)
                 {
                     //do this by creating a copy of v0 with two elements swapped
                     if ( SireMaths::isZero(v1.x()) )
-                        normal = Vector(0,v1.z(),-v1.y()).normalise();
+                        normal = Vector(v1.x(),v1.z(),v1.y()).normalise();
                     else
-                        normal = Vector(v1.y(),-v1.x(),0).normalise();
+                        normal = Vector(v1.y(),v1.x(),v1.z()).normalise();
                 }
             }
             else
             {
                 //do this by creating a copy of v0 with two elements swapped
                 if ( SireMaths::isZero(v0.x()) )
-                    normal = Vector(0,v0.z(),-v0.y()).normalise();
+                    normal = Vector(v0.x(),v0.z(),v0.y()).normalise();
                 else
-                    normal =Vector(v0.y(),-v0.x(),0).normalise();
+                    normal =Vector(v0.y(),v0.x(),v0.z()).normalise();
             }
 
             qDebug() << "Fixed cross product of vectors" << v0.toString() << ":" << v1.toString();
@@ -631,9 +631,9 @@ Matrix Vector::metricTensor() const
 /** Return the multiple of this vector with the matrix 'm' */
 const Vector SIREMATHS_EXPORT SireMaths::operator*(const Matrix &m, const Vector &p)
 {
-    return Vector(m.xx()*p.sc[0] + m.yx()*p.sc[1] + m.zx()*p.sc[2],
-                  m.xy()*p.sc[0] + m.yy()*p.sc[1] + m.zy()*p.sc[2],
-                  m.xz()*p.sc[0] + m.yz()*p.sc[1] + m.zz()*p.sc[2]);
+    return Vector(m.xx()*p.sc[0] + m.xy()*p.sc[1] + m.xz()*p.sc[2],
+                  m.yx()*p.sc[0] + m.yy()*p.sc[1] + m.yz()*p.sc[2],
+                  m.zx()*p.sc[0] + m.zy()*p.sc[1] + m.zz()*p.sc[2]);
 }
 
 /** Increment, decrement, negate etc. */

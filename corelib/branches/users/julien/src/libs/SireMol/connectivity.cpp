@@ -192,46 +192,46 @@ PropertyPtr ConnectivityBase::_pvt_makeCompatibleWith(const MoleculeInfoData &mo
 {
     try
     {
-    if (atommatcher.unchangedAtomOrder(this->info(), molinfo))
-    {
-        //the order of the atoms remains the same - this means that the 
-        //AtomIdx indicies are still valid
-        Connectivity ret;
-        ret.connected_atoms = connected_atoms;
-        ret.connected_res = connected_res;
-        ret.d = molinfo;
-        return ret;
-    }
-
-    QHash<AtomIdx,AtomIdx> matched_atoms = atommatcher.match(this->info(), molinfo);
-
-    ConnectivityEditor editor;
-    editor.d = molinfo;
-    editor.connected_atoms = QVector< QSet<AtomIdx> >( molinfo.nAtoms() );
-    editor.connected_res = QVector< QSet<ResIdx> >( molinfo.nResidues() );
-
-    for (int i=0; i<connected_atoms.count(); ++i)
-    {
-        AtomIdx old_idx(i);
-        
-        AtomIdx new_idx = matched_atoms.value(old_idx, AtomIdx(-1));
-        
-        if (new_idx != -1)
+        if (not atommatcher.changesOrder(this->info(), molinfo))
         {
-            foreach (AtomIdx old_bond, this->connectionsTo(old_idx))
+            //the order of the atoms remains the same - this means that the 
+            //AtomIdx indicies are still valid
+            Connectivity ret;
+            ret.connected_atoms = connected_atoms;
+            ret.connected_res = connected_res;
+            ret.d = molinfo;
+            return ret;
+        }
+
+        QHash<AtomIdx,AtomIdx> matched_atoms = atommatcher.match(this->info(), molinfo);
+
+        ConnectivityEditor editor;
+        editor.d = molinfo;
+        editor.connected_atoms = QVector< QSet<AtomIdx> >( molinfo.nAtoms() );
+        editor.connected_res = QVector< QSet<ResIdx> >( molinfo.nResidues() );
+
+        for (int i=0; i<connected_atoms.count(); ++i)
+        {
+            AtomIdx old_idx(i);
+            
+            AtomIdx new_idx = matched_atoms.value(old_idx, AtomIdx(-1));
+            
+            if (new_idx != -1)
             {
-                AtomIdx new_bond = matched_atoms.value(old_bond, AtomIdx(-1));
-                
-                if (new_bond != -1)
+                foreach (AtomIdx old_bond, this->connectionsTo(old_idx))
                 {
-                    if (new_bond > new_idx)
-                        editor.connect(new_idx, new_bond);
+                    AtomIdx new_bond = matched_atoms.value(old_bond, AtomIdx(-1));
+                    
+                    if (new_bond != -1)
+                    {
+                        if (new_bond > new_idx)
+                            editor.connect(new_idx, new_bond);
+                    }
                 }
             }
         }
-    }
 
-    return editor.commit();
+        return editor.commit();
     }
     catch(const SireError::exception &e)
     {

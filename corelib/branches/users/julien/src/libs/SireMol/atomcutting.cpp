@@ -127,13 +127,14 @@ MolStructureEditor AtomCutting::operator()(MolStructureEditor &moleditor) const
         for (int j=0; j<reseditor.nAtoms(); ++j)
         {
             
-            moleditor.add( CGName(QString::number(k+j)) );          
+	  moleditor.add( CGName(QString::number(k)) );          
             
-            reseditor.atom(j).reparent( CGIdx(k+j) );
+	  reseditor.atom(j).reparent( CGIdx(k) );
             
+	  k++;
         }
         
-        k=reseditor.nAtoms();
+        //k=reseditor.nAtoms() + 1;
         
            
      }

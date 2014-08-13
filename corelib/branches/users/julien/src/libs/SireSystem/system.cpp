@@ -151,6 +151,9 @@ static const RegisterMetaType<System> r_system;
 /** Serialise to a binary datastream */
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const System &system)
 {
+    if (system.needsAccepting())
+        qDebug() << "SYSTEM NEEDS ACCEPTING";
+
     writeHeader(ds, r_system, 3);
     
     if (system.subversion != 0)
@@ -159,6 +162,7 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const System &system)
                 "temporarily invalid state (i.e. has non-zero subversion number). "
                 "The subversion number for %1 is %2.")
                     .arg(system.toString()).arg(system.subversion), CODELOC );
+    
     
     SharedDataStream sds(ds);
     
@@ -2802,14 +2806,21 @@ bool System::remove(const QSet<MolNum> &molnums, const MGID &mgid)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void System::update(const MoleculeData &moldata)
+void System::update(const MoleculeData &moldata, bool auto_commit)
 {
-    Delta delta(*this);
+    Delta delta(*this, auto_commit);
+    
     //this ensures that only a single copy of System is used - prevents
     //unnecessary copying
     this->operator=( System() );
     delta.update(moldata);
     this->operator=( delta.apply() );
+    
+    if (auto_commit and this->needsAccepting())
+    {
+        delta = Delta();
+        this->accept();
+    }
 }
 
 /** Update this system so that it uses the same version of the molecules
@@ -2819,14 +2830,21 @@ void System::update(const MoleculeData &moldata)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void System::update(const Molecules &molecules)
+void System::update(const Molecules &molecules, bool auto_commit)
 {
-    Delta delta(*this);
+    Delta delta(*this, auto_commit);
+    
     //this ensures that only a single copy of System is used - prevents
     //unnecessary copying
     this->operator=( System() );
     delta.update(molecules);
     this->operator=( delta.apply() );
+    
+    if (auto_commit and this->needsAccepting())
+    {
+        delta = Delta();
+        this->accept();
+    }
 }
 
 /** Update this system so that it uses the same version of the molecules
@@ -2836,9 +2854,9 @@ void System::update(const Molecules &molecules)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void System::update(const MoleculeGroup &molgroup)
+void System::update(const MoleculeGroup &molgroup, bool auto_commit)
 {
-    this->update(molgroup.molecules());
+    this->update(molgroup.molecules(), auto_commit);
 }
 
 /** Set the contents of the molecule group(s) identified by the ID 'mgid'
@@ -3140,7 +3158,7 @@ bool System::deltaUpdate(const QString &property, const QList<FFIdx> &ffidxs,
     }
 }
 
-bool System::deltaUpdate(const MoleculeData &moldata)
+bool System::deltaUpdate(const MoleculeData &moldata, bool auto_commit)
 {
     bool in_molgroup = this->_pvt_constMoleculeGroups().contains(moldata.number());
     bool in_ffields = this->_pvt_constForceFields().contains(moldata.number());
@@ -3148,10 +3166,10 @@ bool System::deltaUpdate(const MoleculeData &moldata)
     if (in_molgroup or in_ffields)
     {
         if (in_molgroup)
-            this->_pvt_moleculeGroups().update(moldata);
+            this->_pvt_moleculeGroups().update(moldata, auto_commit);
             
         if (in_ffields)
-            this->_pvt_forceFields().update(moldata);
+            this->_pvt_forceFields().update(moldata, auto_commit);
 
         ++subversion;
         
@@ -3161,7 +3179,7 @@ bool System::deltaUpdate(const MoleculeData &moldata)
         return false;
 }
 
-QList<MolNum> System::deltaUpdate(const Molecules &molecules)
+QList<MolNum> System::deltaUpdate(const Molecules &molecules, bool auto_commit)
 {
     if (molecules.isEmpty())
         return QList<MolNum>();
@@ -3170,7 +3188,7 @@ QList<MolNum> System::deltaUpdate(const Molecules &molecules)
     {
         QList<MolNum> molnums;
     
-        if (this->deltaUpdate( molecules.constBegin()->data() ))
+        if (this->deltaUpdate( molecules.constBegin()->data(), auto_commit ))
             molnums.append( molecules.constBegin()->data().number() );
             
         return molnums;
@@ -3198,10 +3216,10 @@ QList<MolNum> System::deltaUpdate(const Molecules &molecules)
     if (in_molgroup or in_ffields)
     {
         if (in_ffields)
-            this->_pvt_forceFields().update(molecules);
+            this->_pvt_forceFields().update(molecules, auto_commit);
         
         if (in_molgroup)
-            this->_pvt_moleculeGroups().update(molecules);
+            this->_pvt_moleculeGroups().update(molecules, auto_commit);
 
         ++subversion;
         

@@ -858,6 +858,8 @@ AtomPairs<T>::_pvt_makeCompatibleWith(const MoleculeInfoData &other_info,
         if (old_value != default_value)
             ret.set(new_i, new_i, this->get(i,i));
     
+        ret.set(new_i, new_i, this->get(i,i));
+    
         for (AtomIdx j(i+1); j<nats; ++j)
         {
             AtomIdx new_j = matched_atoms.value(j, AtomIdx(-1));
@@ -880,8 +882,6 @@ AtomPairs<T>::_pvt_makeCompatibleWith(const MoleculeInfoData &other_info,
         if (new_i != -1)
             ret.set(new_i, new_i, this->get(i,i));
     }
-
-    ret.cgpairs.commit();
 
     return ret;
 }

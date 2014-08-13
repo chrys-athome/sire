@@ -1350,10 +1350,10 @@ void GridFF::addToGrid(const QVector<GridFF::Vector4> &coords_and_charges)
         #endif
     }
     
-    qint64 ns = t.nsecsElapsed();
+    //int ms = t.elapsed();
     
-    qDebug() << "Added" << nats << "more atoms to" << npts << "grid points in"
-             << (0.000001*ns) << "ms";
+    //qDebug() << "Added" << nats << "more atoms to" << npts << "grid points in"
+    //         << ms << "ms";
 }
 
 inline double getDist(double p, double minp, double maxp)
@@ -1368,7 +1368,7 @@ inline double getDist(double p, double minp, double maxp)
 
 /** Return the minimum distance between a point and the passed AABox. This
     returns 0 if the point is inside the box */
-static double minimumDistanceToGrid(const Vector &coords, const AABox &gridbox)
+double minimumDistanceToGrid(const Vector &coords, const AABox &gridbox)
 {
     const Vector mincoords = gridbox.minCoords();
     const Vector maxcoords = gridbox.maxCoords();
@@ -1588,7 +1588,7 @@ void GridFF::rebuildGrid()
                 closemols_params.append(params);
             }
             //all other points are evaluated using the grid
-            else if (dist < coul_cutoff)
+            else
             {
                 if (params.reduced_charge != 0)
                 {
@@ -1693,17 +1693,6 @@ void GridFF::rebuildGrid()
         qDebug() << "Added all of the group 1 molecules to the grid.";
         qDebug() << "The number of explicitly evaluated atoms is now" << atomcount;
         qDebug() << "The number of grid evaluated atoms is now" << gridcount;
-    }
-
-    {
-        double grid_sum = 0;
-        
-        for (int ipt=0; ipt<(dimx*dimy*dimz); ++ipt)
-        {
-            grid_sum += gridpot.at(ipt);
-        }
-        
-        qDebug() << "Sum of grid potentials is" << grid_sum;
     }
     
     closemols_coords.squeeze();
@@ -2435,15 +2424,16 @@ void GridFF::_pvt_removed(quint32 groupid, const PartialMolecule &mol)
 }
 
 /** Any changes to group 1 mean that the forcefield must be recalculated from scratch */
-void GridFF::_pvt_changed(quint32 groupid, const SireMol::Molecule &molecule)
+void GridFF::_pvt_changed(quint32 groupid, const SireMol::Molecule &molecule, bool auto_commit)
 {
-    InterGroupCLJFF::_pvt_changed(groupid, molecule);
+    InterGroupCLJFF::_pvt_changed(groupid, molecule, auto_commit);
 }
 
 /** Any changes to group 1 mean that the forcefield must be recalculated from scratch */
-void GridFF::_pvt_changed(quint32 groupid, const QList<SireMol::Molecule> &molecules)
+void GridFF::_pvt_changed(quint32 groupid, const QList<SireMol::Molecule> &molecules,
+                          bool auto_commit)
 {
-    InterGroupCLJFF::_pvt_changed(groupid, molecules);
+    InterGroupCLJFF::_pvt_changed(groupid, molecules, auto_commit);
 }
 
 /** Any removals mean that the forcefield must be recalculated from scratch */
