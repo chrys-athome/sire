@@ -135,7 +135,7 @@ public:
     {}
 
     MultiCLJEnergy(const QVector<double> &coul_nrgs, const QVector<double> &lj_nrgs)
-           : CLJEnergy(), cnrgs(coul_nrgs), ljnrgs(lj_nrgs)
+           : CLJEnergy()
     {
         double cnrg = 0;
         double ljnrg = 0;
@@ -151,6 +151,9 @@ public:
         }
         
         CLJEnergy::operator=( CLJEnergy(cnrg,ljnrg) );
+        
+        cnrgs = coul_nrgs;
+        ljnrgs = lj_nrgs;
     }
     
     MultiCLJEnergy(const MultiCLJEnergy &other)
@@ -168,6 +171,14 @@ public:
     const char* what() const
     {
         return MultiCLJEnergy::typeName();
+    }
+    
+    MultiCLJEnergy& operator=(const MultiCLJEnergy &other)
+    {
+        CLJEnergy::operator=(other);
+        cnrgs = other.cnrgs;
+        ljnrgs = other.ljnrgs;
+        return *this;
     }
     
     MultiCLJEnergy& operator+=(const MultiCLJEnergy &other)
