@@ -207,6 +207,8 @@
 
 #include "IntraCoulombFFBase.pypp.hpp"
 
+#include "IntraFF.pypp.hpp"
+
 #include "IntraGroupCLJFF.pypp.hpp"
 
 #include "IntraGroupCLJFFBase.pypp.hpp"
@@ -579,6 +581,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_InternalParameters3D_class();
 
     register_InternalSymbols_class();
+
+    register_IntraFF_class();
 
     register_LJComponent_class();
 

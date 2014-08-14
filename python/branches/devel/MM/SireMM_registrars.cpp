@@ -37,6 +37,7 @@
 #include "interff.h"
 #include "cljworkspace.h"
 #include "intercoulombff.h"
+#include "intraff.h"
 #include "cljatoms.h"
 #include "intraljff.h"
 #include "internalperturbation.h"
@@ -132,6 +133,7 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::InterCoulombFF >();
     ObjectRegistry::registerConverterFor< SireMM::InterGroupCoulombFFBase >();
     ObjectRegistry::registerConverterFor< SireMM::InterGroupCoulombFF >();
+    ObjectRegistry::registerConverterFor< SireMM::IntraFF >();
     ObjectRegistry::registerConverterFor< SireMM::CLJAtom >();
     ObjectRegistry::registerConverterFor< SireMM::CLJAtoms >();
     ObjectRegistry::registerConverterFor< SireMM::IntraLJFFBase >();

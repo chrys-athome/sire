@@ -73,6 +73,7 @@ set ( PYPP_SOURCES
        LJPerturbation.pypp.cpp
        AngleComponent.pypp.cpp
        SoftCLJComponent.pypp.cpp
+       IntraFF.pypp.cpp
        AtomPairs_CLJScaleFactor_.pypp.cpp
        InternalFF.pypp.cpp
        BendBendSymbols.pypp.cpp

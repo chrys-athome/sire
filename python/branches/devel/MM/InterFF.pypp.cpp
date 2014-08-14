@@ -10,6 +10,8 @@ namespace bp = boost::python;
 
 #include "SireBase/booleanproperty.h"
 
+#include "SireBase/errors.h"
+
 #include "SireBase/lengthproperty.h"
 
 #include "SireError/errors.h"
