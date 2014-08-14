@@ -338,6 +338,22 @@ void CLJGroup::update(const MoleculeView &molview)
     
     if (cljexts.contains(molnum) or changed_mols.contains(molnum))
     {
+        if (cljexts.count() == 1)
+        {
+            const CLJExtractor &ext = cljexts.constBegin().value();
+            
+            if (ext.extractingByMolecule() or
+                (ext.extractingByResidue() and molview.data().info().nResidues() == 1) or
+                (ext.extractingByCutGroup() and molview.data().info().nCutGroups() == 1))
+            {
+                //there is only a single CLJAtoms group in this object, so we may
+                //as well rebuild it all from scratch
+                this->mustRecalculateFromScratch();
+                cljexts[molnum].update(molview, cljboxes, cljworkspace);
+                return;
+            }
+        }
+
         //we must update this molecule
         if (changed_mols.contains(molnum))
         {
@@ -355,7 +371,7 @@ void CLJGroup::update(const MoleculeView &molview)
                 changed.update(molview, cljboxes, cljworkspace);
                 changed_mols.insert(molnum,changed);
             }
-      }
+        }
     }
 }
 

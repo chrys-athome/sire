@@ -504,9 +504,6 @@ namespace SireMM
     grid calculations */
 QVector<float> CLJFunction::calculate(const CLJAtoms &atoms, const GridInfo &gridinfo) const
 {
-    QElapsedTimer t;
-    t.start();
-
     QVector<float> gridpot( gridinfo.nPoints(), 0.0 );
     
     if (this->supportsGridCalculation() and not gridinfo.isEmpty())
@@ -514,16 +511,6 @@ QVector<float> CLJFunction::calculate(const CLJAtoms &atoms, const GridInfo &gri
         SireMM::detail::CLJGridCalculator calc(atoms, gridinfo, *this, gridpot.data());
         tbb::parallel_for(tbb::blocked_range<int>(0,gridinfo.nPoints(),4096), calc);
     }
-
-    qint64 ns = t.nsecsElapsed();
-    qDebug() << "Building the grid took" << (0.000001*ns) << "ms";
-    
-    double sum = 0;
-    for (int i=0; i<gridinfo.nPoints(); ++i)
-    {
-        sum += gridpot.constData()[i];
-    }
-    qDebug() << "Sum of grid potential is" << sum;
     
     return gridpot;
 }
@@ -1836,14 +1823,8 @@ void CLJIntraFunction::setConnectivity(const Connectivity &c)
 {
     if (cty != c)
     {
-        QElapsedTimer t;
-        t.start();
-    
         cty = c;
         bond_matrix = cty.getBondMatrix(1,4);
-
-        quint64 ns1 = t.nsecsElapsed();
-        t.start();
 
         if (bond_matrix.count() > 0)
         {
@@ -1860,11 +1841,6 @@ void CLJIntraFunction::setConnectivity(const Connectivity &c)
             
             bond_matrix.squeeze();
         }
-        
-        quint64 ns2 = t.nsecsElapsed();
-        
-        qDebug() << "GETTING MATRIX TOOK" << (0.000001*(ns1+ns2)) << "ms, "
-                 << (0.000001*ns1) << "," << (0.000001*ns2);
     }
 }
 

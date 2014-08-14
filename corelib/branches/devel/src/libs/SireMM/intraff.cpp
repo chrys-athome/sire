@@ -45,6 +45,8 @@
 #include "SireMol/atomselection.h"
 #include "SireMol/selector.hpp"
 
+#include "SireUnits/units.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -56,6 +58,7 @@ using namespace SireMol;
 using namespace SireFF;
 using namespace SireBase;
 using namespace SireStream;
+using namespace SireUnits;
 
 QDataStream& operator<<(QDataStream &ds,
                         const QSharedDataPointer<SireMM::detail::IntraFFMolData> &ptr)
@@ -147,13 +150,12 @@ namespace SireMM
             {}
             
             IntraFFMolData(const MoleculeView &molview,
-                           CLJAtoms::ID_SOURCE id_source,
-                           CLJExtractor::EXTRACT_SOURCE extract_source,
                            const PropertyMap &map,
                            const QVector<CLJFunctionPtr> &funcs)
                     : QSharedData(), needs_energy_calc(true), needs_accepting(false)
             {
-                cljgroup = CLJGroup(id_source, extract_source);
+                cljgroup = CLJGroup(CLJAtoms::USE_ATOMIDX, CLJExtractor::EXTRACT_BY_CUTGROUP);
+                cljgroup.setBoxLength( 7.5*angstrom );
                 cljgroup.add(molview, map);
                 connectivity_property = map["connectivity"];
                 cty = molview.data().property(connectivity_property).asA<Connectivity>();
@@ -330,7 +332,7 @@ IntraFF::IntraFF(const QString &name)
 {
     d = new detail::IntraFFData();
     G1FF::setName(name);
-    this->setCLJFunction( CLJShiftFunction::defaultShiftFunction()
+    this->setCLJFunction( CLJIntraShiftFunction::defaultShiftFunction()
                                     .read().asA<CLJIntraFunction>() );
 }
 
@@ -1016,9 +1018,7 @@ void IntraFF::_pvt_added(const SireMol::PartialMolecule &mol, const SireBase::Pr
     {
         //need to add this as a new molecule
         moldata.insert( mol.number(), QSharedDataPointer<detail::IntraFFMolData>(
-                                new detail::IntraFFMolData(mol, CLJAtoms::USE_ATOMIDX,
-                                            CLJExtractor::EXTRACT_BY_CUTGROUP,
-                                            map, d.constData()->cljfuncs) ) );
+                                new detail::IntraFFMolData(mol, map, d.constData()->cljfuncs) ) );
     }
     else
     {
