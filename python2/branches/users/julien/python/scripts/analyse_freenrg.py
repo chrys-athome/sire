@@ -34,8 +34,8 @@ parser.add_argument('--author', action="store_true",
 parser.add_argument('--version', action="store_true",
                     help="Get version information about this script.")
 
-parser.add_argument('-i', '--input', nargs=1,
-                    help="Supply the name of the Sire Streamed Save (.s3) file containing the "
+parser.add_argument('-i', '--input', nargs='*',
+                    help="Supply the name of the Sire Streamed Save (.s3) file(s) containing the "
                          "free energies to be analysed.")
 
 parser.add_argument('-o', '--output', nargs=1,
@@ -72,7 +72,7 @@ if must_exit:
     sys.exit(0)
 
 if args.input:
-    input_file = args.input[0]
+    input_file = args.input
 else:
     input_file = None
 
@@ -106,11 +106,11 @@ if not input_file:
     print("\nPlease supply the name of the .s3 file containing the free energies to be analysed.")
     sys.exit(-1)
 
-elif not os.path.exists(input_file):
-    parser.print_help()
-    print("\nPlease supply the name of the .s3 file containing the free energies to be analysed.")
-    print("(cannot find file %s)" % input_file)
-    sys.exit(-1)
+#elif not os.path.exists(input_file):
+#    parser.print_help()
+#    print("\nPlease supply the name of the .s3 file containing the free energies to be analysed.")
+#    print("(cannot find file %s)" % input_file)
+#    sys.exit(-1)
 
 if output_file:
     print("Writing all output to file %s\n" % output_file)
@@ -119,11 +119,57 @@ else:
     print("Writing all output to stdout\n")
     FILE = sys.stdout
 
-input_file = os.path.realpath(input_file)
+#input_file = os.path.realpath(input_file)
 
-FILE.write("Analysing free energies contained in file \"%s\"\n" % input_file)
+FILE.write("Analysing free energies contained in file(s) \"%s\"\n" % input_file)
 
-freenrgs = Sire.Stream.load(input_file)
+num_inputfiles = len(input_file)
+
+if num_inputfiles > 1:
+    # Multiple input files provided. Assume we have several gradients files that must be combined
+    grads = {}
+    fwds_grads = {} 
+    bwds_grads = {} 
+
+    delta_lambda = None 
+
+    for i in range(0,num_inputfiles): 
+        grad = Sire.Stream.load(input_file[i]) 
+
+        #print(grad)
+        analytic_data = grad.analyticData() 
+        fwds_data = grad.forwardsData() 
+        bwds_data = grad.backwardsData() 
+
+        #print(analytic_data)
+        #print(fwds_data)
+        #print(bwds_data)
+
+        if len(analytic_data) > 0: 
+             # analytic gradients
+            #print(analytic_data.keys())
+            lamval = list(analytic_data.keys())[0] 
+            grads[ lamval ] = analytic_data[lamval] 
+        else: 
+            # finite difference gradients 
+            lamval = list(fwds_data.keys())[0] 
+            fwds_grads[lamval] = fwds_data[lamval] 
+            bwds_grads[lamval] = bwds_data[lamval] 
+            delta_lambda = grad.deltaLambda() 
+
+    ti = None 
+
+    if len(grads) > 0 : 
+        ti = TI( Gradients(grads) ) 
+    else: 
+        ti = TI( Gradients(fwds_grads,bwds_grads,delta_lambda) ) 
+
+    input_file = "freenrgs.s3"
+    Sire.Stream.save(ti, input_file)
+    #freenrgs = ti
+
+# Only one input file provided, assumes it contains freenrgs
+freenrgs = Sire.Stream.load(input_file)    
 
 results = []
 

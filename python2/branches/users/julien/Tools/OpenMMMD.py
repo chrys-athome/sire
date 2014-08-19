@@ -19,6 +19,7 @@ from Sire.Base import *
 from Sire.Qt import *
 from Sire.ID import *
 from Sire.Config import *
+from Sire.Analysis import *
 
 from Sire.Tools.DCDFile import *
 
@@ -888,7 +889,7 @@ def setupForcefieldsFreeEnergy(system, space ):
     system.add( PropertyConstraint( "alpha0", FFName("solute_fromdummy_intraclj"), 1 - lam ) )
     system.add( PropertyConstraint( "alpha0", FFName("solute_hard:todummy_intraclj"), lam ) )
     system.add( PropertyConstraint( "alpha0", FFName("solute_hard:fromdummy_intraclj"), 1 - lam ) )
-    system.add( PropertyConstraint( "alpha0", FFName("solute_todummy:fromdummy_intraclj"), Min( lam, 1 - lam )  ) )
+    system.add( PropertyConstraint( "alpha0", FFName("solute_todummy:fromdummy_intraclj"), Max( lam, 1 - lam )  ) )
     system.add( PropertyConstraint( "alpha0", FFName("solute_todummy:solvent"), lam ) )
     system.add( PropertyConstraint( "alpha0", FFName("solute_fromdummy:solvent"), 1 - lam ) )
 
@@ -1176,6 +1177,8 @@ def runFreeNrg():
     
     print("Running MD simulation ")
 
+    grads = {}
+    grads[lambda_val.val] = AverageAndStddev()
     for i in range(cycle_start,cycle_end):
         print("\nCycle = ",i,"\n")
 
@@ -1191,10 +1194,19 @@ def runFreeNrg():
         integrator = mdmoves.integrator()
         gradients = integrator.getGradients()
         outgradients.write("%5d %20.10f\n" % (i, gradients[i-1]))
+        grads[lambda_val.val].accumulate( gradients[i-1] )
 
     s2 = timer.elapsed()/1000.
     print("Simulation took %d s " % ( s2 - s1))
-    
+
+    if os.path.exists("gradients.s3"):
+        siregrads = Sire.Stream.load("gradients.s3")
+    else:
+        siregrads = Gradients()
+    siregrads = siregrads + Gradients(grads) 
+   
+    Sire.Stream.save(siregrads, "gradients.s3")
+
     if buffered_coords_freq.val > 0:
         system = clearBuffers(system)
         # Necessary to write correct restart
