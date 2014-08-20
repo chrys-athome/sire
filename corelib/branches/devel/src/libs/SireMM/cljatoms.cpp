@@ -800,6 +800,9 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
 void CLJAtoms::constructFrom(const MoleculeView &molecule,
                              const ID_SOURCE id_source, const PropertyMap &map)
 {
+    if (molecule.isEmpty())
+        return;
+
     //QElapsedTimer t;
     //t.start();
     
