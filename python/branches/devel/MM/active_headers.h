@@ -40,6 +40,7 @@
 #include "intracljff.h"
 #include "intracoulombff.h"
 #include "intraff.h"
+#include "intragroupff.h"
 #include "intraljff.h"
 #include "intrasoftcljff.h"
 #include "ljpair.h"

@@ -34,6 +34,8 @@ namespace bp = boost::python;
 
 #include "SireStream/shareddatastream.h"
 
+#include "SireUnits/units.h"
+
 #include "cljcalculator.h"
 
 #include "cljshiftfunction.h"

@@ -217,6 +217,8 @@
 
 #include "IntraGroupCoulombFFBase.pypp.hpp"
 
+#include "IntraGroupFF.pypp.hpp"
+
 #include "IntraGroupLJFF.pypp.hpp"
 
 #include "IntraGroupLJFFBase.pypp.hpp"
@@ -583,6 +585,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_InternalSymbols_class();
 
     register_IntraFF_class();
+
+    register_IntraGroupFF_class();
 
     register_LJComponent_class();
 

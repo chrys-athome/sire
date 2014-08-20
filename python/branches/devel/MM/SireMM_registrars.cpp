@@ -9,6 +9,7 @@
 #include "cljshiftfunction.h"
 #include "ljpair.h"
 #include "restraintcomponent.h"
+#include "intragroupff.h"
 #include "gridff.h"
 #include "anglerestraint.h"
 #include "intersoftcljff.h"
@@ -63,6 +64,7 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::CLJIntraShiftFunction >();
     ObjectRegistry::registerConverterFor< SireMM::LJPair >();
     ObjectRegistry::registerConverterFor< SireMM::RestraintComponent >();
+    ObjectRegistry::registerConverterFor< SireMM::IntraGroupFF >();
     ObjectRegistry::registerConverterFor< SireMM::GridFF >();
     ObjectRegistry::registerConverterFor< SireMM::AngleRestraint >();
     ObjectRegistry::registerConverterFor< SireMM::InterSoftCLJFFBase >();

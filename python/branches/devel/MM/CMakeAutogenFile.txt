@@ -84,6 +84,7 @@ set ( PYPP_SOURCES
        CoulombComponent.pypp.cpp
        Restraint3D.pypp.cpp
        TripleDistanceRestraint.pypp.cpp
+       IntraGroupFF.pypp.cpp
        CLJCutoffFunction.pypp.cpp
        InterSoftCLJFF.pypp.cpp
        LJParameterName.pypp.cpp
