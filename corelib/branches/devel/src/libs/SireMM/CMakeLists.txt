@@ -51,6 +51,7 @@ set ( SIREMM_HEADERS
       intracljff.h
       intracoulombff.h
       intraff.h
+      intragroupff.h
       intraljff.h
       intrasoftcljff.h
       ljfunction.h
@@ -118,6 +119,7 @@ set ( SIREMM_SOURCES
       intracljff.cpp
       intracoulombff.cpp
       intraff.cpp
+      intragroupff.cpp
       intraljff.cpp
       intrasoftcljff.cpp
       ljpair.cpp
