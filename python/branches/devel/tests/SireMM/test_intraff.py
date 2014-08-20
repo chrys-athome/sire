@@ -238,7 +238,92 @@ def test_ligand_moves(verbose = False):
 
     _checkEnergies(oldsys, newsys, parsys, verbose)
 
+def test_protein_moves(verbose = False):
+    mols = MoleculeGroup("mols")
+    
+    for residue in protein.residues():
+        mols.add(residue)
+
+    oldsys = System()
+    newsys = System()
+    parsys = System()
+
+    oldsys.add(oldff)
+    oldsys.add(mols)
+
+    newsys.add(newff)
+    newsys.add(mols)
+
+    parsys.add(parff)
+    parsys.add(mols)
+
+    moves = RigidBodyMC(mols)
+    moves.setMaximumTranslation(0.25 * angstrom)
+    moves.setMaximumRotation(1 * degrees)
+    moves.enableOptimisedMoves()
+
+    oldsys.mustNowRecalculateFromScratch()
+    newsys.mustNowRecalculateFromScratch()
+    parsys.mustNowRecalculateFromScratch()
+
+    if verbose:
+        print("\nChecking total system energies...")
+
+    _checkEnergies(oldsys, newsys, parsys, verbose)
+
+    if verbose:
+        print("\nChecking system simulation...")
+
+    moves.setGenerator( RanGenerator(42) )
+    moves.clearStatistics()
+
+    t.start()
+    moves.move(oldsys, nmoves, False)
+    oldns = t.nsecsElapsed()
+    old_naccept = moves.nAccepted()
+    old_nreject = moves.nRejected()
+
+    moves.setGenerator( RanGenerator(42) )
+    moves.clearStatistics()
+
+    t.start()
+    moves.move(newsys, nmoves, False)
+    newns = t.nsecsElapsed()
+    new_naccept = moves.nAccepted()
+    new_nreject = moves.nRejected()
+
+    moves.setGenerator( RanGenerator(42) )
+    moves.clearStatistics()
+
+    t.start()
+    moves.move(parsys, nmoves, False)
+    parns = t.nsecsElapsed()
+    par_naccept = moves.nAccepted()
+    par_nreject = moves.nRejected()
+       
+    if verbose:
+        print("OLD: accept = %s, reject = %s, time = %s ms" % \
+                   (old_naccept, old_nreject, oldns*0.000001))
+        print("NEW: accept = %s, reject = %s, time = %s ms" % \
+                   (new_naccept, new_nreject, newns*0.000001))
+        print("PAR: accept = %s, reject = %s, time = %s ms" % \
+                   (par_naccept, par_nreject, parns*0.000001))
+
+        print("\nChecking final total energies...")
+
+    _checkEnergies(oldsys, newsys, parsys, verbose)
+
+    if verbose:
+        print("\nRechecking total energies...")
+
+    oldsys.mustNowRecalculateFromScratch()
+    newsys.mustNowRecalculateFromScratch()
+    parsys.mustNowRecalculateFromScratch()
+
+    _checkEnergies(oldsys, newsys, parsys, verbose)
+
 
 if __name__ == "__main__":
     test_energy(True)
     test_ligand_moves(True)
+    test_protein_moves(True)
