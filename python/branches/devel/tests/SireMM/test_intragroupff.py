@@ -19,7 +19,7 @@ import os
 coul_cutoff = 15 * angstrom
 lj_cutoff = 15 * angstrom
 
-nmoves = 250
+nmoves = 200
 
 switchfunc = HarmonicSwitchingFunction(coul_cutoff,coul_cutoff,
                                        lj_cutoff,lj_cutoff)
@@ -82,20 +82,41 @@ ligand1 = PartialMolecule(ligand, part1)
 print("Ligand: Part 0 contains %d atoms, part 1 contains %d atoms, all contains %d atoms" \
             % (part0.nSelected(), part1.nSelected(), all.nSelected()))
 
-oldff = IntraCLJFF("oldff")
-oldff.setSwitchingFunction(switchfunc)
-oldff.setSpace(space)
-oldff.setShiftElectrostatics(True)
+test_against_old = False
 
-old0ff = IntraCLJFF("old0ff")
-old0ff.setSwitchingFunction(switchfunc)
-old0ff.setSpace(space)
-old0ff.setShiftElectrostatics(True)
+if test_against_old:
+    oldff = IntraCLJFF("oldff")
+    oldff.setSwitchingFunction(switchfunc)
+    oldff.setSpace(space)
+    oldff.setShiftElectrostatics(True)
 
-old1ff = IntraCLJFF("old1ff")
-old1ff.setSwitchingFunction(switchfunc)
-old1ff.setSpace(space)
-old1ff.setShiftElectrostatics(True)
+    old0ff = IntraCLJFF("old0ff")
+    old0ff.setSwitchingFunction(switchfunc)
+    old0ff.setSpace(space)
+    old0ff.setShiftElectrostatics(True)
+
+    old1ff = IntraCLJFF("old1ff")
+    old1ff.setSwitchingFunction(switchfunc)
+    old1ff.setSpace(space)
+    old1ff.setShiftElectrostatics(True)
+else:
+    oldff = IntraFF("oldff")
+    oldff.setProperty("cljFunction", CLJIntraShiftFunction())
+    oldff.setProperty("switchingFunction",switchfunc)
+    oldff.setProperty("space",space)
+    oldff.disableParallelCalculation()
+
+    old0ff = IntraFF("old0ff")
+    old0ff.setProperty("cljFunction", CLJIntraShiftFunction())
+    old0ff.setProperty("switchingFunction",switchfunc)
+    old0ff.setProperty("space",space)
+    old0ff.disableParallelCalculation()
+
+    old1ff = IntraFF("old1ff")
+    old1ff.setProperty("cljFunction", CLJIntraShiftFunction())
+    old1ff.setProperty("switchingFunction",switchfunc)
+    old1ff.setProperty("space",space)
+    old1ff.disableParallelCalculation()
 
 newff = IntraGroupFF("newff")
 newff.setProperty("cljFunction", CLJIntraShiftFunction())
@@ -298,12 +319,17 @@ def test_ligand_moves(verbose = False):
 
     _checkEnergies(oldsys, newsys, parsys, verbose)
 
+    assert_equal( old_naccept, new_naccept )
+    assert_equal( old_naccept, par_naccept )
+    assert_equal( old_nreject, new_nreject )
+    assert_equal( old_nreject, par_nreject )
+
 
 def test_protein_moves(verbose = False):
 
     moves = RigidBodyMC(residues)
     moves.setMaximumTranslation(0.25 * angstrom)
-    moves.setMaximumRotation(1 * degrees)
+    moves.setMaximumRotation(0.5 * degrees)
     moves.enableOptimisedMoves()
 
     oldsys.mustNowRecalculateFromScratch()
@@ -366,6 +392,10 @@ def test_protein_moves(verbose = False):
 
     _checkEnergies(oldsys, newsys, parsys, verbose)
 
+    assert_equal( old_naccept, new_naccept )
+    assert_equal( old_naccept, par_naccept )
+    assert_equal( old_nreject, new_nreject )
+    assert_equal( old_nreject, par_nreject )
 
 if __name__ == "__main__":
     test_energy(True)
