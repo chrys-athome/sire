@@ -19,7 +19,7 @@ import os
 coul_cutoff = 15 * angstrom
 lj_cutoff = 15 * angstrom
 
-nmoves = 200
+nmoves = 50
 
 switchfunc = HarmonicSwitchingFunction(coul_cutoff,coul_cutoff,
                                        lj_cutoff,lj_cutoff)
@@ -45,6 +45,8 @@ ligand = mols[ MolWithResID("OSE") ].molecule()
 
 flex = AmberLoader.generateFlexibility(ligand)
 ligand = ligand.edit().setProperty("flexibility", flex).commit()
+
+mols.update(ligand)
 
 all = protein.selection()
 part0 = protein.selection()
@@ -147,8 +149,19 @@ parff.add(ligand1, MGIdx(1))
 parff.add(protein0, MGIdx(0))
 parff.add(protein1, MGIdx(1))
 
+
+ligmol = MoleculeGroup("ligand")
+ligmol.add(ligand)
+
+residues = MoleculeGroup("residues")
+
+for residue in protein.residues():
+    residues.add(residue)
+
 # need to calculate required energy using differences as old IntraCLJFF is buggy!
 oldsys = System()
+oldsys.add(ligmol)
+oldsys.add(residues)
 oldsys.add(oldff)
 oldsys.add(old0ff)
 oldsys.add(old1ff)
@@ -172,30 +185,18 @@ oldsys.setComponent( elj, oldff.components().lj() - \
                           old1ff.components().lj() )
 
 newsys = System()
+newsys.add(ligmol)
+newsys.add(residues)
 newsys.add(newff)
 newsys.setComponent( ecoul, newff.components().coulomb() )
 newsys.setComponent( elj, newff.components().lj() )
 
 parsys = System()
+parsys.add(ligmol)
+parsys.add(residues)
 parsys.add(parff)
 parsys.setComponent( ecoul, parff.components().coulomb() )
 parsys.setComponent( elj, parff.components().lj() )
-
-ligmol = MoleculeGroup("ligand")
-ligmol.add(ligand)
-
-oldsys.add(ligmol)
-newsys.add(ligmol)
-parsys.add(ligmol)
-
-residues = MoleculeGroup("residues")
-
-for residue in protein.residues():
-    residues.add(residue)
-
-oldsys.add(residues)
-newsys.add(residues)
-parsys.add(residues)
 
 print("Performing tests...\n")
 t = QElapsedTimer()
@@ -262,6 +263,11 @@ def test_ligand_moves(verbose = False):
     oldsys.mustNowRecalculateFromScratch()
     newsys.mustNowRecalculateFromScratch()
     parsys.mustNowRecalculateFromScratch()
+
+    # return the systems to their original conformation
+    oldsys.update(mols)
+    newsys.update(mols)
+    parsys.update(mols)
 
     if verbose:
         print("\nChecking total system energies...")
@@ -335,6 +341,11 @@ def test_protein_moves(verbose = False):
     oldsys.mustNowRecalculateFromScratch()
     newsys.mustNowRecalculateFromScratch()
     parsys.mustNowRecalculateFromScratch()
+
+    # return the systems to their original conformation
+    oldsys.update(mols)
+    newsys.update(mols)
+    parsys.update(mols)
 
     if verbose:
         print("\nChecking total system energies...")
