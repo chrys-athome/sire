@@ -19,7 +19,7 @@ import os
 coul_cutoff = 15 * angstrom
 lj_cutoff = 15 * angstrom
 
-nmoves = 500
+nmoves = 250
 
 switchfunc = HarmonicSwitchingFunction(coul_cutoff,coul_cutoff,
                                        lj_cutoff,lj_cutoff)
