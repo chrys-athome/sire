@@ -6,6 +6,7 @@ from Sire.System import *
 from Sire.Move import *
 from Sire.Maths import *
 from Sire.Units import *
+from Sire.CAS import *
 from Sire.Vol import *
 from Sire.Qt import *
 
@@ -16,9 +17,9 @@ import Sire.Stream
 import os
 
 coul_cutoff = 15 * angstrom
-lj_cutoff = 10 * angstrom
+lj_cutoff = 15 * angstrom
 
-nmoves = 1000
+nmoves = 500
 
 switchfunc = HarmonicSwitchingFunction(coul_cutoff,coul_cutoff,
                                        lj_cutoff,lj_cutoff)
@@ -81,33 +82,26 @@ ligand1 = PartialMolecule(ligand, part1)
 print("Ligand: Part 0 contains %d atoms, part 1 contains %d atoms, all contains %d atoms" \
             % (part0.nSelected(), part1.nSelected(), all.nSelected()))
 
-oldff = IntraGroupCLJFF("oldff")
+oldff = IntraCLJFF("oldff")
 oldff.setSwitchingFunction(switchfunc)
 oldff.setSpace(space)
 oldff.setShiftElectrostatics(True)
 
-totalff = IntraCLJFF("totalff")
-totalff.setSwitchingFunction(switchfunc)
-totalff.setSpace(space)
-totalff.setShiftElectrostatics(True)
+old0ff = IntraCLJFF("old0ff")
+old0ff.setSwitchingFunction(switchfunc)
+old0ff.setSpace(space)
+old0ff.setShiftElectrostatics(True)
+
+old1ff = IntraCLJFF("old1ff")
+old1ff.setSwitchingFunction(switchfunc)
+old1ff.setSpace(space)
+old1ff.setShiftElectrostatics(True)
 
 newff = IntraGroupFF("newff")
 newff.setProperty("cljFunction", CLJIntraShiftFunction())
 newff.setProperty("switchingFunction",switchfunc)
 newff.setProperty("space",space)
 newff.disableParallelCalculation()
-
-new0ff = IntraFF("new0ff")
-new0ff.setProperty("cljFunction", CLJIntraShiftFunction())
-new0ff.setProperty("switchingFunction",switchfunc)
-new0ff.setProperty("space",space)
-new0ff.disableParallelCalculation()
-
-new1ff = IntraFF("new0ff")
-new1ff.setProperty("cljFunction", CLJIntraShiftFunction())
-new1ff.setProperty("switchingFunction",switchfunc)
-new1ff.setProperty("space",space)
-new1ff.disableParallelCalculation()
 
 parff = IntraGroupFF("parff")
 parff.setProperty("cljFunction", CLJIntraShiftFunction())
@@ -116,10 +110,13 @@ parff.setProperty("space",space)
 parff.enableParallelCalculation()
 
 print("Adding molecules to forcefields...")
-oldff.add(ligand0, MGIdx(0))
-oldff.add(ligand1, MGIdx(1))
-oldff.add(protein0, MGIdx(0))
-oldff.add(protein1, MGIdx(1))
+oldff.add(ligand)
+oldff.add(protein)
+old0ff.add(ligand0)
+old0ff.add(protein0)
+old1ff.add(ligand1)
+old1ff.add(protein1)
+
 newff.add(ligand0, MGIdx(0))
 newff.add(ligand1, MGIdx(1))
 newff.add(protein0, MGIdx(0))
@@ -129,12 +126,55 @@ parff.add(ligand1, MGIdx(1))
 parff.add(protein0, MGIdx(0))
 parff.add(protein1, MGIdx(1))
 
-totalff.add(ligand)
-totalff.add(protein)
-new0ff.add(ligand0)
-new0ff.add(protein0)
-new1ff.add(ligand1)
-new1ff.add(protein1)
+# need to calculate required energy using differences as old IntraCLJFF is buggy!
+oldsys = System()
+oldsys.add(oldff)
+oldsys.add(old0ff)
+oldsys.add(old1ff)
+
+etotal = Symbol("E_{total}")
+ecoul = Symbol("E_{coul}")
+elj = Symbol("E_{lj}")
+
+oldsys.setComponent( etotal, oldff.components().total() - \
+                            old0ff.components().total() - \
+                            old1ff.components().total() )
+
+if oldsys.totalComponent() != etotal:
+    oldsys.setComponent( oldsys.totalComponent(), etotal )
+
+oldsys.setComponent( ecoul, oldff.components().coulomb() - \
+                            old0ff.components().coulomb() - \
+                            old1ff.components().coulomb() )
+oldsys.setComponent( elj, oldff.components().lj() - \
+                          old0ff.components().lj() - \
+                          old1ff.components().lj() )
+
+newsys = System()
+newsys.add(newff)
+newsys.setComponent( ecoul, newff.components().coulomb() )
+newsys.setComponent( elj, newff.components().lj() )
+
+parsys = System()
+parsys.add(parff)
+parsys.setComponent( ecoul, parff.components().coulomb() )
+parsys.setComponent( elj, parff.components().lj() )
+
+ligmol = MoleculeGroup("ligand")
+ligmol.add(ligand)
+
+oldsys.add(ligmol)
+newsys.add(ligmol)
+parsys.add(ligmol)
+
+residues = MoleculeGroup("residues")
+
+for residue in protein.residues():
+    residues.add(residue)
+
+oldsys.add(residues)
+newsys.add(residues)
+parsys.add(residues)
 
 print("Performing tests...\n")
 t = QElapsedTimer()
@@ -154,22 +194,22 @@ def _checkEnergies(oldsys, newsys, parsys, verbose):
     nrgs = oldsys.energies()
     oldns = t.nsecsElapsed()
     
-    oldcnrg = oldsys.energy( oldff.components().coulomb() ).value()
-    oldljnrg = oldsys.energy( oldff.components().lj() ).value()
+    oldcnrg = oldsys.energy( ecoul ).value()
+    oldljnrg = oldsys.energy( elj ).value()
     
     t.start()
     nrgs = newsys.energies()
     newns = t.nsecsElapsed()
     
-    newcnrg = newsys.energy( newff.components().coulomb() ).value()
-    newljnrg = newsys.energy( newff.components().lj() ).value()
+    newcnrg = newsys.energy( ecoul ).value()
+    newljnrg = newsys.energy( elj ).value()
       
     t.start()
     nrgs = parsys.energies()
     parns = t.nsecsElapsed()
     
-    parcnrg = parsys.energy( parff.components().coulomb() ).value()
-    parljnrg = parsys.energy( parff.components().lj() ).value()
+    parcnrg = parsys.energy( ecoul ).value()
+    parljnrg = parsys.energy( elj ).value()
 
     if verbose:
         print("OLD SYS :  %s  %s  %s  : %s ms" % (oldcnrg+oldljnrg,oldcnrg,oldljnrg,
@@ -179,95 +219,23 @@ def _checkEnergies(oldsys, newsys, parsys, verbose):
         print("PAR SYS :  %s  %s  %s  : %s ms" % (parcnrg+parljnrg,parcnrg,parljnrg,
                                                   0.000001*parns))
 
-    #assert_almost_equal( oldcnrg, newcnrg, 0.5 )
-    #assert_almost_equal( oldljnrg, newljnrg, 0.5 )
-    #assert_almost_equal( parcnrg, newcnrg, 0.5 )
-    #assert_almost_equal( parljnrg, newljnrg, 0.5 )
-
-def test_energy(verbose = False):
-    oldff.mustNowRecalculateFromScratch()
-    newff.mustNowRecalculateFromScratch()
-    parff.mustNowRecalculateFromScratch()
-
-    t.start()
-    nrgs = oldff.energies()
-    oldns = t.nsecsElapsed()
-
-    oldcnrg = oldff.energy( oldff.components().coulomb() ).value()
-    oldljnrg = oldff.energy( oldff.components().lj() ).value()
-
-    t.start()
-    nrgs = newff.energies()
-    newns = t.nsecsElapsed()
-
-    newcnrg = newff.energy( newff.components().coulomb() ).value()
-    newljnrg = newff.energy( newff.components().lj() ).value()
-
-    t.start()
-    nrgs = parff.energies()
-    parns = t.nsecsElapsed()
-
-    parcnrg = parff.energy( parff.components().coulomb() ).value()
-    parljnrg = parff.energy( parff.components().lj() ).value()
-
-    if verbose:
-        print("\nTotal energy")
-        print("OLD FF :  %s  %s  %s  : %s ms" % (oldcnrg+oldljnrg,oldcnrg,oldljnrg,
-                                                 0.000001*oldns))
-        print("NEW FF :  %s  %s  %s  : %s ms" % (newcnrg+newljnrg,newcnrg,newljnrg,
-                                                 0.000001*newns))
-        print("PAR FF :  %s  %s  %s  : %s ms" % (parcnrg+parljnrg,parcnrg,parljnrg,
-                                                 0.000001*parns))
-
     assert_almost_equal( oldcnrg, newcnrg, 0.5 )
     assert_almost_equal( oldljnrg, newljnrg, 0.5 )
     assert_almost_equal( parcnrg, newcnrg, 0.5 )
     assert_almost_equal( parljnrg, newljnrg, 0.5 )
 
-    # now calculate what the total total energy should be
-    totalff.update( newff.molecules() )
-    new0ff.update( newff.molecules() )
-    new1ff.update( newff.molecules() )
-    total_cnrg = totalff.energy( totalff.components().coulomb() ).value()
-    total_ljnrg = totalff.energy( totalff.components().lj() ).value()
 
-    new0_cnrg = new0ff.energy( new0ff.components().coulomb() ).value()
-    new0_ljnrg = new0ff.energy( new0ff.components().lj() ).value()
+def test_energy(verbose = False):
+    oldsys.mustNowRecalculateFromScratch()
+    newsys.mustNowRecalculateFromScratch()
+    parsys.mustNowRecalculateFromScratch()
 
-    new1_cnrg = new1ff.energy( new1ff.components().coulomb() ).value()
-    new1_ljnrg = new1ff.energy( new1ff.components().lj() ).value()
-
-    new_total_cnrg = new0_cnrg + new1_cnrg + newcnrg
-    new_total_ljnrg = new0_ljnrg + new1_ljnrg + newljnrg
-
-    if verbose:
-        print("\nChecked total")
-        print("TOTAL FF : %s  %s  %s" % (total_cnrg+total_ljnrg, total_cnrg, total_ljnrg))
-        print("NEW FF   : %s  %s  %s" % (new_total_cnrg+new_total_ljnrg, \
-                                         new_total_cnrg,new_total_ljnrg))
-
-    assert_almost_equal( total_cnrg, new_total_cnrg )
-    assert_almost_equal( total_ljnrg, new_total_ljnrg )
+    _checkEnergies(oldsys, newsys, parsys, verbose)
 
 
 def test_ligand_moves(verbose = False):
-    mols = MoleculeGroup("mols")
-    mols.add(ligand)
 
-    oldsys = System()
-    newsys = System()
-    parsys = System()
-
-    oldsys.add(oldff)
-    oldsys.add(mols)
-
-    newsys.add(newff)
-    newsys.add(mols)
-
-    parsys.add(parff)
-    parsys.add(mols)
-
-    moves = InternalMove(mols)
+    moves = InternalMove(ligmol)
     moves.enableOptimisedMoves()
 
     oldsys.mustNowRecalculateFromScratch()
@@ -330,55 +298,10 @@ def test_ligand_moves(verbose = False):
 
     _checkEnergies(oldsys, newsys, parsys, verbose)
 
-    # now calculate what the total total energy should be
-    totalff.update( newff.molecules() )
-    new0ff.update( newff.molecules() )
-    new1ff.update( newff.molecules() )
-    total_cnrg = totalff.energy( totalff.components().coulomb() ).value()
-    total_ljnrg = totalff.energy( totalff.components().lj() ).value()
-
-    new0_cnrg = new0ff.energy( new0ff.components().coulomb() ).value()
-    new0_ljnrg = new0ff.energy( new0ff.components().lj() ).value()
-
-    new1_cnrg = new1ff.energy( new1ff.components().coulomb() ).value()
-    new1_ljnrg = new1ff.energy( new1ff.components().lj() ).value()
-
-    newcnrg = newff.energy( newff.components().coulomb() ).value()
-    newljnrg = newff.energy( newff.components().lj() ).value()
-
-    new_total_cnrg = new0_cnrg + new1_cnrg + newcnrg
-    new_total_ljnrg = new0_ljnrg + new1_ljnrg + newljnrg
-
-    if verbose:
-        print("\nChecked total")
-        print("TOTAL FF : %s  %s  %s" % (total_cnrg+total_ljnrg, total_cnrg, total_ljnrg))
-        print("NEW FF   : %s  %s  %s" % (new_total_cnrg+new_total_ljnrg, \
-                                         new_total_cnrg,new_total_ljnrg))
-
-    assert_almost_equal( total_cnrg, new_total_cnrg )
-    assert_almost_equal( total_ljnrg, new_total_ljnrg )
-
 
 def test_protein_moves(verbose = False):
-    mols = MoleculeGroup("mols")
-    
-    for residue in protein.residues():
-        mols.add(residue)
 
-    oldsys = System()
-    newsys = System()
-    parsys = System()
-
-    oldsys.add(oldff)
-    oldsys.add(mols)
-
-    newsys.add(newff)
-    newsys.add(mols)
-
-    parsys.add(parff)
-    parsys.add(mols)
-
-    moves = RigidBodyMC(mols)
+    moves = RigidBodyMC(residues)
     moves.setMaximumTranslation(0.25 * angstrom)
     moves.setMaximumRotation(1 * degrees)
     moves.enableOptimisedMoves()
@@ -442,34 +365,6 @@ def test_protein_moves(verbose = False):
     parsys.mustNowRecalculateFromScratch()
 
     _checkEnergies(oldsys, newsys, parsys, verbose)
-
-    # now calculate what the total total energy should be
-    totalff.update( newff.molecules() )
-    new0ff.update( newff.molecules() )
-    new1ff.update( newff.molecules() )
-    total_cnrg = totalff.energy( totalff.components().coulomb() ).value()
-    total_ljnrg = totalff.energy( totalff.components().lj() ).value()
-
-    new0_cnrg = new0ff.energy( new0ff.components().coulomb() ).value()
-    new0_ljnrg = new0ff.energy( new0ff.components().lj() ).value()
-
-    new1_cnrg = new1ff.energy( new1ff.components().coulomb() ).value()
-    new1_ljnrg = new1ff.energy( new1ff.components().lj() ).value()
-
-    newcnrg = newff.energy( newff.components().coulomb() ).value()
-    newljnrg = newff.energy( newff.components().lj() ).value()
-
-    new_total_cnrg = new0_cnrg + new1_cnrg + newcnrg
-    new_total_ljnrg = new0_ljnrg + new1_ljnrg + newljnrg
-
-    if verbose:
-        print("\nChecked total")
-        print("TOTAL FF : %s  %s  %s" % (total_cnrg+total_ljnrg, total_cnrg, total_ljnrg))
-        print("NEW FF   : %s  %s  %s" % (new_total_cnrg+new_total_ljnrg, \
-                                         new_total_cnrg,new_total_ljnrg))
-
-    assert_almost_equal( total_cnrg, new_total_cnrg )
-    assert_almost_equal( total_ljnrg, new_total_ljnrg )
 
 
 if __name__ == "__main__":
