@@ -149,6 +149,16 @@ void register_CLJExtractor_class(){
                 , extractingByResidue_function_value );
         
         }
+        { //::SireMM::CLJExtractor::hasChangedAtoms
+        
+            typedef bool ( ::SireMM::CLJExtractor::*hasChangedAtoms_function_type )(  ) const;
+            hasChangedAtoms_function_type hasChangedAtoms_function_value( &::SireMM::CLJExtractor::hasChangedAtoms );
+            
+            CLJExtractor_exposer.def( 
+                "hasChangedAtoms"
+                , hasChangedAtoms_function_value );
+        
+        }
         { //::SireMM::CLJExtractor::idSource
         
             typedef ::SireMM::CLJAtoms::ID_SOURCE ( ::SireMM::CLJExtractor::*idSource_function_type )(  ) const;
