@@ -369,7 +369,17 @@ void CLJGroup::update(const MoleculeView &molview)
             {
                 CLJExtractor changed = cljexts.value(molnum);
                 changed.update(molview, cljboxes, cljworkspace);
-                changed_mols.insert(molnum,changed);
+                
+                if (changed.hasChangedAtoms())
+                {
+                    changed_mols.insert(molnum,changed);
+                }
+                else
+                {
+                    //this change hasn't actually affected the atoms
+                    changed.commit(cljboxes, cljworkspace);
+                    cljexts[molnum] = changed;
+                }
             }
         }
     }
