@@ -29,7 +29,6 @@
 #ifndef SIREMM_CLJ14GROUP_H
 #define SIREMM_CLJ14GROUP_H
 
-#include "twoatomfunctions.h"
 #include "cljfunction.h"
 
 #include "SireMol/partialmolecule.h"
@@ -57,6 +56,7 @@ class CLJ14PairData;
 using SireMol::PartialMolecule;
 using SireMol::MoleculeView;
 using SireMol::CGIdx;
+using SireMol::AtomSelection;
 
 using SireBase::PropertyMap;
 
@@ -139,10 +139,6 @@ private:
     /** The indicies of all elements in 'cgroups' that contains 14 data
         about the CutGroup at CGIdx 'cgidx' */
     QHash< quint32, QSet<quint32> > cgidx_to_idx;
-    
-    /** The index of the element that contains 14 data between each
-        pair of bonded cutgroups */
-    QHash< detail::IDPair, qint32 > cgpair_to_idx;
     
     /** Combining rules to use for the LJ calculation */
     CLJFunction::COMBINING_RULES combining_rules;
