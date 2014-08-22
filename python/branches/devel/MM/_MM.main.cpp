@@ -41,6 +41,8 @@
 
 #include "CHARMMSwitchingFunction.pypp.hpp"
 
+#include "CLJ14Group.pypp.hpp"
+
 #include "CLJAtom.pypp.hpp"
 
 #include "CLJAtoms.pypp.hpp"
@@ -466,6 +468,10 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_CHARMMSwitchingFunction_class();
 
+    register_CLJFunction_class();
+
+    register_CLJ14Group_class();
+
     register_CLJAtom_class();
 
     register_CLJAtoms_class();
@@ -481,8 +487,6 @@ BOOST_PYTHON_MODULE(_MM){
     register_CLJCalculator_class();
 
     register_CLJComponent_class();
-
-    register_CLJFunction_class();
 
     register_CLJCutoffFunction_class();
 

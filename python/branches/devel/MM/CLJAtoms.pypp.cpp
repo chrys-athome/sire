@@ -62,6 +62,7 @@ void register_CLJAtoms_class(){
             .value("USE_ATOMIDX", SireMM::CLJAtoms::USE_ATOMIDX)
             .export_values()
             ;
+        CLJAtoms_exposer.def( bp::init< SireMM::CLJAtom const & >(( bp::arg("atom") )) );
         CLJAtoms_exposer.def( bp::init< QVector< SireMM::CLJAtom > const & >(( bp::arg("atoms") )) );
         CLJAtoms_exposer.def( bp::init< QList< SireMM::CLJAtom > const & >(( bp::arg("atoms") )) );
         CLJAtoms_exposer.def( bp::init< SireMM::CLJAtom const *, int >(( bp::arg("atoms"), bp::arg("natoms") )) );

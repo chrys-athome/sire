@@ -6,6 +6,7 @@
 #include "anglerestraint.h"
 #include "atomfunctions.h"
 #include "atomljs.h"
+#include "clj14group.h"
 #include "cljatoms.h"
 #include "cljboxes.h"
 #include "cljcalculator.h"
