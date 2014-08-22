@@ -31,6 +31,8 @@
 #include "SireMol/atomcoords.h"
 #include "SireMol/atomcharges.h"
 #include "SireMM/atomljs.h"
+#include "SireMol/mover.hpp"
+#include "SireMol/editor.hpp"
 
 #include "SireError/errors.h"
 
@@ -64,7 +66,11 @@ namespace SireMM
             /** The 14 coulomb and LJ scale factors between these atoms */
             float coul14scl, lj14scl;
         
-            CLJ14AtomData();
+            CLJ14AtomData()
+                : atom0( CGAtomIdx::null() ), atom1( CGAtomIdx::null() ),
+                  chg0(0), chg1(0), sig0(0), sig1(0),
+                  eps0(0), eps1(0), coul14scl(0), lj14scl(0)
+            {}
             
             CLJ14AtomData(const CLJ14AtomData &other)
                 : atom0(other.atom0), atom1(other.atom1),
@@ -107,6 +113,19 @@ namespace SireMM
     }
 }
 
+
+inline QDataStream& operator<<(QDataStream &ds, const SireMM::detail::IDPair &idpair)
+{
+    ds << idpair.atom0 << idpair.atom1;
+    return ds;
+}
+
+inline QDataStream& operator>>(QDataStream &ds, SireMM::detail::IDPair &idpair)
+{
+    ds >> idpair.atom0 >> idpair.atom1;
+    return ds;
+}
+
 QDataStream& operator<<(QDataStream &ds, const SireMM::detail::CLJ14AtomData &atom)
 {
     quint32 version = 1;
@@ -144,7 +163,7 @@ QDataStream& operator>>(QDataStream &ds, SireMM::detail::CLJ14AtomData &atom)
     return ds;
 }
 
-static const RegisterMetaType<CLJ14Group> r_group;
+static const RegisterMetaType<CLJ14Group> r_group( NO_ROOT );
 
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJ14Group &group)
 {
@@ -405,6 +424,14 @@ void CLJ14Group::remove(const MoleculeView &new_molecule)
         this->update(new_molecule);
     }
 }
+
+void CLJ14Group::reextract()
+{}
+
+void CLJ14Group::calculateEnergy(const PartialMolecule &newmol,
+                                 const CLJ14AtomData &atomdata,
+                                 double &cnrg, double &ljnrg) const
+{}
 
 /** Calculate and return the coulomb and LJ 14 energy */
 boost::tuple<double,double> CLJ14Group::energy()

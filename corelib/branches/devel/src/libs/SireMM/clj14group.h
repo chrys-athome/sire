@@ -50,7 +50,7 @@ namespace SireMM
 
 namespace detail
 {
-class CLJ14AtomPair;
+class CLJ14AtomData;
 }
 
 using SireMol::PartialMolecule;
@@ -110,6 +110,14 @@ public:
     void mustReallyRecalculateFromScratch();
     
 private:
+    typedef QVector<detail::CLJ14AtomData> CLJ14AtomData;
+
+    void reextract();
+    void calculateEnergy(const PartialMolecule &newmol,
+                         const CLJ14AtomData &atomdata,
+                         double &cnrg, double &ljnrg) const;
+    
+
     /** The molecule whose 14 energy is being calculated */
     PartialMolecule mol;
     
@@ -118,8 +126,6 @@ private:
     
     /** The property map to use to extract parameters */
     PropertyMap propmap;
-    
-    typedef QVector<detail::CLJ14AtomPair> CLJ14AtomData;
     
     /** The 14 pair data for all CutGroups, and between all 
         bonded pairs of CutGroups */
