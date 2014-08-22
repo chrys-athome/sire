@@ -30,6 +30,7 @@
 #define SIREMM_CLJ14GROUP_H
 
 #include "twoatomfunctions.h"
+#include "cljfunction.h"
 
 #include "SireMol/partialmolecule.h"
 
@@ -50,7 +51,7 @@ namespace SireMM
 
 namespace detail
 {
-class CLJ14AtomData;
+class CLJ14PairData;
 }
 
 using SireMol::PartialMolecule;
@@ -109,14 +110,18 @@ public:
     void mustNowRecalculateFromScratch();
     void mustReallyRecalculateFromScratch();
     
-private:
-    typedef QVector<detail::CLJ14AtomData> CLJ14AtomData;
-
-    void reextract();
-    void calculateEnergy(const PartialMolecule &newmol,
-                         const CLJ14AtomData &atomdata,
-                         double &cnrg, double &ljnrg) const;
+    void setArithmeticCombiningRules(bool on);
+    void setGeometricCombiningRules(bool on);
     
+    CLJFunction::COMBINING_RULES combiningRules() const;
+    void setCombiningRules(CLJFunction::COMBINING_RULES rules);
+    
+    bool usingArithmeticCombiningRules() const;
+    bool usingGeometricCombiningRules() const;
+    
+private:
+    void addCGData(CGIdx cg0, CGIdx cg1, const QVector<detail::CLJ14PairData> &cgdata);
+    void reextract();
 
     /** The molecule whose 14 energy is being calculated */
     PartialMolecule mol;
@@ -129,7 +134,7 @@ private:
     
     /** The 14 pair data for all CutGroups, and between all 
         bonded pairs of CutGroups */
-    QVector<CLJ14AtomData> data_for_pair;
+    QVector< QVector<detail::CLJ14PairData> > data_for_pair;
 
     /** The indicies of all elements in 'cgroups' that contains 14 data
         about the CutGroup at CGIdx 'cgidx' */
@@ -138,6 +143,9 @@ private:
     /** The index of the element that contains 14 data between each
         pair of bonded cutgroups */
     QHash< detail::IDPair, qint32 > cgpair_to_idx;
+    
+    /** Combining rules to use for the LJ calculation */
+    CLJFunction::COMBINING_RULES combining_rules;
     
     /** The current coulomb and LJ energies */
     double total_cnrg, total_ljnrg;
