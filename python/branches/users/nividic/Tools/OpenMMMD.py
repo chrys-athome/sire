@@ -888,7 +888,7 @@ def setupForcefieldsFreeEnergy(system, space ):
     system.add( PropertyConstraint( "alpha0", FFName("solute_fromdummy_intraclj"), 1 - lam ) )
     system.add( PropertyConstraint( "alpha0", FFName("solute_hard:todummy_intraclj"), lam ) )
     system.add( PropertyConstraint( "alpha0", FFName("solute_hard:fromdummy_intraclj"), 1 - lam ) )
-    system.add( PropertyConstraint( "alpha0", FFName("solute_todummy:fromdummy_intraclj"), Min( lam, 1 - lam )  ) )
+    system.add( PropertyConstraint( "alpha0", FFName("solute_todummy:fromdummy_intraclj"), Max( lam, 1 - lam )  ) )
     system.add( PropertyConstraint( "alpha0", FFName("solute_todummy:solvent"), lam ) )
     system.add( PropertyConstraint( "alpha0", FFName("solute_fromdummy:solvent"), 1 - lam ) )
 
