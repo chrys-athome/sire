@@ -457,7 +457,7 @@ void OpenMMFrEnergyST::initialise()  {
                                                                   "LJ=((sigma_avg * sigma_avg)/soft)^3;"
                                                                   "soft=(diff_lj*delta*sigma_avg + r*r);"
                                                                   "diff_lj=(1.0-lambda) * 0.1;"
-                                                                  "lambda = Logic_lam * lam + Logic_om_lam * (1.0-lam) + Logic_mix_lam * max(lam,1.0-lam) + Logic_hard;"
+                                                                  "lambda = Logic_lam * lam + Logic_om_lam * (1.0-lam) + Logic_mix_lam * min(lam,1.0-lam) + Logic_hard;"
                                                                   "Logic_hard = isHD1 * isHD2 * (1.0-isTD1) * (1.0-isTD2) * (1.0-isFD1) * (1.0-isFD2);"
                                                                   "Logic_om_lam = max((1.0-isHD1)*(1.0-isHD2)*isTD1*isTD2*(1.0-isFD1)*(1.0-isFD2), B_om_lam);"
                                                                   "B_om_lam = max(isHD1*(1.0-isHD2)*isTD1*(1.0-isTD2)*(1.0-isFD1)*(1.0-isFD2), C_om_lam);"
@@ -529,7 +529,7 @@ void OpenMMFrEnergyST::initialise()  {
                                                                             "eps_avg = sqrt(lamftd*lamftd*eaend + (1-lamftd)*(1-lamftd)*eastart + lamftd*(1-lamftd)*emix);"
                                                                             "sigma_avg = lamftd*saend + (1-lamftd)*sastart;"
                                                                             "q_prod = lamftd*lamftd*qpend + (1-lamftd)*(1-lamftd)*qpstart + lamftd*(1-lamftd)*qmix;"
-                                                                            "lamFTD = max(lamftd,1-lamftd)");
+                                                                            "lamFTD = min(lamftd,1-lamftd)");
             
             custom_intra_14_fromdummy_todummy->addGlobalParameter("lamftd",Alchemical_value);
             custom_intra_14_fromdummy_todummy->addGlobalParameter("deltaftd",shift_delta);
@@ -545,7 +545,7 @@ void OpenMMFrEnergyST::initialise()  {
                                                                   "LJ=((sigma_avg * sigma_avg)/soft)^3;"
                                                                   "soft=(diff_lj*delta*sigma_avg + r*r);"
                                                                   "diff_lj=(1.0-lambda) * 0.1;"
-                                                                  "lambda = Logic_lam * lam + Logic_om_lam * (1.0-lam) + Logic_mix_lam * max(lam,1.0-lam) + Logic_hard;"
+                                                                  "lambda = Logic_lam * lam + Logic_om_lam * (1.0-lam) + Logic_mix_lam * min(lam,1.0-lam) + Logic_hard;"
                                                                   "Logic_hard = isHD1 * isHD2 * (1.0-isTD1) * (1.0-isTD2) * (1.0-isFD1) * (1.0-isFD2);"
                                                                   "Logic_om_lam = max((1.0-isHD1)*(1.0-isHD2)*isTD1*isTD2*(1.0-isFD1)*(1.0-isFD2), B_om_lam);"
                                                                   "B_om_lam = max(isHD1*(1.0-isHD2)*isTD1*(1.0-isTD2)*(1.0-isFD1)*(1.0-isFD2), C_om_lam);"
@@ -567,7 +567,6 @@ void OpenMMFrEnergyST::initialise()  {
             
             custom_force_field->addGlobalParameter("lam",Alchemical_value);
             custom_force_field->addGlobalParameter("delta",shift_delta);
-            custom_force_field->addGlobalParameter("n",coulomb_power);
             custom_force_field->addGlobalParameter("SPOnOff",0.0);
             
             custom_force_field->setNonbondedMethod(OpenMM::CustomNonbondedForce::NoCutoff);
@@ -588,7 +587,6 @@ void OpenMMFrEnergyST::initialise()  {
             
             custom_intra_14_todummy->addGlobalParameter("lamtd",1.0 - Alchemical_value);
             custom_intra_14_todummy->addGlobalParameter("deltatd",shift_delta);
-            custom_intra_14_todummy->addGlobalParameter("ntd", coulomb_power);
             
             
             custom_intra_14_fromdummy = new OpenMM::CustomBondForce("Hcs + Hls;"
@@ -604,7 +602,6 @@ void OpenMMFrEnergyST::initialise()  {
             
             custom_intra_14_fromdummy->addGlobalParameter("lamfd",Alchemical_value);
             custom_intra_14_fromdummy->addGlobalParameter("deltafd",shift_delta);
-            custom_intra_14_fromdummy->addGlobalParameter("nfd",coulomb_power);
             
             
             custom_intra_14_fromdummy_todummy = new OpenMM::CustomBondForce("Hcs + Hls;"
@@ -617,11 +614,10 @@ void OpenMMFrEnergyST::initialise()  {
                                                                             "eps_avg = sqrt(lamftd*lamftd*eaend + (1-lamftd)*(1-lamftd)*eastart + lamftd*(1-lamftd)*emix);"
                                                                             "sigma_avg = lamftd*saend + (1-lamftd)*sastart;"
                                                                             "q_prod = lamftd*lamftd*qpend + (1-lamftd)*(1-lamftd)*qpstart + lamftd*(1-lamftd)*qmix;"
-                                                                            "lamFTD = max(lamftd,1-lamftd)");
+                                                                            "lamFTD = min(lamftd,1-lamftd)");
             
             custom_intra_14_fromdummy_todummy->addGlobalParameter("lamftd",Alchemical_value);
             custom_intra_14_fromdummy_todummy->addGlobalParameter("deltaftd",shift_delta);
-            custom_intra_14_fromdummy_todummy->addGlobalParameter("nftd",coulomb_power);
         
             
         }
@@ -666,7 +662,7 @@ void OpenMMFrEnergyST::initialise()  {
                                                                   "LJ=((sigma_avg * sigma_avg)/soft)^3;"
                                                                   "soft=(diff_lj*delta*sigma_avg + r*r);"
                                                                   "diff_lj=(1.0-lambda) * 0.1;"
-                                                                  "lambda = Logic_lam * lam + Logic_om_lam * (1.0-lam) + Logic_mix_lam * max(lam,1.0-lam) + Logic_hard;"
+                                                                  "lambda = Logic_lam * lam + Logic_om_lam * (1.0-lam) + Logic_mix_lam * min(lam,1.0-lam) + Logic_hard;"
                                                                   "Logic_hard = isHD1 * isHD2 * (1.0-isTD1) * (1.0-isTD2) * (1.0-isFD1) * (1.0-isFD2);"
                                                                   "Logic_om_lam = max((1.0-isHD1)*(1.0-isHD2)*isTD1*isTD2*(1.0-isFD1)*(1.0-isFD2), B_om_lam);"
                                                                   "B_om_lam = max(isHD1*(1.0-isHD2)*isTD1*(1.0-isTD2)*(1.0-isFD1)*(1.0-isFD2), C_om_lam);"
@@ -754,7 +750,7 @@ void OpenMMFrEnergyST::initialise()  {
                                                                             "eps_avg = sqrt(lamftd*lamftd*eaend + (1-lamftd)*(1-lamftd)*eastart + lamftd*(1-lamftd)*emix);"
                                                                             "sigma_avg = lamftd*saend + (1-lamftd)*sastart;"
                                                                             "q_prod = lamftd*lamftd*qpend + (1-lamftd)*(1-lamftd)*qpstart + lamftd*(1-lamftd)*qmix;"
-                                                                            "lamFTD = max(lamftd,1-lamftd)");
+                                                                            "lamFTD = min(lamftd,1-lamftd)");
             
             custom_intra_14_fromdummy_todummy->addGlobalParameter("lamftd",Alchemical_value);
             custom_intra_14_fromdummy_todummy->addGlobalParameter("deltaftd",shift_delta);
@@ -775,7 +771,7 @@ void OpenMMFrEnergyST::initialise()  {
                                                                   "LJ=((sigma_avg * sigma_avg)/soft)^3;"
                                                                   "soft=(diff_lj*delta*sigma_avg + r*r);"
                                                                   "diff_lj=(1.0-lambda) * 0.1;"
-                                                                  "lambda = Logic_lam * lam + Logic_om_lam * (1.0-lam) + Logic_mix_lam * max(lam,1.0-lam) + Logic_hard;"
+                                                                  "lambda = Logic_lam * lam + Logic_om_lam * (1.0-lam) + Logic_mix_lam * min(lam,1.0-lam) + Logic_hard;"
                                                                   "Logic_hard = isHD1 * isHD2 * (1.0-isTD1) * (1.0-isTD2) * (1.0-isFD1) * (1.0-isFD2);"
                                                                   "Logic_om_lam = max((1.0-isHD1)*(1.0-isHD2)*isTD1*isTD2*(1.0-isFD1)*(1.0-isFD2), B_om_lam);"
                                                                   "B_om_lam = max(isHD1*(1.0-isHD2)*isTD1*(1.0-isTD2)*(1.0-isFD1)*(1.0-isFD2), C_om_lam);"
@@ -799,7 +795,6 @@ void OpenMMFrEnergyST::initialise()  {
             
             custom_force_field->addGlobalParameter("lam",Alchemical_value);
             custom_force_field->addGlobalParameter("delta",shift_delta);
-            custom_force_field->addGlobalParameter("n",coulomb_power);
             custom_force_field->addGlobalParameter("krf",kvalue);
             custom_force_field->addGlobalParameter("crf",cvalue);
             custom_force_field->addGlobalParameter("cutoff",converted_cutoff_distance);
@@ -834,7 +829,6 @@ void OpenMMFrEnergyST::initialise()  {
             
             custom_intra_14_todummy->addGlobalParameter("lamtd",1.0 - Alchemical_value);
             custom_intra_14_todummy->addGlobalParameter("deltatd",shift_delta);
-            custom_intra_14_todummy->addGlobalParameter("ntd", coulomb_power);
             custom_intra_14_todummy->addGlobalParameter("cutofftd", converted_cutoff_distance);
             
             
@@ -855,7 +849,6 @@ void OpenMMFrEnergyST::initialise()  {
         
             custom_intra_14_fromdummy->addGlobalParameter("lamfd",Alchemical_value);
             custom_intra_14_fromdummy->addGlobalParameter("deltafd",shift_delta);
-            custom_intra_14_fromdummy->addGlobalParameter("nfd",coulomb_power);
             custom_intra_14_fromdummy->addGlobalParameter("cutofffd",converted_cutoff_distance);
             
             
@@ -872,11 +865,10 @@ void OpenMMFrEnergyST::initialise()  {
                                                                             "eps_avg = sqrt(lamftd*lamftd*eaend + (1-lamftd)*(1-lamftd)*eastart + lamftd*(1-lamftd)*emix);"
                                                                             "sigma_avg = lamftd*saend + (1-lamftd)*sastart;"
                                                                             "q_prod = lamftd*lamftd*qpend + (1-lamftd)*(1-lamftd)*qpstart + lamftd*(1-lamftd)*qmix;"
-                                                                            "lamFTD = max(lamftd,1-lamftd)");
+                                                                            "lamFTD = min(lamftd,1-lamftd)");
             
             custom_intra_14_fromdummy_todummy->addGlobalParameter("lamftd",Alchemical_value);
             custom_intra_14_fromdummy_todummy->addGlobalParameter("deltaftd",shift_delta);
-            custom_intra_14_fromdummy_todummy->addGlobalParameter("nftd",coulomb_power);
             custom_intra_14_fromdummy_todummy->addGlobalParameter("cutoffftd",converted_cutoff_distance);
             
             
@@ -2560,7 +2552,15 @@ void OpenMMFrEnergyST::createContext(IntegratorWorkspace &workspace,SireUnits::D
             }
         }
         
+   
+        
+        /*if(platform_type != "OpenCL" or platform_type != "CUDA" or platform_type != "Reference" or platform_type != "CPU"){
+            throw SireError::program_bug(QObject::tr("The Platform defined  is not supported. Available types are Reference, CPU, OpenCL, CUDA"), CODELOC);
+        
+        }*/
+            
         OpenMM::Platform& platform_openmm = OpenMM::Platform::getPlatformByName(platform_type.toStdString());
+       
         
         if (platform_type == "OpenCL"){
             
@@ -2939,7 +2939,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         
         
         if(perturbed_energies[0])
-            openmm_context->setParameter("SPOnOff",1.0);//Solvent-Solvent and Protein Protein Non Bonded OFF
+           openmm_context->setParameter("SPOnOff",1.0);//Solvent-Solvent and Protein Protein Non Bonded OFF
         
         state_openmm=openmm_context->getState(infoMask,false,0x01);
         //state_openmm=openmm_context->getState(infoMask);
@@ -2949,13 +2949,13 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         
         double potential_energy_lambda = state_openmm.getPotentialEnergy();
         
-        double potential_energy_lambda_plus_delta;
+        double potential_energy_lambda_plus_delta = 0.0;
         
-        double potential_energy_lambda_minus_delta;
+        double potential_energy_lambda_minus_delta = 0.0;
         
-        double plus;
+        double plus = 0.0;
         
-        double minus;
+        double minus = 0.0;
     
         // Because looping from 1 to n_samples
         int modulo = 1;
@@ -2965,6 +2965,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         
         if (Debug)
             qDebug() << "modulo is " << modulo;
+        
         
         if( coord_freq > 0 and modulo == 0 ){
             if (Debug)
@@ -3023,7 +3024,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             
         }
         if(increment_minus > 0.0){
-            
+        
             //NON BONDED TERMS
             if(perturbed_energies[0])
                 openmm_context->setParameter("lam",increment_minus);//1-5 HD
@@ -3060,20 +3061,26 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             
             if(Debug){
                 qDebug() << "Lambda + increment > 1.0";
+                printf("Potential Energy = %.5f kcal/mol\n", potential_energy_lambda * OpenMM::KcalPerKJ);
                 printf("Lambda - increment = %f Potential energy minus  = %.5f kcal/mol (SP = off)\n", increment_minus, potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ );
-                
+                qDebug() << "plus = " << plus << " minus = " << minus ;
             }
             
             
         }
+
+        
         else if(increment_minus < 0.0){
             
             plus = exp(-beta * (potential_energy_lambda_plus_delta - potential_energy_lambda));
             minus = exp(beta * (potential_energy_lambda_plus_delta - potential_energy_lambda));
             
             if(Debug){
-                printf("Lambda + increment = %f Potential energy plus  = %.5f kcal/mol (SP = off)\n", increment_plus,  potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ );
                 qDebug() << "Lambda - increment < 0.0";
+                printf("Potential Energy = %.5f kcal/mol\n", potential_energy_lambda * OpenMM::KcalPerKJ);
+                printf("Lambda + increment = %f Potential energy plus  = %.5f kcal/mol (SP = off)\n", increment_plus,  potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ );
+                qDebug() << "plus = " << plus << " minus = " << minus << "beta = " << beta;
+                
             }
             
             
@@ -3086,10 +3093,10 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             
             if(Debug){
                 
-                
+                printf("Potential Energy = %.5f kcal/mol\n", potential_energy_lambda * OpenMM::KcalPerKJ);
                 printf("Lambda + increment = %f Potential energy plus  = %.5f kcal/mol (SP = off)\n", increment_plus,  potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ );
                 printf("Lambda - increment = %f Potential energy plus  = %.5f kcal/mol (SP = off)\n", increment_minus,  potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ );
-                
+                qDebug() << "plus = " << plus << " minus = " << minus ;
             }
             
         }
@@ -3131,8 +3138,9 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         //NON BONDED TERMS
         if(perturbed_energies[0]){
             openmm_context->setParameter("lam",Alchemical_value);//1-5 HD
-            openmm_context->setParameter("SPOnOff",0.0);//Solvent-Solvent and Protein Protein Non Bonded ON
+            openmm_context->setParameter("SPOnOff",0.0);//Solvent and Protein Non Bonded ON
         }
+        
         
         
         //1-4 Interactions
@@ -3154,6 +3162,8 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             openmm_context->setParameter("lamdih",Alchemical_value);//Torsions
         
         sample_count= sample_count + 1.0;
+        
+        //exit(-1);
                 
         
     }//end while

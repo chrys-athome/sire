@@ -333,7 +333,7 @@ if ( ${SIRE_CXX_COMPILER_ID} MATCHES "GNU" )
     set ( SIRE_RELEASE_FLAGS "-O3 -ffast-math" )
 
     # -fomit-frame-pointer breaks backtrace on an apple
-    set ( SIRE_RELEASE_FLAGS "${SIRE_RELEASE_FLAGS} -fomit-frame-pointer" )
+    #set ( SIRE_RELEASE_FLAGS "${SIRE_RELEASE_FLAGS} -fomit-frame-pointer" )
 
     set ( SIRE_OPENMP_FLAGS "-fopenmp" )
     set ( SIRE_PLATFORM_FLAGS "-pipe" )

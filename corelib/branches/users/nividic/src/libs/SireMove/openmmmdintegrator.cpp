@@ -1091,6 +1091,11 @@ void OpenMMMDIntegrator::createContext(IntegratorWorkspace &workspace,
             }
         }
 
+        if(platform_type != "OpenCL" or platform_type != "CUDA" or platform_type != "Reference" or platform_type != "CPU"){
+            throw SireError::program_bug(QObject::tr("The Platform defined  is not supported. Available types are Reference, CPU, OpenCL, CUDA"), CODELOC);
+            
+        }
+        
         OpenMM::Platform& platform_openmm = OpenMM::Platform::getPlatformByName(platform_type.toStdString());
 
         if (platform_type == "OpenCL"){
