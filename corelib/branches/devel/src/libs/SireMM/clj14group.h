@@ -74,6 +74,8 @@ friend QDataStream& ::operator>>(QDataStream&, CLJ14Group&);
 public:
     CLJ14Group();
     CLJ14Group(const MoleculeView &molecule, const PropertyMap &map = PropertyMap());
+    CLJ14Group(const MoleculeView &molecule, CLJFunction::COMBINING_RULES combining_rules,
+               bool is_strict, const PropertyMap &map = PropertyMap());
     CLJ14Group(const CLJ14Group &other);
     
     ~CLJ14Group();
@@ -90,6 +92,9 @@ public:
     QString toString() const;
     
     bool isNull() const;
+
+    bool setStrict(bool isstrict);
+    bool isStrict() const;
     
     const MoleculeView& molecule() const;
     PropertyMap propertyMap() const;
@@ -118,6 +123,8 @@ public:
     
     bool usingArithmeticCombiningRules() const;
     bool usingGeometricCombiningRules() const;
+    
+    bool wouldChangeProperties(const PropertyMap &map) const;
     
 private:
     void addCGData(CGIdx cg0, CGIdx cg1, const QVector<detail::CLJ14PairData> &cgdata);
@@ -148,6 +155,12 @@ private:
     
     /** Whether or not the energy needs to be recalculated */
     bool needs_energy;
+    
+    /** Whether or not this group is strict
+        (1-4 values are only calculated when both atoms in the 
+         pair are contained in the group, as opposed to when only
+         one of the atoms are in the group) */
+    bool is_strict;
 };
 
 }

@@ -181,7 +181,7 @@ static const RegisterMetaType<CLJ14Group> r_group( NO_ROOT );
 
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJ14Group &group)
 {
-    writeHeader(ds, r_group, 1);
+    writeHeader(ds, r_group, 2);
     
     SharedDataStream sds(ds);
     
@@ -189,7 +189,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJ14Group &group)
         << group.data_for_pair << group.cgidx_to_idx
         << qint32(group.combining_rules)
         << group.total_cnrg << group.total_ljnrg
-        << group.needs_energy;
+        << group.needs_energy << group.is_strict;
     
     return ds;
 }
@@ -198,7 +198,23 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJ14Group &group)
 {
     VersionID v = readHeader(ds, r_group);
     
-    if (v == 1)
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+        
+        qint32 combining_rules;
+        
+        sds >> group.mol >> group.newmol >> group.propmap
+            >> group.data_for_pair >> group.cgidx_to_idx
+            >> combining_rules
+            >> group.total_cnrg >> group.total_ljnrg
+            >> group.needs_energy >> group.is_strict;
+        
+        group.is_strict = true;
+        
+        group.combining_rules = CLJFunction::COMBINING_RULES(combining_rules);
+    }
+    else if (v == 1)
     {
         SharedDataStream sds(ds);
         
@@ -210,10 +226,12 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJ14Group &group)
             >> group.total_cnrg >> group.total_ljnrg
             >> group.needs_energy;
         
+        group.is_strict = true;
+        
         group.combining_rules = CLJFunction::COMBINING_RULES(combining_rules);
     }
     else
-        throw version_error(v, "1", r_group, CODELOC );
+        throw version_error(v, "1,2", r_group, CODELOC );
     
     return ds;
 }
@@ -222,7 +240,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJ14Group &group)
 CLJ14Group::CLJ14Group()
            : combining_rules(CLJFunction::ARITHMETIC),
              total_cnrg(0), total_ljnrg(0),
-             needs_energy(false)
+             needs_energy(false), is_strict(false)
 {}
 
 /** Construct to calculate the 14-energy of the passed molecule */
@@ -230,7 +248,19 @@ CLJ14Group::CLJ14Group(const MoleculeView &molecule, const PropertyMap &map)
            : propmap(map),
              combining_rules(CLJFunction::ARITHMETIC),
              total_cnrg(0), total_ljnrg(0),
-             needs_energy(false)
+             needs_energy(false), is_strict(false)
+{
+    this->add(molecule);
+}
+
+/** Construct to calculate the 14-energy of the passed molecule using the
+    supplied combining rules and strict mode */
+CLJ14Group::CLJ14Group(const MoleculeView &molecule, CLJFunction::COMBINING_RULES rules,
+                       bool strict, const PropertyMap &map)
+           : propmap(map),
+             combining_rules(rules),
+             total_cnrg(0), total_ljnrg(0),
+             needs_energy(false), is_strict(strict)
 {
     this->add(molecule);
 }
@@ -241,7 +271,7 @@ CLJ14Group::CLJ14Group(const CLJ14Group &other)
              data_for_pair(other.data_for_pair), cgidx_to_idx(other.cgidx_to_idx),
              combining_rules(other.combining_rules),
              total_cnrg(other.total_cnrg), total_ljnrg(other.total_ljnrg),
-             needs_energy(other.needs_energy)
+             needs_energy(other.needs_energy), is_strict(other.is_strict)
 {}
 
 /** Destructor */
@@ -262,6 +292,7 @@ CLJ14Group& CLJ14Group::operator=(const CLJ14Group &other)
         total_cnrg = other.total_cnrg;
         total_ljnrg = other.total_ljnrg;
         needs_energy = other.needs_energy;
+        is_strict = other.is_strict;
     }
     
     return *this;
@@ -273,7 +304,8 @@ bool CLJ14Group::operator==(const CLJ14Group &other) const
     return mol == other.mol and
            newmol == other.newmol and
            combining_rules == other.combining_rules and
-           propmap == other.propmap;
+           propmap == other.propmap and
+           is_strict == other.is_strict;
 }
 
 /** Comparison operator */
@@ -345,6 +377,28 @@ void CLJ14Group::mustReallyRecalculateFromScratch()
     data_for_pair.clear();
     cgidx_to_idx.clear();
     needs_energy = true;
+}
+
+/** Set whether or not 'strict' mode is on. If 'strict' mode is on,
+    then this means that the 1-4 energy is calculated only if both of the
+    atoms are selected. If 'strict' mode is off, then the 1-4 energy
+    is calculated when at least one of the atoms is selected. */
+bool CLJ14Group::setStrict(bool isstrict)
+{
+    if (not isstrict == is_strict)
+    {
+        is_strict = isstrict;
+        this->mustReallyRecalculateFromScratch();
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Return whether or not 'strict' mode is on */
+bool CLJ14Group::isStrict() const
+{
+    return is_strict;
 }
 
 /** Switch on or off the use of arithmetic combining rules */
@@ -511,6 +565,21 @@ void CLJ14Group::addCGData(CGIdx cg0, CGIdx cg1,
         cgidx_to_idx[cg1].insert(index);
 }
 
+/** Return whether or not the passed property map would change properties that
+    are used by this calculation */
+bool CLJ14Group::wouldChangeProperties(const PropertyMap &map) const
+{
+    if (propmap != map)
+    {
+        return (map["coordinates"] != propmap["coordinates"]) or
+               (map["charge"] != propmap["charge"]) or
+               (map["LJ"] != propmap["LJ"]) or
+               (map["intrascale"] != propmap["intrascale"]);
+    }
+    else
+        return false;
+}
+
 /** Internal function used to extract all of the 1-4 pairs */
 void CLJ14Group::reextract()
 {
@@ -523,7 +592,7 @@ void CLJ14Group::reextract()
     const MoleculeInfoData &molinfo = newmol.data().info();
     const AtomSelection selected_atoms = newmol.selection();
 
-    if (selected_atoms.selectedNone() or selected_atoms.nSelected() < 2)
+    if (selected_atoms.selectedNone())
     {
         //don't have enough atoms for 1-4 pairs!
         needs_energy = false;
@@ -641,7 +710,7 @@ void CLJ14Group::reextract()
             } // end of loop over j CutGroups
         } // end of loop over i CutGroups
     } // else if selected all
-    else
+    else if (is_strict)
     {
         const QList<CGIdx> selected_cgroups = selected_atoms.selectedCutGroups();
     
@@ -746,7 +815,12 @@ void CLJ14Group::reextract()
             } // end of loop over j CutGroups
         
         } // end of loop over i CutGroups
-    } // end of if selected all
+    } // end of if selected all else if is_strict
+    else
+    {
+        throw SireError::incomplete_code( QObject::tr(
+                "NEED TO WRITE THE CODE FOR NON_STRICT SELECTION OF 1-4 PAIRS"), CODELOC );
+    }
 }
 
 /** Internal function used to calculate the energy of the 1-4 interactions for the
