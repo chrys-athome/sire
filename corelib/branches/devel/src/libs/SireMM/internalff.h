@@ -257,6 +257,26 @@ private:
     static PropertyName sbt_param;
 };
 
+/** This class provides the default name of the 
+    property that contains the non-bonded 1-4 scale factors */
+class SIREMM_EXPORT IntrascaleParameterName
+{
+public:
+    IntrascaleParameterName()
+    {}
+    
+    ~IntrascaleParameterName()
+    {}
+    
+    const PropertyName& intrascale() const
+    {
+        return intra_param;
+    }
+
+private:
+    static PropertyName intra_param;
+};
+
 /** This class provides the default name of the properties
     that contain the bond, angle, dihedral and Urey-Bradley parameters */
 class SIREMM_EXPORT InternalParameterNames 
@@ -266,7 +286,8 @@ class SIREMM_EXPORT InternalParameterNames
               public StretchStretchParameterName,
               public StretchBendParameterName,
               public BendBendParameterName,
-              public StretchBendTorsionParameterName
+              public StretchBendTorsionParameterName,
+              public IntrascaleParameterName
 {
 public:
     InternalParameterNames() 
@@ -274,7 +295,8 @@ public:
               DihedralParameterName(), 
               ImproperParameterName(), UreyBradleyParameterName(),
               StretchStretchParameterName(), StretchBendParameterName(),
-              BendBendParameterName(), StretchBendTorsionParameterName()
+              BendBendParameterName(), StretchBendTorsionParameterName(),
+              IntrascaleParameterName()
     {}
     
     ~InternalParameterNames()
