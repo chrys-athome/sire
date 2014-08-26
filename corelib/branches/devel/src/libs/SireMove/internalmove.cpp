@@ -247,7 +247,7 @@ void InternalMove::move(System &system, int nmoves, bool record_stats)
       
             double old_bias = 1;
             double new_bias = 1;
-	  
+      
             //move one molecule
             //update the sampler with the latest version of the molecules
             smplr.edit().updateFrom(system);
@@ -337,64 +337,6 @@ void InternalMove::move(System &system, int nmoves, bool record_stats)
                     }
                 }
             }
-//             if ( ndofs == 0 || maxvar < 0 || maxvar >= ndofs  )
-//             {
-//                 // We move everything in these cases..
-//                 moved_bonds = flex_bonds;
-//                 moved_angles = flex_angs;
-//                 moved_dihedrals = flex_dihs;
-//             }
-//             else
-//             {
-//                 // draw a random number [0, bonds.size()+angles.size()+dihedrals.size()) 
-//                 // to find matching dof. 
-//                 // Add it to moved_bonds or moved_angles or moved_dihedrals
-//                 // if not already present	
-//                 int movecount = 0;
-	      
-//                 while (movecount < maxvar)
-//                 {
-//                     int rand = this->generator().randInt(0, ndofs - 1);
-//                     //qDebug() << " rand is " << rand;
-                    
-//                     if ( rand < nbonds )
-//                     {
-//                         // it is a bond...
-//                         const BondID &bond = flex_bonds.at( rand );
-//                         if ( not moved_bonds.contains(bond) )
-//                         {
-//                             //qDebug() << " adding bond " << rand;
-//                             moved_bonds.append(bond);
-//                             ++movecount;
-//                         }
-//                     }
-//                     else if ( rand < ( nbonds + nangles ) )
-//                     {
-//                         // it is an angle...
-//                         const AngleID &angle = flex_angs.at( rand - nbonds );
-                        
-//                         if ( not moved_angles.contains(angle) )
-//                         {
-//                             //qDebug() << " adding angle " << rand - nbonds;
-//                             moved_angles.append(angle);
-//                             ++movecount;
-//                         }
-//                     }
-//                     else
-//                     {
-//                         // it is a dihedral...
-//                         const DihedralID &dihedral = flex_dihs.at( 
-//                                                             rand - nbonds - nangles );
-                        
-//                         if ( not moved_dihedrals.contains(dihedral) )
-//                         {
-//                             //qDebug() << " adding dihedral " << rand - nbonds - nangles;
-//                             moved_dihedrals.append(dihedral);
-//                             ++movecount;
-//                         }
-//                     }
-//                 }
-//             }
 
             // Now actually move the selected dofs
             Mover<Molecule> mol_mover = oldmol.molecule().move();
@@ -469,7 +411,7 @@ void InternalMove::move(System &system, int nmoves, bool record_stats)
 
             //calculate the energy of the system
             double new_nrg = system.energy( this->energyComponent() );
-	
+    
             //accept or reject the move based on the change of energy
             //and the biasing factors
             if (not this->test(new_nrg, old_nrg, new_bias, old_bias))

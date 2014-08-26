@@ -915,6 +915,11 @@ static void calculateEnergy(CLJFunction::COMBINING_RULES combining_rules,
 /** Calculate and return the coulomb and LJ 14 energy */
 boost::tuple<double,double> CLJ14Group::energy()
 {
+    if (not needs_energy)
+    {
+        return boost::tuple<double,double>(total_cnrg,total_ljnrg);
+    }
+
     if (recalculatingFromScratch())
     {
         if (data_for_pair.isEmpty())

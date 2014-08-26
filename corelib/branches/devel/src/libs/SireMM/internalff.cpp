@@ -2650,6 +2650,17 @@ void InternalFF::recalculateEnergy()
         //change in energy
         Energy old_nrg;
         Energy new_nrg;
+
+        if (calc_14_nrgs)
+        {
+            //need to set clean so that we can get the old CLJ energy
+            this->setClean();
+            double old_cnrg = this->energy(this->components().intra14Coulomb());
+            double old_ljnrg = this->energy(this->components().intra14LJ());
+            this->setDirty();
+            
+            old_nrg += Intra14Energy(old_cnrg, old_ljnrg);
+        }
         
         for (QHash<MolNum,ChangedMolecule>::const_iterator 
                                         it = changed_mols.constBegin();
@@ -2670,8 +2681,6 @@ void InternalFF::recalculateEnergy()
             }
         }
         
-        this->components().changeEnergy(*this, new_nrg - old_nrg);
-        
         if (calc_14_nrgs)
         {
             double cnrg(0);
@@ -2685,9 +2694,11 @@ void InternalFF::recalculateEnergy()
                 cnrg += nrg.get<0>();
                 ljnrg += nrg.get<1>();
             }
-            
-            this->components().intra14().setEnergy(*this, Intra14Energy(cnrg,ljnrg));
+
+            new_nrg += Intra14Energy(cnrg, ljnrg);
         }
+
+        this->components().changeEnergy(*this, new_nrg - old_nrg);
         
         //can now forget about the changes :-)
         changed_mols.clear();
