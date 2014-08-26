@@ -79,6 +79,7 @@ set ( PYPP_SOURCES
        InternalFF.pypp.cpp
        BendBendSymbols.pypp.cpp
        InterGroupSoftCLJFF.pypp.cpp
+       Intra14Component.pypp.cpp
        DihedralParameterName.pypp.cpp
        InterSoftCLJFFBase.pypp.cpp
        MultiCLJComponent.pypp.cpp
@@ -106,6 +107,7 @@ set ( PYPP_SOURCES
        IntraGroupCoulombFF.pypp.cpp
        InternalParameters.pypp.cpp
        CoulombNBPairs.pypp.cpp
+       Intra14LJComponent.pypp.cpp
        StretchStretchParameterName.pypp.cpp
        ScaledCLJParameterNames3D.pypp.cpp
        InterCoulombFFBase.pypp.cpp
@@ -113,6 +115,7 @@ set ( PYPP_SOURCES
        LJPotentialInterface_InterLJPotential_.pypp.cpp
        CLJBoxIndex.pypp.cpp
        CLJWorkspace.pypp.cpp
+       Intra14CoulombComponent.pypp.cpp
        FourAtomFunction.pypp.cpp
        CLJSoftFunction.pypp.cpp
        IntraSoftCLJFF.pypp.cpp

@@ -128,6 +128,9 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::StretchBendComponent >();
     ObjectRegistry::registerConverterFor< SireMM::BendBendComponent >();
     ObjectRegistry::registerConverterFor< SireMM::StretchBendTorsionComponent >();
+    ObjectRegistry::registerConverterFor< SireMM::Intra14CoulombComponent >();
+    ObjectRegistry::registerConverterFor< SireMM::Intra14LJComponent >();
+    ObjectRegistry::registerConverterFor< SireMM::Intra14Component >();
     ObjectRegistry::registerConverterFor< SireMM::InternalComponent >();
     ObjectRegistry::registerConverterFor< SireMM::ThreeAtomFunctions >();
     ObjectRegistry::registerConverterFor< SireMM::RestraintFF >();

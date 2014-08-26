@@ -201,6 +201,12 @@
 
 #include "InternalSymbolsBase.pypp.hpp"
 
+#include "Intra14Component.pypp.hpp"
+
+#include "Intra14CoulombComponent.pypp.hpp"
+
+#include "Intra14LJComponent.pypp.hpp"
+
 #include "IntraCLJFF.pypp.hpp"
 
 #include "IntraCLJFFBase.pypp.hpp"
@@ -587,6 +593,12 @@ BOOST_PYTHON_MODULE(_MM){
     register_InternalParameters3D_class();
 
     register_InternalSymbols_class();
+
+    register_Intra14Component_class();
+
+    register_Intra14CoulombComponent_class();
+
+    register_Intra14LJComponent_class();
 
     register_IntraFF_class();
 

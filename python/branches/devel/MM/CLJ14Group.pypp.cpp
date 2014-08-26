@@ -45,6 +45,7 @@ void register_CLJ14Group_class(){
         CLJ14Group_exposer_t CLJ14Group_exposer = CLJ14Group_exposer_t( "CLJ14Group", bp::init< >() );
         bp::scope CLJ14Group_scope( CLJ14Group_exposer );
         CLJ14Group_exposer.def( bp::init< SireMol::MoleculeView const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecule"), bp::arg("map")=SireBase::PropertyMap() )) );
+        CLJ14Group_exposer.def( bp::init< SireMol::MoleculeView const &, SireMM::CLJFunction::COMBINING_RULES, bool, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecule"), bp::arg("combining_rules"), bp::arg("is_strict"), bp::arg("map")=SireBase::PropertyMap() )) );
         CLJ14Group_exposer.def( bp::init< SireMM::CLJ14Group const & >(( bp::arg("other") )) );
         { //::SireMM::CLJ14Group::add
         
@@ -96,6 +97,16 @@ void register_CLJ14Group_class(){
             CLJ14Group_exposer.def( 
                 "isNull"
                 , isNull_function_value );
+        
+        }
+        { //::SireMM::CLJ14Group::isStrict
+        
+            typedef bool ( ::SireMM::CLJ14Group::*isStrict_function_type )(  ) const;
+            isStrict_function_type isStrict_function_value( &::SireMM::CLJ14Group::isStrict );
+            
+            CLJ14Group_exposer.def( 
+                "isStrict"
+                , isStrict_function_value );
         
         }
         { //::SireMM::CLJ14Group::molecule
@@ -218,6 +229,17 @@ void register_CLJ14Group_class(){
                 , ( bp::arg("on") ) );
         
         }
+        { //::SireMM::CLJ14Group::setStrict
+        
+            typedef bool ( ::SireMM::CLJ14Group::*setStrict_function_type )( bool ) ;
+            setStrict_function_type setStrict_function_value( &::SireMM::CLJ14Group::setStrict );
+            
+            CLJ14Group_exposer.def( 
+                "setStrict"
+                , setStrict_function_value
+                , ( bp::arg("isstrict") ) );
+        
+        }
         { //::SireMM::CLJ14Group::toString
         
             typedef ::QString ( ::SireMM::CLJ14Group::*toString_function_type )(  ) const;
@@ -288,6 +310,17 @@ void register_CLJ14Group_class(){
             CLJ14Group_exposer.def( 
                 "what"
                 , what_function_value );
+        
+        }
+        { //::SireMM::CLJ14Group::wouldChangeProperties
+        
+            typedef bool ( ::SireMM::CLJ14Group::*wouldChangeProperties_function_type )( ::SireBase::PropertyMap const & ) const;
+            wouldChangeProperties_function_type wouldChangeProperties_function_value( &::SireMM::CLJ14Group::wouldChangeProperties );
+            
+            CLJ14Group_exposer.def( 
+                "wouldChangeProperties"
+                , wouldChangeProperties_function_value
+                , ( bp::arg("map") ) );
         
         }
         CLJ14Group_exposer.staticmethod( "typeName" );
