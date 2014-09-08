@@ -2153,6 +2153,23 @@ void CLJSoftFunction::setCoulombPower(float power)
     pvt_set(alpha(), shiftDelta(), power);
 }
 
+/** Return (1-alpha)^(coulomb_power) */
+float CLJSoftFunction::oneMinusAlphaToN() const
+{
+    if (coulombPower() == 0)
+        return 1.0;
+    else if (coulombPower() == 1)
+        return (1.0 - alpha());
+    else
+        return std::pow( 1.0 - alpha(), coulombPower() );
+}
+
+/** Return alpha * shift_delta */
+float CLJSoftFunction::alphaTimesShiftDelta() const
+{
+    return alpha() * shiftDelta();
+}
+
 /////////
 ///////// Implementation of CLJSoftIntraFunction
 /////////
