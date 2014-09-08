@@ -97,6 +97,10 @@
 
 #include "CLJSoftFunction.pypp.hpp"
 
+#include "CLJSoftIntraFunction.pypp.hpp"
+
+#include "CLJSoftShiftFunction.pypp.hpp"
+
 #include "CLJWorkspace.pypp.hpp"
 
 #include "ChargeParameterName.pypp.hpp"
@@ -523,6 +527,10 @@ BOOST_PYTHON_MODULE(_MM){
     register_CLJShiftFunction_class();
 
     register_CLJSoftFunction_class();
+
+    register_CLJSoftIntraFunction_class();
+
+    register_CLJSoftShiftFunction_class();
 
     register_CLJWorkspace_class();
 

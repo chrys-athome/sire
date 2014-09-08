@@ -69,6 +69,7 @@ set ( PYPP_SOURCES
        Restraint.pypp.cpp
        BendBendParameterName.pypp.cpp
        GridFF2.pypp.cpp
+       CLJSoftShiftFunction.pypp.cpp
        IntraGroupCoulombFFBase.pypp.cpp
        IntraCLJFFBase.pypp.cpp
        LJPerturbation.pypp.cpp
@@ -149,6 +150,7 @@ set ( PYPP_SOURCES
        FourAtomFunctions.pypp.cpp
        CLJFunction.pypp.cpp
        InterCLJFFBase.pypp.cpp
+       CLJSoftIntraFunction.pypp.cpp
        StretchBendTorsionSymbols.pypp.cpp
        CLJBoxDistance.pypp.cpp
        CLJScaleFactor.pypp.cpp

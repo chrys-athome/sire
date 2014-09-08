@@ -7,6 +7,8 @@
 
 namespace bp = boost::python;
 
+#include "SireError/errors.h"
+
 #include "SireMaths/multidouble.h"
 
 #include "SireMaths/multifloat.h"

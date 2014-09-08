@@ -63,6 +63,8 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::SoftCLJComponent >();
     ObjectRegistry::registerConverterFor< SireMM::CLJShiftFunction >();
     ObjectRegistry::registerConverterFor< SireMM::CLJIntraShiftFunction >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJSoftShiftFunction >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJSoftIntraShiftFunction >();
     ObjectRegistry::registerConverterFor< SireMM::LJPair >();
     ObjectRegistry::registerConverterFor< SireMM::RestraintComponent >();
     ObjectRegistry::registerConverterFor< SireMM::IntraGroupFF >();
