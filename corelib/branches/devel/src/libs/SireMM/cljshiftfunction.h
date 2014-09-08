@@ -375,12 +375,12 @@ Q_DECLARE_METATYPE( SireMM::CLJShiftFunction )
 Q_DECLARE_METATYPE( SireMM::CLJIntraShiftFunction )
 
 Q_DECLARE_METATYPE( SireMM::CLJSoftShiftFunction )
-//Q_DECLARE_METATYPE( SireMM::CLJSoftIntraShiftFunction );
+Q_DECLARE_METATYPE( SireMM::CLJSoftIntraShiftFunction );
 
 SIRE_EXPOSE_CLASS( SireMM::CLJShiftFunction )
 SIRE_EXPOSE_CLASS( SireMM::CLJIntraShiftFunction )
 
 SIRE_EXPOSE_CLASS( SireMM::CLJSoftShiftFunction )
-//SIRE _ EXPOSE_CLASS( SireMM::CLJSoftIntraShiftFunction )
+SIRE_EXPOSE_CLASS( SireMM::CLJSoftIntraShiftFunction )
 
 #endif
