@@ -307,6 +307,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, IntraFF &intraff)
             >> intraff.d->parallel_calc
             >> intraff.d->repro_sum
             >> static_cast<G1FF&>(intraff);
+        
+        intraff.rebuildProps();
     }
     else
         throw version_error(v, "1", r_intraff, CODELOC);

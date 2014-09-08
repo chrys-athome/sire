@@ -1938,6 +1938,47 @@ CLJSoftFunction::CLJSoftFunction()
                 : CLJCutoffFunction(), alpha_value(0), shift_delta(0), coulomb_power(1)
 {}
 
+
+/** Construct, specifying the cutoff */
+CLJSoftFunction::CLJSoftFunction(Length cutoff)
+                : CLJCutoffFunction(cutoff)
+{}
+
+/** Construct, specifying the coulomb and LJ cutoffs */
+CLJSoftFunction::CLJSoftFunction(Length coulomb, Length lj)
+                : CLJCutoffFunction(coulomb, lj)
+{}
+
+CLJSoftFunction::CLJSoftFunction(const Space &space, Length cutoff)
+                : CLJCutoffFunction(space, cutoff)
+{}
+
+CLJSoftFunction::CLJSoftFunction(const Space &space, Length coulomb, Length lj)
+                : CLJCutoffFunction(space, coulomb, lj)
+{}
+
+CLJSoftFunction::CLJSoftFunction(Length cutoff, COMBINING_RULES combining_rules)
+                : CLJCutoffFunction(cutoff, combining_rules)
+{}
+
+CLJSoftFunction::CLJSoftFunction(Length coulomb, Length lj, COMBINING_RULES combining_rules)
+                : CLJCutoffFunction(coulomb, lj, combining_rules)
+{}
+
+CLJSoftFunction::CLJSoftFunction(const Space &space, COMBINING_RULES combining_rules)
+                : CLJCutoffFunction(space, combining_rules)
+{}
+
+CLJSoftFunction::CLJSoftFunction(const Space &space, Length cutoff,
+                                 COMBINING_RULES combining_rules)
+                : CLJCutoffFunction(space, cutoff, combining_rules)
+{}
+
+CLJSoftFunction::CLJSoftFunction(const Space &space, Length coulomb, Length lj,
+                                 COMBINING_RULES combining_rules)
+                : CLJCutoffFunction(space, coulomb, lj, combining_rules)
+{}
+
 /** Copy constructor */
 CLJSoftFunction::CLJSoftFunction(const CLJSoftFunction &other)
                 : CLJCutoffFunction(other), alpha_value(other.alpha_value),
@@ -2108,6 +2149,274 @@ void CLJSoftFunction::setShiftDelta(float shift)
 
 /** Set the soft-core coulomb power parameter */
 void CLJSoftFunction::setCoulombPower(float power)
+{
+    pvt_set(alpha(), shiftDelta(), power);
+}
+
+/////////
+///////// Implementation of CLJSoftIntraFunction
+/////////
+
+static const RegisterMetaType<CLJSoftIntraFunction> r_softintra(MAGIC_ONLY,
+                                                                CLJSoftIntraFunction::typeName());
+
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJSoftIntraFunction &func)
+{
+    writeHeader(ds, r_softintra, 1);
+    
+    ds << func.alpha_value << func.shift_delta << func.coulomb_power
+       << static_cast<const CLJIntraFunction&>(func);
+    
+    return ds;
+}
+
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJSoftIntraFunction &func)
+{
+    VersionID v = readHeader(ds, r_softintra);
+    
+    if (v == 1)
+    {
+        ds >> func.alpha_value >> func.shift_delta >> func.coulomb_power
+           >> static_cast<CLJIntraFunction&>(func);
+    }
+    else
+        throw version_error(v, "1", r_softintra, CODELOC);
+    
+    return ds;
+}
+
+/** Constructor */
+CLJSoftIntraFunction::CLJSoftIntraFunction()
+                     : CLJIntraFunction(), alpha_value(0), shift_delta(0), coulomb_power(1)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(Length cutoff) : CLJIntraFunction(cutoff)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(Length coul_cutoff, Length lj_cutoff)
+                     : CLJIntraFunction(coul_cutoff, lj_cutoff)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(const Space &space, Length cutoff)
+                     : CLJIntraFunction(space, cutoff)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(const Space &space,
+                                           Length coul_cutoff, Length lj_cutoff)
+                     : CLJIntraFunction(space, coul_cutoff, lj_cutoff)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(Length cutoff, COMBINING_RULES combining_rules)
+                     : CLJIntraFunction(cutoff, combining_rules)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(Length coul_cutoff, Length lj_cutoff,
+                                           COMBINING_RULES combining_rules)
+                     : CLJIntraFunction(coul_cutoff, lj_cutoff, combining_rules)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(const Space &space, COMBINING_RULES combining_rules)
+                     : CLJIntraFunction(space, combining_rules)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(const Space &space, Length cutoff,
+                                           COMBINING_RULES combining_rules)
+                     : CLJIntraFunction(space, cutoff, combining_rules)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(const Space &space, Length coul_cutoff,
+                                           Length lj_cutoff,
+                                           COMBINING_RULES combining_rules)
+                     : CLJIntraFunction(space, coul_cutoff, lj_cutoff, combining_rules)
+{}
+
+/** Copy constructor */
+CLJSoftIntraFunction::CLJSoftIntraFunction(const CLJSoftIntraFunction &other)
+                     : CLJIntraFunction(other), alpha_value(other.alpha_value),
+                       shift_delta(other.shift_delta), coulomb_power(other.coulomb_power)
+{}
+
+/** Destructor */
+CLJSoftIntraFunction::~CLJSoftIntraFunction()
+{}
+
+/** Copy assignment operator */
+CLJSoftIntraFunction& CLJSoftIntraFunction::operator=(const CLJSoftIntraFunction &other)
+{
+    if (this != &other)
+    {
+        alpha_value = other.alpha_value;
+        shift_delta = other.shift_delta;
+        coulomb_power = other.coulomb_power;
+        CLJIntraFunction::operator=(other);
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool CLJSoftIntraFunction::operator==(const CLJSoftIntraFunction &other) const
+{
+    return alpha_value == other.alpha_value and
+           shift_delta == other.shift_delta and
+           coulomb_power == other.coulomb_power and
+           CLJIntraFunction::operator==(other);
+}
+
+const char* CLJSoftIntraFunction::typeName()
+{
+    return "SireMM::CLJSoftIntraFunction";
+}
+
+/** Return whether or not this is a softened function */
+bool CLJSoftIntraFunction::isSoftened() const
+{
+    return true;
+}
+
+/** Return the properties that can be set in this function */
+Properties CLJSoftIntraFunction::properties() const
+{
+    Properties props = CLJIntraFunction::properties();
+    
+    props.setProperty( "alpha", NumberProperty(alpha_value) );
+    props.setProperty( "shiftDelta", NumberProperty(shift_delta) );
+    props.setProperty( "coulombPower", NumberProperty(coulomb_power) );
+    
+    return props;
+}
+
+/** Set the property with name 'name' to value 'value' */
+CLJFunctionPtr CLJSoftIntraFunction::setProperty(const QString &name, const Property &value) const
+{
+    CLJFunctionPtr ret(*this);
+
+    if (name == "alpha")
+    {
+        ret.edit().asA<CLJSoftIntraFunction>()
+                  .setAlpha( value.asA<NumberProperty>().toDouble() );
+    }
+    else if (name == "shiftDelta")
+    {
+        ret.edit().asA<CLJSoftIntraFunction>()
+                  .setShiftDelta( value.asA<NumberProperty>().toDouble() );
+    }
+    else if (name == "coulombPower")
+    {
+        ret.edit().asA<CLJSoftIntraFunction>()
+                  .setCoulombPower( value.asA<NumberProperty>().toDouble() );
+    }
+    else
+    {
+        ret = CLJIntraFunction::setProperty(name, value);
+    }
+    
+    return ret;
+}
+
+/** Return the value of the property with name 'name' */
+PropertyPtr CLJSoftIntraFunction::property(const QString &name) const
+{
+    if (name == "alpha")
+    {
+        return NumberProperty(alpha_value);
+    }
+    else if (name == "shiftDelta")
+    {
+        return NumberProperty(shift_delta);
+    }
+    else if (name == "coulombPower")
+    {
+        return NumberProperty(coulomb_power);
+    }
+    else
+    {
+        return CLJIntraFunction::property(name);
+    }
+}
+
+/** Return whether or not this function contains a property called 'name' */
+bool CLJSoftIntraFunction::containsProperty(const QString &name) const
+{
+    return (name == "alpha") or (name == "shiftDelta") or
+           (name == "coulombPower") or CLJIntraFunction::containsProperty(name);
+}
+
+/** Return the soft-core alpha value. A value of 0 is a completely hard
+    potential, while increasing values of alpha will increasingly soften 
+    the potential */
+float CLJSoftIntraFunction::alpha() const
+{
+    return alpha_value;
+}
+
+/** Return the soft-core shift_delta parameter. This is used to soften
+    the LJ interactions */
+float CLJSoftIntraFunction::shiftDelta() const
+{
+    return shift_delta;
+}
+
+/** Return the soft-core coulomb_power parameter. This is used to soften
+    the electrostatic interactions */
+float CLJSoftIntraFunction::coulombPower() const
+{
+    return coulomb_power;
+}
+
+/** Return (1-alpha)^(coulomb_power) */
+float CLJSoftIntraFunction::oneMinusAlphaToN() const
+{
+    if (coulombPower() == 0)
+        return 1.0;
+    else if (coulombPower() == 1)
+        return (1.0 - alpha());
+    else
+        return std::pow( 1.0 - alpha(), coulombPower() );
+}
+
+/** Return alpha * shift_delta */
+float CLJSoftIntraFunction::alphaTimesShiftDelta() const
+{
+    return alpha() * shiftDelta();
+}
+
+void CLJSoftIntraFunction::pvt_set(float alpha, float shift, float power)
+{
+    if (alpha < 0)
+        alpha = 0;
+    
+    if (shift < 0)
+        shift = 0;
+
+    if (alpha > 1)
+    {
+        if ( power != int(power) )
+            throw SireError::incompatible_error( QObject::tr(
+                    "You cannot have a soft-core function where alpha > 1 and "
+                    "you have a non-integer coulomb power (alpha = %1, coulomb power = %2)")
+                        .arg(alpha).arg(power), CODELOC );
+    }
+    
+    alpha_value = alpha;
+    shift_delta = shift;
+    coulomb_power = power;
+}
+
+/** Set the soft-core alpha parameter */
+void CLJSoftIntraFunction::setAlpha(float alp)
+{
+    pvt_set(alp, shiftDelta(), coulombPower());
+}
+
+/** Set the soft-core shift delta parameter */
+void CLJSoftIntraFunction::setShiftDelta(float shift)
+{
+    pvt_set(alpha(), shift, coulombPower());
+}
+
+/** Set the soft-core coulomb power parameter */
+void CLJSoftIntraFunction::setCoulombPower(float power)
 {
     pvt_set(alpha(), shiftDelta(), power);
 }
