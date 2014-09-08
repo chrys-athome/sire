@@ -2161,7 +2161,7 @@ float CLJSoftFunction::oneMinusAlphaToN() const
     else if (coulombPower() == 1)
         return (1.0 - alpha());
     else
-        return std::pow( 1.0 - alpha(), coulombPower() );
+        return std::pow( float(1.0 - alpha()), coulombPower() );
 }
 
 /** Return alpha * shift_delta */
@@ -2389,7 +2389,7 @@ float CLJSoftIntraFunction::oneMinusAlphaToN() const
     else if (coulombPower() == 1)
         return (1.0 - alpha());
     else
-        return std::pow( 1.0 - alpha(), coulombPower() );
+        return std::pow( float(1.0 - alpha()), coulombPower() );
 }
 
 /** Return alpha * shift_delta */
