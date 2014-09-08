@@ -45,7 +45,7 @@
 #include "SireMM/threeatomfunctions.h"
 #include "SireMM/fouratomfunctions.h"
 #include "SireMM/cljatoms.h"
-
+#include "SireMM/cljfunction.h"
 #include "SireMM/cljboxes.h"
 
 #include "SireBase/packedarray2d.hpp"
@@ -68,6 +68,8 @@ void register_SireMM_containers()
 
     register_list< QVector<CLJBox> >();
     register_list< QVector<CLJBoxIndex> >();
+
+    register_dict< QHash<QString,CLJFunctionPtr> >();
 
     register_tuple< boost::tuple<CLJAtoms,CLJAtoms,CLJAtoms> >();
 }
