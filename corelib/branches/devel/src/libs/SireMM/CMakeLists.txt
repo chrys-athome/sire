@@ -30,6 +30,7 @@ set ( SIREMM_HEADERS
       cljpotential.h
       cljprobe.h
       cljnbpairs.h
+      cljrffunction.h
       cljshiftfunction.h
       cljworkspace.h
       coulombpotential.h
@@ -99,6 +100,7 @@ set ( SIREMM_SOURCES
       cljpotential.cpp
       cljprobe.cpp
       cljnbpairs.cpp
+      cljrffunction.cpp
       cljshiftfunction.cpp
       cljworkspace.cpp
       coulombpotential.cpp
