@@ -137,6 +137,7 @@ set ( PYPP_SOURCES
        CLJPotentialInterface_IntraCLJPotential_.pypp.cpp
        InterFF.pypp.cpp
        AtomFunction.pypp.cpp
+       CLJSoftIntraShiftFunction.pypp.cpp
        BondSymbols.pypp.cpp
        LJComponent.pypp.cpp
        IntraGroupCLJFF.pypp.cpp

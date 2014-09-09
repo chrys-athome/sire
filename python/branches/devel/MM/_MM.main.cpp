@@ -99,6 +99,8 @@
 
 #include "CLJSoftIntraFunction.pypp.hpp"
 
+#include "CLJSoftIntraShiftFunction.pypp.hpp"
+
 #include "CLJSoftShiftFunction.pypp.hpp"
 
 #include "CLJWorkspace.pypp.hpp"
@@ -529,6 +531,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_CLJSoftFunction_class();
 
     register_CLJSoftIntraFunction_class();
+
+    register_CLJSoftIntraShiftFunction_class();
 
     register_CLJSoftShiftFunction_class();
 
