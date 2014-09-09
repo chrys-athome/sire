@@ -20,6 +20,7 @@
 #include "cljparam.h"
 #include "cljpotential.h"
 #include "cljprobe.h"
+#include "cljrffunction.h"
 #include "cljshiftfunction.h"
 #include "cljworkspace.h"
 #include "coulombpotential.h"

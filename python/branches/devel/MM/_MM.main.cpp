@@ -73,6 +73,8 @@
 
 #include "CLJIntraFunction.pypp.hpp"
 
+#include "CLJIntraRFFunction.pypp.hpp"
+
 #include "CLJIntraShiftFunction.pypp.hpp"
 
 #include "CLJNBPairs.pypp.hpp"
@@ -91,6 +93,8 @@
 
 #include "CLJProbe.pypp.hpp"
 
+#include "CLJRFFunction.pypp.hpp"
+
 #include "CLJScaleFactor.pypp.hpp"
 
 #include "CLJShiftFunction.pypp.hpp"
@@ -99,7 +103,11 @@
 
 #include "CLJSoftIntraFunction.pypp.hpp"
 
+#include "CLJSoftIntraRFFunction.pypp.hpp"
+
 #include "CLJSoftIntraShiftFunction.pypp.hpp"
+
+#include "CLJSoftRFFunction.pypp.hpp"
 
 #include "CLJSoftShiftFunction.pypp.hpp"
 
@@ -512,6 +520,8 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_CLJIntraFunction_class();
 
+    register_CLJIntraRFFunction_class();
+
     register_CLJIntraShiftFunction_class();
 
     register_CLJNBPairs_class();
@@ -526,13 +536,19 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_CLJProbe_class();
 
+    register_CLJRFFunction_class();
+
     register_CLJShiftFunction_class();
 
     register_CLJSoftFunction_class();
 
     register_CLJSoftIntraFunction_class();
 
+    register_CLJSoftIntraRFFunction_class();
+
     register_CLJSoftIntraShiftFunction_class();
+
+    register_CLJSoftRFFunction_class();
 
     register_CLJSoftShiftFunction_class();
 

@@ -3,6 +3,7 @@
 
 #include "SireMM_registrars.h"
 
+#include "cljrffunction.h"
 #include "dihedralrestraint.h"
 #include "ljparameter.h"
 #include "softcljcomponent.h"
@@ -58,6 +59,10 @@
 void register_SireMM_objects()
 {
 
+    ObjectRegistry::registerConverterFor< SireMM::CLJRFFunction >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJIntraRFFunction >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJSoftRFFunction >();
+    ObjectRegistry::registerConverterFor< SireMM::CLJSoftIntraRFFunction >();
     ObjectRegistry::registerConverterFor< SireMM::DihedralRestraint >();
     ObjectRegistry::registerConverterFor< SireMM::LJParameter >();
     ObjectRegistry::registerConverterFor< SireMM::SoftCLJComponent >();
