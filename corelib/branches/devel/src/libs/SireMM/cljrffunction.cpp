@@ -5884,8 +5884,11 @@ void CLJSoftIntraRFFunction::calcVacEnergyGeo(const CLJAtoms &atoms,
     const float soft_coul_cutoff = std::sqrt(alpha() + coul_cutoff*coul_cutoff);
 
     const MultiFloat soft_Rc(soft_coul_cutoff);
-    const MultiFloat one_over_soft_Rc( 1.0 / soft_coul_cutoff );
-    const MultiFloat one_over_soft_Rc2( 1.0 / (soft_coul_cutoff*soft_coul_cutoff) );
+
+    const MultiFloat k_rf( (1.0 / pow_3(soft_coul_cutoff)) * ( (dielectric()-1) /
+                                                               (2*dielectric() + 1) ) );
+    const MultiFloat c_rf( (1.0 / soft_coul_cutoff ) * ( (3*dielectric()) /
+                                                         (2*dielectric() + 1) ) );
     const MultiFloat half(0.5);
     const MultiInt dummy_id = CLJAtoms::idOfDummy();
     const qint32 dummy_int = dummy_id[0];
@@ -5893,7 +5896,7 @@ void CLJSoftIntraRFFunction::calcVacEnergyGeo(const CLJAtoms &atoms,
     const MultiFloat delta( this->alphaTimesShiftDelta() );
     const MultiFloat alfa( this->alpha() );
     
-    MultiFloat tmp, r2, soft_r, one_over_soft_r, sigma, delta_sigma_r2;
+    MultiFloat tmp, r2, soft_r, soft_r2, one_over_soft_r, sigma, delta_sigma_r2;
     MultiFloat sig2_over_delta, sig6_over_delta3;
     MultiFloat bond_mask;
     MultiDouble icnrg(0), iljnrg(0);
@@ -5939,17 +5942,16 @@ void CLJSoftIntraRFFunction::calcVacEnergyGeo(const CLJAtoms &atoms,
                     tmp = za[j] - z;
                     r2.multiplyAdd(tmp, tmp);
                     
-                    soft_r = r2 + alfa;
-                    soft_r = soft_r.sqrt();
+                    soft_r2 = r2 + alfa;
+                    soft_r = soft_r2.sqrt();
 
                     one_over_soft_r = soft_r.reciprocal();
 
-                    //calculate the coulomb energy using shift-electrostatics
-                    // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                    tmp = soft_r - soft_Rc;
-                    tmp *= one_over_soft_Rc2;
-                    tmp -= one_over_soft_Rc;
-                    tmp += one_over_soft_r;
+                    // calculate the coulomb energy using
+                    // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                    // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                    // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                    tmp = one_over_soft_r + k_rf * soft_r2 - c_rf;
                     tmp *= one_minus_alpha_to_n * q * qa[j];
 
                     //apply the cutoff - compare r against Rc. This will
@@ -6021,8 +6023,11 @@ void CLJSoftIntraRFFunction::calcVacEnergyGeo(const CLJAtoms &atoms0, const CLJA
     const float soft_coul_cutoff = std::sqrt(alpha() + coul_cutoff*coul_cutoff);
 
     const MultiFloat soft_Rc(soft_coul_cutoff);
-    const MultiFloat one_over_soft_Rc( 1.0 / soft_coul_cutoff );
-    const MultiFloat one_over_soft_Rc2( 1.0 / (soft_coul_cutoff*soft_coul_cutoff) );
+
+    const MultiFloat k_rf( (1.0 / pow_3(soft_coul_cutoff)) * ( (dielectric()-1) /
+                                                               (2*dielectric() + 1) ) );
+    const MultiFloat c_rf( (1.0 / soft_coul_cutoff ) * ( (3*dielectric()) /
+                                                         (2*dielectric() + 1) ) );
     const MultiFloat half(0.5);
     const MultiInt dummy_id = CLJAtoms::idOfDummy();
     const qint32 dummy_int = dummy_id[0];
@@ -6030,7 +6035,7 @@ void CLJSoftIntraRFFunction::calcVacEnergyGeo(const CLJAtoms &atoms0, const CLJA
     const MultiFloat delta( this->alphaTimesShiftDelta() );
     const MultiFloat alfa( this->alpha() );
     
-    MultiFloat tmp, r2, soft_r, one_over_soft_r, sigma, delta_sigma_r2;
+    MultiFloat tmp, r2, soft_r, soft_r2, one_over_soft_r, sigma, delta_sigma_r2;
     MultiFloat sig2_over_delta, sig6_over_delta3;
     MultiFloat bond_mask;
     MultiDouble icnrg(0), iljnrg(0);
@@ -6073,17 +6078,16 @@ void CLJSoftIntraRFFunction::calcVacEnergyGeo(const CLJAtoms &atoms0, const CLJA
                         tmp = z1[j] - z;
                         r2.multiplyAdd(tmp, tmp);
                         
-                        soft_r = r2 + alfa;
-                        soft_r = soft_r.sqrt();
+                        soft_r2 = r2 + alfa;
+                        soft_r = soft_r2.sqrt();
 
                         one_over_soft_r = soft_r.reciprocal();
 
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = soft_r - soft_Rc;
-                        tmp *= one_over_soft_Rc2;
-                        tmp -= one_over_soft_Rc;
-                        tmp += one_over_soft_r;
+                        // calculate the coulomb energy using
+                        // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                        // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                        // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                        tmp = one_over_soft_r + k_rf * soft_r2 - c_rf;
                         tmp *= one_minus_alpha_to_n * q * q1[j];
 
                         //apply the cutoff - compare r against Rc. This will
@@ -6158,17 +6162,16 @@ void CLJSoftIntraRFFunction::calcVacEnergyGeo(const CLJAtoms &atoms0, const CLJA
                         tmp = z1[j] - z;
                         r2.multiplyAdd(tmp, tmp);
                         
-                        soft_r = r2 + alfa;
-                        soft_r = soft_r.sqrt();
+                        soft_r2 = r2 + alfa;
+                        soft_r = soft_r2.sqrt();
 
                         one_over_soft_r = soft_r.reciprocal();
 
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = soft_r - soft_Rc;
-                        tmp *= one_over_soft_Rc2;
-                        tmp -= one_over_soft_Rc;
-                        tmp += one_over_soft_r;
+                        // calculate the coulomb energy using
+                        // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                        // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                        // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                        tmp = one_over_soft_r + k_rf * soft_r2 - c_rf;
                         tmp *= one_minus_alpha_to_n * q * q1[j];
 
                         //apply the cutoff - compare r against Rc. This will
@@ -6234,8 +6237,11 @@ void CLJSoftIntraRFFunction::calcBoxEnergyGeo(const CLJAtoms &atoms,
     const float soft_coul_cutoff = std::sqrt(alpha() + coul_cutoff*coul_cutoff);
 
     const MultiFloat soft_Rc(soft_coul_cutoff);
-    const MultiFloat one_over_soft_Rc( 1.0 / soft_coul_cutoff );
-    const MultiFloat one_over_soft_Rc2( 1.0 / (soft_coul_cutoff*soft_coul_cutoff) );
+
+    const MultiFloat k_rf( (1.0 / pow_3(soft_coul_cutoff)) * ( (dielectric()-1) /
+                                                               (2*dielectric() + 1) ) );
+    const MultiFloat c_rf( (1.0 / soft_coul_cutoff ) * ( (3*dielectric()) /
+                                                         (2*dielectric() + 1) ) );
     const MultiFloat half(0.5);
     const MultiInt dummy_id = CLJAtoms::idOfDummy();
     const qint32 dummy_int = dummy_id[0];
@@ -6243,7 +6249,7 @@ void CLJSoftIntraRFFunction::calcBoxEnergyGeo(const CLJAtoms &atoms,
     const MultiFloat delta( this->alphaTimesShiftDelta() );
     const MultiFloat alfa( this->alpha() );
     
-    MultiFloat tmp, r2, soft_r, one_over_soft_r, sigma, delta_sigma_r2;
+    MultiFloat tmp, r2, soft_r, soft_r2, one_over_soft_r, sigma, delta_sigma_r2;
     MultiFloat sig2_over_delta, sig6_over_delta3;
     MultiFloat bond_mask;
     MultiDouble icnrg(0), iljnrg(0);
@@ -6305,17 +6311,16 @@ void CLJSoftIntraRFFunction::calcBoxEnergyGeo(const CLJAtoms &atoms,
                     tmp -= box_z.logicalAnd( half_box_z.compareLess(tmp) );
                     r2.multiplyAdd(tmp, tmp);
                     
-                    soft_r = r2 + alfa;
-                    soft_r = soft_r.sqrt();
+                    soft_r2 = r2 + alfa;
+                    soft_r = soft_r2.sqrt();
 
                     one_over_soft_r = soft_r.reciprocal();
 
-                    //calculate the coulomb energy using shift-electrostatics
-                    // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                    tmp = soft_r - soft_Rc;
-                    tmp *= one_over_soft_Rc2;
-                    tmp -= one_over_soft_Rc;
-                    tmp += one_over_soft_r;
+                    // calculate the coulomb energy using
+                    // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                    // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                    // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                    tmp = one_over_soft_r + k_rf * soft_r2 - c_rf;
                     tmp *= one_minus_alpha_to_n * q * qa[j];
 
                     //apply the cutoff - compare r against Rc. This will
@@ -6389,8 +6394,11 @@ void CLJSoftIntraRFFunction::calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJA
     const float soft_coul_cutoff = std::sqrt(alpha() + coul_cutoff*coul_cutoff);
 
     const MultiFloat soft_Rc(soft_coul_cutoff);
-    const MultiFloat one_over_soft_Rc( 1.0 / soft_coul_cutoff );
-    const MultiFloat one_over_soft_Rc2( 1.0 / (soft_coul_cutoff*soft_coul_cutoff) );
+
+    const MultiFloat k_rf( (1.0 / pow_3(soft_coul_cutoff)) * ( (dielectric()-1) /
+                                                               (2*dielectric() + 1) ) );
+    const MultiFloat c_rf( (1.0 / soft_coul_cutoff ) * ( (3*dielectric()) /
+                                                         (2*dielectric() + 1) ) );
     const MultiFloat half(0.5);
     const MultiInt dummy_id = CLJAtoms::idOfDummy();
     const qint32 dummy_int = dummy_id[0];
@@ -6398,7 +6406,7 @@ void CLJSoftIntraRFFunction::calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJA
     const MultiFloat delta( this->alphaTimesShiftDelta() );
     const MultiFloat alfa( this->alpha() );
     
-    MultiFloat tmp, r2, soft_r, one_over_soft_r, sigma, delta_sigma_r2;
+    MultiFloat tmp, r2, soft_r, soft_r2, one_over_soft_r, sigma, delta_sigma_r2;
     MultiFloat sig2_over_delta, sig6_over_delta3;
     MultiFloat bond_mask;
     MultiDouble icnrg(0), iljnrg(0);
@@ -6457,17 +6465,16 @@ void CLJSoftIntraRFFunction::calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJA
                         tmp -= box_z.logicalAnd( half_box_z.compareLess(tmp) );
                         r2.multiplyAdd(tmp, tmp);
                         
-                        soft_r = r2 + alfa;
-                        soft_r = soft_r.sqrt();
+                        soft_r2 = r2 + alfa;
+                        soft_r = soft_r2.sqrt();
 
                         one_over_soft_r = soft_r.reciprocal();
 
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = soft_r - soft_Rc;
-                        tmp *= one_over_soft_Rc2;
-                        tmp -= one_over_soft_Rc;
-                        tmp += one_over_soft_r;
+                        // calculate the coulomb energy using
+                        // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                        // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                        // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                        tmp = one_over_soft_r + k_rf * soft_r2 - c_rf;
                         tmp *= one_minus_alpha_to_n * q * q1[j];
 
                         //apply the cutoff - compare r against Rc. This will
@@ -6550,17 +6557,16 @@ void CLJSoftIntraRFFunction::calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJA
                         tmp -= box_z.logicalAnd( half_box_z.compareLess(tmp) );
                         r2.multiplyAdd(tmp, tmp);
                         
-                        soft_r = r2 + alfa;
-                        soft_r = soft_r.sqrt();
+                        soft_r2 = r2 + alfa;
+                        soft_r = soft_r2.sqrt();
 
                         one_over_soft_r = soft_r.reciprocal();
 
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = soft_r - soft_Rc;
-                        tmp *= one_over_soft_Rc2;
-                        tmp -= one_over_soft_Rc;
-                        tmp += one_over_soft_r;
+                        // calculate the coulomb energy using
+                        // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                        // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                        // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                        tmp = one_over_soft_r + k_rf * soft_r2 - c_rf;
                         tmp *= one_minus_alpha_to_n * q * q1[j];
 
                         //apply the cutoff - compare r against Rc. This will
@@ -6625,8 +6631,11 @@ void CLJSoftIntraRFFunction::calcVacEnergyAri(const CLJAtoms &atoms,
     const float soft_coul_cutoff = std::sqrt(alpha() + coul_cutoff*coul_cutoff);
 
     const MultiFloat soft_Rc(soft_coul_cutoff);
-    const MultiFloat one_over_soft_Rc( 1.0 / soft_coul_cutoff );
-    const MultiFloat one_over_soft_Rc2( 1.0 / (soft_coul_cutoff*soft_coul_cutoff) );
+
+    const MultiFloat k_rf( (1.0 / pow_3(soft_coul_cutoff)) * ( (dielectric()-1) /
+                                                               (2*dielectric() + 1) ) );
+    const MultiFloat c_rf( (1.0 / soft_coul_cutoff ) * ( (3*dielectric()) /
+                                                         (2*dielectric() + 1) ) );
     const MultiFloat half(0.5);
     const MultiInt dummy_id = CLJAtoms::idOfDummy();
     const qint32 dummy_int = dummy_id[0];
@@ -6634,7 +6643,7 @@ void CLJSoftIntraRFFunction::calcVacEnergyAri(const CLJAtoms &atoms,
     const MultiFloat delta( this->alphaTimesShiftDelta() );
     const MultiFloat alfa( this->alpha() );
     
-    MultiFloat tmp, r2, soft_r, one_over_soft_r, sigma, delta_sigma_r2;
+    MultiFloat tmp, r2, soft_r, soft_r2, one_over_soft_r, sigma, delta_sigma_r2;
     MultiFloat sig2_over_delta, sig6_over_delta3;
     MultiFloat bond_mask;
     MultiDouble icnrg(0), iljnrg(0);
@@ -6680,17 +6689,16 @@ void CLJSoftIntraRFFunction::calcVacEnergyAri(const CLJAtoms &atoms,
                     tmp = za[j] - z;
                     r2.multiplyAdd(tmp, tmp);
                     
-                    soft_r = r2 + alfa;
-                    soft_r = soft_r.sqrt();
+                    soft_r2 = r2 + alfa;
+                    soft_r = soft_r2.sqrt();
 
                     one_over_soft_r = soft_r.reciprocal();
 
-                    //calculate the coulomb energy using shift-electrostatics
-                    // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                    tmp = soft_r - soft_Rc;
-                    tmp *= one_over_soft_Rc2;
-                    tmp -= one_over_soft_Rc;
-                    tmp += one_over_soft_r;
+                    // calculate the coulomb energy using
+                    // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                    // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                    // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                    tmp = one_over_soft_r + k_rf * soft_r2 - c_rf;
                     tmp *= one_minus_alpha_to_n * q * qa[j];
 
                     //apply the cutoff - compare r against Rc. This will
@@ -6762,8 +6770,11 @@ void CLJSoftIntraRFFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJA
     const float soft_coul_cutoff = std::sqrt(alpha() + coul_cutoff*coul_cutoff);
 
     const MultiFloat soft_Rc(soft_coul_cutoff);
-    const MultiFloat one_over_soft_Rc( 1.0 / soft_coul_cutoff );
-    const MultiFloat one_over_soft_Rc2( 1.0 / (soft_coul_cutoff*soft_coul_cutoff) );
+
+    const MultiFloat k_rf( (1.0 / pow_3(soft_coul_cutoff)) * ( (dielectric()-1) /
+                                                               (2*dielectric() + 1) ) );
+    const MultiFloat c_rf( (1.0 / soft_coul_cutoff ) * ( (3*dielectric()) /
+                                                         (2*dielectric() + 1) ) );
     const MultiFloat half(0.5);
     const MultiInt dummy_id = CLJAtoms::idOfDummy();
     const qint32 dummy_int = dummy_id[0];
@@ -6771,7 +6782,7 @@ void CLJSoftIntraRFFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJA
     const MultiFloat delta( this->alphaTimesShiftDelta() );
     const MultiFloat alfa( this->alpha() );
     
-    MultiFloat tmp, r2, soft_r, one_over_soft_r, sigma, delta_sigma_r2;
+    MultiFloat tmp, r2, soft_r, soft_r2, one_over_soft_r, sigma, delta_sigma_r2;
     MultiFloat sig2_over_delta, sig6_over_delta3;
     MultiFloat bond_mask;
     MultiDouble icnrg(0), iljnrg(0);
@@ -6814,17 +6825,16 @@ void CLJSoftIntraRFFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJA
                         tmp = z1[j] - z;
                         r2.multiplyAdd(tmp, tmp);
                         
-                        soft_r = r2 + alfa;
-                        soft_r = soft_r.sqrt();
+                        soft_r2 = r2 + alfa;
+                        soft_r = soft_r2.sqrt();
 
                         one_over_soft_r = soft_r.reciprocal();
 
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = soft_r - soft_Rc;
-                        tmp *= one_over_soft_Rc2;
-                        tmp -= one_over_soft_Rc;
-                        tmp += one_over_soft_r;
+                        // calculate the coulomb energy using
+                        // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                        // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                        // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                        tmp = one_over_soft_r + k_rf * soft_r2 - c_rf;
                         tmp *= one_minus_alpha_to_n * q * q1[j];
 
                         //apply the cutoff - compare r against Rc. This will
@@ -6899,17 +6909,16 @@ void CLJSoftIntraRFFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJA
                         tmp = z1[j] - z;
                         r2.multiplyAdd(tmp, tmp);
                         
-                        soft_r = r2 + alfa;
-                        soft_r = soft_r.sqrt();
+                        soft_r2 = r2 + alfa;
+                        soft_r = soft_r2.sqrt();
 
                         one_over_soft_r = soft_r.reciprocal();
 
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = soft_r - soft_Rc;
-                        tmp *= one_over_soft_Rc2;
-                        tmp -= one_over_soft_Rc;
-                        tmp += one_over_soft_r;
+                        // calculate the coulomb energy using
+                        // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                        // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                        // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                        tmp = one_over_soft_r + k_rf * soft_r2 - c_rf;
                         tmp *= one_minus_alpha_to_n * q * q1[j];
 
                         //apply the cutoff - compare r against Rc. This will
@@ -6975,8 +6984,11 @@ void CLJSoftIntraRFFunction::calcBoxEnergyAri(const CLJAtoms &atoms,
     const float soft_coul_cutoff = std::sqrt(alpha() + coul_cutoff*coul_cutoff);
 
     const MultiFloat soft_Rc(soft_coul_cutoff);
-    const MultiFloat one_over_soft_Rc( 1.0 / soft_coul_cutoff );
-    const MultiFloat one_over_soft_Rc2( 1.0 / (soft_coul_cutoff*soft_coul_cutoff) );
+
+    const MultiFloat k_rf( (1.0 / pow_3(soft_coul_cutoff)) * ( (dielectric()-1) /
+                                                               (2*dielectric() + 1) ) );
+    const MultiFloat c_rf( (1.0 / soft_coul_cutoff ) * ( (3*dielectric()) /
+                                                         (2*dielectric() + 1) ) );
     const MultiFloat half(0.5);
     const MultiInt dummy_id = CLJAtoms::idOfDummy();
     const qint32 dummy_int = dummy_id[0];
@@ -6984,7 +6996,7 @@ void CLJSoftIntraRFFunction::calcBoxEnergyAri(const CLJAtoms &atoms,
     const MultiFloat delta( this->alphaTimesShiftDelta() );
     const MultiFloat alfa( this->alpha() );
     
-    MultiFloat tmp, r2, soft_r, one_over_soft_r, sigma, delta_sigma_r2;
+    MultiFloat tmp, r2, soft_r, soft_r2, one_over_soft_r, sigma, delta_sigma_r2;
     MultiFloat sig2_over_delta, sig6_over_delta3;
     MultiFloat bond_mask;
     MultiDouble icnrg(0), iljnrg(0);
@@ -7046,17 +7058,16 @@ void CLJSoftIntraRFFunction::calcBoxEnergyAri(const CLJAtoms &atoms,
                     tmp -= box_z.logicalAnd( half_box_z.compareLess(tmp) );
                     r2.multiplyAdd(tmp, tmp);
                     
-                    soft_r = r2 + alfa;
-                    soft_r = soft_r.sqrt();
+                    soft_r2 = r2 + alfa;
+                    soft_r = soft_r2.sqrt();
 
                     one_over_soft_r = soft_r.reciprocal();
 
-                    //calculate the coulomb energy using shift-electrostatics
-                    // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                    tmp = soft_r - soft_Rc;
-                    tmp *= one_over_soft_Rc2;
-                    tmp -= one_over_soft_Rc;
-                    tmp += one_over_soft_r;
+                    // calculate the coulomb energy using
+                    // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                    // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                    // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                    tmp = one_over_soft_r + k_rf * soft_r2 - c_rf;
                     tmp *= one_minus_alpha_to_n * q * qa[j];
 
                     //apply the cutoff - compare r against Rc. This will
@@ -7130,8 +7141,11 @@ void CLJSoftIntraRFFunction::calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJA
     const float soft_coul_cutoff = std::sqrt(alpha() + coul_cutoff*coul_cutoff);
 
     const MultiFloat soft_Rc(soft_coul_cutoff);
-    const MultiFloat one_over_soft_Rc( 1.0 / soft_coul_cutoff );
-    const MultiFloat one_over_soft_Rc2( 1.0 / (soft_coul_cutoff*soft_coul_cutoff) );
+
+    const MultiFloat k_rf( (1.0 / pow_3(soft_coul_cutoff)) * ( (dielectric()-1) /
+                                                               (2*dielectric() + 1) ) );
+    const MultiFloat c_rf( (1.0 / soft_coul_cutoff ) * ( (3*dielectric()) /
+                                                         (2*dielectric() + 1) ) );
     const MultiFloat half(0.5);
     const MultiInt dummy_id = CLJAtoms::idOfDummy();
     const qint32 dummy_int = dummy_id[0];
@@ -7139,7 +7153,7 @@ void CLJSoftIntraRFFunction::calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJA
     const MultiFloat delta( this->alphaTimesShiftDelta() );
     const MultiFloat alfa( this->alpha() );
     
-    MultiFloat tmp, r2, soft_r, one_over_soft_r, sigma, delta_sigma_r2;
+    MultiFloat tmp, r2, soft_r, soft_r2, one_over_soft_r, sigma, delta_sigma_r2;
     MultiFloat sig2_over_delta, sig6_over_delta3;
     MultiFloat bond_mask;
     MultiDouble icnrg(0), iljnrg(0);
@@ -7198,17 +7212,16 @@ void CLJSoftIntraRFFunction::calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJA
                         tmp -= box_z.logicalAnd( half_box_z.compareLess(tmp) );
                         r2.multiplyAdd(tmp, tmp);
                         
-                        soft_r = r2 + alfa;
-                        soft_r = soft_r.sqrt();
+                        soft_r2 = r2 + alfa;
+                        soft_r = soft_r2.sqrt();
 
                         one_over_soft_r = soft_r.reciprocal();
 
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = soft_r - soft_Rc;
-                        tmp *= one_over_soft_Rc2;
-                        tmp -= one_over_soft_Rc;
-                        tmp += one_over_soft_r;
+                        // calculate the coulomb energy using
+                        // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                        // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                        // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                        tmp = one_over_soft_r + k_rf * soft_r2 - c_rf;
                         tmp *= one_minus_alpha_to_n * q * q1[j];
 
                         //apply the cutoff - compare r against Rc. This will
@@ -7291,17 +7304,16 @@ void CLJSoftIntraRFFunction::calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJA
                         tmp -= box_z.logicalAnd( half_box_z.compareLess(tmp) );
                         r2.multiplyAdd(tmp, tmp);
                         
-                        soft_r = r2 + alfa;
-                        soft_r = soft_r.sqrt();
+                        soft_r2 = r2 + alfa;
+                        soft_r = soft_r2.sqrt();
 
                         one_over_soft_r = soft_r.reciprocal();
 
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = soft_r - soft_Rc;
-                        tmp *= one_over_soft_Rc2;
-                        tmp -= one_over_soft_Rc;
-                        tmp += one_over_soft_r;
+                        // calculate the coulomb energy using
+                        // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                        // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                        // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                        tmp = one_over_soft_r + k_rf * soft_r2 - c_rf;
                         tmp *= one_minus_alpha_to_n * q * q1[j];
 
                         //apply the cutoff - compare r against Rc. This will
