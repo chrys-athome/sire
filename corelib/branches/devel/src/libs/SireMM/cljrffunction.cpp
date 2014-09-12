@@ -4291,13 +4291,15 @@ void CLJIntraRFFunction::calcVacEnergyGeo(const CLJAtoms &atoms,
     const MultiFloat Rc(coul_cutoff);
     const MultiFloat Rlj(lj_cutoff);
 
-    const MultiFloat one_over_Rc( 1.0 / coul_cutoff );
-    const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
+    const MultiFloat k_rf( (1.0 / pow_3(coul_cutoff)) * ( (dielectric()-1) /
+                                                          (2*dielectric() + 1) ) );
+    const MultiFloat c_rf( (1.0 / coul_cutoff ) * ( (3*dielectric()) /
+                                                    (2*dielectric() + 1) ) );
     const MultiFloat half(0.5);
     const MultiInt dummy_id = CLJAtoms::idOfDummy();
     const qint32 dummy_int = dummy_id[0];
 
-    MultiFloat tmp, r, one_over_r, sig2_over_r2, sig6_over_r6;
+    MultiFloat tmp, r, r2, one_over_r, sig2_over_r2, sig6_over_r6;
     MultiFloat bond_mask;
     MultiDouble icnrg(0), iljnrg(0);
     MultiInt itmp;
@@ -4336,21 +4338,20 @@ void CLJIntraRFFunction::calcVacEnergyGeo(const CLJAtoms &atoms,
                 
                     //calculate the distance between the fixed and mobile atoms
                     tmp = xa[j] - x;
-                    r = tmp * tmp;
+                    r2 = tmp * tmp;
                     tmp = ya[j] - y;
-                    r.multiplyAdd(tmp, tmp);
+                    r2.multiplyAdd(tmp, tmp);
                     tmp = za[j] - z;
-                    r.multiplyAdd(tmp, tmp);
-                    r = r.sqrt();
+                    r2.multiplyAdd(tmp, tmp);
+                    r = r2.sqrt();
 
                     one_over_r = r.reciprocal();
             
-                    //calculate the coulomb energy using shift-electrostatics
-                    // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                    tmp = r - Rc;
-                    tmp *= one_over_Rc2;
-                    tmp -= one_over_Rc;
-                    tmp += one_over_r;
+                    // calculate the coulomb energy using
+                    // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                    // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                    // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                    tmp = one_over_r + k_rf * r2 - c_rf;
                     tmp *= q * qa[j];
                 
                     //apply the cutoff - compare r against Rc. This will
@@ -4416,13 +4417,16 @@ void CLJIntraRFFunction::calcVacEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms
     
     const MultiFloat Rc(coul_cutoff);
     const MultiFloat Rlj(lj_cutoff);
-    const MultiFloat one_over_Rc( 1.0 / coul_cutoff );
-    const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
+
+    const MultiFloat k_rf( (1.0 / pow_3(coul_cutoff)) * ( (dielectric()-1) /
+                                                          (2*dielectric() + 1) ) );
+    const MultiFloat c_rf( (1.0 / coul_cutoff ) * ( (3*dielectric()) /
+                                                    (2*dielectric() + 1) ) );
     const MultiFloat half(0.5);
     const MultiInt dummy_id = CLJAtoms::idOfDummy();
     const qint32 dummy_int = dummy_id[0];
 
-    MultiFloat tmp, r, one_over_r, sig2_over_r2, sig6_over_r6;
+    MultiFloat tmp, r, r2, one_over_r, sig2_over_r2, sig6_over_r6;
     MultiDouble icnrg(0), iljnrg(0);
     MultiInt itmp;
 
@@ -4457,21 +4461,20 @@ void CLJIntraRFFunction::calcVacEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms
                     {
                         //calculate the distance between the fixed and mobile atoms
                         tmp = x1[j] - x;
-                        r = tmp * tmp;
+                        r2 = tmp * tmp;
                         tmp = y1[j] - y;
-                        r.multiplyAdd(tmp, tmp);
+                        r2.multiplyAdd(tmp, tmp);
                         tmp = z1[j] - z;
-                        r.multiplyAdd(tmp, tmp);
-                        r = r.sqrt();
+                        r2.multiplyAdd(tmp, tmp);
+                        r = r2.sqrt();
 
                         one_over_r = r.reciprocal();
                 
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = r - Rc;
-                        tmp *= one_over_Rc2;
-                        tmp -= one_over_Rc;
-                        tmp += one_over_r;
+                        // calculate the coulomb energy using
+                        // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                        // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                        // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                        tmp = one_over_r + k_rf * r2 - c_rf;
                         tmp *= q * q1[j];
                     
                         //apply the cutoff - compare r against Rc. This will
@@ -4537,21 +4540,20 @@ void CLJIntraRFFunction::calcVacEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms
 
                         //calculate the distance between the fixed and mobile atoms
                         tmp = x1[j] - x;
-                        r = tmp * tmp;
+                        r2 = tmp * tmp;
                         tmp = y1[j] - y;
-                        r.multiplyAdd(tmp, tmp);
+                        r2.multiplyAdd(tmp, tmp);
                         tmp = z1[j] - z;
-                        r.multiplyAdd(tmp, tmp);
-                        r = r.sqrt();
+                        r2.multiplyAdd(tmp, tmp);
+                        r = r2.sqrt();
 
                         one_over_r = r.reciprocal();
                 
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = r - Rc;
-                        tmp *= one_over_Rc2;
-                        tmp -= one_over_Rc;
-                        tmp += one_over_r;
+                        // calculate the coulomb energy using
+                        // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                        // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                        // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                        tmp = one_over_r + k_rf * r2 - c_rf;
                         tmp *= q * q1[j];
                     
                         //apply the cutoff - compare r against Rc. This will
@@ -4609,13 +4611,15 @@ void CLJIntraRFFunction::calcBoxEnergyGeo(const CLJAtoms &atoms, const Vector &b
     const MultiFloat Rc(coul_cutoff);
     const MultiFloat Rlj(lj_cutoff);
 
-    const MultiFloat one_over_Rc( 1.0 / coul_cutoff );
-    const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
+    const MultiFloat k_rf( (1.0 / pow_3(coul_cutoff)) * ( (dielectric()-1) /
+                                                          (2*dielectric() + 1) ) );
+    const MultiFloat c_rf( (1.0 / coul_cutoff ) * ( (3*dielectric()) /
+                                                    (2*dielectric() + 1) ) );
     const MultiFloat half(0.5);
     const MultiInt dummy_id = CLJAtoms::idOfDummy();
     const qint32 dummy_int = dummy_id[0];
 
-    MultiFloat tmp, r, one_over_r, sig2_over_r2, sig6_over_r6;
+    MultiFloat tmp, r, r2, one_over_r, sig2_over_r2, sig6_over_r6;
     MultiFloat bond_mask;
     MultiDouble icnrg(0), iljnrg(0);
     MultiInt itmp;
@@ -4664,28 +4668,27 @@ void CLJIntraRFFunction::calcBoxEnergyGeo(const CLJAtoms &atoms, const Vector &b
                     tmp = xa[j] - x;
                     tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                     tmp -= box_x.logicalAnd( half_box_x.compareLess(tmp) );
-                    r = tmp * tmp;
+                    r2 = tmp * tmp;
 
                     tmp = ya[j] - y;
                     tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                     tmp -= box_y.logicalAnd( half_box_y.compareLess(tmp) );
-                    r.multiplyAdd(tmp, tmp);
+                    r2.multiplyAdd(tmp, tmp);
 
                     tmp = za[j] - z;
                     tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                     tmp -= box_z.logicalAnd( half_box_z.compareLess(tmp) );
-                    r.multiplyAdd(tmp, tmp);
+                    r2.multiplyAdd(tmp, tmp);
 
-                    r = r.sqrt();
+                    r = r2.sqrt();
 
                     one_over_r = r.reciprocal();
             
-                    //calculate the coulomb energy using shift-electrostatics
-                    // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                    tmp = r - Rc;
-                    tmp *= one_over_Rc2;
-                    tmp -= one_over_Rc;
-                    tmp += one_over_r;
+                    // calculate the coulomb energy using
+                    // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                    // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                    // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                    tmp = one_over_r + k_rf * r2 - c_rf;
                     tmp *= q * qa[j];
                 
                     //apply the cutoff - compare r against Rc. This will
@@ -4753,13 +4756,16 @@ void CLJIntraRFFunction::calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms
     
     const MultiFloat Rc(coul_cutoff);
     const MultiFloat Rlj(lj_cutoff);
-    const MultiFloat one_over_Rc( 1.0 / coul_cutoff );
-    const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
+
+    const MultiFloat k_rf( (1.0 / pow_3(coul_cutoff)) * ( (dielectric()-1) /
+                                                          (2*dielectric() + 1) ) );
+    const MultiFloat c_rf( (1.0 / coul_cutoff ) * ( (3*dielectric()) /
+                                                    (2*dielectric() + 1) ) );
     const MultiFloat half(0.5);
     const MultiInt dummy_id = CLJAtoms::idOfDummy();
     const qint32 dummy_int = dummy_id[0];
 
-    MultiFloat tmp, r, one_over_r, sig2_over_r2, sig6_over_r6;
+    MultiFloat tmp, r, r2, one_over_r, sig2_over_r2, sig6_over_r6;
     MultiDouble icnrg(0), iljnrg(0);
     MultiInt itmp;
 
@@ -4804,28 +4810,27 @@ void CLJIntraRFFunction::calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms
                         tmp = x1[j] - x;
                         tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                         tmp -= box_x.logicalAnd( half_box_x.compareLess(tmp) );
-                        r = tmp * tmp;
+                        r2 = tmp * tmp;
 
                         tmp = y1[j] - y;
                         tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                         tmp -= box_y.logicalAnd( half_box_y.compareLess(tmp) );
-                        r.multiplyAdd(tmp, tmp);
+                        r2.multiplyAdd(tmp, tmp);
 
                         tmp = z1[j] - z;
                         tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                         tmp -= box_z.logicalAnd( half_box_z.compareLess(tmp) );
-                        r.multiplyAdd(tmp, tmp);
+                        r2.multiplyAdd(tmp, tmp);
                         
-                        r = r.sqrt();
+                        r = r2.sqrt();
 
                         one_over_r = r.reciprocal();
                 
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = r - Rc;
-                        tmp *= one_over_Rc2;
-                        tmp -= one_over_Rc;
-                        tmp += one_over_r;
+                        // calculate the coulomb energy using
+                        // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                        // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                        // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                        tmp = one_over_r + k_rf * r2 - c_rf;
                         tmp *= q * q1[j];
                     
                         //apply the cutoff - compare r against Rc. This will
@@ -4892,28 +4897,27 @@ void CLJIntraRFFunction::calcBoxEnergyGeo(const CLJAtoms &atoms0, const CLJAtoms
                         tmp = x1[j] - x;
                         tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                         tmp -= box_x.logicalAnd( half_box_x.compareLess(tmp) );
-                        r = tmp * tmp;
+                        r2 = tmp * tmp;
 
                         tmp = y1[j] - y;
                         tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                         tmp -= box_y.logicalAnd( half_box_y.compareLess(tmp) );
-                        r.multiplyAdd(tmp, tmp);
+                        r2.multiplyAdd(tmp, tmp);
 
                         tmp = z1[j] - z;
                         tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                         tmp -= box_z.logicalAnd( half_box_z.compareLess(tmp) );
-                        r.multiplyAdd(tmp, tmp);
+                        r2.multiplyAdd(tmp, tmp);
                         
-                        r = r.sqrt();
+                        r = r2.sqrt();
 
                         one_over_r = r.reciprocal();
                 
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = r - Rc;
-                        tmp *= one_over_Rc2;
-                        tmp -= one_over_Rc;
-                        tmp += one_over_r;
+                        // calculate the coulomb energy using
+                        // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                        // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                        // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                        tmp = one_over_r + k_rf * r2 - c_rf;
                         tmp *= q * q1[j];
                     
                         //apply the cutoff - compare r against Rc. This will
@@ -4970,13 +4974,15 @@ void CLJIntraRFFunction::calcVacEnergyAri(const CLJAtoms &atoms,
     const MultiFloat Rc(coul_cutoff);
     const MultiFloat Rlj(lj_cutoff);
 
-    const MultiFloat one_over_Rc( 1.0 / coul_cutoff );
-    const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
+    const MultiFloat k_rf( (1.0 / pow_3(coul_cutoff)) * ( (dielectric()-1) /
+                                                          (2*dielectric() + 1) ) );
+    const MultiFloat c_rf( (1.0 / coul_cutoff ) * ( (3*dielectric()) /
+                                                    (2*dielectric() + 1) ) );
     const MultiFloat half(0.5);
     const MultiInt dummy_id = CLJAtoms::idOfDummy();
     const qint32 dummy_int = dummy_id[0];
 
-    MultiFloat tmp, r, one_over_r, sig2_over_r2, sig6_over_r6;
+    MultiFloat tmp, r, r2, one_over_r, sig2_over_r2, sig6_over_r6;
     MultiFloat bond_mask;
     MultiDouble icnrg(0), iljnrg(0);
     MultiInt itmp;
@@ -5015,21 +5021,20 @@ void CLJIntraRFFunction::calcVacEnergyAri(const CLJAtoms &atoms,
                 
                     //calculate the distance between the fixed and mobile atoms
                     tmp = xa[j] - x;
-                    r = tmp * tmp;
+                    r2 = tmp * tmp;
                     tmp = ya[j] - y;
-                    r.multiplyAdd(tmp, tmp);
+                    r2.multiplyAdd(tmp, tmp);
                     tmp = za[j] - z;
-                    r.multiplyAdd(tmp, tmp);
-                    r = r.sqrt();
+                    r2.multiplyAdd(tmp, tmp);
+                    r = r2.sqrt();
 
                     one_over_r = r.reciprocal();
             
-                    //calculate the coulomb energy using shift-electrostatics
-                    // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                    tmp = r - Rc;
-                    tmp *= one_over_Rc2;
-                    tmp -= one_over_Rc;
-                    tmp += one_over_r;
+                    // calculate the coulomb energy using
+                    // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                    // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                    // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                    tmp = one_over_r + k_rf * r2 - c_rf;
                     tmp *= q * qa[j];
                 
                     //apply the cutoff - compare r against Rc. This will
@@ -5098,13 +5103,16 @@ void CLJIntraRFFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAtoms
     
     const MultiFloat Rc(coul_cutoff);
     const MultiFloat Rlj(lj_cutoff);
-    const MultiFloat one_over_Rc( 1.0 / coul_cutoff );
-    const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
+
+    const MultiFloat k_rf( (1.0 / pow_3(coul_cutoff)) * ( (dielectric()-1) /
+                                                          (2*dielectric() + 1) ) );
+    const MultiFloat c_rf( (1.0 / coul_cutoff ) * ( (3*dielectric()) /
+                                                    (2*dielectric() + 1) ) );
     const MultiFloat half(0.5);
     const MultiInt dummy_id = CLJAtoms::idOfDummy();
     const qint32 dummy_int = dummy_id[0];
 
-    MultiFloat tmp, r, one_over_r, sig2_over_r2, sig6_over_r6;
+    MultiFloat tmp, r, r2, one_over_r, sig2_over_r2, sig6_over_r6;
     MultiDouble icnrg(0), iljnrg(0);
     MultiInt itmp;
 
@@ -5139,21 +5147,20 @@ void CLJIntraRFFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAtoms
                     {
                         //calculate the distance between the fixed and mobile atoms
                         tmp = x1[j] - x;
-                        r = tmp * tmp;
+                        r2 = tmp * tmp;
                         tmp = y1[j] - y;
-                        r.multiplyAdd(tmp, tmp);
+                        r2.multiplyAdd(tmp, tmp);
                         tmp = z1[j] - z;
-                        r.multiplyAdd(tmp, tmp);
-                        r = r.sqrt();
+                        r2.multiplyAdd(tmp, tmp);
+                        r = r2.sqrt();
 
                         one_over_r = r.reciprocal();
                 
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = r - Rc;
-                        tmp *= one_over_Rc2;
-                        tmp -= one_over_Rc;
-                        tmp += one_over_r;
+                        // calculate the coulomb energy using
+                        // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                        // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                        // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                        tmp = one_over_r + k_rf * r2 - c_rf;
                         tmp *= q * q1[j];
                     
                         //apply the cutoff - compare r against Rc. This will
@@ -5223,21 +5230,20 @@ void CLJIntraRFFunction::calcVacEnergyAri(const CLJAtoms &atoms0, const CLJAtoms
 
                         //calculate the distance between the fixed and mobile atoms
                         tmp = x1[j] - x;
-                        r = tmp * tmp;
+                        r2 = tmp * tmp;
                         tmp = y1[j] - y;
-                        r.multiplyAdd(tmp, tmp);
+                        r2.multiplyAdd(tmp, tmp);
                         tmp = z1[j] - z;
-                        r.multiplyAdd(tmp, tmp);
-                        r = r.sqrt();
+                        r2.multiplyAdd(tmp, tmp);
+                        r = r2.sqrt();
 
                         one_over_r = r.reciprocal();
                 
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = r - Rc;
-                        tmp *= one_over_Rc2;
-                        tmp -= one_over_Rc;
-                        tmp += one_over_r;
+                        // calculate the coulomb energy using
+                        // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                        // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                        // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                        tmp = one_over_r + k_rf * r2 - c_rf;
                         tmp *= q * q1[j];
                     
                         //apply the cutoff - compare r against Rc. This will
@@ -5300,13 +5306,15 @@ void CLJIntraRFFunction::calcBoxEnergyAri(const CLJAtoms &atoms, const Vector &b
     const MultiFloat Rc(coul_cutoff);
     const MultiFloat Rlj(lj_cutoff);
 
-    const MultiFloat one_over_Rc( 1.0 / coul_cutoff );
-    const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
+    const MultiFloat k_rf( (1.0 / pow_3(coul_cutoff)) * ( (dielectric()-1) /
+                                                          (2*dielectric() + 1) ) );
+    const MultiFloat c_rf( (1.0 / coul_cutoff ) * ( (3*dielectric()) /
+                                                    (2*dielectric() + 1) ) );
     const MultiFloat half(0.5);
     const MultiInt dummy_id = CLJAtoms::idOfDummy();
     const qint32 dummy_int = dummy_id[0];
 
-    MultiFloat tmp, r, one_over_r, sig2_over_r2, sig6_over_r6;
+    MultiFloat tmp, r, r2, one_over_r, sig2_over_r2, sig6_over_r6;
     MultiFloat bond_mask;
     MultiDouble icnrg(0), iljnrg(0);
     MultiInt itmp;
@@ -5355,28 +5363,27 @@ void CLJIntraRFFunction::calcBoxEnergyAri(const CLJAtoms &atoms, const Vector &b
                     tmp = xa[j] - x;
                     tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                     tmp -= box_x.logicalAnd( half_box_x.compareLess(tmp) );
-                    r = tmp * tmp;
+                    r2 = tmp * tmp;
 
                     tmp = ya[j] - y;
                     tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                     tmp -= box_y.logicalAnd( half_box_y.compareLess(tmp) );
-                    r.multiplyAdd(tmp, tmp);
+                    r2.multiplyAdd(tmp, tmp);
 
                     tmp = za[j] - z;
                     tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                     tmp -= box_z.logicalAnd( half_box_z.compareLess(tmp) );
-                    r.multiplyAdd(tmp, tmp);
+                    r2.multiplyAdd(tmp, tmp);
 
-                    r = r.sqrt();
+                    r = r2.sqrt();
 
                     one_over_r = r.reciprocal();
             
-                    //calculate the coulomb energy using shift-electrostatics
-                    // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                    tmp = r - Rc;
-                    tmp *= one_over_Rc2;
-                    tmp -= one_over_Rc;
-                    tmp += one_over_r;
+                    // calculate the coulomb energy using
+                    // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                    // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                    // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                    tmp = one_over_r + k_rf * r2 - c_rf;
                     tmp *= q * qa[j];
                 
                     //apply the cutoff - compare r against Rc. This will
@@ -5447,13 +5454,16 @@ void CLJIntraRFFunction::calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJAtoms
     
     const MultiFloat Rc(coul_cutoff);
     const MultiFloat Rlj(lj_cutoff);
-    const MultiFloat one_over_Rc( 1.0 / coul_cutoff );
-    const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
+
+    const MultiFloat k_rf( (1.0 / pow_3(coul_cutoff)) * ( (dielectric()-1) /
+                                                          (2*dielectric() + 1) ) );
+    const MultiFloat c_rf( (1.0 / coul_cutoff ) * ( (3*dielectric()) /
+                                                    (2*dielectric() + 1) ) );
     const MultiFloat half(0.5);
     const MultiInt dummy_id = CLJAtoms::idOfDummy();
     const qint32 dummy_int = dummy_id[0];
 
-    MultiFloat tmp, r, one_over_r, sig2_over_r2, sig6_over_r6;
+    MultiFloat tmp, r, r2, one_over_r, sig2_over_r2, sig6_over_r6;
     MultiDouble icnrg(0), iljnrg(0);
     MultiInt itmp;
 
@@ -5498,28 +5508,27 @@ void CLJIntraRFFunction::calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJAtoms
                         tmp = x1[j] - x;
                         tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                         tmp -= box_x.logicalAnd( half_box_x.compareLess(tmp) );
-                        r = tmp * tmp;
+                        r2 = tmp * tmp;
 
                         tmp = y1[j] - y;
                         tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                         tmp -= box_y.logicalAnd( half_box_y.compareLess(tmp) );
-                        r.multiplyAdd(tmp, tmp);
+                        r2.multiplyAdd(tmp, tmp);
 
                         tmp = z1[j] - z;
                         tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                         tmp -= box_z.logicalAnd( half_box_z.compareLess(tmp) );
-                        r.multiplyAdd(tmp, tmp);
+                        r2.multiplyAdd(tmp, tmp);
                         
-                        r = r.sqrt();
+                        r = r2.sqrt();
 
                         one_over_r = r.reciprocal();
                 
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = r - Rc;
-                        tmp *= one_over_Rc2;
-                        tmp -= one_over_Rc;
-                        tmp += one_over_r;
+                        // calculate the coulomb energy using
+                        // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                        // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                        // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                        tmp = one_over_r + k_rf * r2 - c_rf;
                         tmp *= q * q1[j];
                     
                         //apply the cutoff - compare r against Rc. This will
@@ -5591,28 +5600,27 @@ void CLJIntraRFFunction::calcBoxEnergyAri(const CLJAtoms &atoms0, const CLJAtoms
                         tmp = x1[j] - x;
                         tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                         tmp -= box_x.logicalAnd( half_box_x.compareLess(tmp) );
-                        r = tmp * tmp;
+                        r2 = tmp * tmp;
 
                         tmp = y1[j] - y;
                         tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                         tmp -= box_y.logicalAnd( half_box_y.compareLess(tmp) );
-                        r.multiplyAdd(tmp, tmp);
+                        r2.multiplyAdd(tmp, tmp);
 
                         tmp = z1[j] - z;
                         tmp &= MULTIFLOAT_POS_MASK;  // this creates the absolute value :-)
                         tmp -= box_z.logicalAnd( half_box_z.compareLess(tmp) );
-                        r.multiplyAdd(tmp, tmp);
+                        r2.multiplyAdd(tmp, tmp);
                         
-                        r = r.sqrt();
+                        r = r2.sqrt();
 
                         one_over_r = r.reciprocal();
                 
-                        //calculate the coulomb energy using shift-electrostatics
-                        // energy = q0q1 * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
-                        tmp = r - Rc;
-                        tmp *= one_over_Rc2;
-                        tmp -= one_over_Rc;
-                        tmp += one_over_r;
+                        // calculate the coulomb energy using
+                        // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+                        // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                        // c = (1/r_c) * (3 eps)/(2 eps + 1)
+                        tmp = one_over_r + k_rf * r2 - c_rf;
                         tmp *= q * q1[j];
                     
                         //apply the cutoff - compare r against Rc. This will
