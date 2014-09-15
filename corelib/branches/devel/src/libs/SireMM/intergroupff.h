@@ -46,11 +46,26 @@ class InterGroupFF;
 QDataStream& operator<<(QDataStream&, const SireMM::InterGroupFF&);
 QDataStream& operator>>(QDataStream&, SireMM::InterGroupFF&);
 
+namespace SireFF
+{
+class ForceTable;
+class FieldTable;
+class PotentialTable;
+class Probe;
+}
+
 namespace SireMM
 {
 
 using SireBase::Property;
 using SireBase::Properties;
+
+using SireCAS::Symbol;
+
+using SireFF::ForceTable;
+using SireFF::FieldTable;
+using SireFF::PotentialTable;
+using SireFF::Probe;
 
 namespace detail
 {
@@ -152,6 +167,32 @@ public:
     void accept();
     bool needsAccepting() const;
 
+    void force(ForceTable &forcetable, double scale_force=1);
+    
+    void force(ForceTable &forcetable, const Symbol &symbol,
+               double scale_force=1);
+               
+    void field(FieldTable &fieldtable, double scale_field=1);
+    
+    void field(FieldTable &fieldtable, const Symbol &component,
+               double scale_field=1);
+
+    void potential(PotentialTable &potentialtable, double scale_potential=1);
+    
+    void potential(PotentialTable &potentialtable, const Symbol &component,
+                   double scale_potential=1);
+
+    void field(FieldTable &fieldtable, const Probe &probe, double scale_field=1);
+    
+    void field(FieldTable &fieldtable, const Symbol &component,
+               const Probe &probe, double scale_field=1);
+               
+    void potential(PotentialTable &potentialtable, const Probe &probe,
+                   double scale_potential=1);
+    
+    void potential(PotentialTable &potentialtable, const Symbol &component,
+                   const Probe &probe, double scale_potential=1);
+    
 private:
     void mustNowReallyRecalculateFromScratch();
 

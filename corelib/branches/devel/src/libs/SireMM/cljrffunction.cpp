@@ -2074,6 +2074,19 @@ void CLJRFFunction::calcBoxGrid(const CLJAtoms &atoms, const GridInfo &grid_info
     }
 }
 
+/// FUNCTIONS TO IMPLEMENT
+
+void CLJRFFunction::calcBoxForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                    const Vector &box, float scale_force) const
+{}
+
+void CLJRFFunction::calcBoxCoulombForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                           const Vector &box, float scale_force) const
+{}
+
+void CLJRFFunction::calcBoxLJForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                      const Vector &box, float scale_force) const
+{}
 
 /////////
 ///////// Implementation of CLJSoftRFFunction

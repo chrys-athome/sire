@@ -36,6 +36,11 @@
 #include "SireError/errors.h"
 #include "SireBase/errors.h"
 
+#include "SireFF/forcetable.h"
+#include "SireFF/fieldtable.h"
+#include "SireFF/potentialtable.h"
+#include "SireFF/probe.h"
+
 #include "SireMol/partialmolecule.h"
 #include "SireMol/molecule.h"
 #include "SireMol/molecules.h"
@@ -1343,4 +1348,69 @@ void InterGroupFF::accept()
     }
     
     G2FF::accept();
+}
+
+
+void InterGroupFF::force(ForceTable &forcetable, const Symbol &symbol,
+                         double scale_force)
+{
+    //get the CLJFunction that corresponds to this symbol...
+
+    //create temporary space to hold the memory for the forces for the CLJAtoms...
+    //workspace = create workspace... NEED TO DEFINE THIS WORKSPACE, prob QVector<Vector>
+
+    //loop over all molecules in the forcetable
+        //use the function to calculate the forces on the molecule, using;
+        //cljfunc.force(cljatoms, workspace, scale_force)  // need to call force, coulombForce or
+                                                           //  ljForce depending on symbol
+    
+        //now add the forces into the forcetable in their correct place
+        //forcetable.add(workspace....)   NEED TO WRITE THIS FUNCTION
+}
+
+void InterGroupFF::force(ForceTable &forcetable, double scale_force)
+{
+    this->force(forcetable, this->components().total(), scale_force);
+}
+
+void InterGroupFF::field(FieldTable &fieldtable, const Symbol &component,
+                         double scale_field)
+{
+}
+
+void InterGroupFF::field(FieldTable &fieldtable, double scale_field)
+{
+    this->field(fieldtable, this->components().total(), scale_field);
+}
+
+void InterGroupFF::potential(PotentialTable &potentialtable, const Symbol &component,
+                             double scale_potential)
+{
+}
+
+void InterGroupFF::potential(PotentialTable &potentialtable, double scale_potential)
+{
+    this->potential(potentialtable, this->components().total(), scale_potential);
+}
+
+void InterGroupFF::field(FieldTable &fieldtable, const Symbol &component,
+                         const Probe &probe, double scale_field)
+{
+}
+
+void InterGroupFF::field(FieldTable &fieldtable, const Probe &probe, double scale_field)
+{
+    this->field(fieldtable, this->components().total(), probe, scale_field);
+}
+
+void InterGroupFF::potential(PotentialTable &potentialtable, const Symbol &component,
+                             const Probe &probe, double scale_potential)
+{
+}
+
+
+void InterGroupFF::potential(PotentialTable &potentialtable, const Probe &probe,
+                             double scale_potential)
+{
+    this->potential(potentialtable, this->components().total(), probe, scale_potential);
 }

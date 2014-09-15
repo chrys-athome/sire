@@ -154,6 +154,15 @@ protected:
                      const Vector &box_dimensions,
                      const int start, const int end, float *gridpot) const;
 
+    // REIMPLEMENT THE BELOW FUNCTIONS
+
+    void calcBoxForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                 const Vector &box, float scale_force) const;
+    void calcBoxCoulombForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                        const Vector &box, float scale_force) const;
+    void calcBoxLJForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                   const Vector &box, float scale_force) const;
+
 private:
     /** The dielectric constant */
     float diel;

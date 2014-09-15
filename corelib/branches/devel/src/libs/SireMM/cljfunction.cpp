@@ -432,6 +432,24 @@ bool CLJFunction::supportsGridCalculation() const
     return false;
 }
 
+/** Return whether or not this function supports calculation of forces */
+bool CLJFunction::supportsForceCalculation() const
+{
+    return false;
+}
+
+/** Return whether or not this function supports calculation of fields */
+bool CLJFunction::supportsFieldCalculation() const
+{
+    return false;
+}
+
+/** Return whether or not this function supports calculation of potentials */
+bool CLJFunction::supportsPotentialCalculation() const
+{
+    return false;
+}
+
 /** Dummy function that needs to be overridden to support grid calculations */
 void CLJFunction::calcBoxGrid(const CLJAtoms &atoms, const GridInfo &gridinfo,
                               const Vector &box_dimensions,
@@ -1245,6 +1263,221 @@ CLJFunction::multiCalculate(const QVector<CLJFunctionPtr> &funcs,
     
     return tuple< QVector<double>,QVector<double> >(cnrgs, ljnrgs);
 }
+
+/** Calculate the total force for arithmetic combining rules and vacuum boundary conditions */
+void CLJFunction::calcVacForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                  float scale_force) const
+{
+    throw SireError::unsupported( QObject::tr( "This CLJFunction (%1) does not support "
+                        "calculation of the force using arithmetic combining rules "
+                        "and vacuum boundary conditions.")
+                            .arg(this->toString()), CODELOC );
+}
+
+void CLJFunction::calcVacCoulombForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                         float scale_force) const
+{
+    throw SireError::unsupported( QObject::tr( "This CLJFunction (%1) does not support "
+                        "calculation of the force using arithmetic combining rules "
+                        "and vacuum boundary conditions.")
+                            .arg(this->toString()), CODELOC );
+}
+
+void CLJFunction::calcVacLJForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                    float scale_force) const
+{
+    throw SireError::unsupported( QObject::tr( "This CLJFunction (%1) does not support "
+                        "calculation of the force using arithmetic combining rules "
+                        "and vacuum boundary conditions.")
+                            .arg(this->toString()), CODELOC );
+}
+
+void CLJFunction::calcVacForceGeo(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                  float scale_force) const
+{
+    throw SireError::unsupported( QObject::tr( "This CLJFunction (%1) does not support "
+                        "calculation of the force using arithmetic combining rules "
+                        "and vacuum boundary conditions.")
+                            .arg(this->toString()), CODELOC );
+}
+
+void CLJFunction::calcVacCoulombForceGeo(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                         float scale_force) const
+{
+    throw SireError::unsupported( QObject::tr( "This CLJFunction (%1) does not support "
+                        "calculation of the force using arithmetic combining rules "
+                        "and vacuum boundary conditions.")
+                            .arg(this->toString()), CODELOC );
+}
+
+void CLJFunction::calcVacLJForceGeo(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                    float scale_force) const
+{
+    throw SireError::unsupported( QObject::tr( "This CLJFunction (%1) does not support "
+                        "calculation of the force using arithmetic combining rules "
+                        "and vacuum boundary conditions.")
+                            .arg(this->toString()), CODELOC );
+}
+
+void CLJFunction::calcBoxForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                             const Vector &box, float scale_force) const
+{
+    throw SireError::unsupported( QObject::tr( "This CLJFunction (%1) does not support "
+                        "calculation of the force using arithmetic combining rules "
+                        "and vacuum boundary conditions.")
+                            .arg(this->toString()), CODELOC );
+}
+
+void CLJFunction::calcBoxCoulombForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                    const Vector &box, float scale_force) const
+{
+    throw SireError::unsupported( QObject::tr( "This CLJFunction (%1) does not support "
+                        "calculation of the force using arithmetic combining rules "
+                        "and vacuum boundary conditions.")
+                            .arg(this->toString()), CODELOC );
+}
+
+void CLJFunction::calcBoxLJForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                               const Vector &box, float scale_force) const
+{
+    throw SireError::unsupported( QObject::tr( "This CLJFunction (%1) does not support "
+                        "calculation of the force using arithmetic combining rules "
+                        "and vacuum boundary conditions.")
+                            .arg(this->toString()), CODELOC );
+}
+
+void CLJFunction::calcBoxForceGeo(const CLJAtoms &atoms, QVector<Vector> &forces,
+                             const Vector &box, float scale_force) const
+{
+    throw SireError::unsupported( QObject::tr( "This CLJFunction (%1) does not support "
+                        "calculation of the force using arithmetic combining rules "
+                        "and vacuum boundary conditions.")
+                            .arg(this->toString()), CODELOC );
+}
+
+void CLJFunction::calcBoxCoulombForceGeo(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                    const Vector &box, float scale_force) const
+{
+    throw SireError::unsupported( QObject::tr( "This CLJFunction (%1) does not support "
+                        "calculation of the force using arithmetic combining rules "
+                        "and vacuum boundary conditions.")
+                            .arg(this->toString()), CODELOC );
+}
+
+void CLJFunction::calcBoxLJForceGeo(const CLJAtoms &atoms, QVector<Vector> &forces,
+                               const Vector &box, float scale_force) const
+{
+    throw SireError::unsupported( QObject::tr( "This CLJFunction (%1) does not support "
+                        "calculation of the force using arithmetic combining rules "
+                        "and vacuum boundary conditions.")
+                            .arg(this->toString()), CODELOC );
+}
+
+// etc. etc. etc.
+
+void CLJFunction::force(const CLJAtoms &atoms, QVector<Vector> &forces, float scale_force) const
+{
+    if (not this->supportsForceCalculation())
+        throw SireError::unsupported( QObject::tr(
+                    "This CLJFunction (%1) does not support force calculations.")
+                        .arg(this->toString()), CODELOC );
+    
+    if (atoms.isEmpty())
+    {
+        return forces.clear();
+    }
+    else
+    {
+        if (use_arithmetic)
+        {
+            if (use_box)
+                return this->calcBoxForceAri(atoms, forces, box_dimensions, scale_force);
+            else
+                return this->calcVacForceAri(atoms, forces, scale_force);
+        }
+        else
+        {
+            if (use_box)
+                return this->calcBoxForceGeo(atoms, forces, box_dimensions, scale_force);
+            else
+                return this->calcVacForceGeo(atoms, forces, scale_force);
+        }
+    }
+}
+
+// the below functions will look a lot like the once above....
+
+void CLJFunction::force(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+           QVector<Vector> &forces0, QVector<Vector> &forces1,
+           float scale_force) const
+{}
+
+void CLJFunction::potential(const CLJAtoms &atoms, QVector<float> &potentials,
+               float scale_potential) const
+{}
+
+void CLJFunction::potential(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+               QVector<float> &potentials0, QVector<float> &potentials1,
+               float scale_potential) const
+{}
+
+void CLJFunction::field(const CLJAtoms &atoms, QVector<Vector> &fields, float scale_field) const
+{}
+
+void CLJFunction::field(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+           QVector<Vector> &fields0, QVector<Vector> &fields1,
+           float scale_field) const
+{}
+
+void CLJFunction::coulombForce(const CLJAtoms &atoms, QVector<Vector> &forces, float scale_force) const
+{}
+
+void CLJFunction::coulombForce(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                  QVector<Vector> &forces0, QVector<Vector> &forces1,
+                  float scale_force) const
+{}
+
+void CLJFunction::coulombPotential(const CLJAtoms &atoms, QVector<float> &potentials,
+                      float scale_potential) const
+{}
+
+void CLJFunction::coulombPotential(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                      QVector<float> &potentials0, QVector<float> &potentials1,
+                      float scale_potential) const
+{}
+
+void CLJFunction::coulombField(const CLJAtoms &atoms, QVector<Vector> &fields, float scale_field) const
+{}
+
+void CLJFunction::coulombField(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                  QVector<Vector> &fields0, QVector<Vector> &fields1,
+                  float scale_field) const
+{}
+
+void CLJFunction::ljForce(const CLJAtoms &atoms, QVector<Vector> &forces, float scale_force) const
+{}
+
+void CLJFunction::ljForce(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+             QVector<Vector> &forces0, QVector<Vector> &forces1,
+             float scale_force) const
+{}
+
+void CLJFunction::ljPotential(const CLJAtoms &atoms, QVector<float> &potentials,
+                 float scale_potential) const
+{}
+
+void CLJFunction::ljPotential(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                 QVector<float> &potentials0, QVector<float> &potentials1,
+                 float scale_potential) const
+{}
+
+void CLJFunction::ljField(const CLJAtoms &atoms, QVector<Vector> &fields, float scale_field) const
+{}
+
+void CLJFunction::ljField(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+             QVector<Vector> &fields0, QVector<Vector> &fields1,
+             float scale_field) const
+{}
 
 /////////
 ///////// Implementation of NulCLJFunction

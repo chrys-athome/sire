@@ -208,11 +208,63 @@ public:
     double lj(const CLJBoxes &atoms) const;
     double lj(const CLJBoxes &atoms0, const CLJBoxes &atoms1) const;
 
+    void force(const CLJAtoms &atoms, QVector<Vector> &forces, float scale_force=1) const;
+    void force(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+               QVector<Vector> &forces0, QVector<Vector> &forces1,
+               float scale_force=1) const;
+
+    void potential(const CLJAtoms &atoms, QVector<float> &potentials,
+                   float scale_potential=1) const;
+    void potential(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                   QVector<float> &potentials0, QVector<float> &potentials1,
+                   float scale_potential=1) const;
+
+    void field(const CLJAtoms &atoms, QVector<Vector> &fields, float scale_field=1) const;
+    void field(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+               QVector<Vector> &fields0, QVector<Vector> &fields1,
+               float scale_field=1) const;
+
+    void coulombForce(const CLJAtoms &atoms, QVector<Vector> &forces, float scale_force=1) const;
+    void coulombForce(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                      QVector<Vector> &forces0, QVector<Vector> &forces1,
+                      float scale_force=1) const;
+
+    void coulombPotential(const CLJAtoms &atoms, QVector<float> &potentials,
+                          float scale_potential=1) const;
+    void coulombPotential(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                          QVector<float> &potentials0, QVector<float> &potentials1,
+                          float scale_potential=1) const;
+
+    void coulombField(const CLJAtoms &atoms, QVector<Vector> &fields, float scale_field=1) const;
+    void coulombField(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                      QVector<Vector> &fields0, QVector<Vector> &fields1,
+                      float scale_field=1) const;
+
+    void ljForce(const CLJAtoms &atoms, QVector<Vector> &forces, float scale_force=1) const;
+    void ljForce(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                 QVector<Vector> &forces0, QVector<Vector> &forces1,
+                 float scale_force=1) const;
+
+    void ljPotential(const CLJAtoms &atoms, QVector<float> &potentials,
+                     float scale_potential=1) const;
+    void ljPotential(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                     QVector<float> &potentials0, QVector<float> &potentials1,
+                     float scale_potential=1) const;
+
+    void ljField(const CLJAtoms &atoms, QVector<Vector> &fields, float scale_field=1) const;
+    void ljField(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                 QVector<Vector> &fields0, QVector<Vector> &fields1,
+                 float scale_field=1) const;
+
     virtual CLJFunction* clone() const=0;
 
     static const NullCLJFunction& null();
 
     virtual bool supportsGridCalculation() const;
+
+    virtual bool supportsForceCalculation() const;
+    virtual bool supportsFieldCalculation() const;
+    virtual bool supportsPotentialCalculation() const;
 
     virtual bool hasCutoff() const;
     
@@ -320,6 +372,36 @@ protected:
                                       const CLJAtoms &atoms1,
                                       const Vector &box,
                                       float min_distance) const;
+
+    virtual void calcVacForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                 float scale_force) const;
+    virtual void calcVacCoulombForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                        float scale_force) const;
+    virtual void calcVacLJForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                   float scale_force) const;
+
+    virtual void calcVacForceGeo(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                float scale_force) const;
+    virtual void calcVacCoulombForceGeo(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                        float scale_force) const;
+    virtual void calcVacLJForceGeo(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                   float scale_force) const;
+
+    virtual void calcBoxForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                 const Vector &box, float scale_force) const;
+    virtual void calcBoxCoulombForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                        const Vector &box, float scale_force) const;
+    virtual void calcBoxLJForceAri(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                   const Vector &box, float scale_force) const;
+
+    virtual void calcBoxForceGeo(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                 const Vector &box, float scale_force) const;
+    virtual void calcBoxCoulombForceGeo(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                        const Vector &box, float scale_force) const;
+    virtual void calcBoxLJForceGeo(const CLJAtoms &atoms, QVector<Vector> &forces,
+                                   const Vector &box, float scale_force) const;
+    
+    // etc. etc. etc.
 
 private:
     void extractDetailsFromRules(COMBINING_RULES rules);
