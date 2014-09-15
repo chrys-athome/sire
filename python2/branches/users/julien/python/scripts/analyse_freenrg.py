@@ -34,9 +34,13 @@ parser.add_argument('--author', action="store_true",
 parser.add_argument('--version', action="store_true",
                     help="Get version information about this script.")
 
-parser.add_argument('-i', '--input', nargs='*',
-                    help="Supply the name of the Sire Streamed Save (.s3) file(s) containing the "
+parser.add_argument('-i', '--input', nargs=1,
+                    help="Supply the name of the Sire Streamed Save (.s3) file containing the "
                          "free energies to be analysed.")
+
+parser.add_argument('-g', '--gradients', nargs='*',
+                    help="Supply the name of the Sire Streamed gradients (.s3) files containing the "
+                         "gradients to be analysed.")
 
 parser.add_argument('-o', '--output', nargs=1,
                     help="""Supply the name of the file in which to write the output.""")
@@ -76,6 +80,11 @@ if args.input:
 else:
     input_file = None
 
+if args.gradients:
+    gradient_files = args.gradients
+else:
+    gradient_files = None
+
 if args.output:
     output_file = args.output[0]
 else:
@@ -102,8 +111,12 @@ else:
     percent = 60.0
 
 if not input_file:
+    if gradient_files:
+        input_file = gradient_files
+    
+if not input_file:
     parser.print_help()
-    print("\nPlease supply the name of the .s3 file containing the free energies to be analysed.")
+    print("\nPlease supply the name of the .s3 file(s) containing the free energies/gradients to be analysed.")
     sys.exit(-1)
 
 #elif not os.path.exists(input_file):
@@ -113,19 +126,19 @@ if not input_file:
 #    sys.exit(-1)
 
 if output_file:
-    print("Writing all output to file %s\n" % output_file)
+    print("# Writing all output to file %s" % output_file)
     FILE = open(output_file, "w")
 else:
-    print("Writing all output to stdout\n")
+    print("# Writing all output to stdout")
     FILE = sys.stdout
 
 #input_file = os.path.realpath(input_file)
 
-FILE.write("Analysing free energies contained in file(s) \"%s\"\n" % input_file)
+FILE.write("# Analysing free energies contained in file(s) \"%s\"\n" % input_file)
 
 num_inputfiles = len(input_file)
 
-if num_inputfiles > 1:
+if gradient_files:
     # Multiple input files provided. Assume we have several gradients files that must be combined
     grads = {}
     fwds_grads = {} 
@@ -177,9 +190,9 @@ def processFreeEnergies(nrgs, FILE):
 
     # try to merge the free enegies - this will raise an exception
     # if this object is not a free energy collection
-    nrgs.merge(0,1)
+    nrgs.merge(0,0)
 
-    FILE.write("\nProcessing object %s\n" % nrgs)
+    FILE.write("# Processing object %s\n" % nrgs)
 
     name = nrgs.typeName().split("::")[-1]
 
@@ -213,7 +226,7 @@ def processFreeEnergies(nrgs, FILE):
         end = nits-1
         start = end - int(percent * end / 100.0)
 
-    FILE.write("Averaging over iterations %s to %s\n" % (start, end))
+    FILE.write("# Averaging over iterations %s to %s\n" % (start, end))
 
     nrg = nrgs.merge(start,end)
 
@@ -231,10 +244,10 @@ except:
     for freenrg in freenrgs:
         results.append( processFreeEnergies(freenrg, FILE) )
 
-FILE.write("\nConvergence\n")
-FILE.write("Iteration ")
+FILE.write("# Convergence\n")
+FILE.write("# Iteration \n")
 for result in results:
-    FILE.write("%s " % result[0])
+    FILE.write("# %s " % result[0])
 FILE.write("\n")
 
 i = 1
@@ -258,24 +271,28 @@ while has_value:
         FILE.write("\n")
         i += 1
 
-FILE.write("\nPMFs")
+FILE.write("# PMFs\n")
 
 for result in results:
-    FILE.write("\n%s\n" % result[0])
-    FILE.write("Lambda  PMF  Maximum  Minimum\n")
+    FILE.write("# %s\n" % result[0])
+    FILE.write("# Lambda  PMF  Maximum  Minimum \n")
 
     for value in result[2].values():
         FILE.write("%s  %s  %s  %s\n" % (value.x(), value.y(), value.y()+value.yMaxError(), value.y()-value.yMaxError()))
 
-FILE.write("\nFree energies\n")
+FILE.write("# Free energies \n")
 
 for result in results:
-    FILE.write("%s = %s +/- %s kcal mol-1" % (result[0], result[2].deltaG(), result[2].values()[-1].yMaxError()))
+    FILE.write("# %s = %s +/- %s kcal mol-1" % (result[0], result[2].deltaG(), result[2].values()[-1].yMaxError()))
 
     try:
         FILE.write(" (quadrature = %s kcal mol-1)" % result[2].quadrature())
     except:
         pass
 
-    FILE.write("\n")
+    FILE.write("#\n")
 
+
+if gradient_files:
+    cmd = "rm freenrgs.s3"
+    os.system(cmd)

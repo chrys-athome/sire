@@ -1107,6 +1107,9 @@ def runFreeNrg():
         host = "unknown"
 
     print(" ### Running Single Topology Molecular Dynamics Free Energy on %s ### " % host)
+    print ("### Simulation Parameters ### ") 
+    Parameter.printAll()
+    print ("### ###")
 
     timer = QTime()
     timer.start()
