@@ -35,9 +35,6 @@
 #include "SireMol/atomcoords.h"
 #include "SireMol/molecule.h"
 #include "SireMol/moleditor.h"
-//Two lines below from old code that has been superseded by atomsbead?
-//#include "SireMol/beadnum.h"
-//#include "SireMol/atombeading.h"
 #include "SireMol/atombeads.h"
 
 #include "SireMaths/axisset.h"

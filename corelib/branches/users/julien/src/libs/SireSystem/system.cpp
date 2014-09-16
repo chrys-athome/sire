@@ -37,6 +37,7 @@
 #include "SireFF/forcefield.h"
 #include "SireFF/ff.h"
 #include "SireFF/ffmolgroup.h"
+#include "SireFF/energytable.h"
 #include "SireFF/forcetable.h"
 #include "SireFF/fieldtable.h"
 #include "SireFF/potentialtable.h"

@@ -33,6 +33,7 @@
 #include "ffidx.h"
 #include "ffname.h"
 #include "ff3d.h"
+#include "energytable.h"
 #include "forcetable.h"
 #include "fieldtable.h"
 #include "potentialtable.h"
