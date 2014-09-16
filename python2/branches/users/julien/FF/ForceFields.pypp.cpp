@@ -40,6 +40,8 @@ namespace bp = boost::python;
 
 #include "SireStream/shareddatastream.h"
 
+#include "energytable.h"
+
 #include "ff3d.h"
 
 #include "ffidx.h"
@@ -69,6 +71,8 @@ namespace bp = boost::python;
 #include "forcefields.h"
 
 #include "forcetable.h"
+
+#include "energytable.h"
 
 SireFF::ForceFields __copy__(const SireFF::ForceFields &other){ return SireFF::ForceFields(other); }
 

@@ -11,8 +11,6 @@ namespace bp = boost::python;
 
 #include "SireMaths/axisset.h"
 
-#include "SireMol/atombeading.h"
-
 #include "SireMol/atombeads.h"
 
 #include "SireMol/atomcoords.h"
@@ -20,8 +18,6 @@ namespace bp = boost::python;
 #include "SireMol/atomelements.h"
 
 #include "SireMol/atommasses.h"
-
-#include "SireMol/beadnum.h"
 
 #include "SireMol/molecule.h"
 
