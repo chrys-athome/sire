@@ -66,6 +66,18 @@ public:
         return "SireFF::FF3D";
     }
     
+    /** Calculate all of the energies of the 
+        molecules in the forcetable 'forcetable' due to the
+        molecules' interactions in this forcefield */
+    virtual void energy(EnergyTable &energytable, double scale_energy=1)=0;
+
+    /** Calculate all of the energies acting on all of the 
+        molecules in the energytable 'energytable' due to the
+        specified component of the molecules' interactions in 
+        this forcefield */
+    virtual void energy(EnergyTable &energytable, const SireCAS::Symbol &component,
+                             double scale_energy=1)=0;
+
     /** Calculate all of the forces acting on all of the 
         molecules in the forcetable 'forcetable' due to the
         molecules' interactions in this forcefield */

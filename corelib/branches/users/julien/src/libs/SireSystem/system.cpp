@@ -776,6 +776,21 @@ MolarEnergy System::energy(const Symbol &component)
     return this->_pvt_forceFields().energy(component);
 }
 
+/** Return the total energytable in this system  
+ */
+void System::energy(EnergyTable &energytable, double scale_energy)
+{
+    this->_pvt_forceFields().energy(energytable, scale_energy);
+}
+/** Return the total energytable of the energy component in this system
+    that is identified by the energy component 'component'
+ */
+void System::energy(EnergyTable &energytable, const Symbol &component,
+                         double scale_energy)
+{
+    this->_pvt_forceFields().energy(energytable, component, scale_energy);
+}
+
 /** Return the energies of the energy components of this system whose
     symbols are in 'components'
     

@@ -2316,6 +2316,26 @@ const Properties& InternalFF::properties() const
     return props;
 }
 
+/** Calculate the energies in molecules in the passed energy table 
+    caused by this potential, and add them onto the energies already
+    in the energy table (optionally scaled by 'scale_energy') */
+void InternalFF::energy(EnergyTable &energytable, double scale_energy)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "InternalFF does not yet support energy calculations!"), CODELOC );
+}
+
+/** Calculate the energies of molecules in the passed energies table 
+    caused by the component of this potential represented by 
+    'symbol', and add them onto the energies already
+    in the energy table (optionally scaled by 'scale_energy') */
+void InternalFF::energy(EnergyTable &energytable, const Symbol &symbol,
+			double scale_energy)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "InternalFF does not yet support energy calculations!"), CODELOC );
+}
+
 /** Calculate the forces acting on molecules in the passed force table 
     caused by this potential, and add them onto the forces already
     in the force table (optionally scaled by 'scale_force') */

@@ -73,7 +73,12 @@ public:
     bool operator!=(const Inter2B3DFF<Potential> &other) const;
     
     Inter2B3DFF<Potential>* clone() const;
+
+    void energy(EnergyTable &energytable, double scale_energy=1);
     
+    void energy(EnergyTable &energytable, const Symbol &symbol,
+		double scale_energy=1);    
+
     void force(ForceTable &forcetable, double scale_force=1);
     
     void force(ForceTable &forcetable, const Symbol &symbol,
@@ -505,6 +510,110 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
         throw;
     }
 }
+
+/** Calculate the energies of the molecules in the passed forcetable
+    that arise from this forcefield, and add them onto the energies present
+    in the energy table, multiplied by the passed (optional) scaling factor */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+void Inter2B3DFF<Potential>::energy(EnergyTable &energytable, double scale_energy)
+{
+
+    if (scale_energy == 0)
+        return;
+
+    int nenergymols = energytable.count();
+    int nmols = this->mols.count();
+    
+    typename Potential::EnergyWorkspace workspace;
+    
+    MolEnergyTable *energytable_array = energytable.data();
+    const ChunkedVector<typename Potential::Molecule> &mols_array 
+                            = this->mols.moleculesByIndex();
+    
+    typename Potential::Energy energy;
+
+    for (int i=0; i<nenergymols; ++i)
+    {
+        MolEnergyTable &moltable = energytable_array[i];
+        
+        MolNum molnum = moltable.molNum();
+        
+        if (not this->mols.contains(molnum))
+            //we don't contain this molecule, so no point
+            //calculating the force
+            continue;
+            
+        //get the copy of this molecule from this forcefield
+        int imol = this->mols.indexOf(molnum);
+        const typename Potential::Molecule &mol0 = mols_array[imol];
+            
+        //calculate the force acting on this molecule caused by all of the 
+        //other molecules in this forcefield
+        for (int j=0; j<nmols; ++j)
+        {
+            if (j == imol)
+                continue;
+                
+            const typename Potential::Molecule &mol1 = mols_array[j];
+            
+            Potential::calculateEnergy(mol0, mol1, moltable, workspace, scale_energy);
+        }
+    }
+}
+
+/** Calculate the energies acting on the molecules in the passed energytable  
+    caused by the component of this forcefield represented by 'symbol',
+    adding this energy onto the existing energies in the forcetable (optionally
+    multiplied by 'scale_energy' */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+void Inter2B3DFF<Potential>::energy(EnergyTable &energytable, const Symbol &symbol, double scale_energy)
+{
+    if (scale_energy == 0)
+        return;
+
+    int nenergymols = energytable.count();
+    int nmols = this->mols.count();
+    
+    typename Potential::EnergyWorkspace workspace;
+    
+    MolEnergyTable *energytable_array = energytable.data();
+    const ChunkedVector<typename Potential::Molecule> mols_array 
+                            = this->mols.moleculesByIndex();
+    
+    typename Potential::Energy energy;
+
+    for (int i=0; i<nenergymols; ++i)
+    {
+        MolEnergyTable &moltable = energytable_array[i];
+        
+        MolNum molnum = moltable.molNum();
+        
+        if (not this->mols.contains(molnum))
+            //we don't contain this molecule, so no point
+            //calculating the force
+            continue;
+            
+        //get the copy of this molecule from this forcefield
+        int imol = this->mols.indexOf(molnum);
+        const typename Potential::Molecule &mol0 = mols_array[imol];
+            
+        //calculate the force acting on this molecule caused by all of the 
+        //other molecules in this forcefield
+        for (int j=0; j<nmols; ++j)
+        {
+            if (j == imol)
+                continue;
+                
+            const typename Potential::Molecule &mol1 = mols_array[j];
+
+            Potential::calculateEnergy(mol0, mol1, moltable, workspace, scale_energy);
+
+        }
+    }
+
+ }
 
 /** Calculate the forces acting on the molecules in the passed forcetable
     that arise from this forcefield, and add them onto the forces present

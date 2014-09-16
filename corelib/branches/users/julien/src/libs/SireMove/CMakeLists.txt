@@ -23,6 +23,7 @@ set ( SIREMOVE_HEADERS
       hybridmc.h
       integrator.h
       integratorworkspace.h
+      integratorworkspacejm.h
       internalmove.h
       internalmovesingle.h
       moldeleter.h
@@ -34,6 +35,7 @@ set ( SIREMOVE_HEADERS
       mtsmc.h
       prefsampler.h
       rbworkspace.h
+      rbworkspacejm.h
       repexmove.h
       replica.h
       replicas.h
@@ -80,6 +82,7 @@ set ( SIREMOVE_SOURCES
       hybridmc.cpp
       integrator.cpp
       integratorworkspace.cpp
+      integratorworkspacejm.cpp
       internalmove.cpp
       internalmovesingle.cpp
       moldeleter.cpp
@@ -91,6 +94,7 @@ set ( SIREMOVE_SOURCES
       mtsmc.cpp
       prefsampler.cpp
       rbworkspace.cpp
+      rbworkspacejm.cpp
       repexmove.cpp
       replica.cpp
       replicas.cpp

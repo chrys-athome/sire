@@ -31,6 +31,7 @@
 
 #include "SireMM/cljprobe.h"
 
+#include "SireFF/energytable.h"
 #include "SireFF/forcetable.h"
 #include "SireFF/fieldtable.h"
 #include "SireFF/potentialtable.h"
@@ -313,6 +314,19 @@ const Properties& QMMMFF::properties() const
 void QMMMFF::mustNowRecalculateFromScratch()
 {
     G2FF::setDirty();
+}
+
+void QMMMFF::energy(EnergyTable &energytable, double scale_energy)
+{
+    throw SireError::incomplete_code( QObject::tr(
+						  "QMMMFF does not yet support energy calculations!"), CODELOC );
+}
+
+void QMMMFF::energy(EnergyTable &energytable, const Symbol &symbol,
+		    double scale_energy)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "QMMMFF does not yet support energy calculations!"), CODELOC );
 }
 
 /** Calculate the QM/MM forces on the molecules in this forcefield

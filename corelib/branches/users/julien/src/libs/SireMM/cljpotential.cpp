@@ -1871,6 +1871,284 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     energy = energy + cljnrg;
 }
 
+/** Add to the energies in 'energies0' the energy on 'mol0' caused
+    by 'mol1' */
+void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &mol0, 
+                                            const InterCLJPotential::Molecule &mol1,
+                                            MolEnergyTable &energies0, 
+                                            InterCLJPotential::EnergyWorkspace &distmat,
+                                            double scale_energy) const
+{
+    BOOST_ASSERT( mol0.molecule().data().info().nCutGroups() == energies0.nCutGroups() );
+    BOOST_ASSERT( mol0.molecule().data().number() == energies0.molNum() );
+
+    const quint32 ngroups0 = mol0.nCutGroups();
+    const quint32 ngroups1 = mol1.nCutGroups();
+    
+    const CoordGroup *groups0_array = mol0.coordinates().constData();
+    const CoordGroup *groups1_array = mol1.coordinates().constData();
+    
+    BOOST_ASSERT(mol0.parameters().atomicParameters().count() == int(ngroups0));
+    BOOST_ASSERT(mol1.parameters().atomicParameters().count() == int(ngroups1));
+    
+    const Parameters::Array *molparams0_array 
+                                    = mol0.parameters().atomicParameters().constData();
+    const Parameters::Array *molparams1_array
+                                    = mol1.parameters().atomicParameters().constData();
+    
+    const MolEnergyTable::Array *energies0_array = energies0.constData();
+    
+    if (use_reaction_field)
+    {
+      //loop over all pairs of CutGroups in the two molecules
+      for (quint32 igroup=0; igroup<ngroups0; ++igroup)
+      {
+	//get the CGIdx of this group
+	CGIdx cgidx_igroup = mol0.cgIdx(igroup);
+	
+        //get the index of this CutGroup in the forces array
+        int energy0_idx = energies0.map(cgidx_igroup);
+        
+        if (energy0_idx == -1)
+            //there is no space for the energies on this CutGroup in 
+            //the energytable - were are therefore not interested in
+            //this CutGroup
+            continue;
+
+        const Parameters::Array &params0 = molparams0_array[igroup];
+
+        const CoordGroup &group0 = groups0_array[igroup];
+        const AABox &aabox0 = group0.aaBox();
+        const quint32 nats0 = group0.count();
+        const Parameter *params0_array = params0.constData();
+    
+        //get the table that holds the energies of all the
+        //atoms of this CutGroup (tables are indexed by CGIdx)
+        BOOST_ASSERT(energies0_array[energy0_idx].count() == int(nats0));
+    
+        Vector *group_energies0_array = energies0.data(energy0_idx);
+
+        //ok, we are interested in the energies of this CutGroup
+        // - calculate all of the energies of this group due to interactions
+        //   with all of the CutGroups in mol1 
+        for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
+        {
+            const CoordGroup &group1 = groups1_array[jgroup];
+            const Parameters::Array &params1 = molparams1_array[jgroup];
+
+            //check first that these two CoordGroups could be within cutoff
+            //(if there is only one CutGroup in both molecules then this
+            //test has already been performed and passed)
+
+	    // JM dec 12. It doesn't look like the within cutoff test has been performed and 
+	    // passed. 
+	    // Expression below might speed things up a bit. 
+            //const bool within_cutoff = not spce->beyond(switchfunc->cutoffDistance(), 
+	    //					aabox0, group1.aaBox());
+            const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox0, group1.aaBox());
+            
+            if (not within_cutoff)
+                //this CutGroup is beyond the cutoff distance
+                continue;
+            
+            //calculate all of the interatomic distances
+            const double mindist = spce->calcDist(group0, group1, distmat);
+            
+            if (mindist > switchfunc->cutoffDistance())
+                //all of the atoms are definitely beyond cutoff
+                continue;
+
+	    // JM dec 12. We are going to need the reaction field parameters. 
+	    // This could be initialised somewhere else...
+	    double Rc = switchfunc->electrostaticCutoffDistance();
+        
+	    if (Rc != switchfunc->vdwCutoffDistance())
+	      throw SireError::unsupported( QObject::tr(
+							"This code does not support having a reaction field together "
+							"with different coulomb and vdw cutoffs..."), CODELOC );
+	    if (Rc > 1e9)
+	      {
+		Rc = 1e9;
+	      }
+
+	    const double k_rf = (1.0 / pow_3(Rc)) * ( (rf_dielectric_constant-1) /
+						(2*rf_dielectric_constant + 1) );
+	    const double c_rf = (1.0 / Rc) * ( (3*rf_dielectric_constant) /
+					       (2*rf_dielectric_constant + 1) );
+	    
+            const quint32 nats1 = group1.count();
+            
+            //loop over all interatomic pairs and calculate the energies
+            const Parameter *params1_array = params1.constData();
+	    
+	    for (quint32 i=0; i<nats0; ++i)
+	    {
+		distmat.setOuterIndex(i);
+		const Parameter &param0 = params0_array[i];
+                
+		double icnrg = 0;
+		double iljnrg = 0;
+
+		for (quint32 j=0; j<nats1; ++j)
+		{
+		  //do both coulomb and LJ
+
+		  const Parameter &param1 = params1_array[j];
+		      
+		  const double r = distmat[j];
+                            
+		  if (r < Rc)
+		    {
+		      const double one_over_r = double(1) / r;
+                      
+		      icnrg += param0.reduced_charge * param1.reduced_charge *
+			(one_over_r + k_rf*r*r - c_rf);
+		      
+		      const LJPair &ljpair = ljpairs.constData()[
+					      ljpairs.map(param0.ljid,
+						     param1.ljid)];
+		      
+		      double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+		      double sig_over_dist12 = pow_2(sig_over_dist6);
+			      
+		      iljnrg += ljpair.epsilon() * (sig_over_dist12 - sig_over_dist6);
+		    }
+		}
+
+		iljnrg = scale_energy * 0.5 * 4 * iljnrg ;
+		icnrg = scale_energy * 0.5 * icnrg;
+
+		Vector nrg = Vector( icnrg + iljnrg, icnrg, iljnrg);
+
+		group_energies0_array[i] += nrg;
+
+	    }
+
+        } // end of loop over jgroup CutGroups
+	
+      } // end of loop over igroup CutGroups
+    }
+    else
+    {
+      //loop over all pairs of CutGroups in the two molecules
+      for (quint32 igroup=0; igroup<ngroups0; ++igroup)
+      {
+	//get the CGIdx of this group
+	CGIdx cgidx_igroup = mol0.cgIdx(igroup);
+	
+        //get the index of this CutGroup in the forces array
+        int energy0_idx = energies0.map(cgidx_igroup);
+        
+        if (energy0_idx == -1)
+            //there is no space for the energies on this CutGroup in 
+            //the energytable - were are therefore not interested in
+            //this CutGroup
+            continue;
+
+        const Parameters::Array &params0 = molparams0_array[igroup];
+
+        const CoordGroup &group0 = groups0_array[igroup];
+        const AABox &aabox0 = group0.aaBox();
+        const quint32 nats0 = group0.count();
+        const Parameter *params0_array = params0.constData();
+    
+        //get the table that holds the energies of all the
+        //atoms of this CutGroup (tables are indexed by CGIdx)
+        BOOST_ASSERT(energies0_array[energy0_idx].count() == int(nats0));
+    
+        Vector *group_energies0_array = energies0.data(energy0_idx);
+
+        //ok, we are interested in the energies of this CutGroup
+        // - calculate all of the energies of this group due to interactions
+        //   with all of the CutGroups in mol1 
+        for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
+        {
+            const CoordGroup &group1 = groups1_array[jgroup];
+            const Parameters::Array &params1 = molparams1_array[jgroup];
+
+            //check first that these two CoordGroups could be within cutoff
+            //(if there is only one CutGroup in both molecules then this
+            //test has already been performed and passed)
+            const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox0, group1.aaBox());
+            
+            if (not within_cutoff)
+                //this CutGroup is beyond the cutoff distance
+                continue;
+            
+            //calculate all of the interatomic distances
+            const double mindist = spce->calcDist(group0, group1, distmat);
+            
+            if (mindist > switchfunc->cutoffDistance())
+                //all of the atoms are definitely beyond cutoff
+                continue;
+
+            const quint32 nats1 = group1.count();
+            
+            //loop over all interatomic pairs and calculate the energies
+            const Parameter *params1_array = params1.constData();
+	    
+	    for (quint32 i=0; i<nats0; ++i)
+	    {
+		distmat.setOuterIndex(i);
+		const Parameter &param0 = params0_array[i];
+                
+		double icnrg = 0;
+		double iljnrg = 0;
+
+		for (quint32 j=0; j<nats1; ++j)
+		{
+		    const Parameter &param1 = params1_array[j];
+		    
+		    const double invdist = double(1) / distmat[j];
+			
+		    icnrg += param0.reduced_charge * param1.reduced_charge 
+                                    * invdist;
+                    
+		    const LJPair &ljpair = ljpairs.constData()[
+						   ljpairs.map(param0.ljid,
+							       param1.ljid)];
+
+		    double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+		    double sig_over_dist12 = pow_2(sig_over_dist6);
+    
+		    iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                                                      sig_over_dist6);
+		}
+
+		//are we shifting the electrostatic potential?
+		if (use_electrostatic_shifting)
+		  {
+		    icnrg -= this->totalCharge(params0) * this->totalCharge(params1)
+		      / switchfunc->electrostaticCutoffDistance();
+		    
+		  }
+
+		//now add these energies onto the total for the molecule,
+		//scaled by any non-bonded feather factor
+		if (mindist > switchfunc->featherDistance())
+		  {
+		    icnrg = switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
+		    iljnrg = switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
+		  }
+		
+		iljnrg = scale_energy * 0.5 * 4 * iljnrg ;
+		icnrg = scale_energy * 0.5 * icnrg;
+
+		Vector nrg = Vector( icnrg + iljnrg, icnrg, iljnrg);
+
+		group_energies0_array[i] += nrg;
+	    }
+
+        } // end of loop over jgroup CutGroups
+	
+      } // end of loop over igroup CutGroups
+    }
+}
+
 /** Add to the forces in 'forces0' the forces acting on 'mol0' caused
     by 'mol1' */
 void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &mol0, 

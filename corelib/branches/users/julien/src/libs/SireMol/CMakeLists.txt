@@ -14,6 +14,7 @@ set ( SIREMOL_HEADERS
       amberparameters.h
       angleid.h
       atom.h
+      atombeading.h
       atombeads.h
       atomcharges.h
       atomcoords.h

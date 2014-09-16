@@ -111,7 +111,12 @@ public:
     virtual MolarEnergy energy(QVector<FFPtr> &forcefields,
                           const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                           double scale_energy=1) const=0;
-                          
+    
+    virtual void energy(EnergyTable &energytable,
+                       QVector<FFPtr> &forcefields,
+                       const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                       double scale_energy=1) const=0;
+                      
     virtual void force(ForceTable &forcetable,
                        QVector<FFPtr> &forcefields,
                        const QHash<Symbol,FFSymbolPtr> &ffsymbols,
@@ -195,6 +200,10 @@ public:
                        const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                        double scale_energy=1) const;
     
+    void energy(EnergyTable &energytable, QVector<FFPtr> &forcefields,
+		 const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+		 double scale_energy=1) const; 
+
     void force(ForceTable &forcetable,
                QVector<FFPtr> &forcefields,
                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
@@ -258,6 +267,10 @@ public:
                        const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                        double scale_energy=1) const;
     
+    void energy(EnergyTable &energytable, QVector<FFPtr> &forcefields,
+		 const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+		 double scale_energy=1) const; 
+
     void force(ForceTable &forcetable,
                QVector<FFPtr> &forcefields,
                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
@@ -320,7 +333,11 @@ public:
     MolarEnergy energy(QVector<FFPtr> &forcefields,
                        const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                        double scale_energy=1) const;
-                  
+
+    void energy(EnergyTable &energytable, QVector<FFPtr> &forcefields,
+		 const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+		 double scale_energy=1) const;        
+  
     void force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                double scale_force=1) const;
@@ -384,7 +401,11 @@ public:
     MolarEnergy energy(QVector<FFPtr> &forcefields,
                        const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                        double scale_energy=1) const;
-                  
+    
+    void energy(EnergyTable &energytable, QVector<FFPtr> &forcefields,
+		 const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+		 double scale_energy=1) const; 
+              
     void force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                double scale_force=1) const;
@@ -477,7 +498,11 @@ public:
     MolarEnergy energy(QVector<FFPtr> &forcefields,
                        const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                        double scale_energy=1) const;
-                  
+    
+    void energy(EnergyTable &energytable, QVector<FFPtr> &forcefields,
+		 const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+		 double scale_energy=1) const; 
+              
     void force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                double scale_force=1) const;
@@ -663,6 +688,17 @@ MolarEnergy FFConstantValue::energy(QVector<FFPtr> &forcefields,
     return MolarEnergy();
 }
 
+void FFConstantValue::energy(EnergyTable &energytable,
+                          QVector<FFPtr> &forcefields,
+                          const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                          double scale_energy) const
+{
+    throw SireError::program_bug( QObject::tr(
+            "Constant values or expressions do not have an energy, and should "
+            "not be called as if they have an energy! %1 == %2")
+                .arg(this->symbol().toString()).arg(v), CODELOC );
+}
+
 void FFConstantValue::force(ForceTable &forcetable,
                           QVector<FFPtr> &forcefields,
                           const QHash<Symbol,FFSymbolPtr> &ffsymbols,
@@ -812,6 +848,17 @@ MolarEnergy FFConstantExpression::energy(QVector<FFPtr> &forcefields,
     return MolarEnergy();
 }
 
+void FFConstantExpression::energy(EnergyTable &energytable,
+                                 QVector<FFPtr> &forcefields,
+                                 const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                 double scale_energy) const
+{
+    throw SireError::program_bug( QObject::tr(
+            "Constant values or expressions do not have an energy, and should "
+            "not be called as if they have an energy! %1 == %2")
+                .arg(this->symbol().toString(), expression.toString()), CODELOC );
+}
+
 void FFConstantExpression::force(ForceTable &forcetable,
                                  QVector<FFPtr> &forcefields,
                                  const QHash<Symbol,FFSymbolPtr> &ffsymbols,
@@ -920,6 +967,22 @@ MolarEnergy FFSymbolFF::energy(QVector<FFPtr> &forcefields,
         return scale_energy * forcefields[ffidx].edit().energy(this->symbol());
     else
         return MolarEnergy(0);
+}
+
+void FFSymbolFF::energy(EnergyTable &energytable, QVector<FFPtr> &forcefields,
+                       const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                       double scale_energy) const
+{
+
+    FFPtr &ffield = forcefields[ffidx];
+    
+    if (not ffield->isA<FF3D>())
+        throw SireFF::missing_derivative( QObject::tr(
+            "The forcefield of type %1 does not inherit from FF3D so does "
+            "not provide an energy function.")
+                .arg(ffield->what()), CODELOC );
+
+    ffield.edit().asA<FF3D>().energy(energytable, this->symbol(), scale_energy);
 }
 
 void FFSymbolFF::force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
@@ -1209,6 +1272,40 @@ MolarEnergy FFSymbolExpression::energy(QVector<FFPtr> &forcefields,
     return nrg;
 }
 
+void FFSymbolExpression::energy(EnergyTable &energytable,
+                               QVector<FFPtr> &forcefields,
+                               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                               double scale_energy) const
+{
+    int ncomponents = components.count();
+    const Component *components_array = components.constData();
+    
+    Values values;
+    
+    for (int i=0; i<ncomponents; ++i)
+    {
+        const Component &component = components_array[i];
+        
+        //evaluate all of the dependent symbols...
+        int ndeps = component.nDependents();
+        const Symbol *deps_array = component.dependents().constData();
+        
+        for (int j=0; j<ndeps; ++j)
+        {
+            const Symbol &symbol = deps_array[j];
+
+            if (not values.contains(symbol))
+                values.set( symbol, ffsymbols[symbol]->value(ffsymbols) );
+        }
+        
+        //now evaluate the scaling factor...
+        double scale = scale_energy * component.scalingFactor(values);
+        
+        ffsymbols[component.symbol()]->energy(energytable, forcefields, 
+					      ffsymbols, scale);
+    }
+}
+
 void FFSymbolExpression::force(ForceTable &forcetable,
                                QVector<FFPtr> &forcefields,
                                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
@@ -1440,6 +1537,23 @@ MolarEnergy FFTotalExpression::energy(QVector<FFPtr> &forcefields,
     }
     
     return nrg * scale_energy;
+}
+
+void FFTotalExpression::energy(EnergyTable &energytable,
+                              QVector<FFPtr> &forcefields,
+                              const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                              double scale_energy) const
+{
+    int nffields = forcefields.count();
+    FFPtr *ffields_array = forcefields.data();
+    
+    for (int i=0; i<nffields; ++i)
+    {
+        FFPtr &ffield = ffields_array[i];
+        
+        if (ffield->isA<FF3D>())
+            ffield.edit().asA<FF3D>().energy(energytable, scale_energy);
+    }
 }
 
 void FFTotalExpression::force(ForceTable &forcetable,
@@ -2865,6 +2979,35 @@ QHash<Symbol,Expression> ForceFields::componentExpressions() const
     
     return exps;
 }
+
+void ForceFields::energy(EnergyTable &energytable, const Symbol &component,
+			 double scale_energy)
+{
+    FFSymbolPtr comp = ffsymbols.value(component);
+
+    if (comp.get() == 0)
+        throw SireFF::missing_component( QObject::tr(   
+            "There is no component of the energy represented by the "
+            "symbol %1. Available components are %2.")
+                .arg(component.toString(), Sire::toString(energySymbols())),
+                    CODELOC );
+
+    if (comp->isConstant())
+        throw SireFF::missing_component( QObject::tr(
+                "The component %1 is a constant component (it is not an energy "
+                "component). Available energy components are %2.")
+                    .arg(component.toString(),
+                         Sire::toString(energySymbols())), CODELOC );
+    comp->energy(energytable, ffields_by_idx, ffsymbols, scale_energy);
+}
+
+/** Add the energies due to the forcefields in this set to the molecules
+    in the energy table 'energytable', scaled by 'scale_energy' */
+void ForceFields::energy(EnergyTable &energytable, double scale_energy)
+{
+    this->energy(energytable, this->totalComponent(), scale_energy);
+}
+
 
 /** Add the force due to the component 'component' to the molecules
     in the force table 'forcetable', scaled by 'scale_force'

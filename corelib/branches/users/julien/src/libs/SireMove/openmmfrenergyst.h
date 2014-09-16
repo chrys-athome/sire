@@ -67,7 +67,12 @@ friend QDataStream& ::operator>>(QDataStream&, OpenMMFrEnergyST&);
 public:
     OpenMMFrEnergyST(bool frequent_save_velocities = false);
 
-    OpenMMFrEnergyST(const MoleculeGroup &molecule_group,const MoleculeGroup &solutes,const MoleculeGroup &solute_hard, const MoleculeGroup &solute_todummy, const MoleculeGroup & solute_fromdummy,bool frequent_save_velocities = false);
+    OpenMMFrEnergyST(const MoleculeGroup &molecule_group,
+		     const MoleculeGroup &solutes,
+		     const MoleculeGroup &solute_hard, 
+		     const MoleculeGroup &solute_todummy, 
+		     const MoleculeGroup & solute_fromdummy,
+		     bool frequent_save_velocities = false);
 
     OpenMMFrEnergyST(const OpenMMFrEnergyST &other);
 

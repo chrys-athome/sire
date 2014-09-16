@@ -32,6 +32,7 @@
 #include "SireMol/partialmolecule.h"
 #include "SireMol/moleculegroup.h"
 
+#include "SireFF/energytable.h"
 #include "SireFF/forcetable.h"
 #include "SireFF/fieldtable.h"
 #include "SireFF/potentialtable.h"
@@ -235,6 +236,19 @@ void QMFF::changedPotential()
 {
     G1FF::incrementVersion();
     this->mustNowRecalculateFromScratch();
+}
+
+void QMFF::energy(EnergyTable &energytable, double scale_energy)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "QMFF does not yet support energy calculations!"), CODELOC );
+}
+
+void QMFF::energy(EnergyTable &energytable, const Symbol &symbol,
+		  double scale_energy)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "QMFF does not yet support energy calculations!"), CODELOC );
 }
 
 /** Calculate the QM forces on the molecules in this forcefield
