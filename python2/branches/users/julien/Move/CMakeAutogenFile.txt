@@ -58,6 +58,7 @@ set ( PYPP_SOURCES
        NullVelocityGenerator.pypp.cpp
        SupraSubSystem.pypp.cpp
        VelocitiesFromProperty.pypp.cpp
+       RBWorkspaceJM.pypp.cpp
        SystemWideDeleter.pypp.cpp
        VelocityVerlet.pypp.cpp
        Move.pypp.cpp

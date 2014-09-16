@@ -728,6 +728,28 @@ void register_System_class(){
                 , ( bp::arg("component") ) );
         
         }
+        { //::SireSystem::System::energy
+        
+            typedef void ( ::SireSystem::System::*energy_function_type )( ::SireFF::EnergyTable &,double ) ;
+            energy_function_type energy_function_value( &::SireSystem::System::energy );
+            
+            System_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
+        
+        }
+        { //::SireSystem::System::energy
+        
+            typedef void ( ::SireSystem::System::*energy_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
+            energy_function_type energy_function_value( &::SireSystem::System::energy );
+            
+            System_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("component"), bp::arg("scale_energy")=1 ) );
+        
+        }
         { //::SireSystem::System::energyComponents
         
             typedef ::SireCAS::Values ( ::SireSystem::System::*energyComponents_function_type )(  ) ;
