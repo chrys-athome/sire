@@ -1205,6 +1205,11 @@ void FFSymbolExpression::expandInTermsOf(const QSet<Symbol> &ffsymbols)
     
     if (not remainder.isZero())
     {
+      /* JM Jan 2013. Output disabled as some Nautilus scripts trigger this condition (but are valid) */
+      bool debug = 0 ;
+
+      if (debug)
+	{
         qDebug() << QObject::tr(
                 "You may have a forcefield expression that contains a free "
                 "term (%1) that is not dependent on a forcefield component. "
@@ -1212,7 +1217,7 @@ void FFSymbolExpression::expandInTermsOf(const QSet<Symbol> &ffsymbols)
                 "the addition of a constant dimensionless value is not "
                 "dimensionally correct. Please check that the remainder is zero.")
                     .arg(remainder.toString());
-                    
+	}        
         remainder = 0;
     }
 }
