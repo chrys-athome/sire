@@ -1137,7 +1137,7 @@ void OpenMMMDIntegrator::createContext(IntegratorWorkspace &workspace,
 
     }
 
-    if (true)
+    if (Debug)
         qDebug() << "\n Using OpenMM platform = "  << openmm_context->getPlatform().getName().c_str()<<"\n";
 
     // Now update coordinates / velocities / dimensions with sire data
