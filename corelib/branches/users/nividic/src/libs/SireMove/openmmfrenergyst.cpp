@@ -2552,12 +2552,17 @@ void OpenMMFrEnergyST::createContext(IntegratorWorkspace &workspace,SireUnits::D
             }
         }
         
-   
         
-        /*if(platform_type != "OpenCL" or platform_type != "CUDA" or platform_type != "Reference" or platform_type != "CPU"){
+        bool type_test=false;
+        
+        if(platform_type == "OpenCL" || platform_type == "CUDA" || platform_type == "Reference" || platform_type != "CPU"){
+            type_test = true;
+        }
+        
+        if(type_test == false){
+            qDebug()  << "The selected Platform = " << platform_type << " is not supported";
             throw SireError::program_bug(QObject::tr("The Platform defined  is not supported. Available types are Reference, CPU, OpenCL, CUDA"), CODELOC);
-        
-        }*/
+        }
             
         OpenMM::Platform& platform_openmm = OpenMM::Platform::getPlatformByName(platform_type.toStdString());
        
