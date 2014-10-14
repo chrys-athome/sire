@@ -112,6 +112,8 @@ cmm_removal = Parameter("center of mass frequency", 0, "Frequency of which the s
 
 center_solute = Parameter("center solute", True, """Whether or not to centre the centre of geometry of the solute in the box.""")
 
+center_protein = Parameter("center protein", False, """Whether or not to centre the centre of geometry of the protein in the box.""")
+
 use_restraints = Parameter("use restraints", False, """Whether or not to use harmonic restaints on the solute atoms.""")
 
 k_restraint = Parameter("restraint force constant", 100.0, """Force constant to use for the harmonic restaints.""")
@@ -227,6 +229,41 @@ def centerSolute(system, space):
     return system
 
 
+def centerProtein(system, space):
+    
+    # ! Assuming first molecule in the system is the solute !
+    
+    if space.isPeriodic():
+        box_center = space.dimensions()/2
+    else:
+        box_center = Vector( 0.0, 0.0, 0.0 )
+    
+    protein = system.molecules().at(MolNum(2)) #second molecule
+
+    protein_cog = CenterOfGeometry(protein).point()
+    
+    delta = box_center - protein_cog
+    
+    molNums = system.molNums()
+    
+    for molnum in molNums:
+        mol = system.molecule(molnum).molecule()
+        molcoords = mol.property("coordinates")
+        molcoords.translate(delta)
+        mol = mol.edit().setProperty("coordinates",molcoords).commit()
+        system.update(mol)
+    
+    return system
+
+
+def printEnergies(energies):
+    components = energies.symbols()
+    
+    components.sort( key=str )
+    
+    for component in components:
+        print("%s == %f kcal mol-1" % (component, energies[component]))
+
 def createSystem(molecules):
     #print("Applying flexibility and zmatrix templates...")
     print("Creating the system...")
@@ -239,25 +276,20 @@ def createSystem(molecules):
         moleculeList.append(molecule)
 
     molecules = MoleculeGroup("molecules")
-    ions = MoleculeGroup("ions")
     
     for molecule in moleculeList:
         natoms = molecule.nAtoms()
-        if natoms == 1:
-            ions.add(molecule)
-        else:
-            molecules.add(molecule)
+        molecules.add(molecule)
 
     all = MoleculeGroup("all")
+
     all.add(molecules)
-    all.add(ions)
 
     # Add these groups to the System
     system = System()
 
     system.add(all)
     system.add(molecules)
-    system.add(ions)
        
     return system
 
@@ -267,7 +299,6 @@ def setupForcefields(system, space):
 
     all = system[ MGName("all") ]
     molecules = system[ MGName("molecules")]
-    ions = system[ MGName("ions") ]
     
     # - first solvent-solvent coulomb/LJ (CLJ) energy
     internonbondedff = InterCLJFF("molecules:molecules")
@@ -276,20 +307,6 @@ def setupForcefields(system, space):
         internonbondedff.setReactionFieldDielectric(rf_dielectric.val)
     internonbondedff.add(molecules)
 
-    inter_ions_nonbondedff = InterCLJFF("ions:ions")
-    if (cutoff_type.val != "nocutoff") :
-        inter_ions_nonbondedff.setUseReactionField(True)
-        inter_ions_nonbondedff.setReactionFieldDielectric(rf_dielectric.val)
-
-    inter_ions_nonbondedff.add(ions)
-    
-    inter_ions_molecules_nonbondedff = InterGroupCLJFF("ions:molecules")
-    if (cutoff_type.val != "nocutoff") :
-        inter_ions_molecules_nonbondedff.setUseReactionField(True)
-        inter_ions_molecules_nonbondedff.setReactionFieldDielectric(rf_dielectric.val)
-
-    inter_ions_molecules_nonbondedff.add(ions, MGIdx(0) )
-    inter_ions_molecules_nonbondedff.add(molecules, MGIdx(1) )
     
     # Now solute bond, angle, dihedral energy
     intrabondedff = InternalFF("molecules-intrabonded")
@@ -335,7 +352,7 @@ def setupForcefields(system, space):
                 restraintff.add(restraint)
 
     # Here is the list of all forcefields
-    forcefields = [ internonbondedff, intrabondedff, intranonbondedff, inter_ions_nonbondedff, inter_ions_molecules_nonbondedff, restraintff ] 
+    forcefields = [ internonbondedff, intrabondedff, intranonbondedff, restraintff ]
     
     for forcefield in forcefields:
         system.add(forcefield)
@@ -348,7 +365,6 @@ def setupForcefields(system, space):
 
     total_nrg = internonbondedff.components().total() +\
                 intranonbondedff.components().total() + intrabondedff.components().total() +\
-                inter_ions_nonbondedff.components().total() + inter_ions_molecules_nonbondedff.components().total() +\
                 restraintff.components().total()
 
     e_total = system.totalComponent()
@@ -358,6 +374,10 @@ def setupForcefields(system, space):
     # Add a monitor that calculates the average total energy and average energy
     # deltas - we will collect both a mean average and an zwanzig average
     system.add( "total_energy", MonitorComponent(e_total, Average()) )
+
+
+    #printEnergies( system.componentValues())
+
 
     return system
 
@@ -432,6 +452,8 @@ def setupMoves(system, random_seed, GPUS):
     print("Generated random seed number %d " % random_seed)
 
     moves.setGenerator( RanGenerator(random_seed) )
+
+    #print("\n*OpenMM Energy = %f kcal mol-1" % Integrator_OpenMM.getPotentialEnergy(system).value())
 
     return moves
 
@@ -894,7 +916,7 @@ def setupForcefieldsFreeEnergy(system, space ):
 
     system.setComponent( lam, lambda_val.val )
 
-    # printEnergies( system.componentValues() )
+    #printEnergies( system.componentValues())
 
     return system
 
@@ -969,7 +991,11 @@ def setupMovesFreeEnergy(system,random_seed,GPUS,lam_val):
     print("Generated random seed number %d " % random_seed)
 
     moves.setGenerator( RanGenerator(random_seed) )
- 
+
+
+    #print("\n*OpenMM Energy = %f kcal mol-1" % Integrator_OpenMM.getPotentialEnergy(system).value())
+
+
     return moves
 
 def clearBuffers( system ):
@@ -1030,8 +1056,11 @@ def run():
 
         system = createSystem(molecules)
 
-        if (center_solute.val):
+        if (center_solute.val and center_protein.val == False):
             system = centerSolute(system, space)
+
+        if (center_protein.val):
+            system = centerProtein(system, space)
 
         if use_restraints.val:
             system = setupRestraints(system)
@@ -1128,8 +1157,11 @@ def runFreeNrg():
 
         system = createSystemFreeEnergy(molecules)
 
-        if (center_solute.val):
+        if (center_solute.val and center_protein.val == False):
             system = centerSolute(system, space)
+        
+        if (center_protein.val):
+            system = centerProtein(system, space)
 
         if use_restraints.val:
             system = setupRestraints(system)
