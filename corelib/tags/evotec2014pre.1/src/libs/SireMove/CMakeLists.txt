@@ -11,7 +11,6 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in SireMove
 set ( SIREMOVE_HEADERS
-      dcd_writer.h      
       dlmrigidbody.h
       dynamics.h
       ensemble.h
@@ -68,10 +67,7 @@ set ( SIREMOVE_HEADERS
 
 # Define the sources in SireMove
 set ( SIREMOVE_SOURCES
-
       register_siremove.cpp
-
-      dcd_writer.cpp
       dlmrigidbody.cpp
       dynamics.cpp
       ensemble.cpp
@@ -127,28 +123,10 @@ set ( SIREMOVE_SOURCES
       ${SIREMOVE_HEADERS}
     )
 
-set ( SIREMOVE_OPENMM_HEADERS
-      openmmintegrator.h
-      openmmmdintegrator.h
-      openmmfrenergydt.h
-      openmmfrenergyst.h
-      openmmacceleratedmdintegrator.h
-      dcd_writer.h
-    )
-
-set ( SIREMOVE_OPENMM_SOURCES
-      openmmintegrator.cpp
-      openmmmdintegrator.cpp
-      openmmfrenergydt.cpp
-      openmmfrenergyst.cpp
-      openmmacceleratedmdintegrator.cpp
-      dcd_writer.cpp
-    )
-
 if ( ${OpenMM_FOUND} )
     message ( STATUS "Adding in OpenMM support to SireMove using OpenMM ${OpenMM_ROOT_DIR}" )
-    set ( SIREMOVE_SOURCES  ${SIREMOVE_SOURCES} ${SIREMOVE_OPENMM_SOURCES} ${SIREMOVE_OPENMM_HEADERS} )
-    set ( SIREMOVE_HEADERS  ${SIREMOVE_HEADERS} ${SIREMOVE_OPENMM_HEADERS} )
+    set ( SIREMOVE_SOURCES  ${SIREMOVE_SOURCES}  )
+    set ( SIREMOVE_HEADERS  ${SIREMOVE_HEADERS}  )
     set ( SIRE_OPENMM_LIBRARIES ${OpenMM_LIBRARIES} )    
     include_directories(${OpenMM_INCLUDE_DIR})
     add_definitions( "-DSIRE_USE_OPENMM" )
@@ -187,5 +165,3 @@ install( FILES ${SIREMOVE_HEADERS}
 install( FILES ${SIREMOVE_DEPRECATED_HEADERS}
          DESTINATION ${SIRE_INCLUDES}/SireMove/deprecated )
 
-install( FILES ${SIREMOVE_OPENMM_HEADERS}
-         DESTINATION ${SIRE_INCLUDES}/SireMove )
