@@ -578,6 +578,8 @@ static void calculateForces(const ViewsOfMol &mol, const MolForceTable &forces,
         
         BOOST_ASSERT( forces.nValues() == nats );
 
+
+	//qDebug() << "MOL " << "\n";
 	//for (int i=0; i < nats ; ++i )
 	//  qDebug() << " AtomForces " << forces.toVector().at(i).toString() ;
         
