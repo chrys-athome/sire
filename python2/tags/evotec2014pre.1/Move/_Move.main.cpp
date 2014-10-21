@@ -69,16 +69,6 @@
 
 #include "NullVolumeChanger.pypp.hpp"
 
-#include "OpenMMAMDIntegrator.pypp.hpp"
-
-#include "OpenMMFrEnergyDT.pypp.hpp"
-
-#include "OpenMMFrEnergyST.pypp.hpp"
-
-#include "OpenMMIntegrator.pypp.hpp"
-
-#include "OpenMMMDIntegrator.pypp.hpp"
-
 #include "PrefSampler.pypp.hpp"
 
 #include "RBWorkspaceJM.pypp.hpp"
@@ -245,16 +235,6 @@ BOOST_PYTHON_MODULE(_Move){
     register_VolumeChanger_class();
 
     register_NullVolumeChanger_class();
-
-    register_OpenMMAMDIntegrator_class();
-
-    register_OpenMMFrEnergyDT_class();
-
-    register_OpenMMFrEnergyST_class();
-
-    register_OpenMMIntegrator_class();
-
-    register_OpenMMMDIntegrator_class();
 
     register_Sampler_class();
 
