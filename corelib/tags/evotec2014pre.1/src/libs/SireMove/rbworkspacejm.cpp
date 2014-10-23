@@ -253,6 +253,8 @@ static QVector<Vector> buildBead(const ViewsOfMol &mol,
             //now calculate the coordinates of all of the atoms in terms
             //of the center of mass / orientaton frame
             Matrix inv_matrix = bead_to_world.inverse();
+	    // JM 10/14 correct row vs. column major bug introduced in Aug14 version of sire 
+	    inv_matrix = inv_matrix.transpose();
 
             for (int i=0; i<nats; ++i)
             {
@@ -601,7 +603,8 @@ static void calculateForces(const ViewsOfMol &mol, const MolForceTable &forces,
 	      //qDebug() << " We are here ";
 
                 Matrix orient = bead_orient.toMatrix() * bead_to_world;
-
+		// JM 10/14 correct row vs. column major bug introduced in Aug14 version of sire 
+		orient = orient.transpose(); 
 		//qDebug() << " orient is " << orient.toString();
 
                 const Vector *int_coords = atom_int_coords.constData();
