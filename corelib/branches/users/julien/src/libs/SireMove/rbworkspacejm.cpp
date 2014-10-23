@@ -223,11 +223,14 @@ static QVector<Vector> buildBead(const ViewsOfMol &mol,
             }
             
             bead_com /= bead_mass;
+
+	    //qDebug() << " BEAD_COM " << bead_com.toString() << "\n";
+
             bead_orients[0] = Quaternion();
             
             bead_to_world = Matrix( double(0) );
             
-            //now calculate moments of inertia
+	    //now calculate moments of inertia
             for (int i=0; i<nats; ++i)
             {
                 double *inertia_array = bead_to_world.data();
@@ -253,6 +256,12 @@ static QVector<Vector> buildBead(const ViewsOfMol &mol,
             //now calculate the coordinates of all of the atoms in terms
             //of the center of mass / orientaton frame
             Matrix inv_matrix = bead_to_world.inverse();
+
+	    // JM 10/14 correct row vs. column major bug introduced in Aug14 version of sire 
+	    inv_matrix = inv_matrix.transpose();
+	    
+
+	    //qDebug() << " inv_matrix " << inv_matrix.toString() << "\n";
 
             for (int i=0; i<nats; ++i)
             {
@@ -395,7 +404,7 @@ static void getBeading(const ViewsOfMol &mol, const PropertyName &beading_proper
     
     if (moldata.hasProperty(beading_property))
     {
-        qDebug() << CODELOC;
+      //qDebug() << CODELOC;
     
         if (mol.selectedAll())
         {
@@ -581,7 +590,7 @@ static void calculateForces(const ViewsOfMol &mol, const MolForceTable &forces,
 
 	//qDebug() << "MOL " << "\n";
 	//for (int i=0; i < nats ; ++i )
-	//  qDebug() << " AtomForces " << forces.toVector().at(i).toString() ;
+	  //qDebug() << " AtomForces " << forces.toVector().at(i).toString() ;
         
         if (beading.isEmpty())
         {
@@ -602,7 +611,13 @@ static void calculateForces(const ViewsOfMol &mol, const MolForceTable &forces,
             {
 	      //qDebug() << " We are here ";
 
+	      //qDebug() << "bead_orient " << bead_orient.toMatrix().toString() << "\n";
+	      //qDebug() << "bead_to_world" << bead_to_world.toString() << "\n";
+
+
                 Matrix orient = bead_orient.toMatrix() * bead_to_world;
+		// JM 10/14 correct row vs. column major bug introduced in Aug14 version of sire 
+		orient = orient.transpose(); 
 
 		//qDebug() << " orient is " << orient.toString();
 
@@ -631,6 +646,7 @@ static void calculateForces(const ViewsOfMol &mol, const MolForceTable &forces,
                 bead_torque = orient.inverse() * bead_torque;
 
 		//qDebug() << " JM mapping force back old ..." << bead_force.toString();
+		//qDebug() << " orient.inverse() " << orient.inverse().toString() << "\n";
 		bead_force = orient.inverse() * bead_force;
 		//qDebug() << " now..." << bead_force.toString();
             }
@@ -1243,8 +1259,8 @@ static AtomCoords updateCoordinates(const ViewsOfMol &mol,
         {
             //just one bead for the whole molecule
             const Vector &com = bead_coords[0];
-            Matrix orient = bead_orients[0].toMatrix() * beads_to_world[0];
-        
+	    Matrix orient = bead_orients[0].toMatrix() * beads_to_world[0];
+	    
             for (int i=0; i<nats; ++i)
             {
                 new_coords_array[i] = com + (orient * int_coords_array[i]);
