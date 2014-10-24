@@ -319,6 +319,11 @@ install( FILES __init__.py
          DESTINATION ${SIRE_PYTHON}/Sire 
        )
 
+install( FILES ${CMAKE_SOURCE_DIR}/build/scripts/update_rpath.py
+               ${CMAKE_SOURCE_DIR}/build/scripts/install_default_modules.py
+         DESTINATION ${SIRE_INSTALL_PREFIX}/share/Sire/build
+       )
+
 # Finally, write the version header file and finish off the component dependencies file
 include( GetSvnVersion )
 

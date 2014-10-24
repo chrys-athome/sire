@@ -33,6 +33,24 @@ print( "\nCreating Sire installer \"%s\"..." % (sire_run) )
 
 makeself =  join(getShareDir(), "build", "makeself.sh")
 install_sire = join(getShareDir(), "build", "install_sire.sh")
+update_rpath = join(getShareDir(), "build", "update_rpath.py")
+install_default_modules = join(getShareDir(), "build", "install_default_modules.py")
+
+print(update_rpath)
+print(install_default_modules)
+
+sire_python = "%s/python" % getBinDir()
+bundled_python = "%s/../bin/python3" % getBundledLibDir()
+
+print("Ensuring that the package is linked internally and has all base modules...")
+
+if os.system("%s %s" % (bundled_python, install_default_modules)) != 0:
+    print("Could not install default modules, so cannot package Sire!")
+    sys.exit(-1)
+
+if os.system("%s %s" % (sire_python, update_rpath)) != 0:
+    print("Could not update RPATH so cannot package Sire!")
+    sys.exit(-1)
 
 # create a directory that will contain the files to be packages
 with tempfile.TemporaryDirectory() as tempdir:
