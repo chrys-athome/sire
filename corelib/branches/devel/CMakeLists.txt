@@ -552,6 +552,9 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 option( SIRE_ENABLE_BUNDLING "Allow Sire to use bundled libraries" ON )
 
 # Fine-grain control of bundling each dependency
+option( SIRE_BUNDLE_ZLIB "Whether Sire should use its bundled copy of zlib" ON )
+option( SIRE_BUNDLE_SQLITE "Whether Sire should use its bundled copy of sqlite" ON )
+option( SIRE_BUNDLE_SSL "Whether Sire should use its bundled copy of openssl" ON )
 option( SIRE_BUNDLE_TBB "Whether Sire should use its bundled copy of TBB" ON )
 option( SIRE_BUNDLE_GSL "Whether Sire should use its bundled copy of GSL" ON )
 option( SIRE_BUNDLE_CPUID "Whether Sire should use its bundled copy of libcpuid" ON )
@@ -560,6 +563,9 @@ option( SIRE_BUNDLE_BLASLAPACK "Whether Sire should use its bundled copy of BLAS
 option( SIRE_BUNDLE_QT "Whether Sire should use its bundled copy of Qt" ON )
 
 save_sire_variable( "SIRE_ENABLE_BUNDLING" "${SIRE_ENABLE_BUNDLING}" )
+save_sire_variable( "SIRE_BUNDLE_ZLIB" "${SIRE_BUNDLE_ZLIB}" )
+save_sire_variable( "SIRE_BUNDLE_SQLITE" "${SIRE_BUNDLE_SQLITE}" )
+save_sire_variable( "SIRE_BUNDLE_SSL" "${SIRE_BUNDLE_SSL}" )
 save_sire_variable( "SIRE_BUNDLE_TBB" "${SIRE_BUNDLE_TBB}" )
 save_sire_variable( "SIRE_BUNDLE_CPUID" "${SIRE_BUNDLE_CPUID}" )
 save_sire_variable( "SIRE_BUNDLE_GSL" "${SIRE_BUNDLE_GSL}" )
@@ -572,6 +578,9 @@ set (SIRE_FOUND_GSL FALSE)
 set (SIRE_FOUND_BOOST FALSE)
 set (SIRE_FOUND_BLASLAPACK FALSE)
 set (SIRE_FOUND_QT FALSE)
+set (SIRE_FOUND_ZLIB FALSE)
+set (SIRE_FOUND_SSL FALSE)
+set (SIRE_FOUND_SQLITE FALSE)
 
 if ( ${SIRE_ENABLE_BUNDLING} )
     message( STATUS "Sire will be compiled to use its own copy of bundled libraries." )
@@ -593,6 +602,18 @@ if ( ${SIRE_ENABLE_BUNDLING} )
           
     if (NOT EXISTS "${BUNDLE_STAGEDIR}/include")
       file(MAKE_DIRECTORY ${BUNDLE_STAGEDIR}/include)
+    endif()
+
+    if ( ${SIRE_BUNDLE_ZLIB} )
+      include( "src/bundled/install_zlib.cmake" )
+    endif()
+
+    if ( ${SIRE_BUNDLE_SQLITE} )
+      include( "src/bundled/install_sqlite.cmake" )
+    endif()
+
+    if ( ${SIRE_BUNDLE_SSL} )
+      include( "src/bundled/install_openssl.cmake" )
     endif()
 
     if ( ${SIRE_BUNDLE_TBB} )
@@ -628,6 +649,18 @@ if ( ${SIRE_ENABLE_BUNDLING} )
                DESTINATION ${CMAKE_INSTALL_PREFIX}
                USE_SOURCE_PERMISSIONS )
     endif()
+endif()
+
+if ( NOT ${SIRE_FOUND_ZLIB} )
+    # look for zlib in the system
+    find_package( zlib REQUIRED )
+endif()
+save_sire_variable( "SIRE_ZLIB_LIBRARIES" "${ZLIB_LIBRARIES}" )
+save_sire_variable( "SIRE_ZLIB_INCLUDE_DIR" "${ZLIB_INCLUDE_DIRS}" )
+
+if ( NOT ${SIRE_FOUND_SSL} )
+    # look for ssl in the system
+    find_package( openssl REQUIRED )
 endif()
 
 if ( NOT ${SIRE_FOUND_QT} )
