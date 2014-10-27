@@ -653,14 +653,14 @@ endif()
 
 if ( NOT ${SIRE_FOUND_ZLIB} )
     # look for zlib in the system
-    find_package( zlib REQUIRED )
+    find_package( ZLIB REQUIRED )
 endif()
 save_sire_variable( "SIRE_ZLIB_LIBRARIES" "${ZLIB_LIBRARIES}" )
 save_sire_variable( "SIRE_ZLIB_INCLUDE_DIR" "${ZLIB_INCLUDE_DIRS}" )
 
 if ( NOT ${SIRE_FOUND_SSL} )
     # look for ssl in the system
-    find_package( openssl REQUIRED )
+    find_package( OpenSSL REQUIRED )
 endif()
 
 if ( NOT ${SIRE_FOUND_QT} )

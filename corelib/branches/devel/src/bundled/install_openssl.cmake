@@ -41,7 +41,7 @@ else()
     if (APPLE)
       list( APPEND SSL_OPTIONS "darwin64-x86_64-cc" )      
     else()
-      list( APPEND SSL_OPTIONS "linux-generic64" )
+      list( APPEND SSL_OPTIONS "linux-x86_64" )
     endif()
 
     message( STATUS "${SSL_OPTIONS}" )
@@ -51,7 +51,8 @@ else()
                      WORKING_DIRECTORY ${SSL_BUILD_DIR} )
 
     message( STATUS "Patience... Compiling openssl..." )
-    execute_process( COMMAND ${CMAKE_MAKE_PROGRAM} -k -j ${NCORES}
+    # OpenSSL make file is not safe to compile in parallel
+    execute_process( COMMAND ${CMAKE_MAKE_PROGRAM}
                      WORKING_DIRECTORY ${SSL_BUILD_DIR} )
 
     # Now, if this is on OS X, we have to set the name of the 
@@ -92,7 +93,7 @@ else()
   endif()
 endif()
 
-find_package( openssl REQUIRED )
+find_package( OpenSSL REQUIRED )
 
 if ( SSL_LIBRARY )
   message( STATUS "Using openssl from ${SSL_LIBRARY}|${CRYPTO_LIBRARY}" )

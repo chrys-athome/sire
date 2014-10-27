@@ -57,7 +57,7 @@ else()
   endif()
 endif()
 
-find_package( zlib REQUIRED )
+find_package( ZLIB REQUIRED )
 
 if ( ZLIB_LIBRARY )
   message( STATUS "Using zlib from ${ZLIB_LIBRARY}" )
