@@ -138,6 +138,16 @@ void register_RBWorkspaceJM_class(){
                 , ( bp::arg("nrg_component") ) );
         
         }
+        { //::SireMove::RBWorkspaceJM::calculateRBForces
+        
+            typedef bool ( ::SireMove::RBWorkspaceJM::*calculateRBForces_function_type )(  ) ;
+            calculateRBForces_function_type calculateRBForces_function_value( &::SireMove::RBWorkspaceJM::calculateRBForces );
+            
+            RBWorkspaceJM_exposer.def( 
+                "calculateRBForces"
+                , calculateRBForces_function_value );
+        
+        }
         { //::SireMove::RBWorkspaceJM::commitCoordinates
         
             typedef void ( ::SireMove::RBWorkspaceJM::*commitCoordinates_function_type )(  ) ;
@@ -244,6 +254,17 @@ void register_RBWorkspaceJM_class(){
                 "regenerateVelocities"
                 , regenerateVelocities_function_value
                 , ( bp::arg("generator") ) );
+        
+        }
+        { //::SireMove::RBWorkspaceJM::setForceTable
+        
+            typedef void ( ::SireMove::RBWorkspaceJM::*setForceTable_function_type )( ::SireFF::ForceTable & ) ;
+            setForceTable_function_type setForceTable_function_value( &::SireMove::RBWorkspaceJM::setForceTable );
+            
+            RBWorkspaceJM_exposer.def( 
+                "setForceTable"
+                , setForceTable_function_value
+                , ( bp::arg("forces") ) );
         
         }
         { //::SireMove::RBWorkspaceJM::setSystem
