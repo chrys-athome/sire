@@ -261,6 +261,8 @@ public:
 
     MolForceTable& getTable(MolNum molnum);
 
+    void setTable(MolNum molnum, MolForceTable& table);
+
     const MolForceTable& getTable(MolNum molnum) const;
 
     const MolForceTable& constGetTable(MolNum molnum) const;
@@ -390,6 +392,7 @@ inline MolForceTable& ForceTable::getTable(MolNum molnum)
         
     return tables_by_idx.data()[ it.value() ];
 }
+
 
 /** Return the table for the molecule with number 'molnum'
 

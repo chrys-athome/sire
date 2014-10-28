@@ -1275,3 +1275,13 @@ const char* ForceTable::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<ForceTable>() );
 }
+
+ void ForceTable::setTable(MolNum molnum, MolForceTable& table)
+ {
+   if ( containsTable(molnum))
+     {
+       qDebug() << " THERE IS A TABLE !" << "\n"; 
+       qint32 idx = molnum_to_idx[molnum];
+       tables_by_idx[idx] = table;
+     }
+ }

@@ -902,6 +902,86 @@ static void calculateEnergies(const ViewsOfMol &mol, const MolEnergyTable &energ
 //    return true;
 //}
 
+void RBWorkspaceJM::setForceTable(ForceTable &forces)
+{
+  myforcetable = forces;
+}
+
+/** Calculate the RB forces and torques using the available atomic forces */
+bool RBWorkspaceJM::calculateRBForces()
+{
+    const int nbeads = bead_coordinates.count();
+    
+    if (nbeads == 0)
+        //no beads, so no need to calculate forces
+        return false;
+
+    // JM 10/14 HERE SKIP AND USE EXISTING FORCES
+    //IntegratorWorkspaceJM::calculateForces(nrg_component);
+
+    //forces have changed on the atoms, so recalculate all of
+    //the forces and torques on all of the beads
+
+    const MoleculeGroup &molgroup = moleculeGroup();
+    const int nmols = molgroup.nMolecules();
+    
+    //    qDebug() << " nmols is " << nmols;
+
+    Vector *bead_forces_array = bead_forces.data();
+    Vector *bead_torques_array = bead_torques.data();
+
+    Vector *bead_energies_array = bead_energies.data();
+
+    const Matrix *bead_to_world_array = bead_to_world.constData();
+    const Quaternion *bead_orients_array = bead_orientations.constData();
+
+    const QPair< qint32,QVector<qint32> > *atoms_to_beads_array 
+                                                    = atoms_to_beads.constData();
+    const QVector<Vector> *int_coords_array = atom_int_coords.constData();
+    
+    //const ForceTable &forcetable = forceTable();
+    const ForceTable &forcetable = myforcetable;
+
+    //const EnergyTable &energytable = energyTable();
+
+    for (int i=0; i<nbeads; ++i)
+    {
+        bead_forces_array[i] = Vector(0);
+        bead_torques_array[i] = Vector(0);
+        bead_energies_array[i] = Vector(0);
+    }
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        const QPair< qint32,QVector<qint32> > &beading = atoms_to_beads_array[i];
+
+        if (beading.first == -1)
+            //there are no beads for this molecule, so no forces or torques
+            continue;
+	
+        MolNum molnum = molgroup.molNumAt(i);
+
+	//	qDebug() << " Mol " << i << " MolNum " << molnum.toString() << " beading.first is " << beading.first << " beading.second is " << beading.second;
+
+        ::calculateForces(molgroup[molnum], forcetable.getTable(molnum), 
+                          int_coords_array[i], beading.second, 
+                          bead_to_world_array + beading.first,
+                          bead_orients_array + beading.first,
+                          bead_forces_array + beading.first,
+                          bead_torques_array + beading.first);
+
+	//::calculateEnergies(molgroup[molnum], energytable.getTable(molnum), 
+	//		    int_coords_array[i], beading.second, 
+	//		    bead_energies_array + beading.first);
+
+	//	qDebug() << " Done " ;
+	//qDebug() << bead_forces_array ;
+	//exit(-1);
+    }
+    
+    return true;
+}
+
 /** Calculate the forces and torques and energies */
 bool RBWorkspaceJM::calculateForces(const Symbol &nrg_component)
 {

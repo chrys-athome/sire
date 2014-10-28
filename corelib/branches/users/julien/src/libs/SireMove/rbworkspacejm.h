@@ -97,6 +97,10 @@ public:
 
     bool calculateForces(const Symbol &nrg_component);
 
+    void setForceTable(ForceTable &forces);
+
+    bool calculateRBForces();
+
     //    bool calculateEnergies(const Symbol &nrg_component);
 
     //    bool calculateForcesAndEnergies(const Symbol &nrg_component);
@@ -132,6 +136,9 @@ protected:
 
 private:
     void rebuildFromScratch();
+   
+    //A custom forcetable
+    ForceTable myforcetable;
 
     /** The coordinates of the atoms of each bead in the center of
         mass / principle inertia tensor frame. These
