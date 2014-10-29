@@ -109,7 +109,7 @@ barostat_frequency = Parameter("barostat frequency", 25, """Number of steps befo
 
 lj_dispersion = Parameter("lj dispersion", False, """Whether or not to calculate and include the LJ dispersion term.""")
 
-cmm_removal = Parameter("center of mass frequency", 0, "Frequency of which the system center of mass motion is removed.""")
+cmm_removal = Parameter("center of mass frequency", 10, "Frequency of which the system center of mass motion is removed.""")
 
 center_solute = Parameter("center solute", True, """Whether or not to centre the centre of geometry of the solute in the box.""")
 
@@ -1072,6 +1072,9 @@ def run():
         trajectory = setupDCD(dcd_root.val, system)
 
     s1 = timer.elapsed()/1000.
+
+    # Jm debug 14/10/14
+    PDB().write(system[MGName("all")], "frame-0.pdb" )
     
     print("Running MD simulation ")
 
