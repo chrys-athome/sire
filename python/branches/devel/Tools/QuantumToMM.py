@@ -346,7 +346,7 @@ def setQMProperties(forcefield, space):
     # calculate the total charge on the QM atoms
     total_charge = 0.0
     for molnum in forcefield.molecules().molNums():
-        total_charge = forcefield[molnum].evaluate().charge().value()
+        total_charge += forcefield[molnum].evaluate().charge().value()
 
     # round the charge to the nearest integer
     print("Charge on QM atoms is %s" % total_charge)
@@ -713,9 +713,8 @@ def loadQMMMSystem():
     ligand_mobile.add(mobile_mols, MGIdx(1))
 
     qm_ligand = QMMMFF("system:ligand-QM")    
-    qm_ligand = setQMProperties(qm_ligand, space)
-
     qm_ligand.add(ligand_mols, MGIdx(0))
+    qm_ligand = setQMProperties(qm_ligand, space)
 
     zero_energy = 0
 
