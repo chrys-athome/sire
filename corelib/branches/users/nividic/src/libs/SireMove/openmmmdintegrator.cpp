@@ -141,6 +141,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMMDIntegrato
 /** Extract from a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMMDIntegrator &velver){
 
+    
     VersionID v = readHeader(ds, r_openmmint);
 
     if (v == 2)
