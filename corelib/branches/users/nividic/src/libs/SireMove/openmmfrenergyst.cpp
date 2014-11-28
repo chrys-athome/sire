@@ -2555,7 +2555,7 @@ void OpenMMFrEnergyST::createContext(IntegratorWorkspace &workspace,SireUnits::D
         
         bool type_test=false;
         
-        if(platform_type == "OpenCL" || platform_type == "CUDA" || platform_type == "Reference" || platform_type != "CPU"){
+        if(platform_type == "OpenCL" || platform_type == "CUDA" || platform_type == "Reference" || platform_type == "CPU"){
             type_test = true;
         }
         
