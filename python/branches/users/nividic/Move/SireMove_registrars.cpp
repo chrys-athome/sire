@@ -3,7 +3,6 @@
 
 #include "SireMove_registrars.h"
 
-
 #include "moleculardynamics.h"
 #include "suprasimpacket.h"
 #include "titrator.h"
