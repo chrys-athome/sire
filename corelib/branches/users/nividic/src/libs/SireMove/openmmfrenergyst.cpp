@@ -128,7 +128,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyST 
         << velver.device_index <<velver.precision << velver.Alchemical_value << velver.coulomb_power << velver.shift_delta << velver.delta_alchemical 
         << velver.gradients << velver.energies <<velver.perturbed_energies <<  velver.Integrator_type << velver.friction << velver.integration_tol 
         << velver.timeskip << velver.minimize << velver.minimize_tol << velver.minimize_iterations << velver.equilib_iterations << velver.equilib_time_step
-        << velver.reinetialize_context << velver.GF_acc << velver.GB_acc
+        << velver.reinetialize_context << velver.GF_acc << velver.GB_acc << velver.gradient
         << static_cast<const Integrator&>(velver);
 
     // Free OpenMM pointers??
@@ -152,7 +152,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyST &velve
         >> velver.device_index >> velver.precision >> velver.Alchemical_value >> velver.coulomb_power >> velver.shift_delta >> velver.delta_alchemical
         >> velver.gradients >> velver.energies >> velver.perturbed_energies >> velver.Integrator_type >> velver.friction 
         >> velver.integration_tol >> velver.timeskip >> velver.minimize >> velver.minimize_tol >> velver.equilib_iterations >> velver.equilib_time_step
-        >> velver.minimize_iterations >> velver.reinetialize_context >> velver.GF_acc >> velver.GB_acc
+        >> velver.minimize_iterations >> velver.reinetialize_context >> velver.GF_acc >> velver.GB_acc >> velver.gradient
         >> static_cast<Integrator&>(velver);
 
         // Maybe....need to reinitialise from molgroup because openmm system was not serialised...
@@ -183,7 +183,7 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(bool frequent_save)
                 shift_delta(2.0),delta_alchemical(0.001),gradients(),energies(), perturbed_energies(),
                 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond),
                 minimize(false),minimize_tol(1.0),minimize_iterations(0),equilib_iterations(5000),equilib_time_step(0.0005 * picosecond),
-                reinetialize_context(false),GF_acc(0.0),GB_acc(0.0)
+                reinetialize_context(false),GF_acc(0.0),GB_acc(0.0),gradient(0.0)
 {}
 
 /** Constructor using the passed molecule groups */
@@ -200,7 +200,7 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const MoleculeGroup &molecule_group, const Mo
                 shift_delta(2.0),delta_alchemical(0.001),gradients(),energies(), perturbed_energies(),
                 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond),
                 minimize(false),minimize_tol(1.0),minimize_iterations(0),equilib_iterations(5000),equilib_time_step(0.0005 * picosecond),
-                reinetialize_context(false),GF_acc(0.0),GB_acc(0.0)
+                reinetialize_context(false),GF_acc(0.0),GB_acc(0.0),gradient(0.0)
 {}
 
 /** Copy constructor */
@@ -225,7 +225,7 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const OpenMMFrEnergyST &other)
                 Integrator_type(other.Integrator_type),friction(other.friction),integration_tol(other.integration_tol),timeskip(other.timeskip),
                 minimize(other.minimize),minimize_tol(other.minimize_tol),minimize_iterations(other.minimize_iterations),
                 equilib_iterations(other.equilib_iterations),equilib_time_step(other.equilib_time_step),
-                reinetialize_context(other.reinetialize_context),GF_acc(other.GF_acc),GB_acc(other.GB_acc)
+                reinetialize_context(other.reinetialize_context),GF_acc(other.GF_acc),GB_acc(other.GB_acc),gradient(other.gradient)
 {}
 
 /** Destructor */
@@ -284,6 +284,7 @@ OpenMMFrEnergyST& OpenMMFrEnergyST::operator=(const OpenMMFrEnergyST &other)
     reinetialize_context=other.reinetialize_context;
     GF_acc=other.GF_acc;
     GB_acc=other.GB_acc;
+    gradient=other.gradient;
     return *this;
 }
 
@@ -330,6 +331,7 @@ bool OpenMMFrEnergyST::operator==(const OpenMMFrEnergyST &other) const
     and reinetialize_context == other.reinetialize_context
     and GF_acc == other.GF_acc
     and GB_acc == other.GB_acc
+    and gradient == other.gradient
     and Integrator::operator==(other);
 }
 
@@ -2796,6 +2798,10 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     double pot_energy_acc = 0.0;
 
     int sample_count=1;
+    
+    double GF_local = 0.0;
+    
+    double GB_local = 0.0;
 
 
     //state_openmm=openmm_context->getState(infoMask);
@@ -2927,14 +2933,14 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     
     double double_increment = increment_plus - increment_minus;
     
-    //double coefficient = -1.0/(double_increment*beta);
-    
-    double minv_beta = -1.0/beta;
+    double coefficient = -1.0/(double_increment*beta);
     
     Debug = false;
     
     //if(true)
     //   printf("\nepsm = %.8f increment = %.5f double increment = %.5f\n",epsm, increment, double_increment);
+    
+    
     
     while(sample_count <= n_samples){
         
@@ -3109,23 +3115,28 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         
         GF_acc = GF_acc + plus;
         GB_acc = GB_acc + minus;
+        
+        GF_local = GF_local +  plus;
+        GB_local = GB_local +  minus;
+        
 
         pot_energy_acc = pot_energy_acc + potential_energy_lambda;
         
         double avg_pot_energy_lambda = pot_energy_acc / (sample_count);
         
-        double avg_GF = GF_acc /(sample_count);
+        /*double avg_GF = GF_acc /(sample_count);
         double avg_GB = GB_acc /(sample_count);
         double Energy_GF = minv_beta*log(avg_GF);
         double Energy_GB = minv_beta*log(avg_GB);
-        double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / double_increment ;
+        double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / double_increment ;*/
         
-        
-        //double Energy_Gradient_lamda = coefficient * log(GF_acc / GB_acc);
+        //Energy Gradient in the Block
+        double Energy_Gradient_lamda = coefficient * log(GF_local / GB_local);
+    
         
         if(Debug){
             //qDebug()<< "Total Time = " << state_openmm.getTime() << " ps";
-            printf("Cumulative Energy Gradient = %.5f kcal/mol\n", Energy_Gradient_lamda * OpenMM::KcalPerKJ);
+            printf("Block Energy Gradient = %.5f kcal/mol\n", Energy_Gradient_lamda * OpenMM::KcalPerKJ);
             //qDebug() << "Istantaneus Energy Gradient = " << coefficient * log(plus / minus) * OpenMM::KcalPerKJ << " kcal/(mol lambda)";
         }
         
@@ -3183,7 +3194,10 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         timeskip = SireUnits::Dimension::Time(0.0);
     }
 
-
+    
+    //Cumulative Gradient
+    gradient = (-1.0/(2.0*delta_alchemical*beta) * log(GF_acc / GB_acc)) * OpenMM::KcalPerKJ;
+    
     state_openmm = openmm_context->getState(infoMask);
     positions_openmm = state_openmm.getPositions();
     velocities_openmm = state_openmm.getVelocities();
@@ -3579,6 +3593,13 @@ QVector<double> OpenMMFrEnergyST::getGradients(void){
 
     return gradients;
 
+}
+
+
+/** Calculated Cumulative Gradient*/
+double OpenMMFrEnergyST::getGradient(void){
+    
+    return gradient;
 }
 
 

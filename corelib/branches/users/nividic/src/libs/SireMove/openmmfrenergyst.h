@@ -194,6 +194,8 @@ public:
     void setEquilib_time_step(SireUnits::Dimension::Time);
 
     void setReinitializeContext(bool);
+    
+    double getGradient(void);
 
 
 private:
@@ -287,6 +289,8 @@ private:
 
     double GF_acc;
     double GB_acc;
+    
+    double gradient;
 
 
 };
