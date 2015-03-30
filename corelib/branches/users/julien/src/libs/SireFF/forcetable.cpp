@@ -1280,7 +1280,7 @@ const char* ForceTable::typeName()
  {
    if ( containsTable(molnum))
      {
-       qDebug() << " THERE IS A TABLE !" << "\n"; 
+       //qDebug() << " THERE IS A TABLE !" << "\n"; 
        qint32 idx = molnum_to_idx[molnum];
        tables_by_idx[idx] = table;
      }
