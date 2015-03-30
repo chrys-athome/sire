@@ -125,6 +125,13 @@ freeze_residues = Parameter("freeze residues", True, """Whether or not to freeze
 
 frozen_residues = Parameter("frozen residues", ["LGR", "SIT", "NEG", "POS"], """List of residues to freeze if 'freeze residues' is True.""")
 
+#use_distance_restraints = Parameter("use distance restraints",True, """Whether or not to use restraints distances between pairs of atoms.""") 
+use_distance_restraints = Parameter("use distance restraints",False, """Whether or not to use restraints distances between pairs of atoms.""")
+
+#distance_restraints_dict = Parameter("distance restraints dictionary",{ (17,12):(3.0,10.0, 0.2) }, """Dictionnary of pair of atoms whose distance is restrained, and restraint parameters. Syntax is {(atom0,atom1):(reql, kl, Dl)} where atom0, atom1 are atomic indices. reql the equilibrium distance. Kl the force constant of the restraint. D the flat bottom radius.""")
+
+distance_restraints_dict = Parameter("distance restraints dictionary",{ }, """Dictionnary of pair of atoms whose distance is restrained, and restraint parameters. Syntax is {(atom0,atom1):(reql, kl, Dl)} where atom0, atom1 are atomic indices. reql the equilibrium distance. Kl the force constant of the restraint. D the flat bottom radius. WARNING: PBC distance checks not implemented, avoid restraining pair of atoms that may diffuse out of the box.""")
+
 ## Free energy specific keywords 
 
 morphfile = Parameter("morphfile", "SYSTEM.morph",
@@ -144,6 +151,7 @@ coulomb_power = Parameter("coulomb power", 0,
 
 energy_frequency = Parameter("energy frequency", 10,
                              """The number of time steps between evaluation of free energy gradients.""")
+
 
 #####################################
 
@@ -464,6 +472,25 @@ def atomNumVectorListToProperty( list ):
 
     return prop
 
+def linkbondVectorListToProperty( list ):
+
+    prop = Properties()
+
+    i = 0
+
+    for value in list:
+        prop.setProperty("AtomNum0(%d)" % i, VariantProperty(value[0]))
+        prop.setProperty("AtomNum1(%d)" % i, VariantProperty(value[1]))
+        prop.setProperty("reql(%d)" % i, VariantProperty(value[2]))
+        prop.setProperty("kl(%d)" % i, VariantProperty(value[3]))
+        prop.setProperty("dl(%d)" % i, VariantProperty(value[4]))
+        i += 1
+
+    prop.setProperty("nbondlinks", VariantProperty(i) );
+
+    return prop
+
+
 def propertyToAtomNumList( prop ):
     list = []
 
@@ -540,6 +567,46 @@ def setupRestraints(system):
             system.update(mol)
 
     return system
+
+def setupDistanceRestraints(system):
+    prop_list = []
+
+    molecules = system[ MGName("all") ].molecules()
+
+    dic_items = list( distance_restraints_dict.val.items() )
+
+    for i in range(0,molecules.nMolecules()):
+        mol = molecules.molecule(MolNum(i+1)).molecule()
+        atoms_mol = mol.atoms()
+        natoms_mol = mol.nAtoms()
+        for j in range(0,natoms_mol):
+            at = atoms_mol[j]
+            atnumber = at.number()
+            for k in range(len(dic_items)):
+                if dic_items[k][0][0] == dic_items[k][0][1]:
+                    print ("Error! It is not possible to place a distance restraint on the same atom")
+                    sys.exit(-1)
+                if atnumber.value() - 1 in dic_items[k][0]:
+                    print (at)
+                    # atom0index atom1index, reql, kl, dl 
+                    prop_list.append((dic_items[k][0][0]+1, dic_items[k][0][1]+1,dic_items[k][1][0],dic_items[k][1][1], dic_items[k][1][2]))
+
+    unique_prop_list = []
+
+    [unique_prop_list.append(item) for item in prop_list if item not in unique_prop_list]
+
+    print (unique_prop_list)
+
+    #Mol number 0 will store all the information related to the bond-links in the system
+    mol0 = molecules.molecule(MolNum(1)).molecule()
+
+    mol0 = mol0.edit().setProperty("linkbonds", linkbondVectorListToProperty( unique_prop_list )).commit()
+
+    system.update(mol0)
+
+    return system
+
+
 
 def freezeResidues(system):
    
@@ -1141,6 +1208,9 @@ def runFreeNrg():
         if use_restraints.val:
             system = setupRestraints(system)
         
+        if use_distance_restraints.val:
+            system = setupDistanceRestraints(system)
+
         # Note that this just set the mass to zero which freezes residues in OpenMM but Sire doesn't known that
         if freeze_residues.val:
             system = freezeResidues(system)
