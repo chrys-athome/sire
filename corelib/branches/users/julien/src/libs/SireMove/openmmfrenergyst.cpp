@@ -2777,6 +2777,13 @@ MolarEnergy OpenMMFrEnergyST::getPotentialEnergy(const System &system)
     return nrg;
 }
 
+/** This method will create an OpenMM context from the passed system, and energy minimize the coordinates, before updating 
+the system and passing it back to Sire. **/
+System minimizer( System &system, double max_iteration, double tolerance)
+{
+  return system;
+}
+
 
 void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) {
 
